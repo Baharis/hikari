@@ -1,0 +1,136 @@
+data_xcalibur
+_audit_creation_date           2017-05-17
+_audit_creation_method         'CrysAlisPro 1.171.38.43d (Rigaku OD, 2015)'
+_computing_data_collection     'CrysAlisPro 1.171.38.43d (Rigaku OD, 2015)'
+_computing_cell_refinement     'CrysAlisPro 1.171.38.43d (Rigaku OD, 2015)'
+_computing_data_reduction      'CrysAlisPro 1.171.38.43d (Rigaku OD, 2015)'
+_cell_length_a                  14.1502(7) 
+_cell_length_b                  14.1502(7) 
+_cell_length_c                  18.2238(13) 
+_cell_angle_alpha               90.0 
+_cell_angle_beta                90.0 
+_cell_angle_gamma               90.0 
+_cell_volume                    3648.9(4) 
+_cell_measurement_temperature   297.4(5) 
+_cell_measurement_reflns_used   6829
+_cell_measurement_theta_min     3.7640
+_cell_measurement_theta_max     55.1540
+_cell_oxdiff_length_a                  14.1255(12) 
+_cell_oxdiff_length_b                  14.1878(9) 
+_cell_oxdiff_length_c                  18.2071(11) 
+_cell_oxdiff_angle_alpha               90.026(5) 
+_cell_oxdiff_angle_beta                90.016(6) 
+_cell_oxdiff_angle_gamma               89.942(6) 
+_cell_oxdiff_volume                    3648.9(5) 
+_cell_oxdiff_measurement_reflns_used   6826
+_exptl_absorpt_correction_T_min                   0.59493
+_exptl_absorpt_correction_T_max                   1.00000
+_exptl_absorpt_correction_type            multi-scan
+_exptl_absorpt_process_details
+;
+CrysAlisPro 1.171.38.43d (Rigaku Oxford Diffraction, 2015)
+Empirical absorption correction using spherical harmonics,
+ implemented in SCALE3 ABSPACK scaling algorithm.
+;
+_oxdiff_exptl_absorpt_empirical_full_min           0.660
+_oxdiff_exptl_absorpt_empirical_full_max           4.434
+_oxdiff_exptl_absorpt_empirical_details
+;
+Empirical correction (ABSPACK) includes:
+- Absorption correction using spherical harmonics
+- Frame scaling
+;
+_diffrn_ambient_temperature 297.4(5) 
+_diffrn_ambient_environment air
+_diffrn_source 'micro-focus sealed X-ray tube'
+_diffrn_source_type 'SuperNova (Cu) X-ray Source'
+_diffrn_radiation_probe x-ray
+_diffrn_radiation_type 'Cu K\a'
+_diffrn_radiation_wavelength 1.54184
+_diffrn_radiation_monochromator mirror
+_diffrn_measurement_device 'four-circle diffractometer'
+_diffrn_measurement_device_type 'SuperNova, Dual, Cu at zero, Atlas'
+_diffrn_detector 'CCD plate'
+_diffrn_detector_type Atlas
+_diffrn_detector_area_resol_mean 5.2195
+_diffrn_reflns_number 27562
+_diffrn_reflns_av_R_equivalents 0.1843
+_diffrn_reflns_av_sigmaI/netI 0.1193
+_diffrn_reflns_limit_h_min -15
+_diffrn_reflns_limit_h_max 15
+_diffrn_reflns_limit_k_min -15
+_diffrn_reflns_limit_k_max 15
+_diffrn_reflns_limit_l_min -19
+_diffrn_reflns_limit_l_max 19
+_diffrn_reflns_theta_min 3.9552
+_diffrn_reflns_theta_max 57.5116
+_diffrn_measured_fraction_theta_max 0.9933
+_diffrn_reflns_theta_full 55.2927
+_diffrn_measured_fraction_theta_full 1.0000
+_diffrn_orient_matrix_type 'CrysAlisPro convention (1999,Acta A55,543-557)'
+_diffrn_orient_matrix_UB_11      -0.0078746000
+_diffrn_orient_matrix_UB_12      -0.0230634000
+_diffrn_orient_matrix_UB_13       0.0824418000
+_diffrn_orient_matrix_UB_21      -0.0513404000
+_diffrn_orient_matrix_UB_22      -0.0926825000
+_diffrn_orient_matrix_UB_23      -0.0187496000
+_diffrn_orient_matrix_UB_31       0.0958934000
+_diffrn_orient_matrix_UB_32      -0.0516338000
+_diffrn_orient_matrix_UB_33      -0.0032413000
+_diffrn_measurement_details
+;
+List of Runs (angles in degrees, time in seconds):
+
+  # Type    Start    End  Width  t~exp~   \w     \q     \k     \f   Frames
+--------------------------------------------------------------------------
+  1  \w   -127.00  61.00   1.00    1.50    --  -32.65 -19.00 -30.00  188
+  2  \w   -123.00 -66.00   1.00    1.50    --  -32.65-138.00 137.00   57
+  3  \w   -127.00  62.00   1.00    1.50    --  -32.65  19.00 120.00  189
+  4  \w     31.00 106.00   1.00    1.50    --   32.65-138.00 137.00   75
+  5  \w    -34.00  -4.00   1.00    1.50    --   34.00 128.00 -65.30   30
+  6  \w      1.00  27.00   1.00    1.50    --   50.00  93.00  26.47   26
+  7  \w      9.00  35.00   1.00    1.50    --   54.00  86.00-107.09   26
+  8  \w      8.00  34.00   1.00    1.50    --   54.00  87.00 179.04   26
+  9  \w      9.00  35.00   1.00    1.50    --   54.00  86.00  93.16   26
+ 10  \w     18.00  46.00   1.00   15.00    --   62.00  81.00 -92.41   28
+ 11  \w     18.00  46.00   1.00   15.00    --   62.00  81.00  32.14   28
+ 12  \w     18.00  46.00   1.00   15.00    --   62.00  81.00 142.55   28
+ 13  \w     18.00  46.00   1.00   15.00    --   62.00  80.00-157.20   28
+ 14  \w     18.00  45.00   1.00   15.00    --   62.00  82.00 -53.58   27
+ 15  \w     37.00 178.00   1.00   15.00    --   80.75  77.00  30.00  141
+ 16  \w     37.00 178.00   1.00   15.00    --   80.75  77.00 -90.00  141
+ 17  \w     37.00 178.00   1.00   15.00    --   80.75  77.00 -60.00  141
+ 18  \w     37.00 178.00   1.00   15.00    --   80.75  77.00   0.00  141
+ 19  \w     37.00 178.00   1.00   15.00    --   80.75  77.00 120.00  141
+ 20  \w     37.00 178.00   1.00   15.00    --   80.75  77.00  60.00  141
+ 21  \w     37.00 178.00   1.00   15.00    --   80.75  77.00-120.00  141
+ 22  \w     37.00 178.00   1.00   15.00    --   80.75  77.00 -30.00  141
+ 23  \w     37.00 178.00   1.00   15.00    --   80.75  77.00 120.00  141
+ 24  \w     37.00 178.00   1.00   15.00    --   80.75  77.00-150.00  141
+ 25  \w     37.00 178.00   1.00   15.00    --   80.75  77.00 150.00  141
+ 26  \w     -4.00 109.00   1.00   15.00    --   80.75 -94.00 -90.00  113
+ 27  \w     37.00 178.00   1.00   15.00    --   80.75  77.00-180.00  141
+ 28  \w     86.00 173.00   1.00   15.00    --   80.75 138.00-161.00   87
+ 29  \w     37.00 178.00   1.00   15.00    --   80.75  77.00  90.00  141
+ 30  \w     12.00 115.00   1.00   15.00    --   80.75-111.00-180.00  103
+ 31  \w   -123.00 -73.00   1.00    1.50    --  -32.65-125.00-180.00   50
+ 32  \w   -123.00 -73.00   1.00    1.50    --  -32.65-125.00  60.00   50
+ 33  \w    -68.00 133.00   1.00    1.50    --   32.65   0.00-180.00  201
+ 34  \w     -9.00 125.00   1.00    1.50    --   32.65  57.00-180.00  134
+ 35  \w    -68.00 133.00   1.00    1.50    --   32.65   0.00-150.00  201
+ 36  \w    -35.00  -9.00   1.00    1.50    --   38.00 136.00  26.16   26
+ 37  \w    -45.00 -18.00   1.00    1.50    --   42.00 156.00 145.58   27
+ 38  \w      8.00  34.00   1.00    1.50    --   54.00  87.00  -3.00   26
+;
+_diffrn_measurement_method '\w scans'
+_symmetry_space_group_name_H-M_alt 'I -4 2 m'
+_symmetry_space_group_name_H-M 'I -4 2 m'
+_symmetry_cell_setting tetragonal
+_space_group_IT_number 121
+_space_group_crystal_system tetragonal
+_space_group_name_H-M_alt 'I -4 2 m'
+_reflns_odcompleteness_completeness		100.00
+_reflns_odcompleteness_theta		55.29
+_reflns_odcompleteness_iscentric		1
+_chemical_oxdiff_formula 'C27 H38 N9 S2 Ag'
+_chemical_oxdiff_usercomment 'little yellowish translucent block, room temp'
