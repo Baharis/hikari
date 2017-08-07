@@ -234,7 +234,7 @@ class Pattern:
     def dac(self, opening_angle=40, crystal_position=(1, 0, 0)):
         """Cut the reflections based on DAC angle (in angles)
         and [h, k, l] indexes of diamond-parallel crystal face"""
-        opening_angle = np.radians([opening_angle])[0]
+        opening_angle = np.radians([float(opening_angle)])[0]
         normal = np.array(crystal_position)/lin.norm(np.array(crystal_position))
         reflections_to_delete = []
         for index, reflection in enumerate(self.reflections):
@@ -308,7 +308,7 @@ class Pattern:
         self.reflections = new_reflections
 
     def draw(self, color_scheme='gist_rainbow', dpi=600, itosigma=False,
-             legend=True, projection=('h', 'k', 0), property='batch', restrict=None,
+             legend=True, projection=('h', 'k', 0), restrict=None,
              savefig=False, savename='hikari', scale=1.0, showfig=False):
         """Draw a cross-section of reciprocal lattice for given pattern
 
@@ -317,7 +317,6 @@ class Pattern:
             itosigma     (boolean)  I/sigma(I) to be printed as transparency
             legend       (boolean)  Legend of used colors should be printed
             projection   (tuple)    cross-section ('h', 2, 'l') or None for 3D
-            property     (string)   Colored property: [batch]/redundancy/none
             restrict     (tuple)    Restrict value of properties to certain set
             savefig      (boolean)  Save a figure to the file
             savename     (string)   Name of the saved figure
@@ -344,13 +343,6 @@ class Pattern:
         else:
             axes = ['h', 'k', 'l']
             ax = fig.add_subplot(111, projection='3d')
-
-        # deciding about colored property
-        if property == 'none':
-            self.reduce()
-            self.reduce()
-        elif property == 'redundancy':
-            self.reduce()
 
         # preparing for creating the lists of parameters
         x_pos, y_pos, z_pos, size, color, edge = [], [], [], [], [], []
@@ -403,7 +395,7 @@ class Pattern:
         ax.axis('equal')
 
         # preparing legend
-        if legend and not property == 'none' and not b_range == 1:
+        if legend and not b_range == 1:
             used_colors, used_batches = [], []
             color_skip = int(b_range / 25) + 1
             for i in range(0, b_range, color_skip):
@@ -411,13 +403,13 @@ class Pattern:
                 used_batches.append(str(i + b_min))
             if b_range < 10:
                 ax.legend(used_colors, used_batches, loc=1,
-                          prop={'size': 7}, title=property)
+                          prop={'size': 7})
             elif b_range < 25:
                 ax.legend(used_colors, used_batches, loc=1, ncol=2,
-                          prop={'size': 6}, title=property)
+                          prop={'size': 6})
             else:
                 ax.legend(used_colors, used_batches, loc=1, ncol=3,
-                          prop={'size': 5}, title=property)
+                          prop={'size': 5})
 
         # returning reflections to their original state and saving figure
         self.reflections = backup_reflections
@@ -436,8 +428,7 @@ if __name__ == '__main__':
     p.place(dox)
     p.dac(opening_angle=40, crystal_position=(0, 0, 1))
     p.write('output.hkl')
-    f = p.draw2d(projection=None, property='batch', scale=1.5, savefig=True, savename='hk0')
-    plt.show()
+    p.draw(projection=None, scale=1.5, savefig=True, savename='hk0')
 
 # crystal = Crystal()
 # p = Pattern()

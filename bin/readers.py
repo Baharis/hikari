@@ -1,6 +1,17 @@
 from collections import OrderedDict
 
 
+def ustrip(ufloat):
+    string = str(ufloat)
+    new = ''
+    for letter in string:
+        if letter is not '(':
+            new += letter
+        else:
+            break
+    return float(new)
+
+
 def read_res(path):
     """Read data from specified ins/res file and return a relevant dictionary"""
     output = OrderedDict()
