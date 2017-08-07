@@ -199,8 +199,8 @@ class Pattern:
             self.delete_reflection(index)
 
     def place(self, crystal):
-        """Assign reflections their positions and delete h=k=l=0 reflections"""
-        for index, reflection in enumerate(self.reflections):
+        """Assign reflections their positions"""
+        for reflection in self.reflections:
             reflection['p'] = reflection['h'] * crystal.a_w + \
                               reflection['k'] * crystal.b_w + \
                               reflection['l'] * crystal.c_w
@@ -345,6 +345,9 @@ class Pattern:
             ax = fig.add_subplot(111, projection='3d')
 
         # preparing for creating the lists of parameters
+        for index, reflection in enumerate(reversed(self.reflections)):
+            if reflection['h'] == reflection['k'] == reflection['l'] == 0:
+                del self.reflections[len(self.reflections)-index-1]
         x_pos, y_pos, z_pos, size, color, edge = [], [], [], [], [], []
         i_max = max(self.reflections, key=lambda x: x['i'])['i']
         itos_max = max(self.reflections, key=lambda x: x['i'] / x['s'])['i'] / \
