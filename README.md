@@ -80,4 +80,4 @@ Will reformat the .hkl format to the shorted form:
  0 0 0   0.0   0.0 1
 ```
 
-In order to see all available options `dacxrd_peaks.py --help` for all options.
+In order to see all available options execute `hikari.py --help`.

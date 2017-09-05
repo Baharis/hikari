@@ -47,13 +47,13 @@ p.read(options['<hkl_path>'])
 # READING CRYSTAL INFORMATION FROM RES
 if options['-r'] != 'None':
     res = readers.read_res(options['-r'])
-    p.edit_wavelength(res['CELL'][0])
-    c.a_d = res['CELL'][1]
-    c.b_d = res['CELL'][2]
-    c.c_d = res['CELL'][3]
-    c.al_d = np.radians(res['CELL'][4])
-    c.be_d = np.radians(res['CELL'][5])
-    c.ga_d = np.radians(res['CELL'][6])
+    p.edit_wavelength(float(res['CELL'][0]))
+    c.a_d = float(res['CELL'][1])
+    c.b_d = float(res['CELL'][2])
+    c.c_d = float(res['CELL'][3])
+    c.al_d = np.radians(float(res['CELL'][4]))
+    c.be_d = np.radians(float(res['CELL'][5]))
+    c.ga_d = np.radians(float(res['CELL'][6]))
 
 # READING CRYSTAL INFORMATION FROM CIF
 elif options['-c'] != 'None':

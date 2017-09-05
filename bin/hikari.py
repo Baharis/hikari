@@ -154,7 +154,7 @@ class Pattern:
                    'Ag': 0.5609}
         try:
             self.wavelength = sources[wavelength[:2]]
-        except KeyError:
+        except TypeError:
             self.wavelength = float(wavelength)
         except ValueError:
             pass
