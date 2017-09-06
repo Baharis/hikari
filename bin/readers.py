@@ -243,7 +243,6 @@ def read_dat(path):
                      'Bond Length [A]', 'den [e*A-3]', 'lap [e*A-5]',
                      'eli [1]', 'type')
 
-
     # INTERPRET FILE AND REFORMAT TO PANDAS DATAFRAME
     dat_file = open(path, 'r')
     dat_content = list()
