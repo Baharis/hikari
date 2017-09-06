@@ -1,4 +1,6 @@
+import struct, sys
 from collections import OrderedDict
+import pandas as pd
 
 
 def ustrip(ufloat):
@@ -165,3 +167,105 @@ def read_cif(path, data_block='I'):
 
         index += 1
     return output
+
+
+def read_hkl(path, format):
+    """Read .hkl file as specified by path and fields
+    format: either ordered dictionary with specified fields (minus = ignore)
+    or type number"""
+
+    # INTERPRET GIVEN HKL FORMAT
+    if format == 2:
+        column_labels = ('h', 'k', 'l', 'I', 'si', 'b', 'la')
+        format_string = '4s 4s 4s 8s 8s 4s 8s'
+    elif format == 3:
+        column_labels = ('h', 'k', 'l', 'F', 'si', 'b')
+        format_string = '4s 4s 4s 8s 8s 4s'
+    elif format == 4:
+        column_labels = ('h', 'k', 'l', 'I', 'si', 'b')
+        format_string = '4s 4s 4s 8s 8s 4s'
+    elif format == 5:
+        column_labels = ('h', 'k', 'l', 'I', 'si', 'c')
+        format_string = '4s 4s 4s 8s 8s 4s'
+    elif format == 6:
+        column_labels = ('h', 'k', 'l', 'I', 'si', 'm')
+        format_string = '4s 4s 4s 8s 8s 4s'
+    elif type(format) in (dict, OrderedDict):
+        column_labels = list()
+        format_string = str()
+        if type(format) is dict and sys.version_info[0] < 3:
+            format_items = format.iteritems()
+        else:
+            format_items = format.items()
+        for key, value in format_items:
+            column_labels.append(key)
+            if int(value) > 0:
+                format_string += value + 's '
+            else:
+                format_string += str(abs(int(value))) + 'x '
+        column_labels = tuple(column_labels)
+        format_string.rstrip(' ')
+    else:
+        raise TypeError('Format type should be integer, dict or OrderedDict')
+
+    # PREPARE OBJECTS RESPONSIBLE FOR PARSING INPUT
+    # https://stackoverflow.com/questions/4914008/
+    # how-to-efficiently-parse-fixed-width-files
+    field_struct = struct.Struct(format_string)
+    unpack = field_struct.unpack_from
+    parse = lambda line: tuple(s.decode() for s in unpack(line.encode()))
+
+    # INTERPRET FILE AND REFORMAT TO PANDAS DATAFRAME
+    hkl_file = open(path, 'r')
+    hkl_content = list()
+    for line in hkl_file:
+        if not line.strip():
+            continue
+        line_content = list()
+        for key, value in zip(column_labels, parse(line)):
+            if key in ('h', 'k', 'l', 'b', 'c', 'm'):
+                line_content.append(int(value))
+            else:
+                line_content.append(float(value))
+        hkl_content.append(line_content)
+    hkl_dataframe = pd.DataFrame(hkl_content)
+    hkl_dataframe.columns = column_labels
+    return hkl_dataframe
+
+
+def read_dat(path):
+    """Read Gcp_Vcp.dat file of MoPro as specified by path"""
+
+    # SET DAT FILE READING FORMAT AND PARSING OBJECTS
+    column_labels = ('Atom 1', 'Atom 2', 'CP', 'Symmetry',
+                     'Gcp [Hartree*Bohr-3]', 'Vcp [Hartree*Bohr-3]',
+                     'Gcp [kJ*mol-1*Bohr-3]', 'Vcp [kJ*mol-1*Bohr-3]',
+                     'Bond Length [A]', 'den [e*A-3]', 'lap [e*A-5]',
+                     'eli [1]', 'type')
+
+
+    # INTERPRET FILE AND REFORMAT TO PANDAS DATAFRAME
+    dat_file = open(path, 'r')
+    dat_content = list()
+    skip_flag = True
+    for line in dat_file:
+        if skip_flag:
+            skip_flag = not line[:30] == 'Atom1     Atom2     CP    sym2'
+            continue
+        line = line.rstrip('\n').replace('-', ' -').replace(', -', ',-').split()
+        indices = (0, 2, 4, 5, 6, 7, 8, 9, 10, 13, 14, 18, 19)
+        line_content = list()
+        [line_content.append(line[index]) for index in indices]
+        dat_content.append(line_content)
+    dat_dataframe = pd.DataFrame(dat_content)
+    dat_dataframe.columns = column_labels
+    return dat_dataframe
+
+
+if __name__ == '__main__':
+    # hkl = read_hkl(path='/home/dtchon/git/kesshou/test_data/exp_353.hkl', format=4)
+    # hkl.to_csv('/home/dtchon/git/kesshou/test_data/exp_353.csv')
+    dat = read_dat(path='/home/dtchon/x/Doksycyklina/exp_353/mopro/'
+                          'exp_353_190/wd2_intra/bond_Gcp_Vcp.dat')
+    dat.to_csv('/home/dtchon/x/Doksycyklina/exp_353/mopro/'
+               'exp_353_190/wd2_intra/bond_Gcp_Vcp.csv')
