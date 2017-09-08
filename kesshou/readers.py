@@ -243,7 +243,6 @@ def read_dat(path):
                      'Bond Length [A]', 'den [e*A-3]', 'lap [e*A-5]',
                      'eli [1]', 'type')
 
-
     # INTERPRET FILE AND REFORMAT TO PANDAS DATAFRAME
     dat_file = open(path, 'r')
     dat_content = list()
@@ -262,10 +261,10 @@ def read_dat(path):
     return dat_dataframe
 
 
-if __name__ == '__main__':
-    # hkl = read_hkl(path='/home/dtchon/git/kesshou/test_data/exp_353.hkl', format=4)
-    # hkl.to_csv('/home/dtchon/git/kesshou/test_data/exp_353.csv')
-    dat = read_dat(path='/home/dtchon/x/Doksycyklina/exp_353/mopro/'
-                          'exp_353_190/wd2_intra/bond_Gcp_Vcp.dat')
-    dat.to_csv('/home/dtchon/x/Doksycyklina/exp_353/mopro/'
-               'exp_353_190/wd2_intra/bond_Gcp_Vcp.csv')
+# if __name__ == '__main__':
+#     hkl = read_hkl(path='/home/dtchon/git/kesshou/test_data/exp_353.hkl', format=4)
+#     hkl.to_csv('/home/dtchon/git/kesshou/test_data/exp_353.csv')
+#     dat = read_dat(path='/home/dtchon/x/Doksycyklina/exp_353/mopro/'
+#                           'exp_353_190/wd2_intra/bond_Gcp_Vcp.dat')
+#     dat.to_csv('/home/dtchon/x/Doksycyklina/exp_353/mopro/'
+#                'exp_353_190/wd2_intra/bond_Gcp_Vcp.csv')
