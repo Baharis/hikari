@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from .readers import read_hkl
 
+
 class Crystal:
     """Simple class for storing crystal parameters, content and properties.
 

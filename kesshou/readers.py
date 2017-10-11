@@ -233,34 +233,6 @@ def read_hkl(path, format):
     return hkl_dataframe
 
 
-def read_dat(path):
-    """Read Gcp_Vcp.dat file of MoPro as specified by path"""
-
-    # SET DAT FILE READING FORMAT AND PARSING OBJECTS
-    column_labels = ('Atom 1', 'Atom 2', 'CP', 'Symmetry',
-                     'Gcp [Hartree*Bohr-3]', 'Vcp [Hartree*Bohr-3]',
-                     'Gcp [kJ*mol-1*Bohr-3]', 'Vcp [kJ*mol-1*Bohr-3]',
-                     'Bond Length [A]', 'den [e*A-3]', 'lap [e*A-5]',
-                     'eli [1]', 'type')
-
-    # INTERPRET FILE AND REFORMAT TO PANDAS DATAFRAME
-    dat_file = open(path, 'r')
-    dat_content = list()
-    skip_flag = True
-    for line in dat_file:
-        if skip_flag:
-            skip_flag = not line[:30] == 'Atom1     Atom2     CP    sym2'
-            continue
-        line = line.rstrip('\n').replace('-', ' -').replace(', -', ',-').split()
-        indices = (0, 2, 4, 5, 6, 7, 8, 9, 10, 13, 14, 18, 19)
-        line_content = list()
-        [line_content.append(line[index]) for index in indices]
-        dat_content.append(line_content)
-    dat_dataframe = pd.DataFrame(dat_content)
-    dat_dataframe.columns = column_labels
-    return dat_dataframe
-
-
 # if __name__ == '__main__':
 #     hkl = read_hkl(path='/home/dtchon/git/kesshou/test_data/exp_353.hkl', format=4)
 #     hkl.to_csv('/home/dtchon/git/kesshou/test_data/exp_353.csv')
