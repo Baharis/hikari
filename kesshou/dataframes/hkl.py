@@ -814,5 +814,4 @@ if __name__ == '__main__':
     p.write('/home/dtchon/git/kesshou/test_data/output.hkl', 4)
     p.draw(projection=(0, 'k', 'l'), scale=1.5, savefig=False, savename='hk0', showfig=True)
 
-
 # TODO 3D call visualise and to pyqtplot
