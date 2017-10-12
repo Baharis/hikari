@@ -71,8 +71,8 @@ if options['draw2d']:
     for times in range(eval(options['--reduce'])):
         p.reduce()
     p.draw(color_scheme='gist_rainbow', dpi=600, itosigma=options['--itosigma'],
-         legend=True, projection=eval(options['--plane']), savefig=True,
-         savename=options['-s'], scale=eval(options['--scale']), showfig=None)
+           legend=True, projection=eval(options['--plane']), savepath=True,
+           savename=options['-s'], scale=eval(options['--scale']), showfig=None)
 
 elif options['modify']:
     p.place(c)

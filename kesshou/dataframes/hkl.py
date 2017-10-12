@@ -302,6 +302,14 @@ class HklKeys:
         'reduce_behaviour': 'discard',
         'type': float
     }
+    __r = {
+        'default': 0.0,
+        'description': 'resolution in A^-1',
+        'imperative': False,
+        'dtype': 'float32',
+        'reduce_behaviour': 'keep',
+        'type': float
+    }
     __x = {
         'default': 0.0,
         'description': 'reciprocal position vector x value ',
@@ -326,7 +334,7 @@ class HklKeys:
         'reduce_behaviour': 'keep',
         'type': float
     }
-    defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'b', 'm', 'la', 'u',
+    defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'b', 'm', 'la', 'u', 'r',
                     'x', 'y', 'z'}
 
     def __init__(self):
@@ -393,8 +401,6 @@ class HklKeys:
 
 class HklFrame:
     """Single crystal diffraction pattern container"""
-    file_format = 2
-    writing_separator = False
 
     def __init__(self):
         self.crystal = HklCrystal()
@@ -450,14 +456,19 @@ class HklFrame:
         return new_data
 
     def edit_wavelength(self, wavelength):
-        """Define wavelength [Ag, Mo, Cu or custom in A] used for measurement"""
+        """Define wavelength [e.g. "CuKa", "Ag", "Individual" or custom in A]"""
         sources = {'Cr': 2.2896,	'Fe': 1.9360,	'Co': 1.79,
                    'Cu': 1.54056,	'Mo': 0.71069,	'Zr': 0.69,
                    'Ag': 0.5609}
         try:
             self.meta['wavelength'] = sources[wavelength[:2]]
         except TypeError:
+            # IF CUSTOM VALUE WAS GIVEN
             self.meta['wavelength'] = float(wavelength)
+        except KeyError:
+            # NEGATIVE WAVELENGTH SERVES AS SCALE FOR INDIVIDUAL REFLECT. VALUES
+            if wavelength[:3] in {'ind', 'Ind', 'IND', 'i'}:
+                self.meta['wavelength'] = -1.0
 
     def seek_reflection(self, **param):
         """Find indices of reflections described by dict of keys and values"""
@@ -594,27 +605,33 @@ class HklFrame:
         """Cut the reflections based on DAC angle (in angles)
         and [h, k, l] indexes of diamond-parallel crystal face"""
 
-        # CALCULATE OPENING ANGLE "oa" AND NORMAL VECTOR "n"
-        oa = np.radians([float(opening_angle)])[0]
-        n = np.array((1.0, 0.0, 0.0))
-        n = np.dot(lin.inv(self.crystal.orient_matrix), n)
+        # CALCULATE OPENING ANGLE "_oa" AND WAVELENGTH "_la"
+        _oa = np.radians([float(opening_angle)])[0]
+        _la = self.meta['wavelength']
+
+        # CALCULATE NORMAL VECTOR "_n" IN RECIPROCAL LATTICE
+        _r = np.array((1.0, 0.0, 0.0))
+        _UB = self.crystal.orient_matrix
+        _n = np.dot(lin.inv(_UB), _r)
+        _n /= lin.norm(_n)
 
         # DELETE REFLECTIONS OUT OF ACCESSIBLE VOLUME
         indices_to_delete = []
         for index, row in self.data.iterrows():
-            # CALCULATE RECIPROCAL POSITION VECTOR "v"
-            v = np.array((row['x'], row['y'], row['z']))
-            # CALCULATE PARALLELLED TO NORMAL VECTOR "p"
-            p = v - n * np.dot(v, n)
+            # CALCULATE RECIPROCAL POSITION VECTOR "_v"
+            _v = np.array((row['x'], row['y'], row['z']))
+            # CALCULATE PARALLELLED TO NORMAL VECTOR "_p"
+            _p = _v - _n * np.dot(_v, _n)
             # EXCLUDE REFLECTIONS PARALLEL TO NORMAL
-            if np.isclose([lin.norm(p)], [0.]):
+            if np.isclose([lin.norm(_p)], [0.]):
                 indices_to_delete.append(index)
                 continue
-            # CALCULATE INCLINATION OF "v" FROM CELL PLANE (PERPEND. TO NORMAL)
-            ph = np.arccos(min((np.dot(p, v) / (lin.norm(p) * lin.norm(v)), 1)))
-            r_max = 2 * np.sin(max(oa-ph, 0)) / self.meta['wavelength']
+            # CALCULATE INCLINATION OF "_v" FROM CELL PLANE (PERP. TO NORMAL)
+            _ph = np.arccos(
+                min((np.dot(_p, _v) / (lin.norm(_p) * lin.norm(_v)), 1)))
+            r_max = 2 * np.sin(max(_oa-_ph, 0)) / _la
             # IF ITS OUT OF ACCESSIBLE VOLUME ADD TO DELETION
-            if lin.norm(v) > r_max:
+            if lin.norm(_v) > r_max:
                 indices_to_delete.append(index)
         self.data = self.data.drop(indices_to_delete).reset_index(drop=True)
 
@@ -690,7 +707,29 @@ class HklFrame:
         average_down_redundant_reflections()
         self.data = self.data_from_dict(superreflections)
 
+    def calculate_resolution(self):
+        """For each reflection calculate resolution as r = sin(th)/la"""
+        resolution_list = []
+
+        # IF REFLECTIONS ARE NOT PLACED, DO IT
+        try:
+            self.data['x']
+        except KeyError:
+            self.place()
+
+        # FOR EACH REFLECTION ASSIGN RESOLUTION TO THE LIST
+        for index, row in self.data.iterrows():
+            _v = np.array((row['x'], row['y'], row['z']))
+            resolution_list.append(lin.norm(_v)/2)
+
+        # ADD COLUMN TO REFLECTION DATA
+        self.keys.add(['r'])
+        typ = self.keys.get_property('r', 'dtype')
+        self.data['r'] = pd.Series(resolution_list, dtype=typ)
+        print(self.data['r'])
+
     def calculate_uncertainty(self, master_key):
+        """For each reflection calculate u = master_key/sigma(master_key)"""
         uncertainties = []
         for index, row in self.data.iterrows():
             try:
@@ -704,7 +743,7 @@ class HklFrame:
 
     def draw(self, alpha=False, colored='b', dpi=600, legend=True,
              master_key='I', projection=('h', 'k', 0),
-             savefig=False, savename='kesshou', scale=1.0, showfig=False):
+             savepath=False, scale=1.0, showfig=False):
         """Draw a cross-section of reciprocal lattice for given pattern
 
             alpha        (string)   Value to be visualised as alpha or False
@@ -713,8 +752,7 @@ class HklFrame:
             legend       (boolean)  Legend of used colors should be printed
             master_key   (string)   Value to be visualised as radius, 'I' or 'F'
             projection   (tuple)    desired cross-section, default ('h', 'k', 0)
-            savefig      (boolean)  Figure should be saved to the file
-            savename     (string)   Name of the saved figure, if applicable
+            savepath     (string)   Path to the file to save the image or False
             scale        (float)    Scale factor for the reflection size
             showfig      (boolean)  Figure should be shown in matplotlib window
             uncertainty  (boolean)  master/sigma(master) drawn as transparency
@@ -797,8 +835,8 @@ class HklFrame:
 
         # SAVE OR SHOW FIGURE IF APPLICABLE
         fig = plt.gcf()
-        if savefig:
-            fig.savefig('/home/dtchon/git/kesshou/test_data/output.png'.format(savename), bbox_inches=None, dpi=dpi)
+        if savepath:
+            fig.savefig(savepath, bbox_inches=None, dpi=dpi)
         if showfig:
             plt.show()
 
@@ -812,6 +850,6 @@ if __name__ == '__main__':
     p.place()
     p.dac(opening_angle=40)
     p.write('/home/dtchon/git/kesshou/test_data/output.hkl', 4)
-    p.draw(projection=(0, 'k', 'l'), scale=1.5, savefig=False, savename='hk0', showfig=True)
+    p.draw(projection=(0, 'k', 'l'), scale=1.5, savepath=False, showfig=True)
 
 # TODO 3D call visualise and to pyqtplot
