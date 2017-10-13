@@ -304,7 +304,7 @@ class HklKeys:
     }
     __r = {
         'default': 0.0,
-        'description': 'resolution in A^-1',
+        'description': 'distance from 000. Divide by two for resol. in A^-1',
         'imperative': False,
         'dtype': 'float32',
         'reduce_behaviour': 'keep',
@@ -484,17 +484,29 @@ class HklFrame:
         self.data = self.data.drop(indices_to_delete).reset_index(drop=True)
 
     def place(self):
-        """Assign reflections their positions"""
-        _x, _y, _z = list(), list(), list()
+        """Assign reflections their positions anr calculate dist. from 000"""
+
+        # CREATE EMPTY DATA HOLDERS AND IMPORT CONSTANTS
+        _x, _y, _z, _r, _types = list(), list(), list(), list(), dict()
         _a, _b, _c = self.crystal.a_w, self.crystal.b_w, self.crystal.c_w
+        _keys = ('x', 'y', 'z', 'r')
+        for key in _keys:
+            _types[key] = self.keys.get_property(key, 'dtype')
+
+        # POSITION THE REFLECTIONS IN THE RECIPROCAL SPACE
         for index, row in self.data.iterrows():
-            v = row['h'] * _a + row['k'] * _b + row['l'] * _c
-            _x.append(v[0])
-            _y.append(v[1])
-            _z.append(v[2])
-        self.data['x'] = pd.Series(_x, index=self.data.index)
-        self.data['y'] = pd.Series(_y, index=self.data.index)
-        self.data['z'] = pd.Series(_z, index=self.data.index)
+            _v = row['h'] * _a + row['k'] * _b + row['l'] * _c
+            _x.append(_v[0])
+            _y.append(_v[1])
+            _z.append(_v[2])
+            _r.append(lin.norm(_v))
+
+        # ADD KEYS AND APPEND DATA TO DATAFRAME
+        self.keys.add(_keys)
+        self.data['x'] = pd.Series(_x, index=self.data.index, dtype=_types['x'])
+        self.data['y'] = pd.Series(_y, index=self.data.index, dtype=_types['y'])
+        self.data['z'] = pd.Series(_z, index=self.data.index, dtype=_types['z'])
+        self.data['r'] = pd.Series(_r, index=self.data.index, dtype=_types['r'])
 
     def transform(self, matrix):
         """Transform reflection pattern using given 3x3 or 4x4 matrix"""
@@ -706,27 +718,6 @@ class HklFrame:
         # INCLUDE LAST REDUNDANTS AND CREATE NEW DATAFRAME
         average_down_redundant_reflections()
         self.data = self.data_from_dict(superreflections)
-
-    def calculate_resolution(self):
-        """For each reflection calculate resolution as r = sin(th)/la"""
-        resolution_list = []
-
-        # IF REFLECTIONS ARE NOT PLACED, DO IT
-        try:
-            self.data['x']
-        except KeyError:
-            self.place()
-
-        # FOR EACH REFLECTION ASSIGN RESOLUTION TO THE LIST
-        for index, row in self.data.iterrows():
-            _v = np.array((row['x'], row['y'], row['z']))
-            resolution_list.append(lin.norm(_v)/2)
-
-        # ADD COLUMN TO REFLECTION DATA
-        self.keys.add(['r'])
-        typ = self.keys.get_property('r', 'dtype')
-        self.data['r'] = pd.Series(resolution_list, dtype=typ)
-        print(self.data['r'])
 
     def calculate_uncertainty(self, master_key):
         """For each reflection calculate u = master_key/sigma(master_key)"""
