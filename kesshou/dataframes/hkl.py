@@ -312,7 +312,7 @@ class HklKeys:
     }
     __x = {
         'default': 0.0,
-        'description': 'reciprocal position vector x value ',
+        'description': 'reciprocal position vector x value',
         'imperative': False,
         'dtype': 'float32',
         'reduce_behaviour': 'keep',
@@ -320,7 +320,7 @@ class HklKeys:
     }
     __y = {
         'default': 0.0,
-        'description': 'reciprocal position vector y value ',
+        'description': 'reciprocal position vector y value',
         'imperative': False,
         'dtype': 'float32',
         'reduce_behaviour': 'keep',
@@ -328,7 +328,7 @@ class HklKeys:
     }
     __z = {
         'default': 0.0,
-        'description': 'reciprocal position vector z value ',
+        'description': 'reciprocal position vector z value',
         'imperative': False,
         'dtype': 'float32',
         'reduce_behaviour': 'keep',
@@ -831,16 +831,126 @@ class HklFrame:
         if showfig:
             plt.show()
 
+    def count_points_in_sphere(self, radius):
+        """Calculate max value of index not described in constrains"""
+
+        # DEFINE BASIC CONSTANT, VARIABLES, OBJECTS
+        number_of_points = 0
+        a, b, c = self.crystal.a_w, self.crystal.b_w, self.crystal.c_w
+
+        def _is_in_sphere(h, k, l):
+            return lin.norm(h * a + k * b + l * c) <= radius
+
+        def _positive_integers():
+            n = -1
+            while True:
+                n += 1
+                yield n
+
+        def _negative_integers():
+            n = 0
+            while True:
+                n -= 1
+                yield n
+
+        for h in _positive_integers():
+            for k in _positive_integers():
+                for l in _positive_integers():
+                    if _is_in_sphere(h, k, l):
+                        number_of_points += 1
+                    else:
+                        break
+                for l in _negative_integers():
+                    if _is_in_sphere(h, k, l):
+                        number_of_points += 1
+                    else:
+                        break
+                if not _is_in_sphere(h, k, 0):
+                    break
+            for k in _negative_integers():
+                for l in _positive_integers():
+                    if _is_in_sphere(h, k, l):
+                        number_of_points += 1
+                    else:
+                        break
+                for l in _negative_integers():
+                    if _is_in_sphere(h, k, l):
+                        number_of_points += 1
+                    else:
+                        break
+                if not _is_in_sphere(h, k, 0):
+                    break
+            if not _is_in_sphere(h, 0, 0):
+                break
+        for h in _negative_integers():
+            for k in _positive_integers():
+                for l in _positive_integers():
+                    if _is_in_sphere(h, k, l):
+                        number_of_points += 1
+                    else:
+                        break
+                for l in _negative_integers():
+                    if _is_in_sphere(h, k, l):
+                        number_of_points += 1
+                    else:
+                        break
+                if not _is_in_sphere(h, k, 0):
+                    break
+            for k in _negative_integers():
+                for l in _positive_integers():
+                    if _is_in_sphere(h, k, l):
+                        number_of_points += 1
+                    else:
+                        break
+                for l in _negative_integers():
+                    if _is_in_sphere(h, k, l):
+                        number_of_points += 1
+                    else:
+                        break
+                if not _is_in_sphere(h, k, 0):
+                    break
+            if not _is_in_sphere(h, 0, 0):
+                break
+
+        return number_of_points
+
+    def calculate_statistics(self, radius):
+        # TODO forgot to consider radius :)
+        pos_reflections = p.count_points_in_sphere(radius)
+        copy = self
+        copy.drop_zero()
+        copy.data = copy.data.sort_values(['r'])
+        all_reflections = 0
+        obs_reflections = 0
+        for index, row in copy.data.iterrows():
+            if row['r'] <= radius:
+                all_reflections += row['m']
+        copy.reduce()
+        ind_reflections = 0
+        for index, row in copy.data.iterrows():
+            if row['r'] <= radius:
+                ind_reflections += 1
+                try:
+                    if row['I']/row['si'] > 2:
+                        obs_reflections += row['m']
+                except KeyError:
+                    if row['F']/row['si'] > 2:
+                        obs_reflections += row['m']
+        print('RADIUS: ' + str(radius))
+        print('all: ' + str(all_reflections))
+        print('independent: ' + str(ind_reflections))
+        print('observed: ' + str(obs_reflections))
+        print('possible: ' + str(pos_reflections))
+        print('completeness: ' + str(ind_reflections/pos_reflections))
+        print('redundancy: ' + str(all_reflections/ind_reflections) + '\n')
+
 
 if __name__ == '__main__':
     p = HklFrame()
-    p.crystal.edit_cell(a=11, b=12, c=16)
-    p.crystal.orient_matrix = np.array(((0, 1, 0), (-1, 0, 0), (0, 0, 1)))
-    p.read('/home/dtchon/git/kesshou/test_data/small.hkl', 4)
-    p.drop_zero()
+    p.read('/home/dtchon/git/kesshou/test_data/neu_353.hkl', 2)
+    p.crystal.edit_cell(a=11.071, b=12.664, c=16.666)
     p.place()
-    p.dac(opening_angle=40)
-    p.write('/home/dtchon/git/kesshou/test_data/output.hkl', 4)
-    p.draw(projection=(0, 'k', 'l'), scale=1.5, savepath=False, showfig=True)
+    for radius in np.arange(0.2, 3.0, 0.2):
+        p.calculate_statistics(radius) #0.625A-1 = 0.8A
 
 # TODO 3D call visualise and to pyqtplot
