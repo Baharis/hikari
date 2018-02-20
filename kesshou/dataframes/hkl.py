@@ -473,6 +473,9 @@ class HklFrame:
         self.meta = {'wavelength': 0.71069}
         self.keys = HklKeys()
 
+    def __len__(self):
+        return self.data.shape[0]
+
     @staticmethod
     def interpret_hkl_format(hkl_format):
         """Interpret hkl format int / dict / OrderedDict and return
@@ -526,7 +529,7 @@ class HklFrame:
         """Define wavelength [e.g. "CuKa", "Ag", "Individual" or custom in A]"""
         sources = {'Cr': 2.2896,	'Fe': 1.9360,	'Co': 1.79,
                    'Cu': 1.54056,	'Mo': 0.71069,	'Zr': 0.69,
-                   'Ag': 0.5609}
+                   'Ag': 0.56087}
         try:
             self.meta['wavelength'] = sources[wavelength[:2]]
         except TypeError:
@@ -715,9 +718,9 @@ class HklFrame:
         """Cut the reflections based on DAC angle (in angles)
         and [h, k, l] indexes of diamond-parallel crystal face"""
 
-        # CALCULATE OPENING ANGLE "_oa" AND WAVELENGTH "_la"
-        _oa = np.radians([float(opening_angle)])[0]
-        _la = self.meta['wavelength']
+        # CALCULATE OPENING ANGLE "oa" AND WAVELENGTH "la"
+        oa = np.radians([float(opening_angle)])[0]
+        la = self.meta['wavelength']
 
         # CALCULATE NORMAL VECTOR "_n" IN RECIPROCAL LATTICE
         _r = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
@@ -727,7 +730,6 @@ class HklFrame:
              _h[1] * self.crystal.b_w + \
              _h[2] * self.crystal.c_w       # calc. perp. vect. in recipr. space
         _n /= lin.norm(_n)                  # normalise the n vector
-        #print(_n)
 
         # DELETE REFLECTIONS OUT OF ACCESSIBLE VOLUME
         indices_to_delete = []
@@ -743,40 +745,41 @@ class HklFrame:
             # CALCULATE INCLINATION OF "_v" FROM CELL PLANE (PERP. TO NORMAL)
             _ph = np.arccos(
                 min((np.dot(_p, _v) / (lin.norm(_p) * lin.norm(_v)), 1)))
-            r_max = 2 * np.sin(max(_oa-_ph, 0)) / _la
+            r_max = 2 * np.sin(max(oa-_ph, 0)) / la
             # IF ITS OUT OF ACCESSIBLE VOLUME ADD TO DELETION
             if lin.norm(_v) > r_max:
                 indices_to_delete.append(index)
         self.data.drop(indices_to_delete, inplace=True)
         self.data.reset_index(drop=True, inplace=True)
 
-    def thin_out(self, target_completeness=1):
+    def thin_out(self, target_completeness=1.0, exponentially=False):
         """Randomly delete reflections to relative desired completeness"""
 
-        # check whether acceptance is between 0 and 1
-        if not 0.0 <= target_completeness <= 1.0:
-            raise ValueError('acceptance parameter outside the 0--1 range')
+        if exponentially is False:
+            # check whether acceptance is between 0 and 1
+            if not 0.0 <= target_completeness <= 1.0:
+                raise ValueError('acceptance parameter outside the 0--1 range')
 
-        # create a list of reflections to be deleted
-        total_indices = self.data.shape[0]
-        number_to_delete = int((1-target_completeness) * total_indices)
-        indices_to_delete = \
-            random.sample(range(1, total_indices), number_to_delete)
+            # create a list of reflections to be deleted
+            total_indices = self.data.shape[0]
+            number_to_delete = int((1-target_completeness) * total_indices)
+            indices_to_delete = \
+                random.sample(range(0, total_indices), number_to_delete)
 
-        # delete chosen reflections
-        self.data.drop(indices_to_delete, inplace=True)
-        self.data.reset_index(drop=True, inplace=True)
+            # delete chosen reflections
+            self.data.drop(indices_to_delete, inplace=True)
+            self.data.reset_index(drop=True, inplace=True)
 
-    def _thin_out_legacy(self, falloff=0.2):
-        """Cut reflections based on a exp(-falloff*r) function"""
-
-        indices_to_delete = []
-        for index, reflection in self.data.iterrows():
-            v = np.array((reflection['x'], reflection['y'], reflection['z']))
-            if random.random() > np.exp(-lin.norm(v) * falloff):
-                indices_to_delete.append(index)
-        self.data.drop(indices_to_delete, inplace=True)
-        self.data.reset_index(drop=True, inplace=True)
+        if exponentially is True:
+            # the old algorithm, doesn't give exact value of completeness
+            falloff = 0.2
+            indices_to_delete = []
+            for index, reflection in self.data.iterrows():
+                v = np.array((reflection['x'], reflection['y'], reflection['z']))
+                if random.random() > np.exp(-lin.norm(v) * falloff):
+                    indices_to_delete.append(index)
+            self.data.drop(indices_to_delete, inplace=True)
+            self.data.reset_index(drop=True, inplace=True)
 
     def trim(self, limit):
         """Cut the reflection further then the limit in A-1"""
@@ -912,7 +915,7 @@ class HklFrame:
             coordinates = {'h': 'x', 'k': 'y', 'l': 'z'}
             _x.append(row[coordinates[axes[0]]])
             _y.append(row[coordinates[axes[1]]])
-            _size.append(scale ** 2 * np.log(abs(row[master_key])) ** 2)
+            _size.append(scale ** 2 * np.log(abs(row[master_key])+1.0) ** 2)
             if colored:
                 _rgb = colors[int(row[colored] - data_minima[colored])][:3]
             if alpha:
@@ -958,38 +961,57 @@ class HklFrame:
         if showfig:
             plt.show()
 
-    def count_points_in_sphere(self, radius):
-        """Calculate max value of index not described in constrains"""
-
-        # DEFINE BASIC CONSTANT, VARIABLES, OBJECTS
-        number_of_points = 0
+    def generate_ball(self, radius=2.0):
+        """Generate points in a sphere of given radius"""
         a, b, c = self.crystal.a_w, self.crystal.b_w, self.crystal.c_w
+        r2 = radius**2
 
+        # function checking whether the point is in sphere
         def _is_in_sphere(h, k, l):
-            return lin.norm(h * a + k * b + l * c) <= radius
+            v = h * a + k * b + l * c
+            return np.dot(v, v) <= r2
+            # return lin.norm(h * a + k * b + l * c) <= radius # distance method
 
+        # non-negative values generator
         def _positive_integers():
             n = -1
             while True:
                 n += 1
                 yield n
 
+        # negative values generator
         def _negative_integers():
             n = 0
             while True:
                 n -= 1
                 yield n
 
+        # prepare container for points
+        hkl_content = dict()
+        column_labels = ['h', 'k', 'l', 'I', 'si', 'b', 'm']
+        for key in column_labels:
+            hkl_content[key] = []
+        self.keys.set(column_labels)
+
+        def _add_hkl():
+            hkl_content['h'].append(h)
+            hkl_content['k'].append(k)
+            hkl_content['l'].append(l)
+            hkl_content['I'].append(1.0)
+            hkl_content['si'].append(1.0)
+            hkl_content['b'].append(1)
+            hkl_content['m'].append(1)
+
         for h in _positive_integers():
             for k in _positive_integers():
                 for l in _positive_integers():
                     if _is_in_sphere(h, k, l):
-                        number_of_points += 1
+                        _add_hkl()
                     else:
                         break
                 for l in _negative_integers():
                     if _is_in_sphere(h, k, l):
-                        number_of_points += 1
+                        _add_hkl()
                     else:
                         break
                 if not _is_in_sphere(h, k, 0):
@@ -997,12 +1019,12 @@ class HklFrame:
             for k in _negative_integers():
                 for l in _positive_integers():
                     if _is_in_sphere(h, k, l):
-                        number_of_points += 1
+                        _add_hkl()
                     else:
                         break
                 for l in _negative_integers():
                     if _is_in_sphere(h, k, l):
-                        number_of_points += 1
+                        _add_hkl()
                     else:
                         break
                 if not _is_in_sphere(h, k, 0):
@@ -1013,12 +1035,12 @@ class HklFrame:
             for k in _positive_integers():
                 for l in _positive_integers():
                     if _is_in_sphere(h, k, l):
-                        number_of_points += 1
+                        _add_hkl()
                     else:
                         break
                 for l in _negative_integers():
                     if _is_in_sphere(h, k, l):
-                        number_of_points += 1
+                        _add_hkl()
                     else:
                         break
                 if not _is_in_sphere(h, k, 0):
@@ -1026,12 +1048,12 @@ class HklFrame:
             for k in _negative_integers():
                 for l in _positive_integers():
                     if _is_in_sphere(h, k, l):
-                        number_of_points += 1
+                        _add_hkl()
                     else:
                         break
                 for l in _negative_integers():
                     if _is_in_sphere(h, k, l):
-                        number_of_points += 1
+                        _add_hkl()
                     else:
                         break
                 if not _is_in_sphere(h, k, 0):
@@ -1039,7 +1061,14 @@ class HklFrame:
             if not _is_in_sphere(h, 0, 0):
                 break
 
-        return number_of_points
+        # produce new pandas frame with only considered points
+        self.data = self.data_from_dict(hkl_content)
+
+    def count_points_in_sphere(self, radius):
+        """Calculate amount of points in a sphere of given radius"""
+
+        self.generate_ball(radius)
+        return len(self)
 
     def calculate_statistics(self, radius):
         # TODO forgot to consider radius :)
@@ -1076,7 +1105,9 @@ if __name__ == '__main__':
     import copy
 
     p = HklFrame()
+    q = HklFrame()
     p.read('/home/dtchon/git/kesshou/test_data/c1_p1_dt.hkl', 4)
+    q.read('/home/dtchon/git/kesshou/test_data/c1_p1_dt_THoa45.hkl', 4)
     from cif import CifFrame, ustrip
     # c = CifFrame()
     # c.read('/home/dtchon/git/kesshou/test_data/exp_353.cif', datablock='exp_353')
@@ -1088,29 +1119,30 @@ if __name__ == '__main__':
      #   (0.0571303000, 0.0081278000, 0.0181937000),
      #   (0.0264406000, 0.0361560000, 0.0272830000)))
 
-    # c1_p1_dt (RFpirazCHO) orientation
-    #p.crystal.orient_matrix = np.array(((
-    #                                        -0.0026344000, 0.0562933000, -0.0106563000),
-    #   (-0.0075935000, -0.0365821000, -0.0163966000),
-    #   (-0.0748129000, 0.0020128000, 0.0016300000)))
-    # p.crystal.edit_cell(a=7.448, b=8.302, c=28.56, al=90, be=91.12, ga=90)
-
-     #exp_714 (RFpirazCHO) orientation
+    #c1_p1_dt (RFpirazCHO) orientation
     p.crystal.orient_matrix = np.array(((
                                             -0.0026344000, 0.0562933000, -0.0106563000),
        (-0.0075935000, -0.0365821000, -0.0163966000),
        (-0.0748129000, 0.0020128000, 0.0016300000)))
+    q.crystal.orient_matrix = p.crystal.orient_matrix
     p.crystal.edit_cell(a=7.448, b=8.302, c=28.56, al=90, be=91.12, ga=90)
+    q.crystal.edit_cell(a=7.448, b=8.302, c=28.56, al=90, be=91.12, ga=90)
+    p.edit_wavelength('Ag')
+    q.edit_wavelength('Ag')
 
     p.place()
     p.drop_zero()
-    print(p.data.shape[0])
-    #p.draw(savepath='c1_p1_dt_pre', projection=('h', 'k', 0))
-    p.dac(opening_angle=25)
-    print(p.data.shape[0])
-    #p.draw(savepath='c1_p1_dt_post45', projection=('h', 'k', 0))
-    p.dac(opening_angle=20)
-    print(p.data.shape[0])
+    p.reduce()
+    q.place()
+    q.drop_zero()
+
+    print('oa', 'experiment', 'theory')
+    for angle in range(45, 0, -1):
+        p.dac(opening_angle=angle)
+        q.dac(opening_angle=angle)
+        print(angle, len(p), len(q))
+
+
     #p.write('/home/dtchon/git/kesshou/test_data/output.hkl', 'XD')
 
     #p.crystal.edit_cell(a=11.071, b=12.664, c=16.666)
