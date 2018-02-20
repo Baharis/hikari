@@ -19,14 +19,14 @@ class CifFrame:
         self.data = OrderedDict()
         self.meta = dict()
         if file_path is not None:
-            self.read(path=file_path, data_block=file_data_block)
+            self.read(path=file_path, datablock=file_data_block)
 
-    def read(self, path, data_block='I'):
+    def read(self, path, datablock='I'):
         """Read data from specified ins/res file and return an OrderedDict"""
 
         # SPECIFY SOME META
         self.meta['path'] = os.path.abspath(path)
-        self.meta['name'] = data_block
+        self.meta['name'] = datablock
         self.meta['comment'] = str()
 
         # READ THE FILE, FIND RELEVANT DATA BLOCK, DELETE REST
@@ -34,7 +34,7 @@ class CifFrame:
         lines_to_delete = []
         correct_datablock = False
         for index, line in enumerate(lines):
-            if line[:5 + len(data_block)] == 'data_' + data_block:
+            if line[:5 + len(datablock)] == 'data_' + datablock:
                 correct_datablock = True
             elif line[:5] == 'data_':
                 correct_datablock = False

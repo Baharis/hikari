@@ -302,11 +302,75 @@ class HklKeys:
         'reduce_behaviour': 'discard',
         'type': float
     }
+    __ph = {
+        'default': 0.0,
+        'description': 'reflection phase in radians',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'average',
+        'type': float
+    }
     __r = {
         'default': 0.0,
         'description': 'distance from 000. Divide by two for resol. in A^-1',
         'imperative': False,
         'dtype': 'float32',
+        'reduce_behaviour': 'keep',
+        'type': float
+    }
+    __t = {
+        'default': 0.0,
+        'description': 'absorption weighted path length in centimeters',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'keep',
+        'type': float
+    }
+    __u1 = {
+        'default': 0.0,
+        'description': 'Direction cosines of a vector (see XD manual for ref.)',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'keep',
+        'type': float
+    }
+    __u2 = {
+        'default': 0.0,
+        'description': 'Direction cosines of a vector (see XD manual for ref.)',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'keep',
+        'type': float
+    }
+    __u3 = {
+        'default': 0.0,
+        'description': 'Direction cosines of a vector (see XD manual for ref.)',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'keep',
+        'type': float
+    }
+    __v1 = {
+        'default': 0.0,
+        'description': 'Direction cosines of a vector (see XD manual for ref.)',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'keep',
+        'type': float
+    }
+    __v2 = {
+        'default': 0.0,
+        'description': 'Direction cosines of a vector (see XD manual for ref.)',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'keep',
+        'type': float
+    }
+    __v3 = {
+        'default': 0.0,
+        'description': 'Direction cosines of a vector (see XD manual for ref.)',
+        'imperative': False,
+        'dtype': 'float64',
         'reduce_behaviour': 'keep',
         'type': float
     }
@@ -334,7 +398,8 @@ class HklKeys:
         'reduce_behaviour': 'keep',
         'type': float
     }
-    defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'b', 'm', 'la', 'u', 'r',
+    defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'b', 'm', 'la', 'ph',
+                    'u', 'r', 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3',
                     'x', 'y', 'z'}
 
     def __init__(self):
@@ -427,6 +492,8 @@ class HklFrame:
         elif hkl_format == 6:
             column_labels = ('h', 'k', 'l', 'I', 'si', 'm')
             format_string = '4s 4s 4s 8s 8s 4s'
+        elif hkl_format in ('xd', 'Xd', 'xD', 'XD'):
+            column_labels, format_string = tuple(), 'XD'
         elif type(hkl_format) in (dict, OrderedDict):
             column_labels = list()
             format_string = str()
@@ -444,7 +511,7 @@ class HklFrame:
             format_string.rstrip(' ')
         else:
             raise TypeError(
-                'Format type should be 2, 3, 4, 5, 6, dict or OrderedDict')
+                'Format type should be 2, 3, 4, 5, 6, "XD" or dict')
         return format_string, column_labels
 
     def data_from_dict(self, dictionary):
@@ -481,7 +548,8 @@ class HklFrame:
     def drop_zero(self):
         """Delete all reflections with h==h==l==0"""
         indices_to_delete = self.seek_reflection(**{'h': 0, 'k': 0, 'l': 0})
-        self.data = self.data.drop(indices_to_delete).reset_index(drop=True)
+        self.data.drop(indices_to_delete, inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
 
     def place(self):
         """Assign reflections their positions anr calculate dist. from 000"""
@@ -536,15 +604,38 @@ class HklFrame:
         # PREPARE OBJECTS RESPONSIBLE FOR PARSING INPUT
         format_string, column_labels = self.interpret_hkl_format(hkl_format)
         self.keys.add(column_labels)
-        field_struct = struct.Struct(format_string)
-        unpack = field_struct.unpack_from
 
-        def parse_hkl_line(hkl_line):
-            return tuple(s.decode() for s in unpack(hkl_line.encode()))
+        if format_string is 'XD':
+            def parse_line(hkl_line):
+                return tuple(hkl_line.strip().split())
+        else:
+            def parse_line(hkl_line):
+                field_struct = struct.Struct(format_string)
+                unpack = field_struct.unpack_from
+                return tuple(s.decode() for s in unpack(hkl_line.encode()))
 
         # OPEN HKL FILE AND PREPARE CONTAINER
         hkl_file = open(hkl_path, 'r')
         hkl_content = dict()
+
+        # LOAD HKL COLUMN TAGS IF SUPERTYPE IS "XD"
+        if format_string is 'XD':
+            title_line = hkl_file.readline().strip().split()
+            hkl_id = title_line[0]
+            hkl_mainkey = 'F' if title_line[1] == 'F' else 'I'
+            if title_line[2] != 'NDAT':
+                raise KeyError('Loaded hkl file is not of "XD" type.')
+            if int(title_line[3]) == -7:
+                column_labels = ('h', 'k', 'l', 'b', hkl_mainkey, 'si', 'ph')
+            elif 6 <= int(title_line[3]) <= 13:
+                column_labels = ('h', 'k', 'l', 'b', hkl_mainkey, 'si',
+                                 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3'
+                                 )[0:int(title_line[3])]
+            else:
+                raise KeyError('"NDAT" parameter of loaded hkl file lies'
+                               'outside of the expected range')
+
+        # LOAD THE KEYS
         for key in column_labels:
             hkl_content[key] = []
         self.keys.set(column_labels)
@@ -557,7 +648,7 @@ class HklFrame:
                 continue
             # SAVE EACH LINE TO THE LIST
             hkl_checksum += 1
-            for key, value in zip(column_labels, parse_hkl_line(line)):
+            for key, value in zip(column_labels, parse_line(line)):
                 value = self.keys.get_property(key, 'type')(value)
                 hkl_content[key].append(value)
         hkl_file.close()
@@ -575,7 +666,14 @@ class HklFrame:
         """Write .hkl file as specified by path and write_format"""
 
         # PREPARE OBJECTS RESPONSIBLE FOR WRITING OUTPUT
+        first_line = ''
         format_string, column_labels = self.interpret_hkl_format(hkl_format)
+        if format_string == 'XD':
+            first_line = 'COMPOUND_ID          F^2  NDAT 6'
+            format_string, column_labels = self.interpret_hkl_format(
+                OrderedDict([('h', 5), ('k', 5), ('l', 5), ('b', 5),
+                             ('I', 10), ('si', 10)])
+            )
         column_sizes, column_formats = [], []
         for column in format_string.split():
             number, letter = int(column[:-1]), column[-1]
@@ -622,10 +720,14 @@ class HklFrame:
         _la = self.meta['wavelength']
 
         # CALCULATE NORMAL VECTOR "_n" IN RECIPROCAL LATTICE
-        _r = np.array((1.0, 0.0, 0.0))
-        _UB = self.crystal.orient_matrix
-        _n = np.dot(lin.inv(_UB), _r)
-        _n /= lin.norm(_n)
+        _r = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
+        _UB = self.crystal.orient_matrix    # import UB orientation matrix
+        _h = np.dot(lin.inv(_UB), _r)       # calculate plane hkl indices
+        _n = _h[0] * self.crystal.a_w + \
+             _h[1] * self.crystal.b_w + \
+             _h[2] * self.crystal.c_w       # calc. perp. vect. in recipr. space
+        _n /= lin.norm(_n)                  # normalise the n vector
+        #print(_n)
 
         # DELETE REFLECTIONS OUT OF ACCESSIBLE VOLUME
         indices_to_delete = []
@@ -645,9 +747,27 @@ class HklFrame:
             # IF ITS OUT OF ACCESSIBLE VOLUME ADD TO DELETION
             if lin.norm(_v) > r_max:
                 indices_to_delete.append(index)
-        self.data = self.data.drop(indices_to_delete).reset_index(drop=True)
+        self.data.drop(indices_to_delete, inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
 
-    def thin_out(self, falloff=0.2):
+    def thin_out(self, target_completeness=1):
+        """Randomly delete reflections to relative desired completeness"""
+
+        # check whether acceptance is between 0 and 1
+        if not 0.0 <= target_completeness <= 1.0:
+            raise ValueError('acceptance parameter outside the 0--1 range')
+
+        # create a list of reflections to be deleted
+        total_indices = self.data.shape[0]
+        number_to_delete = int((1-target_completeness) * total_indices)
+        indices_to_delete = \
+            random.sample(range(1, total_indices), number_to_delete)
+
+        # delete chosen reflections
+        self.data.drop(indices_to_delete, inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
+
+    def _thin_out_legacy(self, falloff=0.2):
         """Cut reflections based on a exp(-falloff*r) function"""
 
         indices_to_delete = []
@@ -655,7 +775,8 @@ class HklFrame:
             v = np.array((reflection['x'], reflection['y'], reflection['z']))
             if random.random() > np.exp(-lin.norm(v) * falloff):
                 indices_to_delete.append(index)
-        self.data = self.data.drop(indices_to_delete).reset_index(drop=True)
+        self.data.drop(indices_to_delete, inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
 
     def trim(self, limit):
         """Cut the reflection further then the limit in A-1"""
@@ -665,7 +786,8 @@ class HklFrame:
             v = np.array((reflection['x'], reflection['y'], reflection['z']))
             if lin.norm(v) > limit:
                 indices_to_delete.append(index)
-        self.data = self.data.drop(indices_to_delete).reset_index(drop=True)
+        self.data.drop(indices_to_delete, inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
 
     def reduce(self):
         """Average down redundant reflections, e.g. for drawing"""
@@ -798,6 +920,11 @@ class HklFrame:
             _color.append(_rgb + _alp)
             _edge.append('None') if row[master_key] > 0 else _edge.append('k')
 
+        # CHECKING IF LIST IS NOT EMPTY
+        if len(_color) == 0:
+            print("Reflection set intended to be drawn is empty! Aborting")
+            return
+
         # DRAW THE PLOT
         directions = {'h': 'a* [A^-1]', 'k': 'b* [A^-1]', 'l': 'c* [A^-1]'}
         ax.set_title(title)
@@ -916,7 +1043,7 @@ class HklFrame:
 
     def calculate_statistics(self, radius):
         # TODO forgot to consider radius :)
-        pos_reflections = p.count_points_in_sphere(radius)
+        pos_reflections = self.count_points_in_sphere(radius)
         copy = self
         copy.drop_zero()
         copy.data = copy.data.sort_values(['r'])
@@ -946,11 +1073,50 @@ class HklFrame:
 
 
 if __name__ == '__main__':
+    import copy
+
     p = HklFrame()
-    p.read('/home/dtchon/git/kesshou/test_data/neu_353.hkl', 2)
-    p.crystal.edit_cell(a=11.071, b=12.664, c=16.666)
+    p.read('/home/dtchon/git/kesshou/test_data/c1_p1_dt.hkl', 4)
+    from cif import CifFrame, ustrip
+    # c = CifFrame()
+    # c.read('/home/dtchon/git/kesshou/test_data/exp_353.cif', datablock='exp_353')
+    # p.crystal.import_from_frame(c)
+
+    # exp_353 orientation
+    #p.crystal.orient_matrix = np.array(((
+    #    0.0117244000, 0.0419390000, 0.0270692000),
+     #   (0.0571303000, 0.0081278000, 0.0181937000),
+     #   (0.0264406000, 0.0361560000, 0.0272830000)))
+
+    # c1_p1_dt (RFpirazCHO) orientation
+    #p.crystal.orient_matrix = np.array(((
+    #                                        -0.0026344000, 0.0562933000, -0.0106563000),
+    #   (-0.0075935000, -0.0365821000, -0.0163966000),
+    #   (-0.0748129000, 0.0020128000, 0.0016300000)))
+    # p.crystal.edit_cell(a=7.448, b=8.302, c=28.56, al=90, be=91.12, ga=90)
+
+     #exp_714 (RFpirazCHO) orientation
+    p.crystal.orient_matrix = np.array(((
+                                            -0.0026344000, 0.0562933000, -0.0106563000),
+       (-0.0075935000, -0.0365821000, -0.0163966000),
+       (-0.0748129000, 0.0020128000, 0.0016300000)))
+    p.crystal.edit_cell(a=7.448, b=8.302, c=28.56, al=90, be=91.12, ga=90)
+
     p.place()
-    for radius in np.arange(0.2, 3.0, 0.2):
-        p.calculate_statistics(radius) #0.625A-1 = 0.8A
+    p.drop_zero()
+    print(p.data.shape[0])
+    #p.draw(savepath='c1_p1_dt_pre', projection=('h', 'k', 0))
+    p.dac(opening_angle=25)
+    print(p.data.shape[0])
+    #p.draw(savepath='c1_p1_dt_post45', projection=('h', 'k', 0))
+    p.dac(opening_angle=20)
+    print(p.data.shape[0])
+    #p.write('/home/dtchon/git/kesshou/test_data/output.hkl', 'XD')
+
+    #p.crystal.edit_cell(a=11.071, b=12.664, c=16.666)
+    #p.place()
+    #for radius in np.arange(0.2, 3.0, 0.2):
+    #    p.calculate_statistics(radius) #0.625A-1 = 0.8A
 
 # TODO 3D call visualise and to pyqtplot
+# TODO some function changes something globally (try to cut some
