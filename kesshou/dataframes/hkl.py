@@ -1102,53 +1102,7 @@ class HklFrame:
 
 
 if __name__ == '__main__':
-    import copy
 
-    p = HklFrame()
-    q = HklFrame()
-    p.read('/home/dtchon/git/kesshou/test_data/c1_p1_dt.hkl', 4)
-    q.read('/home/dtchon/git/kesshou/test_data/c1_p1_dt_THoa45.hkl', 4)
-    from cif import CifFrame, ustrip
-    # c = CifFrame()
-    # c.read('/home/dtchon/git/kesshou/test_data/exp_353.cif', datablock='exp_353')
-    # p.crystal.import_from_frame(c)
-
-    # exp_353 orientation
-    #p.crystal.orient_matrix = np.array(((
-    #    0.0117244000, 0.0419390000, 0.0270692000),
-     #   (0.0571303000, 0.0081278000, 0.0181937000),
-     #   (0.0264406000, 0.0361560000, 0.0272830000)))
-
-    #c1_p1_dt (RFpirazCHO) orientation
-    p.crystal.orient_matrix = np.array(((
-                                            -0.0026344000, 0.0562933000, -0.0106563000),
-       (-0.0075935000, -0.0365821000, -0.0163966000),
-       (-0.0748129000, 0.0020128000, 0.0016300000)))
-    q.crystal.orient_matrix = p.crystal.orient_matrix
-    p.crystal.edit_cell(a=7.448, b=8.302, c=28.56, al=90, be=91.12, ga=90)
-    q.crystal.edit_cell(a=7.448, b=8.302, c=28.56, al=90, be=91.12, ga=90)
-    p.edit_wavelength('Ag')
-    q.edit_wavelength('Ag')
-
-    p.place()
-    p.drop_zero()
-    p.reduce()
-    q.place()
-    q.drop_zero()
-
-    print('oa', 'experiment', 'theory')
-    for angle in range(45, 0, -1):
-        p.dac(opening_angle=angle)
-        q.dac(opening_angle=angle)
-        print(angle, len(p), len(q))
-
-
-    #p.write('/home/dtchon/git/kesshou/test_data/output.hkl', 'XD')
-
-    #p.crystal.edit_cell(a=11.071, b=12.664, c=16.666)
-    #p.place()
-    #for radius in np.arange(0.2, 3.0, 0.2):
-    #    p.calculate_statistics(radius) #0.625A-1 = 0.8A
 
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some
