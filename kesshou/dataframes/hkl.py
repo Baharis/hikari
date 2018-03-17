@@ -1162,6 +1162,10 @@ class HklFrame:
         cell_list = (la, a, b, c, al, be, ga)
         hklres_file = open(path, 'w')
         hklres_file.write('TITL hkl visualisation\n')
+        hklres_file.write('REM special hkl visualisation file, to be used in'
+                          'mercury with hkl.msd style applied\n')
+        hklres_file.write('REM reciprocal unit cell has been inflated '
+                          'thousandfold for technical reasons\n')
         hklres_file.write('CELL {0:7f} {1:7f} {2:7f} {3:7f} {4:7f} {5:7f} '
                           '{6:7f}\n'.format(*cell_list))
         hklres_file.write('LATT -1\n\n')
