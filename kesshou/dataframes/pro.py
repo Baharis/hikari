@@ -144,5 +144,5 @@ class ProFrame:
 
 
 if __name__ == '__main__':
-    pro = ProFrame(file_path='/home/dtchon/git/kesshou/test_data/xd_pro_Bader.out')
-    pro.write('/home/dtchon/git/kesshou/test_data/xd_pro_Bader_digested.csv')
+    pro = ProFrame(file_path='/home/dtchon/git/kesshou/test_data/xd_pro_Sylwia.out')
+    pro.write('/home/dtchon/git/kesshou/test_data/xd_pro_Sylwia_digested.csv')

@@ -279,7 +279,7 @@ class HklKeys:
         'type': int
     }
     __c = {
-        'default': 0,
+        'default': 1,
         'description': 'crystal or twin number',
         'imperative': False,
         'dtype': 'int16',
@@ -483,23 +483,54 @@ class HklFrame:
         if hkl_format == 2:
             column_labels = ('h', 'k', 'l', 'I', 'si', 'b', 'la')
             format_string = '4s 4s 4s 8s 8s 4s 8s'
+            file_prefix = False
+            file_suffix = False
+            zero_line = True
         elif hkl_format == 3:
             column_labels = ('h', 'k', 'l', 'F', 'si', 'b')
             format_string = '4s 4s 4s 8s 8s 4s'
+            file_prefix = False
+            file_suffix = False
+            zero_line = True
         elif hkl_format == 4:
             column_labels = ('h', 'k', 'l', 'I', 'si', 'b')
             format_string = '4s 4s 4s 8s 8s 4s'
+            file_prefix = False
+            file_suffix = False
+            zero_line = True
         elif hkl_format == 5:
             column_labels = ('h', 'k', 'l', 'I', 'si', 'c')
             format_string = '4s 4s 4s 8s 8s 4s'
+            file_prefix = False
+            file_suffix = False
+            zero_line = True
         elif hkl_format == 6:
             column_labels = ('h', 'k', 'l', 'I', 'si', 'm')
             format_string = '4s 4s 4s 8s 8s 4s'
+            file_prefix = False
+            file_suffix = False
+            zero_line = True
         elif hkl_format in ('xd', 'Xd', 'xD', 'XD'):
             column_labels, format_string = tuple(), 'XD'
+            file_prefix = False
+            file_suffix = False
+            zero_line = True
+        elif hkl_format in ('tonto', 'Tonto', 'TONTO', 'HAR', 'har', 'Har'):
+            column_labels = ('h', 'k', 'l', 'I', 'si')
+            format_string = '4s 4s 4s 8s 8s'
+            file_prefix = 'reflection_data= {\n' \
+                          'keys= { h= k= l= i_exp= i_sigma= }\n' \
+                          'data= {'
+            file_suffix = '}\n' \
+                          '}\n' \
+                          'REVERT'
+            zero_line = False
         elif type(hkl_format) in (dict, OrderedDict):
             column_labels = list()
             format_string = str()
+            file_prefix = 'COMPOUND_ID          F^2  NDAT 6'
+            file_suffix = False
+            zero_line = True
             if type(hkl_format) is dict and sys.version_info[0] < 3:
                 format_items = hkl_format.iteritems()
             else:
@@ -507,15 +538,15 @@ class HklFrame:
             for key, value in format_items:
                 column_labels.append(key)
                 if int(value) > 0:
-                    format_string += value + 's '
+                    format_string += str(value) + 's '
                 else:
                     format_string += str(abs(int(value))) + 'x '
             column_labels = tuple(column_labels)
             format_string.rstrip(' ')
         else:
             raise TypeError(
-                'Format type should be 2, 3, 4, 5, 6, "XD" or dict')
-        return format_string, column_labels
+                'Format type should be 2, 3, 4, 5, 6, "XD", "TONTO" or dict')
+        return format_string, column_labels, file_prefix, file_suffix, zero_line
 
     def data_from_dict(self, dictionary):
         """Produce pd DataFrame from dictionary of values"""
@@ -605,7 +636,8 @@ class HklFrame:
         or type number"""
 
         # PREPARE OBJECTS RESPONSIBLE FOR PARSING INPUT
-        format_string, column_labels = self.interpret_hkl_format(hkl_format)
+        format_string, column_labels, file_prefix, file_suffix, zero_line = \
+            self.interpret_hkl_format(hkl_format)
         self.keys.add(column_labels)
 
         if format_string is 'XD':
@@ -669,14 +701,13 @@ class HklFrame:
         """Write .hkl file as specified by path and write_format"""
 
         # PREPARE OBJECTS RESPONSIBLE FOR WRITING OUTPUT
-        first_line = ''
-        format_string, column_labels = self.interpret_hkl_format(hkl_format)
+        format_string, column_labels, file_prefix, file_suffix, zero_line = \
+            self.interpret_hkl_format(hkl_format)
         if format_string == 'XD':
-            first_line = 'COMPOUND_ID          F^2  NDAT 6'
-            format_string, column_labels = self.interpret_hkl_format(
-                OrderedDict([('h', 5), ('k', 5), ('l', 5), ('b', 5),
-                             ('I', 10), ('si', 10)])
-            )
+            format_string, column_labels, file_prefix, file_suffix, zero_line =\
+                self.interpret_hkl_format(OrderedDict([('h', 5), ('k', 5),
+                                                       ('l', 5), ('b', 5),
+                                                       ('I', 10), ('si', 10)]))
         column_sizes, column_formats = [], []
         for column in format_string.split():
             number, letter = int(column[:-1]), column[-1]
@@ -699,8 +730,12 @@ class HklFrame:
                     dummy_column.append(default_value)
                 self.data[key] = pd.Series.from_array(dummy_column, dtype=dtype)
 
-        # WRITE SELF.DATA CONTENTS
+        # WRITE PREFIX LINE
         hkl_file = open(hkl_path, 'w')
+        if file_prefix is not False:
+            hkl_file.write(file_prefix + '\n')
+
+        # WRITE SELF.DATA CONTENTS
         for index, row in self.data.iterrows():
             # FOR EACH DEMANDED KEY PRINT IT ACCORDING TO FORMATS
             for key, form in zip(column_labels, column_formats):
@@ -708,10 +743,15 @@ class HklFrame:
                     str(self.keys.get_property(key, 'type')(row[key]))))
             hkl_file.write('\n')
 
-        # WRITE LAST DEFAULT 0 0 0 LINE AND CLOSE THE FILE
-        for key, form in zip(column_labels, column_formats):
-            hkl_file.write(form.format(
-                str(self.keys.get_property(key, 'default'))))
+        # WRITE 0 0 0 LINE
+        if zero_line is True:
+            for key, form in zip(column_labels, column_formats):
+                hkl_file.write(form.format(
+                    str(self.keys.get_property(key, 'default'))))
+
+        # WRITE SUFFIX LINE
+        if file_suffix is not False:
+            hkl_file.write(file_suffix + '\n')
         hkl_file.close()
 
     def dac(self, opening_angle=40):
@@ -1100,8 +1140,69 @@ class HklFrame:
         print('completeness: ' + str(ind_reflections/pos_reflections))
         print('redundancy: ' + str(all_reflections/ind_reflections) + '\n')
 
+    def to_hklres(self, colored='m', master_key='I', path='hkl.res'):
+
+        # prepare minima and maxima for scaling purposes
+        data_minima, data_maxima = dict(), dict()
+        for key in list(self.keys.all):
+            data_minima[key] = self.data[key].min()
+            data_maxima[key] = self.data[key].max()
+        hkl_minimum = min((data_minima['h'], data_minima['k'], data_minima['l']))
+        hkl_maximum = max((data_maxima['h'], data_maxima['k'], data_maxima['l']))
+        scale = 1./max((abs(hkl_maximum), abs(hkl_minimum)))
+
+        # print the title line
+        a  = self.crystal.a_r * 1000
+        b  = self.crystal.b_r * 1000
+        c  = self.crystal.c_r * 1000
+        al = np.degrees(self.crystal.al_r)
+        be = np.degrees(self.crystal.be_r)
+        ga = np.degrees(self.crystal.ga_r)
+        la = self.meta['wavelength']
+        cell_list = (la, a, b, c, al, be, ga)
+        hklres_file = open(path, 'w')
+        hklres_file.write('TITL hkl visualisation\n')
+        hklres_file.write('CELL {0:7f} {1:7f} {2:7f} {3:7f} {4:7f} {5:7f} '
+                          '{6:7f}\n'.format(*cell_list))
+        hklres_file.write('LATT -1\n\n')
+
+        # define function for getting good label initial - colour
+        labels = ('H', 'He',
+                  'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
+                  'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar')
+
+        def get_label(integer):
+            return labels[(int(integer)-1) % len(labels)]
+
+        # for each reflection write a respective line to .res
+        for index, reflection in self.data.iterrows():
+            line_pars = dict()
+            line_pars['label'] = '{atom}({h},{k},{l})'.format(
+                atom=get_label(reflection[colored]),
+                h=int(reflection['h']),
+                k=int(reflection['k']),
+                l=int(reflection['l']))
+            line_pars['x'] = float(reflection['h'] * scale)
+            line_pars['y'] = float(reflection['k'] * scale)
+            line_pars['z'] = float(reflection['l'] * scale)
+            line_pars['size'] = np.log(abs(reflection[master_key])+1.0) ** 2 \
+                                * 10 * scale ** 2
+            hklres_file.write('{label:16}   1 {x: .4f} {y: .4f} {z: .4f} '
+                              '11.0000 {size: .12f}\n'.format(**line_pars))
+
+        # close the file
+        hklres_file.close()
+
 
 if __name__ == '__main__':
+    p = HklFrame()
+    p.read('/home/dtchon/git/kesshou/test_data/glycine_full_unmerged.hkl', 4)
+    p.reduce()
+    p.crystal.edit_cell(a=5.08, b=11.8, c=5.46,  al=90, be=111.98, ga=90.0)
+    p.edit_wavelength(0.71073)
+    p.place()
+    # p.trim(2/1.54)
+    p.to_hklres(path='/home/dtchon/Desktop/hkl.res')
 
 
 # TODO 3D call visualise and to pyqtplot
