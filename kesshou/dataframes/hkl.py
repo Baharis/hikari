@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import copy
 import random
 import struct
 import sys
@@ -476,6 +477,11 @@ class HklFrame:
     def __len__(self):
         return self.data.shape[0]
 
+    def __add__(self, other):
+        c = copy.deepcopy(self)
+        c.data = pd.concat([self.data, other.data], ignore_index=True)
+        return c
+
     @staticmethod
     def interpret_hkl_format(hkl_format):
         """Interpret hkl format int / dict / OrderedDict and return
@@ -548,6 +554,11 @@ class HklFrame:
                 'Format type should be 2, 3, 4, 5, 6, "XD", "TONTO" or dict')
         return format_string, column_labels, file_prefix, file_suffix, zero_line
 
+    def calculate_intensity_from_structure_factor(self):
+        self.data['I'] = self.data.apply(lambda row: row['F']**2, axis=1)
+        self.data['si'] = self.data.apply(lambda row: 2*row['si']*row['F'],
+                                          axis=1)
+
     def data_from_dict(self, dictionary):
         """Produce pd DataFrame from dictionary of values"""
         new_data = pd.DataFrame()
@@ -559,7 +570,7 @@ class HklFrame:
     def edit_wavelength(self, wavelength):
         """Define wavelength [e.g. "CuKa", "Ag", "Individual" or custom in A]"""
         sources = {'Cr': 2.2896,	'Fe': 1.9360,	'Co': 1.79,
-                   'Cu': 1.54056,	'Mo': 0.71069,	'Zr': 0.69,
+                   'Cu': 1.54056,	'Mo': 0.71073,	'Zr': 0.69,
                    'Ag': 0.56087}
         try:
             self.meta['wavelength'] = sources[wavelength[:2]]
@@ -611,24 +622,19 @@ class HklFrame:
         self.data['r'] = pd.Series(_r, index=self.data.index, dtype=_types['r'])
 
     def transform(self, matrix):
-        """Transform reflection pattern using given 3x3 or 4x4 matrix"""
+        """Transform reflection indices using given 3x3 or 4x4 matrix"""
         m_linear = np.array(((matrix[0][0], matrix[0][1], matrix[0][2]),
                              (matrix[1][0], matrix[1][1], matrix[1][2]),
                              (matrix[2][0], matrix[2][1], matrix[2][2])))
-        try:
-            m_translation = np.array((matrix[0][3], matrix[1][3], matrix[2][3]))
-        except IndexError:
-            m_translation = np.array((0.0, 0.0, 0.0))
-        _x, _y, _z = [], [], []
+        _h, _k, _l = [], [], []
         for index, row in self.data.iterrows():
-            v = np.array((row['x'], row['y'], row['z']))
-            v = np.dot(m_linear, v) + m_translation
-            _x.append(v[0])
-            _y.append(v[1])
-            _z.append(v[2])
-        self.data['x'] = pd.Series(_x, index=self.data.index)
-        self.data['y'] = pd.Series(_y, index=self.data.index)
-        self.data['z'] = pd.Series(_z, index=self.data.index)
+            v = np.dot(m_linear, np.array((row['h'], row['k'], row['l'])))
+            _h.append(v[0])
+            _k.append(v[1])
+            _l.append(v[2])
+        self.data['h'] = pd.Series(_h, index=self.data.index, dtype=np.int8)
+        self.data['k'] = pd.Series(_k, index=self.data.index, dtype=np.int8)
+        self.data['l'] = pd.Series(_l, index=self.data.index, dtype=np.int8)
 
     def read(self, hkl_path, hkl_format):
         """Read .hkl file as specified by path and fields
@@ -697,7 +703,11 @@ class HklFrame:
         # PRODUCE PANDAS DATAFRAME
         self.data = self.data_from_dict(hkl_content)
 
-    def write(self, hkl_path, hkl_format):
+    def rescale_f(self, factor=1.0):
+        self.data['F'] = self.data.apply(lambda row: row['F']*factor, axis=1)
+        self.data['si'] = self.data.apply(lambda row: row['si']*factor, axis=1)
+
+    def write(self, hkl_path, hkl_format, columns_separator=True):
         """Write .hkl file as specified by path and write_format"""
 
         # PREPARE OBJECTS RESPONSIBLE FOR WRITING OUTPUT
@@ -716,7 +726,8 @@ class HklFrame:
             elif letter == 's':
                 column_sizes.append(number)
         for size in column_sizes:
-            column_formats.append('{{:>{}.{}}}'.format(size, size-1))
+            cs = int(columns_separator)
+            column_formats.append('{{:>{}.{}}}'.format(size, size-cs))
 
         # PREPARE NON-EXISTED, BUT DEMANDED ROWS
         for key in column_labels:
@@ -754,7 +765,7 @@ class HklFrame:
             hkl_file.write(file_suffix + '\n')
         hkl_file.close()
 
-    def dac(self, opening_angle=40):
+    def dac(self, opening_angle=40, vector=False):
         """Cut the reflections based on DAC angle (in angles)
         and [h, k, l] indexes of diamond-parallel crystal face"""
 
@@ -763,12 +774,15 @@ class HklFrame:
         la = self.meta['wavelength']
 
         # CALCULATE NORMAL VECTOR "_n" IN RECIPROCAL LATTICE
-        _r = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
-        _UB = self.crystal.orient_matrix    # import UB orientation matrix
-        _h = np.dot(lin.inv(_UB), _r)       # calculate plane hkl indices
-        _n = _h[0] * self.crystal.a_w + \
-             _h[1] * self.crystal.b_w + \
-             _h[2] * self.crystal.c_w       # calc. perp. vect. in recipr. space
+        if vector is False:
+            _r = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
+            _UB = self.crystal.orient_matrix    # import UB orientation matrix
+            _h = np.dot(lin.inv(_UB), _r)       # calculate plane hkl indices
+            _n = _h[0] * self.crystal.a_w + \
+                 _h[1] * self.crystal.b_w + \
+                 _h[2] * self.crystal.c_w       # calc. perp. vect. in recipr. space
+        if vector is not False:
+            _n = np.array(vector)
         _n /= lin.norm(_n)                  # normalise the n vector
 
         # DELETE REFLECTIONS OUT OF ACCESSIBLE VOLUME
@@ -1110,36 +1124,6 @@ class HklFrame:
         self.generate_ball(radius)
         return len(self)
 
-    def calculate_statistics(self, radius):
-        # TODO forgot to consider radius :)
-        pos_reflections = self.count_points_in_sphere(radius)
-        copy = self
-        copy.drop_zero()
-        copy.data = copy.data.sort_values(['r'])
-        all_reflections = 0
-        obs_reflections = 0
-        for index, row in copy.data.iterrows():
-            if row['r'] <= radius:
-                all_reflections += row['m']
-        copy.reduce()
-        ind_reflections = 0
-        for index, row in copy.data.iterrows():
-            if row['r'] <= radius:
-                ind_reflections += 1
-                try:
-                    if row['I']/row['si'] > 2:
-                        obs_reflections += row['m']
-                except KeyError:
-                    if row['F']/row['si'] > 2:
-                        obs_reflections += row['m']
-        print('RADIUS: ' + str(radius))
-        print('all: ' + str(all_reflections))
-        print('independent: ' + str(ind_reflections))
-        print('observed: ' + str(obs_reflections))
-        print('possible: ' + str(pos_reflections))
-        print('completeness: ' + str(ind_reflections/pos_reflections))
-        print('redundancy: ' + str(all_reflections/ind_reflections) + '\n')
-
     def to_hklres(self, colored='m', master_key='I', path='hkl.res'):
 
         # prepare minima and maxima for scaling purposes
@@ -1149,7 +1133,7 @@ class HklFrame:
             data_maxima[key] = self.data[key].max()
         hkl_minimum = min((data_minima['h'], data_minima['k'], data_minima['l']))
         hkl_maximum = max((data_maxima['h'], data_maxima['k'], data_maxima['l']))
-        scale = 1./max((abs(hkl_maximum), abs(hkl_minimum)))
+        scale = 2./max((abs(hkl_maximum), abs(hkl_minimum)))
 
         # print the title line
         a  = self.crystal.a_r * 1000
@@ -1171,9 +1155,11 @@ class HklFrame:
         hklres_file.write('LATT -1\n\n')
 
         # define function for getting good label initial - colour
-        labels = ('H', 'He',
-                  'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
-                  'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar')
+        # labels = ('H', 'He',
+        #          'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
+        #          'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar')     #18c.scale
+        labels = ('H', 'Li', 'B', 'N', 'F', 'Na', 'Al', 'P', 'Cl') #9c.scale
+        # labels = ('H')                                             #all red
 
         def get_label(integer):
             return labels[(int(integer)-1) % len(labels)]
@@ -1190,23 +1176,68 @@ class HklFrame:
             line_pars['y'] = float(reflection['k'] * scale)
             line_pars['z'] = float(reflection['l'] * scale)
             line_pars['size'] = np.log(abs(reflection[master_key])+1.0) ** 2 \
-                                * 10 * scale ** 2
+                                * 5 * scale ** 2
             hklres_file.write('{label:16}   1 {x: .4f} {y: .4f} {z: .4f} '
                               '11.0000 {size: .12f}\n'.format(**line_pars))
 
         # close the file
         hklres_file.close()
 
+    def resymmetrify(self, operations=tuple()):
+        q = copy.deepcopy(self)
+
+        # For each declared symmetry operation
+        for operation in operations:
+            r = copy.deepcopy(self)
+            r.transform(operation)
+            q = q + r
+        q.reduce()
+        self.data = q.data
+
+# if __name__ == '__main__':
+#     p = HklFrame()
+#     p.read('/home/dtchon/x/HiPHAR/glycine/hkl_preparation/full_unmerged/glycine.hkl', 4)
+#     p.edit_wavelength('MoKa')
+#     p.crystal.edit_cell(**{'a': 5.08568, 'b': 11.80399, 'c': 5.46058, 'al': 90, 'be': 111.980, 'ga': 90})
+#     #p.crystal.edit_cell(a=9.13398, b=8.80993, c=21.4182, al = 90, be=93.0499, ga=90)
+#     p.place()
+#
+#     print(p.data.nlargest(5, 'r'))
+
+
+
+    # TODO CHECK R-calculation while placing - it seens there is a mistake (note below)
+    # (1.361 z bezp. obliczeń
+    # sqrt(1/(sin(111.980 degrees))^2*(47/5.08568^2 + 10^2*(sin(111.980 degrees))^2/11.80399^2+14^2/5.46058^2-2*-7*14*cos(111.980 degrees)/(5.08568*5.46058)))
+    # 1.374 z kąta theta
+    # 1.39(1) z xprepa
+    # 1.461 z programu? <- check that)
+
+
+
+# if __name__ == '111__main__':
+#     p = HklFrame()
+#     p.read('/home/dtchon/git/kesshou/test_data/example.hkl', 4)
+#     q = HklFrame()
+#     q.read('/home/dtchon/git/kesshou/test_data/example.hkl', 4)
+#     q.transform([[-1,0,0],[0,-1,0],[0,0,-1]])
+#     r = p + q
+#     r.write('/home/dtchon/git/kesshou/test_data/example+example.hkl', 4)
 
 if __name__ == '__main__':
     p = HklFrame()
-    p.read('/home/dtchon/git/kesshou/test_data/glycine_full_unmerged.hkl', 4)
-    p.reduce()
+    p.read('/home/dtchon/git/kesshou/test_data/glycine_oa35.hkl', 4)
+    #p.crystal.edit_cell(a=6.7049, b=8.1989, c=10.329,
+    #                   al=109.691, be=99.378, ga=100.628)
     p.crystal.edit_cell(a=5.08, b=11.8, c=5.46,  al=90, be=111.98, ga=90.0)
-    p.edit_wavelength(0.71073)
+    #p.edit_wavelength(0.48590)
+    p.resymmetrify(operations=(((-1, 0, 0), (0, -1, 0), (0, 0, -1)), ))
+    p.resymmetrify(operations=(((1, 0, 0), (0, -1, 0), (0, 0, 1)), ))
+    p.reduce()
+    p.reduce()
     p.place()
-    # p.trim(2/1.54)
-    p.to_hklres(path='/home/dtchon/Desktop/hkl.res')
+    #p.trim(2/1.54)
+    p.to_hklres(path='/home/dtchon/git/kesshou/test_data/glycine_oa35_hkl.res')
 
 
 # TODO 3D call visualise and to pyqtplot

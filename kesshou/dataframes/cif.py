@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from collections import OrderedDict
 
 
@@ -25,7 +26,6 @@ class CifFrame:
         """Read data from specified ins/res file and return an OrderedDict"""
 
         # SPECIFY SOME META
-        self.meta['path'] = os.path.abspath(path)
         self.meta['name'] = datablock
         self.meta['comment'] = str()
 
