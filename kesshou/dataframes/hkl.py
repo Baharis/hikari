@@ -1224,20 +1224,15 @@ class HklFrame:
 #     r = p + q
 #     r.write('/home/dtchon/git/kesshou/test_data/example+example.hkl', 4)
 
+
 if __name__ == '__main__':
     p = HklFrame()
     p.read('/home/dtchon/git/kesshou/test_data/glycine_oa35.hkl', 4)
-    #p.crystal.edit_cell(a=6.7049, b=8.1989, c=10.329,
-    #                   al=109.691, be=99.378, ga=100.628)
     p.crystal.edit_cell(a=5.08, b=11.8, c=5.46,  al=90, be=111.98, ga=90.0)
-    #p.edit_wavelength(0.48590)
-    p.resymmetrify(operations=(((-1, 0, 0), (0, -1, 0), (0, 0, -1)), ))
-    p.resymmetrify(operations=(((1, 0, 0), (0, -1, 0), (0, 0, 1)), ))
+    p.edit_wavelength(0.48590)
     p.reduce()
-    p.reduce()
-    p.place()
-    #p.trim(2/1.54)
-    p.to_hklres(path='/home/dtchon/git/kesshou/test_data/glycine_oa35_hkl.res')
+    p.place2()
+    p.to_hklres(path='/home/dtchon/git/kesshou/test_data/opt_tests.res')
 
 
 # TODO 3D call visualise and to pyqtplot
