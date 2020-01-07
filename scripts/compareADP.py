@@ -17,15 +17,15 @@ their individual adp parameters as a correlation coefficient"""
 # for now it works well only if 1 block is present
 
 # Input details
-input_cif1_name = 'PT8_MM_anh3_MN'
-input_cif1_path = '/home/dtchon/git/kesshou/test_data/PT8_MM_anh3_MN.CIF'
-input_cif1_block = 'I'
-input_cif2_name = 'PT8_MM_anh3_MW'
-input_cif2_path = '/home/dtchon/git/kesshou/test_data/PT8_MM_anh3_MW.CIF'
+input_cif1_name = 'PA_IAMref'
+input_cif1_path = '/home/dtchon/x/HiPHAR/PA/IAM_models_simple/0kbar_full_experimental/0kbar_full_experimental.cif'
+input_cif1_block = '0kbar_full_experimental'
+input_cif2_name = 'ref'
+input_cif2_path = '/home/dtchon/x/HiPHAR/PA/TAAM-shade_reference/plate_2_10.CIF'
 input_cif2_block = 'I'
 
 # Output details
-output_directory = '/home/dtchon/git/kesshou/test_data/'
+output_directory = '/home/dtchon/x/HiPHAR/RFpirazB/IAM_models/'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ SCRIPT CODE - DO NOT CHANGE ~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -45,10 +45,13 @@ def adp_cc(u, v):
     Requires two 3x3 U matrices."""
     u = un.matrix(u)
     v = un.matrix(v)
-    if min(adp_det(u), adp_det(v)) <= 0:
+    try:        #traktuj ujemne oraz zerowe jako całkowicie błędne
+        if min(adp_det(u), adp_det(v)) <= 0:
+            return ufloat(0., 0.)
+        nominator = (adp_det(u.I) * adp_det(v.I)) ** (1 / 4)
+        denominator = (adp_det(u.I + v.I) / 8) ** (1 / 2)
+    except np.linalg.linalg.LinAlgError:
         return ufloat(0., 0.)
-    nominator = (adp_det(u.I) * adp_det(v.I)) ** (1 / 4)
-    denominator = (adp_det(u.I + v.I) / 8) ** (1 / 2)
     return nominator / denominator
 
 
@@ -163,7 +166,11 @@ def read_adps_from_cif(path):
     missing_data = list(set(u_iso.keys()) - set(data['_atom_site_aniso_label']))
     for missing in missing_data:
         zero = ufloat(0., 0.)
-        scale = pow(ufloat_fromstr(u_iso[missing]), 1 / 3)
+        u = ufloat_fromstr(u_iso[missing])
+        if u.n < 0:
+            scale = pow(u.n / abs(u.n) * u, 1 / 3)
+        else:
+            scale = pow(u, 1 / 3)
         data['_atom_site_aniso_label'].append(missing)
         data['_atom_site_aniso_U_11'].append(scale)
         data['_atom_site_aniso_U_22'].append(scale)
@@ -261,6 +268,9 @@ def data_from_adps(adps1, adps2):
         # TODO - uncomment the following lines to get correct values
         # TODO it looks like coordinates change only increases uncertaint. (duh)
 
+        # TODO - because the reorientation matrix is not normalised,
+        # TODO comparing isotropic and unisotropic atom sizes GIVES NONSENSE
+
         # get the statistics
         data['label'].append(atom1.name)
         data['cc'].append(adp_cc(u=u1, v=u2))
@@ -268,7 +278,9 @@ def data_from_adps(adps1, adps2):
             adp_cc(u=adp_isotropise(u1), v=adp_isotropise(u2)))
         data['cc_shape'].append(
             adp_cc(u=adp_normalise(u1), v=adp_normalise(u2)))
+        #print(atom1.name, adp_volume(u1), adp_volume(u2))
         data['scale'].append(adp_volume(u1) / adp_volume(u2))
+
     data = pd.DataFrame.from_dict(data=data, orient='columns')
     data.set_index('label', inplace=True)
     return data

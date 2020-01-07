@@ -7,9 +7,9 @@ from kesshou.symmetry.pointgroup import PG4pmmm
 
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
 # Unit Cell (in Angstrom in degrees)
-unit_cell_a = 3.0
-unit_cell_b = 3.0
-unit_cell_c = 3.0
+unit_cell_a = 10.0
+unit_cell_b = 10.0
+unit_cell_c = 10.0
 unit_cell_al = 90.0
 unit_cell_be = 90.0
 unit_cell_ga = 90.0

@@ -23,16 +23,16 @@ unit_cell_ga = 90.0
 # symmetry_operations = [  # LAUE GROUP 2/m:
 #     [[1, 0, 0], [0, -1, 0], [0, 0, 1]]          # m_y plane
 # ]
-# symmetry_operations = [  # LAUE GROUP mmm:
-#    [[-1, 0, 0], [0, 1, 0], [0, 0, 1]],         # m_x plane
-#    [[1, 0, 0], [0, -1, 0], [0, 0, 1]],         # m_y plane
-#    [[1, 0, 0], [0, 1, 0], [0, 0, -1]]         # m_z plane
-# ]
-symmetry_operations = [  # LAUE GROUP 4/m:
-   [[0, -1, 0], [1, 0, 0], [0, 0, 1]],        # 4^1 axis
-   [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],        # 4^2 axis
-   [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],        # 4^3 axis
+symmetry_operations = [  # LAUE GROUP mmm:
+   [[-1, 0, 0], [0, 1, 0], [0, 0, 1]],         # m_x plane
+   [[1, 0, 0], [0, -1, 0], [0, 0, 1]],         # m_y plane
+   [[1, 0, 0], [0, 1, 0], [0, 0, -1]]         # m_z plane
 ]
+# symmetry_operations = [  # LAUE GROUP 4/m:
+#    [[0, -1, 0], [1, 0, 0], [0, 0, 1]],        # 4^1 axis
+#    [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],        # 4^2 axis
+#    [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],        # 4^3 axis
+# ]
 # symmetry_operations = [  # LAUE GROUP 4/mmm:
 #    [[-1, 0, 0], [0, 1, 0], [0, 0, 1]],         # m_x plane
 #    [[1, 0, 0], [0, -1, 0], [0, 0, 1]],         # m_y plane
@@ -74,13 +74,13 @@ symmetry_operations = [  # LAUE GROUP 4/m:
 precision = 1000
 
 # Checked parameters
-pressure_cell_oa = 35
-hkl_wavelength = 'MoKa'
-resolution = 0.50 # checked 0.50 or 0.83
+pressure_cell_oa = 55
+hkl_wavelength = 0.45
+resolution = 0.40  # checked 0.50 or 0.83
 
 # Output file details
 output_txt_path = '/home/dtchon/git/kesshou/test_data/' \
-                  'cubic_oa35_la73_res50.txt'
+                  'orthorhombic_oa55_la45_res40.txt'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ SCRIPT CODE - DO NOT CHANGE ~~~~~~~~~~~~~~~~~~~~~~~ #
 

@@ -4,11 +4,11 @@ from kesshou.dataframes.hkl import HklFrame
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
 
 # Input details
-input_hkl_path = '/home/dtchon/x/HiPHAR/glycine/IAM_models/opt40/sortav.hkl'
+input_hkl_path = '/home/dtchon/x/HiPHAR/RFpirazB/hkl_preparation/10kbar_10geom_experimental/sortav.hkl'
 input_hkl_format = 4
 
 # Output details
-output_hkl_path = '/home/dtchon/x/HiPHAR/glycine/HAR_models_ISO/opt40/gly_opt40_tonto.hkl'
+output_hkl_path = '/home/dtchon/x/HiPHAR/RFpirazB/hkl_preparation/10kbar_10geom_experimental/sortav_tonto.hkl'
 output_hkl_format = 'tonto'
 
 

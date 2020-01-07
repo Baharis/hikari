@@ -5,35 +5,33 @@ from copy import deepcopy
 
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
 # Unit Cell (in Angstrom in degrees)
-unit_cell_a = 5.085678
-unit_cell_b = 11.803994
-unit_cell_c = 5.460576
+unit_cell_a = 4.2815
+unit_cell_b = 4.2815
+unit_cell_c = 4.2815
 unit_cell_al = 90.0000
-unit_cell_be = 111.9796
+unit_cell_be = 90.0000
 unit_cell_ga = 90.0000
 
 # Crystal orientation matrix from .cif file
-UB_11 = 1.0
-UB_12 = 0.0
-UB_13 = 0.0
-UB_21 = 0.0
-UB_22 = 1.0
-UB_23 = 0.0
-UB_31 = 0.0
-UB_32 = 0.0
-UB_33 = 1.0
+UB_11 = 0.0025914000
+UB_12 = -0.0132920000
+UB_13 = -0.1299297000
+UB_21 = 0.0567811000
+UB_22 = 0.1172899000
+UB_23 = -0.0107307000
+UB_31 = 0.1174748000
+UB_32 = -0.0564320000
+UB_33 =  0.0081958000
 
 # Opening angle in degrees
-pressure_cell_oa = [30]
+pressure_cell_oa = [37]
 
 # Input details
-input_hkl_path = '/home/dtchon/x/HiPHAR/glycine/hkl_preparation/full_unmerged/glycine.hkl'
-input_hkl_format = 4
 input_hkl_wavelength = 'AgKa'
 
 # Output details
-output_name = 'glycine'
-output_directory = '/home/dtchon/x/HiPHAR/glycine/hkl_preparation/'
+output_name = 'Pm3m_AM'
+output_directory = '/home/dtchon/x/HP/Pm3m_AM/'
 output_hkl_format = 4
 
 
@@ -41,13 +39,13 @@ output_hkl_format = 4
 
 # Prepare HklFrame object
 p = HklFrame()
-p.read(input_hkl_path, input_hkl_format)
+p.edit_wavelength(input_hkl_wavelength)
 p.crystal.edit_cell(a=unit_cell_a, b=unit_cell_b, c=unit_cell_c,
                     al=unit_cell_al, be=unit_cell_be, ga=unit_cell_ga)
-p.edit_wavelength(input_hkl_wavelength)
 p.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
                                     (UB_21, UB_22, UB_23),
                                     (UB_31, UB_32, UB_33)))
+p.generate_ball(radius=2/p.meta['wavelength'])
 p.drop_zero()
 p.place()
 

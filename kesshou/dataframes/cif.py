@@ -84,6 +84,10 @@ class CifFrame:
                 while len(lines[index].split()) == len(subkeys):
                     subvalues_lines.append(list(lines[index].split()))
                     index += 1
+                    try:
+                        _ = lines[index]
+                    except IndexError:
+                        break
                 subvalues = list(map(list, zip(*subvalues_lines)))
                 if not len(subvalues):
                     for i in range(len(subkeys)):

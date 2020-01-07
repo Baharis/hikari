@@ -898,6 +898,52 @@ class HklFrame:
         average_down_redundant_reflections()
         self.data = self.data_from_dict(superreflections)
 
+    def overwrite_values(self, other, keys):
+        """Take one merged hkl and overwrite its keys to other merged hkl's"""
+
+        # MAKE DEEPCOPIES OF BOTH HKLS AND SORT THEM H-K-L-WISE
+        data1 = copy.deepcopy(self.data)
+        data2 = copy.deepcopy(other.data)
+        data1.sort_values(['h', 'k', 'l'], inplace=True)
+        data2.sort_values(['h', 'k', 'l'], inplace=True)
+        indices_to_delete = list()
+
+        # GO THROUGH LISTS ELEMENT-WISE UNTIL THE FIRST IS EXHAUSTED
+        index1, index2 = 0, 0
+
+        while True:
+            try:
+                hkl1 = tuple(data1.loc[index1, ['h', 'k', 'l']])
+                hkl2 = tuple(data2.loc[index2, ['h', 'k', 'l']])
+            except KeyError:
+                break
+            else:
+                if hkl1 == hkl2:
+                    for key in keys:
+                        data1.at[index1, key] = data2.loc[index2, key]
+                    index1 += 1
+                    index2 += 1
+                    continue
+                if hkl1 > hkl2:
+                    index2 += 1
+                    continue
+                if hkl1 < hkl2:
+                    indices_to_delete.append(hkl1)
+                    index1 += 1
+                    continue
+                else:
+                    print('something went wrong')
+                    break
+
+        # DELETE NOT OVERWRITTEN ELEMENTS AND RETURN NEW DATAFRAME
+        new_dataframe = copy.deepcopy(self)
+        new_dataframe.data.drop(indices_to_delete, inplace=True)
+        new_dataframe.data.reset_index(drop=True, inplace=True)
+        data1.drop(indices_to_delete, inplace=True)
+        data1.reset_index(drop=True, inplace=True)
+        new_dataframe.data = data1
+        return new_dataframe
+
     def calculate_uncertainty(self, master_key):
         """For each reflection calculate u = master_key/sigma(master_key)"""
         uncertainties = []
@@ -1227,13 +1273,29 @@ class HklFrame:
 
 if __name__ == '__main__':
     p = HklFrame()
-    p.read('/home/dtchon/git/kesshou/test_data/glycine_oa35.hkl', 4)
-    p.crystal.edit_cell(a=5.08, b=11.8, c=5.46,  al=90, be=111.98, ga=90.0)
+    sortav_format = OrderedDict([('h', 5), ('k', 5), ('l', 5),
+                                 ('I', 10), ('si', 10), ('b', 5)])
+    p.read('/home/dtchon/Desktop/_/import_hkl3.hkl', sortav_format)
+    p.crystal.edit_cell(a=16.15, b=6.76, c=18.17,  al=90, be=97.8, ga=90.0)
     p.edit_wavelength(0.48590)
     p.reduce()
-    p.place2()
-    p.to_hklres(path='/home/dtchon/git/kesshou/test_data/opt_tests.res')
+    p.place()
+    p.to_hklres(path='/home/dtchon/Desktop/_/import_hkl3_hkl.res')
 
 
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some
+
+# TODO SEEMS LIKE THERE IS STILL SOME BUG WITH DISTANCES when angle =/=90deg
+# TODO PLUS THERE IS SOME MISMATCH between lattice parameters!!!
+# TODO CHECK IT
+
+# TODO hkl3to4 had function to rescale data if it was too long to fit in format
+# TODO add it here if necessary; pasted below
+# p = HklFrame()
+# p.read(input_hkl_path, 3)
+# max_f = p.data['F'].max()
+# if max_f > 9999:
+#     p.rescale_f(9999 / max_f)
+# p.calculate_intensity_from_structure_factor()
+# p.write(input_hkl_path + 'f4', 4, columns_separator=False)

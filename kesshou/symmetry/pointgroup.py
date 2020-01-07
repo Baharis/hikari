@@ -38,7 +38,7 @@ class PointGroup:
         self.operations = self.generate_group()
 
     def generate_group(self):
-        """generate whole laue group based on its generators"""
+        """generate whole point group based on its generators"""
         operations = self.generators
 
         def _is_in(op, ops):
