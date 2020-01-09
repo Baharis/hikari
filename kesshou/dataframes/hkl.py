@@ -87,21 +87,20 @@ class HklCrystal:
                         * np.cos(self.ga_d)) / np.sin(self.ga_d),
                         self.v_d / (self.a_d * self.b_d * np.sin(self.ga_d))))
         # RECIPROCAL CELL SCALARS
-        self.__a_r = 1 / self.a_d
-        self.__b_r = 1 / self.b_d
-        self.__c_r = 1 / self.c_d
+        self.__a_r = self.b_d * self.c_d * np.sin(self.al_d) / self.v_d
+        self.__b_r = self.c_d * self.a_d * np.sin(self.be_d) / self.v_d
+        self.__c_r = self.a_d * self.b_d * np.sin(self.ga_d) / self.v_d
         self.__al_r = np.pi - self.al_d
         self.__be_r = np.pi - self.be_d
         self.__ga_r = np.pi - self.ga_d
-        self.__v_r = 1 / self.v_d
+        self.__v_r = self.a_r * self.b_r * self.c_r * \
+                     (1 - np.cos(self.al_r) ** 2 - np.cos(self.be_r) ** 2
+                      - np.cos(self.ga_r) ** 2 + 2 * np.cos(self.al_r)
+                      * np.cos(self.be_r) * np.cos(self.ga_r)) ** 0.5
         # RECIPROCAL CELL VECTORS
-        self.__a_w = np.array((self.a_r, 0, 0))
-        self.__b_w = np.array((self.b_r * np.cos(self.ga_r),
-                        self.b_r * np.sin(self.ga_r), 0))
-        self.__c_w = np.array((self.c_r * np.cos(self.be_r),
-                        self.c_r * (np.cos(self.al_r) - np.cos(self.be_r)
-                        * np.cos(self.ga_r)) / np.sin(self.ga_r),
-                        self.v_r / (self.a_r * self.b_r * np.sin(self.ga_r))))
+        self.__a_w = np.cross(self.b_v, self.c_v) / self.v_d
+        self.__b_w = np.cross(self.c_v, self.a_v) / self.v_d
+        self.__c_w = np.cross(self.a_v, self.b_v) / self.v_d
 
     def import_from_frame(self, frame):
         """Import necessary crystal parameters from CifFrame"""
@@ -568,7 +567,7 @@ class HklFrame:
         return new_data
 
     def edit_wavelength(self, wavelength):
-        """Define wavelength [e.g. "CuKa", "Ag", "Individual" or custom in A]"""
+        """Define wavelength: "CuKa", "Ag", "Polichromatic" or custom in A"""
         sources = {'Cr': 2.2896,	'Fe': 1.9360,	'Co': 1.79,
                    'Cu': 1.54056,	'Mo': 0.71073,	'Zr': 0.69,
                    'Ag': 0.56087}
@@ -579,7 +578,7 @@ class HklFrame:
             self.meta['wavelength'] = float(wavelength)
         except KeyError:
             # NEGATIVE WAVELENGTH SERVES AS SCALE FOR INDIVIDUAL REFLECT. VALUES
-            if wavelength[:3] in {'ind', 'Ind', 'IND', 'i'}:
+            if wavelength[:3] in {'pol', 'Pol', 'POL', 'P'}:
                 self.meta['wavelength'] = -1.0
 
     def seek_reflection(self, **param):
@@ -597,7 +596,8 @@ class HklFrame:
         self.data.reset_index(drop=True, inplace=True)
 
     def place(self):
-        """Assign reflections their positions anr calculate dist. from 000"""
+        """Assign reflections their positions in reciprocal space (x, y, z)
+        and calculate their distance from origin (r) in reciprocal Angstrom"""
 
         # CREATE EMPTY DATA HOLDERS AND IMPORT CONSTANTS
         _x, _y, _z, _r, _types = list(), list(), list(), list(), dict()
@@ -620,6 +620,7 @@ class HklFrame:
         self.data['y'] = pd.Series(_y, index=self.data.index, dtype=_types['y'])
         self.data['z'] = pd.Series(_z, index=self.data.index, dtype=_types['z'])
         self.data['r'] = pd.Series(_r, index=self.data.index, dtype=_types['r'])
+        # TODO can be vectorized to be made faster
 
     def transform(self, matrix):
         """Transform reflection indices using given 3x3 or 4x4 matrix"""
@@ -635,6 +636,7 @@ class HklFrame:
         self.data['h'] = pd.Series(_h, index=self.data.index, dtype=np.int8)
         self.data['k'] = pd.Series(_k, index=self.data.index, dtype=np.int8)
         self.data['l'] = pd.Series(_l, index=self.data.index, dtype=np.int8)
+        # TODO very slow for large hkls; vectorize to multiply matrices
 
     def read(self, hkl_path, hkl_format):
         """Read .hkl file as specified by path and fields
@@ -707,6 +709,11 @@ class HklFrame:
         self.data['F'] = self.data.apply(lambda row: row['F']*factor, axis=1)
         self.data['si'] = self.data.apply(lambda row: row['si']*factor, axis=1)
 
+    def rescale_i(self, factor=1.0):
+        self.data['I'] = self.data.apply(lambda row: row['I']*factor, axis=1)
+        self.data['si'] = self.data.apply(lambda row: row['si']*factor, axis=1)
+        # TODO one of those might be wrong (should be square?) ask around which
+
     def write(self, hkl_path, hkl_format, columns_separator=True):
         """Write .hkl file as specified by path and write_format"""
 
@@ -766,8 +773,9 @@ class HklFrame:
         hkl_file.close()
 
     def dac(self, opening_angle=40, vector=False):
-        """Cut the reflections based on DAC angle (in angles)
-        and [h, k, l] indexes of diamond-parallel crystal face"""
+        """Cut the reflections based on DAC angle (degrees) and
+        orientation matrix or perpendicular vector in rec. space (if given).
+        Please provide angle from normal vector, not double opening angle."""
 
         # CALCULATE OPENING ANGLE "oa" AND WAVELENGTH "la"
         oa = np.radians([float(opening_angle)])[0]
@@ -805,6 +813,7 @@ class HklFrame:
                 indices_to_delete.append(index)
         self.data.drop(indices_to_delete, inplace=True)
         self.data.reset_index(drop=True, inplace=True)
+        # TODO this could be made faster using better vectorisation, see notes
 
     def thin_out(self, target_completeness=1.0, exponentially=False):
         """Randomly delete reflections to relative desired completeness"""
@@ -840,8 +849,7 @@ class HklFrame:
 
         indices_to_delete = []
         for index, reflection in self.data.iterrows():
-            v = np.array((reflection['x'], reflection['y'], reflection['z']))
-            if lin.norm(v) > limit:
+            if reflection['r'] > limit:
                 indices_to_delete.append(index)
         self.data.drop(indices_to_delete, inplace=True)
         self.data.reset_index(drop=True, inplace=True)
@@ -1229,7 +1237,7 @@ class HklFrame:
         # close the file
         hklres_file.close()
 
-    def resymmetrify(self, operations=tuple()):
+    def resymmetrify(self, operations=tuple(), reduce=True):
         q = copy.deepcopy(self)
 
         # For each declared symmetry operation
@@ -1237,18 +1245,11 @@ class HklFrame:
             r = copy.deepcopy(self)
             r.transform(operation)
             q = q + r
-        q.reduce()
+        if reduce is True:
+            q.reduce()
         self.data = q.data
 
-# if __name__ == '__main__':
-#     p = HklFrame()
-#     p.read('/home/dtchon/x/HiPHAR/glycine/hkl_preparation/full_unmerged/glycine.hkl', 4)
-#     p.edit_wavelength('MoKa')
-#     p.crystal.edit_cell(**{'a': 5.08568, 'b': 11.80399, 'c': 5.46058, 'al': 90, 'be': 111.980, 'ga': 90})
-#     #p.crystal.edit_cell(a=9.13398, b=8.80993, c=21.4182, al = 90, be=93.0499, ga=90)
-#     p.place()
-#
-#     print(p.data.nlargest(5, 'r'))
+
 
 
 
@@ -1260,35 +1261,8 @@ class HklFrame:
     # 1.461 z programu? <- check that)
 
 
-
-# if __name__ == '111__main__':
-#     p = HklFrame()
-#     p.read('/home/dtchon/git/kesshou/test_data/example.hkl', 4)
-#     q = HklFrame()
-#     q.read('/home/dtchon/git/kesshou/test_data/example.hkl', 4)
-#     q.transform([[-1,0,0],[0,-1,0],[0,0,-1]])
-#     r = p + q
-#     r.write('/home/dtchon/git/kesshou/test_data/example+example.hkl', 4)
-
-
-if __name__ == '__main__':
-    p = HklFrame()
-    sortav_format = OrderedDict([('h', 5), ('k', 5), ('l', 5),
-                                 ('I', 10), ('si', 10), ('b', 5)])
-    p.read('/home/dtchon/Desktop/_/import_hkl3.hkl', sortav_format)
-    p.crystal.edit_cell(a=16.15, b=6.76, c=18.17,  al=90, be=97.8, ga=90.0)
-    p.edit_wavelength(0.48590)
-    p.reduce()
-    p.place()
-    p.to_hklres(path='/home/dtchon/Desktop/_/import_hkl3_hkl.res')
-
-
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some
-
-# TODO SEEMS LIKE THERE IS STILL SOME BUG WITH DISTANCES when angle =/=90deg
-# TODO PLUS THERE IS SOME MISMATCH between lattice parameters!!!
-# TODO CHECK IT
 
 # TODO hkl3to4 had function to rescale data if it was too long to fit in format
 # TODO add it here if necessary; pasted below
