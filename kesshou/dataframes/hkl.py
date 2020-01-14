@@ -1,4 +1,6 @@
 from collections import OrderedDict
+from kesshou.utility import cubespace
+from kesshou.symmetry.pointgroup import *
 import copy
 import random
 import struct
@@ -1249,17 +1251,82 @@ class HklFrame:
             q.reduce()
         self.data = q.data
 
+    def make_stats(self, bins=10, point_group=PG_1):
+        """This method analyses dataframe in terms of no. of reflections,
+        Rint, completeness, redundancy in 'bins' resolution shells."""
+
+        # get max resolution for later calculations
+        max_resolution = max(self.data['r'])
+
+        # prepare merged, base, full, resymmetrified merged and
+        # resymmetrified unmerged dataframe
+        hkl_base = copy.deepcopy(self)
+        hkl_full = copy.deepcopy(self)
+        hkl_full.generate_ball(radius=max_resolution)
+        hkl_full.place()
+        hkl_merged = copy.deepcopy(self)
+        hkl_merged.reduce()
+        hkl_resy_u = copy.deepcopy(self)
+        hkl_resy_u.resymmetrify(operations=point_group.operations, reduce=False)
+        hkl_resy_m = copy.deepcopy(hkl_resy_u)
+        hkl_resy_m.reduce()
+
+        # group the dataframes by resolution
+        res_limits = cubespace(0.0, max_resolution, num=bins+1)
+        hkl_base_res_bins = pd.cut(hkl_base.data['r'], res_limits)
+        hkl_base_by_res = hkl_base.data.groupby(hkl_base_res_bins)
+        hkl_full_res_bins = pd.cut(hkl_full.data['r'], res_limits)
+        hkl_full_by_res = hkl_full.data.groupby(hkl_full_res_bins)
+        hkl_merged_res_bins = pd.cut(hkl_merged.data['r'], res_limits)
+        hkl_merged_by_res = hkl_merged.data.groupby(hkl_merged_res_bins)
+        hkl_resy_u_res_bins = pd.cut(hkl_resy_u.data['r'], res_limits)
+        hkl_resy_u_by_res = hkl_resy_u.data.groupby(hkl_resy_u_res_bins)
+        hkl_resy_m_res_bins = pd.cut(hkl_resy_m.data['r'], res_limits)
+        hkl_resy_m_by_res = hkl_resy_m.data.groupby(hkl_resy_m_res_bins)
+
+        # count observed, independent and theory reflns for each res. shell
+        observed = hkl_base_by_res.size()
+        independent = hkl_merged_by_res.size()
+        theory = hkl_full_by_res.size()
+
+        # calculate completeness and redundancy in P1
+        completeness_nosymm = independent.div(theory)
+        redundancy_nosymm = observed.div(independent)
+
+        # count observed and independent after resymmetrization
+        observed_after_resy = hkl_resy_u_by_res.size()
+        independent_after_resy = hkl_resy_m_by_res.size()
+
+        # calculate completeness and redundancy in point_grpup
+        completeness_symm = independent_after_resy.div(theory)
+        redundancy_symm = observed_after_resy.div(independent_after_resy)
+
+        # make a final results table
+        results = pd.concat([observed, independent, theory,
+                             completeness_nosymm, redundancy_nosymm,
+                             completeness_symm, redundancy_symm],
+                            axis=1)
+        results.columns = ['Obser', 'Indep', 'Theory',
+                           'Cplt_P1', 'Redu_P1',
+                           'Cplt', 'Redu']
+        print(results)
+
+    # TODO write method for splitting dataframes into num dataframes
+    # TODO for completeness statistics using kesshou.utility.cubespace
+    # TODO write method for performing automated completeness calculations
+    # TODO using written above method
+    # TODO ----------- DO IT TODAY ----------- :)
 
 
-
-
-    # TODO CHECK R-calculation while placing - it seens there is a mistake (note below)
-    # (1.361 z bezp. obliczeń
-    # sqrt(1/(sin(111.980 degrees))^2*(47/5.08568^2 + 10^2*(sin(111.980 degrees))^2/11.80399^2+14^2/5.46058^2-2*-7*14*cos(111.980 degrees)/(5.08568*5.46058)))
-    # 1.374 z kąta theta
-    # 1.39(1) z xprepa
-    # 1.461 z programu? <- check that)
-
+if __name__ == '__main__':
+    p = HklFrame()
+    p.read('/home/dtchon/git/kesshou/test_data/sortav.hkl', 4)
+    p.crystal.edit_cell(a=6.9271, b=30.3291, c=10.3256, al=90, be=90, ga=90)
+    p.place()
+    p.make_stats(point_group=PGmmm)
+    # something wrong with cplt? too low, should be 100% for this file
+    # systematic extintions are not considered - to be tackled in further future
+    # TODO change point group to laue group in stats counting
 
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some

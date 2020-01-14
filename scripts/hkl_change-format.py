@@ -19,5 +19,4 @@ p = HklFrame()
 p.read(input_hkl_path, input_hkl_format)
 p.write(output_hkl_path, output_hkl_format)
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END OF FILE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #

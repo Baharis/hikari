@@ -1,8 +1,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~ IMPORT STATEMENTS - DO NOT CHANGE ~~~~~~~~~~~~~~~~~~~~ #
 from kesshou.dataframes.hkl import HklFrame
-import numpy as np
-import copy
+from kesshou.utility import cubespace
 from kesshou.symmetry.pointgroup import PGm_3m
+import copy
+import numpy as np
 
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
 # Unit Cell (in Angstrom in degrees)
@@ -22,11 +23,10 @@ UB_22 = 0.1172899000
 UB_23 = -0.0107307000
 UB_31 = 0.1174748000
 UB_32 = -0.0564320000
-UB_33 =  0.0081958000
+UB_33 = 0.0081958000
 
-# Prepare a list of symmetry operations characteristic for a given Laue group:
-# remember half of them is unnecessary to retrieve the shape (disc has -1 symm)
-symmetry_operations = PGm_3m.hp_disc_transforming_symm_ops
+# Provide point group of your data
+point_group = PGm_3m
 
 # Opening angle in degrees
 pressure_cell_oa = 37
@@ -39,7 +39,7 @@ input_hkl_wavelength = 'AgKa'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ SCRIPT CODE - DO NOT CHANGE ~~~~~~~~~~~~~~~~~~~~~~~ #
 
-
+# Load desired hkl file
 p = HklFrame()
 p.crystal.edit_cell(a=unit_cell_a, b=unit_cell_b, c=unit_cell_c,
                     al=unit_cell_al, be=unit_cell_be, ga=unit_cell_ga)
@@ -49,37 +49,31 @@ p.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
                                     (UB_21, UB_22, UB_23),
                                     (UB_31, UB_32, UB_33)))
 p.drop_zero()
-p.reduce()
+
+# Assign reflections their positions and make basic statistics
 p.place()
 p.dac(opening_angle=pressure_cell_oa)
+p.make_stats(point_group=point_group)
 
-
+# generate ball of hkl data to compare with hkl file
 q = HklFrame()
 q.crystal.edit_cell(a=unit_cell_a, b=unit_cell_b, c=unit_cell_c,
                     al=unit_cell_al, be=unit_cell_be, ga=unit_cell_ga)
 q.edit_wavelength(input_hkl_wavelength)
-#q.generate_ball(radius=2/q.meta['wavelength'])
-q.generate_ball(radius=max(p.data['r']))
+q.generate_ball(radius=2/p.meta['wavelength'])
 q.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
                                     (UB_21, UB_22, UB_23),
                                     (UB_31, UB_32, UB_33)))
 q.drop_zero()
 q.place()
 
-
-# print('oa', 'experiment', 'theory')
-# for angle in range(pressure_cell_oa, 0, -1):
-#     p.dac(opening_angle=angle)
-#     q.dac(opening_angle=angle)
-#     r = copy.deepcopy(p).resymmetrify()
-#     print(angle, len(p), len(r), len(q))
-
-for resolution in np.arange(0.5, 1.5, 0.05):
-    rad = 1/resolution
+# analyse DAC completeness (relative to max cplt. in this DAC orientation)
+r_max = max(q.data['r'])
+for resolution in reversed(cubespace(0, r_max, 10, include_start=False)):
     p.trim(rad)
     q.trim(rad)
     r = copy.deepcopy(p)
-    r.resymmetrify(symmetry_operations)
+    r.resymmetrify(point_group.hp_disc_transforming_symm_ops)
     print(resolution, len(p), len(r), len(q))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END OF FILE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #

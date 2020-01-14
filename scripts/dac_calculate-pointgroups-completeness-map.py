@@ -15,8 +15,9 @@ unit_cell_be = 90.0
 unit_cell_ga = 90.0
 
 # Vector orientation matrix resolution
-primary_orientation = [0, 0, 1]    # expressed in h, k, l
-secondary_orientation = [1, 0, 0]  # expressed in h, k, l
+# fractional coordinates in reciprocal space
+primary_orientation = [0, 0, 1]
+secondary_orientation = [1, 0, 0]
 
 phi_from = 1    # phi is rotation of DAC normal vector around primary vector,
                 # where 0 corresponds to primary-secondary plane in recip. space
@@ -36,7 +37,7 @@ resolution_cutoff = 0.8
 
 # Prepare a list of symmetry operations characteristic for a given Laue group:
 # remember half of them is unnecessary to retrieve the shape (disc has -1 symm)
-symmetry_operations = PG4pmmm.hp_disc_transforming_symm_ops
+point_group = PG4pmmm
 
 
 # Output directory
@@ -67,7 +68,7 @@ log.write('> unit cell ga: ' + str(unit_cell_ga) + '\n')
 log.write('> primary orientation (hkl): ' + str(primary_orientation) + '\n')
 log.write('> secondary orientation (hkl): ' + str(secondary_orientation) + '\n')
 log.write('> symmetry operations: ' + '\n')
-for operation in symmetry_operations:
+for operation in point_group.hp_disc_transforming_symm_ops:
     log.write('> ' + str(operation) + '\n')
 
 # generate reference ball
@@ -149,7 +150,7 @@ for phi_index, phi in enumerate(phi_range):
         # trim a copy of ball and calculate completeness
         q = copy.deepcopy(p)
         q.dac(opening_angle=pressure_cell_oa, vector=DAC_v)
-        q.resymmetrify(operations=symmetry_operations)
+        q.resymmetrify(operations=point_group.hp_disc_transforming_symm_ops)
         phi_psi_matrix[phi_index+1, psi_index+1] = q.data.shape[0]
         dat.write('{:8.0f}'.format(phi))
         dat.write('{:8.0f}'.format(psi))

@@ -62,7 +62,6 @@ class PointGroup:
 
     @property
     def hp_disc_transforming_symm_ops(self):
-        hp_disc_operations = list()
         hp_disc_operations = [op for op in self.operations
                               if lin.det(op) > 0 and np.trace(op) < 3]
         return hp_disc_operations

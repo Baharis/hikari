@@ -3,12 +3,12 @@ from kesshou.dataframes.hkl import HklFrame
 import copy
 import numpy as np
 import random
+from kesshou.symmetry.pointgroup import PGmmm
 
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
-# This script strives to verify the values presented in paper of Casati et. al.
+# This script verifies the values presented in paper of Casati et. al.
 # "Exploring charge density analysis [...]", Table 1
 
-random.seed(1337)
 # Unit Cell (in Angstrom in degrees)
 unit_cell_a = 10.0
 unit_cell_b = 10.0
@@ -17,58 +17,12 @@ unit_cell_al = 90.0
 unit_cell_be = 90.0
 unit_cell_ga = 90.0
 
+# Random seed for selecting random orientation vectors
+random.seed(1337)
+
 # Prepare a list of symmetry operations characteristic for a given Laue group:
 # remember half of them is unnecessary to retrieve the shape (disc has -1 symm)
-# symmetry_operations = []  # LAUE GROUP -1:
-# symmetry_operations = [  # LAUE GROUP 2/m:
-#     [[1, 0, 0], [0, -1, 0], [0, 0, 1]]          # m_y plane
-# ]
-symmetry_operations = [  # LAUE GROUP mmm:
-   [[-1, 0, 0], [0, 1, 0], [0, 0, 1]],         # m_x plane
-   [[1, 0, 0], [0, -1, 0], [0, 0, 1]],         # m_y plane
-   [[1, 0, 0], [0, 1, 0], [0, 0, -1]]         # m_z plane
-]
-# symmetry_operations = [  # LAUE GROUP 4/m:
-#    [[0, -1, 0], [1, 0, 0], [0, 0, 1]],        # 4^1 axis
-#    [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],        # 4^2 axis
-#    [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],        # 4^3 axis
-# ]
-# symmetry_operations = [  # LAUE GROUP 4/mmm:
-#    [[-1, 0, 0], [0, 1, 0], [0, 0, 1]],         # m_x plane
-#    [[1, 0, 0], [0, -1, 0], [0, 0, 1]],         # m_y plane
-#    [[1, 0, 0], [0, 1, 0], [0, 0, -1]],         # m_z plane
-#    [[0, 1, 0], [-1, 0, 0], [0, 0, -1]],        # -4^1 axis
-#    [[0, -1, 0], [1, 0, 0], [0, 0, -1]],        # -4^3 axis
-#    [[0, -1, 0], [-1, 0, 0], [0, 0, 1]],        # 1-10 plane
-#    [[0, 1, 0], [1, 0, 0], [0, 0, 1]]           # 110 plane
-# ]
-# symmetry_operations = [  # LAUE GROUP m-3m, at least I hope:
-#     [[1, 0, 0], [0, 1, 0], [0, 0, 1]],          # xyz
-#     [[0, 0, 1], [1, 0, 0], [0, 1, 0]],          # zxy
-#     [[0, 1, 0], [0, 0, 1], [1, 0, 0]],          # yzx
-#     [[1, 0, 0], [0, 0, 1], [0, 1, 0]],          # xzy
-#     [[0, 1, 0], [1, 0, 0], [0, 0, 1]],          # yxz
-#     [[0, 0, 1], [0, 1, 0], [1, 0, 0]],          # zyx
-#     [[1, 0, 0], [0, -1, 0], [0, 0, -1]],  # x-y-z
-#     [[0, 0, 1], [-1, 0, 0], [0, -1, 0]],  # z-x-y
-#     [[0, 1, 0], [0, 0, -1], [-1, 0, 0]],  # y-z-x
-#     [[1, 0, 0], [0, 0, -1], [0, -1, 0]],  # x-z-y
-#     [[0, 1, 0], [-1, 0, 0], [0, 0, -1]],  # y-x-z
-#     [[0, 0, 1], [0, -1, 0], [-1, 0, 0]],  # z-y-x
-#     [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],  # -xy-z
-#     [[0, 0, -1], [1, 0, 0], [0, -1, 0]],  # -zx-y
-#     [[0, -1, 0], [0, 0, 1], [-1, 0, 0]],  # -yz-x
-#     [[-1, 0, 0], [0, 0, 1], [0, -1, 0]],  # -xz-y
-#     [[0, -1, 0], [1, 0, 0], [0, 0, -1]],  # -yx-z
-#     [[0, 0, -1], [0, 1, 0], [-1, 0, 0]],  # -zy-x
-#     [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],  # -x-yz
-#     [[0, 0, -1], [-1, 0, 0], [0, 1, 0]],  # -z-xy
-#     [[0, -1, 0], [0, 0, -1], [1, 0, 0]],  # -y-zx
-#     [[-1, 0, 0], [0, 0, -1], [0, 1, 0]],  # -x-zy
-#     [[0, -1, 0], [-1, 0, 0], [0, 0, 1]],  # -y-xz
-#     [[0, 0, -1], [0, -1, 0], [1, 0, 0]]   # -z-yx
-# ]
-
+point_group = PGmmm
 
 # Multistats precision, how many random vectors should be checked
 precision = 1000
@@ -129,7 +83,7 @@ points = fibonacci_sphere(samples=precision)
 for point in points:
     p = copy.deepcopy(q)
     p.dac(opening_angle=pressure_cell_oa, vector=point)
-    p.resymmetrify(symmetry_operations)
+    p.resymmetrify(point_group.hp_disc_transforming_symm_ops)
     counted_reflections = len(p)
     output_file.write('\n' + str(point) + ' ' + str(counted_reflections))
     del p

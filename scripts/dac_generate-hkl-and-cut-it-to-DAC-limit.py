@@ -21,7 +21,7 @@ UB_22 = 0.1172899000
 UB_23 = -0.0107307000
 UB_31 = 0.1174748000
 UB_32 = -0.0564320000
-UB_33 =  0.0081958000
+UB_33 = 0.0081958000
 
 # Opening angle in degrees
 pressure_cell_oa = [37]
@@ -33,7 +33,6 @@ input_hkl_wavelength = 'AgKa'
 output_name = 'Pm3m_AM'
 output_directory = '/home/dtchon/x/HP/Pm3m_AM/'
 output_hkl_format = 4
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ SCRIPT CODE - DO NOT CHANGE ~~~~~~~~~~~~~~~~~~~~~~~ #
 

@@ -3,12 +3,10 @@ from collections import OrderedDict
 from enum import Enum
 import numpy as np
 import pandas as pd
-import pprint
 from uncertainties import ufloat, ufloat_fromstr
 from uncertainties.umath import sin, cos
 from uncertainties import unumpy as un
 from kesshou.dataframes.cif import CifFrame
-from kesshou.dataframes.hkl import HklCrystal
 
 
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
