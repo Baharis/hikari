@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from kesshou.utility import cubespace
+from kesshou.utility import cubespace, odd, parity
 from kesshou.symmetry.pointgroup import *
 import copy
 import random
@@ -472,8 +472,9 @@ class HklFrame:
     def __init__(self):
         self.crystal = HklCrystal()
         self.data = pd.DataFrame()
-        self.meta = {'wavelength': 0.71069}
+        self.rules = set()
         self.keys = HklKeys()
+        self.meta = {'wavelength': 0.71069}
 
     def __len__(self):
         return self.data.shape[0]
@@ -1311,11 +1312,8 @@ class HklFrame:
                            'Cplt', 'Redu']
         print(results)
 
-    # TODO write method for splitting dataframes into num dataframes
-    # TODO for completeness statistics using kesshou.utility.cubespace
-    # TODO write method for performing automated completeness calculations
-    # TODO using written above method
-    # TODO ----------- DO IT TODAY ----------- :)
+    def extinct_I(self):
+        self.h + self.k + self.l
 
 
 if __name__ == '__main__':

@@ -1,64 +1,18 @@
 import numpy as np
 import numpy.linalg as lin
-from itertools import product as itertools_product
-
-symm_ops = dict()
-symm_ops['1'] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-symm_ops['-1'] = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, -1]])
-symm_ops['2_x'] = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-symm_ops['2_y'] = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
-symm_ops['2_z'] = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
-symm_ops['2_xy'] = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
-symm_ops['-3_z'] = np.array([[1, 1, 0], [-1, 0, 0], [0, 0, -1]])
-symm_ops['3_xyz'] = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
-symm_ops['-3_xyz'] = np.array([[0, 0, -1], [-1, 0, 0], [0, -1, 0]])
-symm_ops['4_z'] = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
-symm_ops['-4_z'] = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, -1]])
-symm_ops['m_x'] = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
-symm_ops['m_y'] = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]])
-symm_ops['m_z'] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]])
-symm_ops['m_xy'] = np.array([[0, -1, 0], [-1, 0, 0], [0, 0, 1]])
-symm_ops['h2_x'] = np.array([[1, -1, 0], [0, -1, 0], [0, 0, -1]])
-symm_ops['h2_x2y'] = np.array([[-1, 1, 0], [0, 1, 0], [0, 0, -1]])
-symm_ops['h3_z'] = np.array([[0, -1, 0], [1, -1, 0], [0, 0, 1]])
-symm_ops['h-3_z'] = np.array([[0, 1, 0], [-1, 1, 0], [0, 0, -1]])
-symm_ops['h6_z'] = np.array([[1, -1, 0], [1, 0, 0], [0, 0, 1]])
-symm_ops['h-6_z'] = np.array([[-1, 1, 0], [-1, 0, 0], [0, 0, -1]])
-symm_ops['hm_x'] = np.array([[-1, 1, 0], [0, 1, 0], [0, 0, 1]])
-symm_ops['hm_x2y'] = np.array([[1, -1, 0], [0, -1, 0], [0, 0, 1]])
-symm_ops['hm_z'] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]])
+from .group import Group
+from .symm_ops import symm_ops
 
 
-class PointGroup:
+class PointGroup(Group):
     """Basic Point Group class info holder"""
 
+    unique_point = np.array([0.0 + np.pi / 100,
+                             0.1 + np.pi / 100,
+                             0.2 + np.pi / 100])
+
     def __init__(self, generators):
-        self.operations = list()
-        self.generators = generators
-        self.operations = self.generate_group()
-
-    def generate_group(self):
-        """generate whole point group based on its generators"""
-        operations = self.generators
-
-        def _is_in(op, ops):
-            return any([np.array_equal(op, op1) for op1 in ops])
-
-        # then perform recursive group table multiplication
-        def _find_new_product(current_ops):
-            new_op = None
-            for op1, op2 in itertools_product(current_ops, current_ops):
-                op = np.dot(op1, op2)
-                if not _is_in(op, current_ops):
-                    new_op = op
-                    break
-            if new_op is None:
-                return current_ops
-            else:
-                return _find_new_product([*current_ops, new_op])
-
-        operations = _find_new_product(operations)
-        return operations
+        super().__init__(generators=generators)
 
     @property
     def hp_disc_transforming_symm_ops(self):
@@ -70,21 +24,9 @@ class PointGroup:
     def is_centrosymmetric(self):
         return any(np.array_equal(op, symm_ops['-1']) for op in self.operations)
 
-    @property
-    def is_enantiomorphic(self):
-        return all(lin.det(op) > 0 for op in self.operations)
-
-    @property
-    def is_polar(self):
-        polar_prop = np.array([1, 3, 7])
-        sum_of_props = sum(np.dot(op, polar_prop) for op in self.operations)
-        # print([op for op in self.operations])
-        # print([np.dot(op, polar_prop) for op in self.operations])
-        return lin.norm(sum_of_props) > 0.1
-
     def lauefy(self):
         self.generators.append(symm_ops['-1'])
-        self.operations = self.generate_group()
+        self.construct()
 
 
 # TRICLINIC

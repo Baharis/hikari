@@ -4,6 +4,7 @@ import numpy as np
 from copy import deepcopy
 
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
+
 # Unit Cell (in Angstrom in degrees)
 unit_cell_a = 6.6139
 unit_cell_b = 8.1151
@@ -11,8 +12,6 @@ unit_cell_c = 10.272
 unit_cell_al = 109.439
 unit_cell_be = 99.563
 unit_cell_ga = 100.637
-
-
 
 # Crystal orientation matrix from .cif file
 UB_11 = -0.0483900000
@@ -25,10 +24,11 @@ UB_31 = -0.0119742000
 UB_32 = -0.0528324000
 UB_33 = -0.0431912000
 
-# OR perpendicular vector, if better suited
+# OR DAC perpendicular vector, if better suited
 v1 = 1/np.sqrt(2)
 v2 = 1/np.sqrt(2)
 v3 = 0
+use_vector_instead_of_orientation_matrix = False
 
 # Opening angle in degrees
 pressure_cell_oa = [40, ]
@@ -55,9 +55,10 @@ p.read(input_hkl_path, input_hkl_format)
 p.crystal.edit_cell(a=unit_cell_a, b=unit_cell_b, c=unit_cell_c,
                     al=unit_cell_al, be=unit_cell_be, ga=unit_cell_ga)
 p.edit_wavelength(input_hkl_wavelength)
-p.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
-                                    (UB_21, UB_22, UB_23),
-                                    (UB_31, UB_32, UB_33)))
+if not use_vector_instead_of_orientation_matrix:
+    p.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
+                                        (UB_21, UB_22, UB_23),
+                                        (UB_31, UB_32, UB_33)))
 p.drop_zero()
 p.place()
 
@@ -72,7 +73,6 @@ p.trim(reslim)
 # Draw projections before dac operation
 q = deepcopy(p)
 q.reduce()
-q.drop_zero()
 for projection in projections:
     output_png_path = output_directory + output_name + '_full_' + \
                       str(projection[0]) + \
@@ -87,8 +87,11 @@ except TypeError:
     pressure_cell_oa = list(pressure_cell_oa)
 for oa in pressure_cell_oa:
     q = deepcopy(p)
-    #vector = np.array((v1, v2, v3))
-    q.dac(opening_angle=oa)#, vector=vector)
+    if use_vector_instead_of_orientation_matrix:
+        vector = np.array((v1, v2, v3))
+        q.dac(opening_angle=oa, vector=vector)
+    else:
+        q.dac(opening_angle=oa)
     output_hkl_path = output_directory + output_name +\
                       '_oa' + str(oa)[0:6] + '.hkl'
     q.write(hkl_path=output_hkl_path, hkl_format=output_hkl_format)
