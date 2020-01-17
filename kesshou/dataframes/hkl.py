@@ -718,40 +718,13 @@ class HklFrame:
     def place(self):
         """Assign reflections their positions in reciprocal space (x, y, z)
         and calculate their distance from origin (r) in reciprocal Angstrom"""
-
-        # CREATE EMPTY DATA HOLDERS AND IMPORT CONSTANTS
-        _x, _y, _z, _r, _types = list(), list(), list(), list(), dict()
-        _a, _b, _c = self.crystal.a_w, self.crystal.b_w, self.crystal.c_w
-        _keys = ('x', 'y', 'z', 'r')
-        for key in _keys:
-            _types[key] = self.keys.get_property(key, 'dtype')
-
-        # POSITION THE REFLECTIONS IN THE RECIPROCAL SPACE
-        for index, row in self.data.iterrows():
-            _v = row['h'] * _a + row['k'] * _b + row['l'] * _c
-            _x.append(_v[0])
-            _y.append(_v[1])
-            _z.append(_v[2])
-            _r.append(lin.norm(_v))
-
-        # ADD KEYS AND APPEND DATA TO DATAFRAME
-        self.keys.add(_keys)
-        self.data['x'] = pd.Series(_x, index=self.data.index, dtype=_types['x'])
-        self.data['y'] = pd.Series(_y, index=self.data.index, dtype=_types['y'])
-        self.data['z'] = pd.Series(_z, index=self.data.index, dtype=_types['z'])
-        self.data['r'] = pd.Series(_r, index=self.data.index, dtype=_types['r'])
-        # TODO can be vectorized to be made faster
-
-    def place2(self):
-        """Assign reflections their positions in reciprocal space (x, y, z)
-        and calculate their distance from origin (r) in reciprocal Angstrom"""
-        hkl_matrix = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
-        abc_matrix = np.matrix(np.concatenate((self.crystal.a_w,
-                                               self.crystal.b_w,
-                                               self.crystal.c_w)))
-        print(hkl_matrix)
-        print('--------------------------------')
-        print(abc_matrix)
+        hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
+        abc = np.matrix((self.crystal.a_w, self.crystal.b_w, self.crystal.c_w))
+        xyz = hkl @ abc
+        self.data['x'] = xyz[:, 0]
+        self.data['y'] = xyz[:, 1]
+        self.data['z'] = xyz[:, 2]
+        self.data['r'] = lin.norm(xyz, axis=1)
 
     def transform(self, matrix):
         """Transform reflection indices using given 3x3 or 4x4 matrix"""
@@ -1458,14 +1431,9 @@ class HklFrame:
 if __name__ == '__main__':
     p = HklFrame()
     p.crystal.edit_cell(a=6.9271, b=7.3291, c=10.3256, al=93, be=123, ga=71)
-    p.generate_ball(radius=0.2)
+    p.generate_ball(radius=2)
     p.place()
     print(p.data)
-    q = HklFrame()
-    q.crystal.edit_cell(a=6.9271, b=7.3291, c=10.3256, al=93, be=123, ga=71)
-    q.generate_ball(radius=0.2)
-    q.place2()
-    print(q.data)
 
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some
