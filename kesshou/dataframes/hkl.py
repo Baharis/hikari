@@ -488,9 +488,9 @@ class HklFrame:
         """This method returns part of self.data for which equation is True"""
         equation = equation.lower().replace(' ', '').replace('_', '')
         df = self.data
-        # no variables
+        # no variables return dataframe with no rows
         if equation == '':
-            return df
+            return df.iloc[0:0]
         # one variable
         if equation == 'h=2n':
             return df.loc[is2n(df['h'])]
@@ -564,6 +564,9 @@ class HklFrame:
             return df.loc[(is2n(df['h'])) & (is2n(df['l']))]
         if equation in ('k,l=2n', 'l,k=2n'):
             return df.loc[(is2n(df['k'])) & (is2n(df['l']))]
+        if equation in ('h,k,l=2n', 'h,l,k=2n', 'k,h,l=2n',
+                        'k,l,h=2n', 'l,h,k=2n', 'l,k,h=2n', ):
+            return df.loc[(is2n(df['h'])) & (is2n(df['k'])) & (is2n(df['l']))]
         # multiple sums of variables
         if equation in ('h+k,h+l,k+l=2n', 'k+h,h+l,k+l=2n', 'h+k,l+h,k+l=2n',
                         'h+k,h+l,l+k=2n', 'k+h,l+h,k+l=2n', 'k+h,l+h,l+k=2n'):
@@ -577,7 +580,6 @@ class HklFrame:
         """This method returns part of self.data which lies within address"""
         address = address.lower().replace(' ', '').replace('_', '')
         df = self.data
-
         # no zeroes in address
         if address == 'hkl':
             return df
@@ -587,7 +589,6 @@ class HklFrame:
             return df.loc[df['h'] == df['l']]
         if address in ('hkk', 'hll'):
             return df.loc[df['k'] == df['l']]
-
         # one zero in address
         if address == 'hk0':
             return df.loc[df['l'] == 0]
@@ -601,7 +602,6 @@ class HklFrame:
             return df.loc[(df['h'] == df['l']) & (df['k'] == 0)]
         if address in ('0kk', '0ll'):
             return df.loc[(df['k'] == df['l']) & (df['h'] == 0)]
-
         # two zeroes in address
         if address == 'h00':
             return df.loc[(df['k'] == 0) & (df['l'] == 0)]
@@ -609,6 +609,10 @@ class HklFrame:
             return df.loc[(df['h'] == 0) & (df['l'] == 0)]
         if address == '00l':
             return df.loc[(df['h'] == 0) & (df['k'] == 0)]
+        # three zeroes in address
+        if address == '000':
+            return df.loc[(df['h'] == 0) & (df['k'] == 0) & (df['l'] == 0)]
+        # raise exception if the address is unknown
         raise ValueError('Unknown domain address have been supplied')
 
     @staticmethod
@@ -711,20 +715,6 @@ class HklFrame:
             if wavelength[:3] in {'pol', 'Pol', 'POL', 'P'}:
                 self.meta['wavelength'] = -1.0
 
-    def seek_reflection(self, **param):
-        """Find indices of reflections described by dict of keys and values"""
-        positions = []
-        for index, reflection in self.data.iterrows():
-            if all(reflection[key] == param[key] for key in param.keys()):
-                positions.append(index)
-        return positions
-
-    def drop_zero(self):
-        """Delete all reflections with h==h==l==0"""
-        indices_to_delete = self.seek_reflection(**{'h': 0, 'k': 0, 'l': 0})
-        self.data.drop(indices_to_delete, inplace=True)
-        self.data.reset_index(drop=True, inplace=True)
-
     def place(self):
         """Assign reflections their positions in reciprocal space (x, y, z)
         and calculate their distance from origin (r) in reciprocal Angstrom"""
@@ -751,6 +741,17 @@ class HklFrame:
         self.data['z'] = pd.Series(_z, index=self.data.index, dtype=_types['z'])
         self.data['r'] = pd.Series(_r, index=self.data.index, dtype=_types['r'])
         # TODO can be vectorized to be made faster
+
+    def place2(self):
+        """Assign reflections their positions in reciprocal space (x, y, z)
+        and calculate their distance from origin (r) in reciprocal Angstrom"""
+        hkl_matrix = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
+        abc_matrix = np.matrix(np.concatenate((self.crystal.a_w,
+                                               self.crystal.b_w,
+                                               self.crystal.c_w)))
+        print(hkl_matrix)
+        print('--------------------------------')
+        print(abc_matrix)
 
     def transform(self, matrix):
         """Transform reflection indices using given 3x3 or 4x4 matrix"""
@@ -976,13 +977,7 @@ class HklFrame:
 
     def trim(self, limit):
         """Cut the reflection further then the limit in A-1"""
-
-        indices_to_delete = []
-        for index, reflection in self.data.iterrows():
-            if reflection['r'] > limit:
-                indices_to_delete.append(index)
-        self.data.drop(indices_to_delete, inplace=True)
-        self.data.reset_index(drop=True, inplace=True)
+        self.data = self.data.loc[self.data['r'] <= limit]
 
     def reduce(self):
         """Average down redundant reflections, e.g. for drawing"""
@@ -1116,7 +1111,7 @@ class HklFrame:
         color_scheme = 'gist_rainbow'
         distance = 1
         axes = list()
-        self.drop_zero()
+        self.extinct('000')
         fig = plt.figure()
 
         # INTERPRET PROJECTION
@@ -1462,18 +1457,15 @@ class HklFrame:
 
 if __name__ == '__main__':
     p = HklFrame()
-    #p.read('/home/dtchon/git/kesshou/test_data/sortav.hkl', 4)
-    #p.crystal.edit_cell(a=6.9271, b=30.3291, c=10.3256, al=90, be=90, ga=90)
-    p.generate_ball(radius=2.1)
+    p.crystal.edit_cell(a=6.9271, b=7.3291, c=10.3256, al=93, be=123, ga=71)
+    p.generate_ball(radius=0.2)
+    p.place()
     print(p.data)
-    #print(equal2n(p.data.h + p.data.k + p.data.l))
-    #assert False
-    #p.make_stats(point_group=PGmmm)
-    p.extinct('hk0', 'h=2n')
-    print(p.data)
-    # something wrong with cplt? too low, should be 100% for this file
-    # systematic extintions are not considered - to be tackled in further future
-    # TODO change point group to laue group in stats counting
+    q = HklFrame()
+    q.crystal.edit_cell(a=6.9271, b=7.3291, c=10.3256, al=93, be=123, ga=71)
+    q.generate_ball(radius=0.2)
+    q.place2()
+    print(q.data)
 
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some
