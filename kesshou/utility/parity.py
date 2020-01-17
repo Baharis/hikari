@@ -1,21 +1,17 @@
 # set of simple functions to increase the clarity of extinction conditions
 
 
-def equal2n(integer):
-    return integer % 2 == 0
+def is2n(int_or_iterable):
+    return int_or_iterable % 2 == 0
 
 
-def equal3n(integer):
-    return integer % 3 == 0
+def is3n(int_or_iterable):
+    return int_or_iterable % 3 == 0
 
 
-def equal4n(integer):
-    return integer % 4 == 0
+def is4n(int_or_iterable):
+    return int_or_iterable % 4 == 0
 
 
-def equal5n(integer):
-    return integer % 5 == 0
-
-
-def equal6n(integer):
-    return integer % 6 == 0
+def is6n(int_or_iterable):
+    return int_or_iterable % 6 == 0

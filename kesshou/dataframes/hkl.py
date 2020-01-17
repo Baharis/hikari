@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from kesshou.utility import cubespace, odd, parity
+from kesshou.utility import cubespace, is2n, is3n, is4n, is6n
 from kesshou.symmetry.pointgroup import *
 import copy
 import random
@@ -484,6 +484,133 @@ class HklFrame:
         c.data = pd.concat([self.data, other.data], ignore_index=True)
         return c
 
+    def condition(self, equation=''):
+        """This method returns part of self.data for which equation is True"""
+        equation = equation.lower().replace(' ', '').replace('_', '')
+        df = self.data
+        # no variables
+        if equation == '':
+            return df
+        # one variable
+        if equation == 'h=2n':
+            return df.loc[is2n(df['h'])]
+        if equation == 'k=2n':
+            return df.loc[is2n(df['k'])]
+        if equation == 'l=2n':
+            return df.loc[is2n(df['l'])]
+        if equation == 'h=3n':
+            return df.loc[is3n(df['h'])]
+        if equation == 'k=3n':
+            return df.loc[is3n(df['k'])]
+        if equation == 'l=3n':
+            return df.loc[is3n(df['l'])]
+        if equation == 'h=4n':
+            return df.loc[is4n(df['h'])]
+        if equation == 'k=4n':
+            return df.loc[is4n(df['k'])]
+        if equation == 'l=4n':
+            return df.loc[is4n(df['l'])]
+        if equation == 'h=6n':
+            return df.loc[is6n(df['h'])]
+        if equation == 'k=6n':
+            return df.loc[is6n(df['k'])]
+        if equation == 'l=6n':
+            return df.loc[is6n(df['l'])]
+        # sum of variables
+        if equation in ('h+k=2n', 'k+h=2n'):
+            return df.loc[is2n(df['h'] + df['k'])]
+        if equation in ('h+l=2n', 'l+h=2n'):
+            return df.loc[is2n(df['h'] + df['l'])]
+        if equation in ('k+l=2n', 'l+k=2n'):
+            return df.loc[is2n(df['k'] + df['l'])]
+        if equation in ('2h+k=4n', 'k+2h=4n'):
+            return df.loc[is4n(df['h'] + df['h'] + df['k'])]
+        if equation in ('h+2k=4n', '2k+h=4n'):
+            return df.loc[is4n(df['h'] + df['k'] + df['k'])]
+        if equation in ('2h+l=4n', 'l+2h=4n'):
+            return df.loc[is4n(df['h'] + df['h'] + df['l'])]
+        if equation in ('h+2l=4n', '2l+h=4n'):
+            return df.loc[is4n(df['h'] + df['l'] + df['l'])]
+        if equation in ('2k+l=4n', 'l+2k=4n'):
+            return df.loc[is4n(df['k'] + df['k'] + df['l'])]
+        if equation in ('k+2l=4n', '2l+k=4n'):
+            return df.loc[is4n(df['k'] + df['l'] + df['l'])]
+        if equation in ('h+k+l=2n', 'h+l+k=2n', 'k+h+l=2n',
+                        'k+l+h=2n', 'l+h+k=2n', 'l+k+h=2n'):
+            return df.loc[is2n(df['h'] + df['k'] + df['l'])]
+        # mixed sum and multiple variables
+        if equation in ('h,k=2n,h+k=4n', 'h+k=4n,h,k=2n',
+                        'k,h=2n,h+k=4n', 'h+k=4n,k,h=2n',
+                        'h,k=2n,k+h=4n', 'k+h=4n,h,k=2n',
+                        'k,h=2n,k+h=4n', 'k+h=4n,k,h=2n'):
+            return df.loc[(is2n(df['h'])) & (is2n(df['k'])) &
+                          (is4n(df['h'] + df['k']))]
+        if equation in ('h,l=2n,h+l=4n', 'h+l=4n,h,l=2n',
+                        'l,h=2n,h+l=4n', 'h+l=4n,l,h=2n',
+                        'h,l=2n,l+h=4n', 'l+h=4n,h,l=2n',
+                        'l,h=2n,l+h=4n', 'l+h=4n,l,h=2n'):
+            return df.loc[(is2n(df['h'])) & (is2n(df['l'])) &
+                          (is4n(df['h'] + df['l']))]
+        if equation in ('k,l=2n,k+l=4n', 'k+l=4n,k,l=2n',
+                        'l,k=2n,k+l=4n', 'k+l=4n,l,k=2n',
+                        'k,l=2n,l+k=4n', 'l+k=4n,k,l=2n',
+                        'l,k=2n,l+k=4n', 'l+k=4n,l,k=2n'):
+            return df.loc[(is2n(df['k'])) & (is2n(df['l'])) &
+                          (is4n(df['k'] + df['l']))]
+        # multiple variables
+        if equation in ('h,k=2n', 'k,h=2n'):
+            return df.loc[(is2n(df['h'])) & (is2n(df['k']))]
+        if equation in ('h,l=2n', 'l,h=2n'):
+            return df.loc[(is2n(df['h'])) & (is2n(df['l']))]
+        if equation in ('k,l=2n', 'l,k=2n'):
+            return df.loc[(is2n(df['k'])) & (is2n(df['l']))]
+        # multiple sums of variables
+        if equation in ('h+k,h+l,k+l=2n', 'k+h,h+l,k+l=2n', 'h+k,l+h,k+l=2n',
+                        'h+k,h+l,l+k=2n', 'k+h,l+h,k+l=2n', 'k+h,l+h,l+k=2n'):
+            return df.loc[(is2n(df['h'] + df['k'])) &
+                          (is2n(df['h'] + df['l'])) &
+                          (is2n(df['k'] + df['l']))]
+        # raise exception if the equation is unknown
+        raise ValueError('Unknown condition equation have been supplied')
+
+    def domain(self, address='hkl'):
+        """This method returns part of self.data which lies within address"""
+        address = address.lower().replace(' ', '').replace('_', '')
+        df = self.data
+
+        # no zeroes in address
+        if address == 'hkl':
+            return df
+        if address in ('hhl', 'kkl'):
+            return df.loc[df['h'] == df['k']]
+        if address in ('hkh', 'lkl'):
+            return df.loc[df['h'] == df['l']]
+        if address in ('hkk', 'hll'):
+            return df.loc[df['k'] == df['l']]
+
+        # one zero in address
+        if address == 'hk0':
+            return df.loc[df['l'] == 0]
+        if address == 'h0l':
+            return df.loc[df['k'] == 0]
+        if address == '0kl':
+            return df.loc[df['h'] == 0]
+        if address in ('hh0', 'kk0'):
+            return df.loc[(df['h'] == df['k']) & (df['l'] == 0)]
+        if address in ('h0h', 'l0l'):
+            return df.loc[(df['h'] == df['l']) & (df['k'] == 0)]
+        if address in ('0kk', '0ll'):
+            return df.loc[(df['k'] == df['l']) & (df['h'] == 0)]
+
+        # two zeroes in address
+        if address == 'h00':
+            return df.loc[(df['k'] == 0) & (df['l'] == 0)]
+        if address == '0k0':
+            return df.loc[(df['h'] == 0) & (df['l'] == 0)]
+        if address == '00l':
+            return df.loc[(df['h'] == 0) & (df['k'] == 0)]
+        raise ValueError('Unknown domain address have been supplied')
+
     @staticmethod
     def interpret_hkl_format(hkl_format):
         """Interpret hkl format int / dict / OrderedDict and return
@@ -724,7 +851,7 @@ class HklFrame:
         format_string, column_labels, file_prefix, file_suffix, zero_line = \
             self.interpret_hkl_format(hkl_format)
         if format_string == 'XD':
-            format_string, column_labels, file_prefix, file_suffix, zero_line =\
+            format_string, column_labels, file_prefix, file_suffix, zero_line = \
                 self.interpret_hkl_format(OrderedDict([('h', 5), ('k', 5),
                                                        ('l', 5), ('b', 5),
                                                        ('I', 10), ('si', 10)]))
@@ -1046,7 +1173,7 @@ class HklFrame:
         ax.set_ylabel(directions[axes[1]])
         ax.scatter(0, 0, s=20, c='k', marker='x')
         ax.scatter(_x, _y, s=_size, c=_color, marker='.',
-                edgecolors=_edge, linewidth=[0.05 * s for s in _size])
+                   edgecolors=_edge, linewidth=[0.05 * s for s in _size])
         ax.axis('equal')
 
         # ADD LEGEND IF APPLICABLE
@@ -1312,16 +1439,38 @@ class HklFrame:
                            'Cplt', 'Redu']
         print(results)
 
-    def extinct_I(self):
-        self.h + self.k + self.l
+    def extinct_i(self):
+        """Test function; extinct all reflections of I-centred lattice"""
+        self.data = self.data.loc[is2n(self.data.h + self.data.k + self.data.l)]
+
+    def extinct(self, domain='hkl', condition=''):
+        """Extinct all reflections which meet condition lll:rrr.
+        lll describes domain which is affected by condition [hkl]
+        rrr describes condition which must be met in the domain [none]"""
+
+        # obtain a copy of dataframe containing only reflections within domain
+        dom = self.domain(domain)
+        # obtain a part of dataframe which meets the condition
+        con = self.condition(condition)
+        # obtain a part of domain which does NOT meet the condition
+        dom = dom.loc[~dom.isin(con).all(1)]
+        # remove from self.data refls in domain which do NOT meet the condition
+        self.data = self.data.loc[~self.data.isin(dom).all(1)]
+        # reset the indices for other methods to use
+        self.data.reset_index(inplace=True)
 
 
 if __name__ == '__main__':
     p = HklFrame()
-    p.read('/home/dtchon/git/kesshou/test_data/sortav.hkl', 4)
-    p.crystal.edit_cell(a=6.9271, b=30.3291, c=10.3256, al=90, be=90, ga=90)
-    p.place()
-    p.make_stats(point_group=PGmmm)
+    #p.read('/home/dtchon/git/kesshou/test_data/sortav.hkl', 4)
+    #p.crystal.edit_cell(a=6.9271, b=30.3291, c=10.3256, al=90, be=90, ga=90)
+    p.generate_ball(radius=2.1)
+    print(p.data)
+    #print(equal2n(p.data.h + p.data.k + p.data.l))
+    #assert False
+    #p.make_stats(point_group=PGmmm)
+    p.extinct('hk0', 'h=2n')
+    print(p.data)
     # something wrong with cplt? too low, should be 100% for this file
     # systematic extintions are not considered - to be tackled in further future
     # TODO change point group to laue group in stats counting

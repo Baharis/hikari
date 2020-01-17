@@ -1,2 +1,2 @@
 from .cubespace import cubespace
-from .parity import equal2n, equal3n, equal4n, equal5n, equal6n
+from .parity import is2n, is3n, is4n, is6n
