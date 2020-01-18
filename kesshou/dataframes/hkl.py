@@ -645,6 +645,12 @@ class HklFrame:
             file_prefix = False
             file_suffix = False
             zero_line = True
+        elif hkl_format == 40:
+            column_labels = ('h', 'k', 'l', 'I', 'si')
+            format_string = '4s 4s 4s 8s 8s'
+            file_prefix = False
+            file_suffix = False
+            zero_line = True
         elif hkl_format == 5:
             column_labels = ('h', 'k', 'l', 'I', 'si', 'c')
             format_string = '4s 4s 4s 8s 8s 4s'
@@ -1059,17 +1065,8 @@ class HklFrame:
 
     def calculate_uncertainty(self, master_key):
         """For each reflection calculate u = master_key/sigma(master_key)"""
-        uncertainties = []
-        for index, row in self.data.iterrows():
-            try:
-                uncertainty = abs(row[master_key] / row['si'])
-            except ZeroDivisionError:
-                uncertainty = 0.0
-            uncertainties.append(uncertainty)
-        self.keys.add(['u'])
-        typ = self.keys.get_property('u', 'dtype')
-        self.data['u'] = pd.Series(uncertainties, dtype=typ)
-        # TODO vectorize
+        self.data['u'] = [0 if si == 0 else abs(mk / si) for
+                          mk, si in zip(self.data[master_key], self.data['si'])]
 
     def draw(self, alpha=False, colored='b', dpi=600, legend=True,
              master_key='I', projection=('h', 'k', 0),
@@ -1416,10 +1413,6 @@ class HklFrame:
                            'Cplt', 'Redu']
         print(results)
 
-    def extinct_i(self):
-        """Test function; extinct all reflections of I-centred lattice"""
-        self.data = self.data.loc[is2n(self.data.h + self.data.k + self.data.l)]
-
     def extinct(self, domain='hkl', condition=''):
         """Extinct all reflections which meet condition lll:rrr.
         lll describes domain which is affected by condition [hkl]
@@ -1440,14 +1433,14 @@ class HklFrame:
 if __name__ == '__main__':
     p = HklFrame()
 #    p.crystal.edit_cell(a=10, b=10, c=10)
-    p.crystal.edit_cell(a=16.9271, b=17.3291, c=20.3256, al=93, be=123, ga=71)
-    p.generate_ball()
-    p.place()
+    #p.crystal.edit_cell(a=16.9271, b=17.3291, c=20.3256, al=93, be=123, ga=71)
+    #p.generate_ball()
+    #p.place()
+    p.read('/home/dtchon/_/shelxt.hkl', 40)
+    #p.extinct('000')
     q = copy.deepcopy(p)
-    p.dac(opening_angle=35, vector=(2, 1, 0))
-    q.dac2(opening_angle=35, vector=(2, 1, 0))
-
-
+    p.calculate_uncertainty('I')
+    print(p.data['u'])
 
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some
