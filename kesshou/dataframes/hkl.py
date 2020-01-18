@@ -484,6 +484,14 @@ class HklFrame:
         c.data = pd.concat([self.data, other.data], ignore_index=True)
         return c
 
+    @property
+    def la(self):
+        return self.meta['wavelength']
+
+    @property
+    def r_lim(self):
+        return 2 / self.meta['wavelength']
+
     def condition(self, equation=''):
         """This method returns part of self.data for which equation is True"""
         equation = equation.lower().replace(' ', '').replace('_', '')
@@ -740,7 +748,7 @@ class HklFrame:
         self.data['h'] = pd.Series(_h, index=self.data.index, dtype=np.int8)
         self.data['k'] = pd.Series(_k, index=self.data.index, dtype=np.int8)
         self.data['l'] = pd.Series(_l, index=self.data.index, dtype=np.int8)
-        # TODO very slow for large hkls; vectorize to multiply matrices
+        #TODO vectorize
 
     def read(self, hkl_path, hkl_format):
         """Read .hkl file as specified by path and fields
@@ -876,48 +884,45 @@ class HklFrame:
             hkl_file.write(file_suffix + '\n')
         hkl_file.close()
 
-    def dac(self, opening_angle=40, vector=False):
+    def dac(self, opening_angle=40, vector=None):
         """Cut the reflections based on DAC angle (degrees) and
         orientation matrix or perpendicular vector in rec. space (if given).
         Please provide angle from normal vector, not double opening angle."""
-
-        # CALCULATE OPENING ANGLE "oa" AND WAVELENGTH "la"
+        # make the abbreviations for opening angle, self.data and self.crystal
+        xl = self.crystal
         oa = np.radians([float(opening_angle)])[0]
-        la = self.meta['wavelength']
-
-        # CALCULATE NORMAL VECTOR "_n" IN RECIPROCAL LATTICE
-        if vector is False:
-            _r = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
-            _UB = self.crystal.orient_matrix    # import UB orientation matrix
-            _h = np.dot(lin.inv(_UB), _r)       # calculate plane hkl indices
-            _n = _h[0] * self.crystal.a_w + \
-                 _h[1] * self.crystal.b_w + \
-                 _h[2] * self.crystal.c_w       # calc. perp. vect. in recipr. space
-        if vector is not False:
-            _n = np.array(vector)
-        _n /= lin.norm(_n)                  # normalise the n vector
-
-        # DELETE REFLECTIONS OUT OF ACCESSIBLE VOLUME
-        indices_to_delete = []
-        for index, row in self.data.iterrows():
-            # CALCULATE RECIPROCAL POSITION VECTOR "_v"
-            _v = np.array((row['x'], row['y'], row['z']))
-            # CALCULATE PARALLELLED TO NORMAL VECTOR "_p"
-            _p = _v - _n * np.dot(_v, _n)
-            # EXCLUDE REFLECTIONS PARALLEL TO NORMAL
-            if np.isclose([lin.norm(_p)], [0.]):
-                indices_to_delete.append(index)
-                continue
-            # CALCULATE INCLINATION OF "_v" FROM CELL PLANE (PERP. TO NORMAL)
-            _ph = np.arccos(
-                min((np.dot(_p, _v) / (lin.norm(_p) * lin.norm(_v)), 1)))
-            r_max = 2 * np.sin(max(oa-_ph, 0)) / la
-            # IF ITS OUT OF ACCESSIBLE VOLUME ADD TO DELETION
-            if lin.norm(_v) > r_max:
-                indices_to_delete.append(index)
-        self.data.drop(indices_to_delete, inplace=True)
-        self.data.reset_index(drop=True, inplace=True)
-        # TODO this could be made faster using better vectorisation, see notes
+        # extinct 000 and make sure
+        self.extinct('000')
+        assert 'x' in self.data.columns
+        # calculate normal vector "n" in reciprocal lattice
+        if vector is None:
+            l = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
+            _UB = self.crystal.orient_matrix   # import UB orientation matrix
+            h = np.dot(lin.inv(_UB), l)        # calculate plane hkl indices
+            n = h[0] * xl.a_w + h[1] * xl.b_w + h[2] * xl.c_w # perp. vector
+        else:
+            n = np.array(vector)
+        n = 1 / lin.norm(n) * n                        # normalise the n vector
+        # extinct reflections further than max radius
+        self.trim(limit=self.r_lim * np.sin(oa))
+        # remove reflections perpendicular to disc's normal vector
+        xyz = self.data.loc[:, ('x', 'y', 'z')].to_numpy()
+        self.data = self.data.loc[~np.isclose(xyz @ n, self.data['r'])]
+        # calculate reflection's position in 2D disc reference system "m"
+        # m1 / m2 is a coordinate parallel / perpendicular to vector n
+        xyz = self.data.loc[:, ('x', 'y', 'z')].to_numpy()
+        m1 = np.outer(xyz @ n, n)
+        m2 = xyz - m1
+        m1 = m1 @ n
+        m2 = lin.norm(m2, axis=1)
+        # find the middle of two tori, which trace the DAC-limiting shape
+        t1 = 1 / 2 * self.r_lim * np.cos(oa)
+        t2 = 1 / 2 * self.r_lim * np.sin(oa)
+        # check if points lie in one of two tori making the DAC shape
+        in_torus1 = (m1 - t1) ** 2 + (m2 - t2) ** 2 <= (self.r_lim / 2) ** 2
+        in_torus2 = (m1 + t1) ** 2 + (m2 - t2) ** 2 <= (self.r_lim / 2) ** 2
+        # leave only points which lie in both tori
+        self.data = self.data[in_torus1 * in_torus2]
 
     def thin_out(self, target_completeness=1.0, exponentially=False):
         """Randomly delete reflections to relative desired completeness"""
@@ -947,6 +952,7 @@ class HklFrame:
                     indices_to_delete.append(index)
             self.data.drop(indices_to_delete, inplace=True)
             self.data.reset_index(drop=True, inplace=True)
+    # TODO vectorize
 
     def trim(self, limit):
         """Cut the reflection further then the limit in A-1"""
@@ -1003,6 +1009,7 @@ class HklFrame:
         # INCLUDE LAST REDUNDANTS AND CREATE NEW DATAFRAME
         average_down_redundant_reflections()
         self.data = self.data_from_dict(superreflections)
+    # TODO vectorize, meaby?
 
     def overwrite_values(self, other, keys):
         """Take one merged hkl and overwrite its keys to other merged hkl's"""
@@ -1062,6 +1069,7 @@ class HklFrame:
         self.keys.add(['u'])
         typ = self.keys.get_property('u', 'dtype')
         self.data['u'] = pd.Series(uncertainties, dtype=typ)
+        # TODO vectorize
 
     def draw(self, alpha=False, colored='b', dpi=600, legend=True,
              master_key='I', projection=('h', 'k', 0),
@@ -1269,6 +1277,7 @@ class HklFrame:
 
         # produce new pandas frame with only considered points
         self.data = self.data_from_dict(hkl_content)
+        # TODO vectorize
 
     def count_points_in_sphere(self, radius):
         """Calculate amount of points in a sphere of given radius"""
@@ -1430,10 +1439,15 @@ class HklFrame:
 
 if __name__ == '__main__':
     p = HklFrame()
-    p.crystal.edit_cell(a=6.9271, b=7.3291, c=10.3256, al=93, be=123, ga=71)
-    p.generate_ball(radius=2)
+#    p.crystal.edit_cell(a=10, b=10, c=10)
+    p.crystal.edit_cell(a=16.9271, b=17.3291, c=20.3256, al=93, be=123, ga=71)
+    p.generate_ball()
     p.place()
-    print(p.data)
+    q = copy.deepcopy(p)
+    p.dac(opening_angle=35, vector=(2, 1, 0))
+    q.dac2(opening_angle=35, vector=(2, 1, 0))
+
+
 
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some
