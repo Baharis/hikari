@@ -77,7 +77,7 @@ p.crystal.edit_cell(a=unit_cell_a, b=unit_cell_b, c=unit_cell_c,
                     al=unit_cell_al, be=unit_cell_be, ga=unit_cell_ga)
 p.edit_wavelength(hkl_wavelength)
 ball_radius = 2./p.meta['wavelength']
-p.generate_ball(radius=ball_radius)
+p.make_ball(radius=ball_radius)
 ball_trim_range = 1./resolution_cutoff
 p.drop_zero()
 p.reduce()

@@ -60,7 +60,7 @@ q = HklFrame()
 q.crystal.edit_cell(a=unit_cell_a, b=unit_cell_b, c=unit_cell_c,
                     al=unit_cell_al, be=unit_cell_be, ga=unit_cell_ga)
 q.edit_wavelength(input_hkl_wavelength)
-q.generate_ball(radius=2/p.meta['wavelength'])
+q.make_ball(radius=2 / p.meta['wavelength'])
 q.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
                                     (UB_21, UB_22, UB_23),
                                     (UB_31, UB_32, UB_33)))

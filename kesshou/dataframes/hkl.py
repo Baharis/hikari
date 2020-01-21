@@ -742,19 +742,13 @@ class HklFrame:
 
     def transform(self, matrix):
         """Transform reflection indices using given 3x3 or 4x4 matrix"""
-        m_linear = np.array(((matrix[0][0], matrix[0][1], matrix[0][2]),
-                             (matrix[1][0], matrix[1][1], matrix[1][2]),
-                             (matrix[2][0], matrix[2][1], matrix[2][2])))
-        _h, _k, _l = [], [], []
-        for index, row in self.data.iterrows():
-            v = np.dot(m_linear, np.array((row['h'], row['k'], row['l'])))
-            _h.append(v[0])
-            _k.append(v[1])
-            _l.append(v[2])
-        self.data['h'] = pd.Series(_h, index=self.data.index, dtype=np.int8)
-        self.data['k'] = pd.Series(_k, index=self.data.index, dtype=np.int8)
-        self.data['l'] = pd.Series(_l, index=self.data.index, dtype=np.int8)
-        #TODO vectorize
+        mat = matrix[0:3, 0:3]
+        hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
+        hkl = hkl @ mat
+        self.data['h'] = hkl[:, 0]
+        self.data['k'] = hkl[:, 1]
+        self.data['l'] = hkl[:, 2]
+        self.place()
 
     def read(self, hkl_path, hkl_format):
         """Read .hkl file as specified by path and fields
@@ -958,7 +952,7 @@ class HklFrame:
                     indices_to_delete.append(index)
             self.data.drop(indices_to_delete, inplace=True)
             self.data.reset_index(drop=True, inplace=True)
-    # TODO vectorize
+            # TODO vectorize (low priority)
 
     def trim(self, limit):
         """Cut the reflection further then the limit in A-1"""
@@ -969,6 +963,7 @@ class HklFrame:
 
         # SORT THE HKL DATAFRAME AND PREPARE NECESSARY OBJECTS
         self.data = self.data.sort_values(['h', 'k', 'l'])
+        self.keys.add(set(self.data.keys()) - {'index'})
         superreflections, redundants = dict(), list()
         self.keys.remove(self.keys.reduce_behaviour['discard'])
         for key in self.keys.all:
@@ -1172,115 +1167,35 @@ class HklFrame:
         if showfig:
             plt.show()
 
-    def generate_ball(self, radius=2.0):
+    def make_ball(self, radius=2.0):
         """Generate points in a sphere of given radius"""
+        # prepare necessary abbreviations of known properties
         a, b, c = self.crystal.a_w, self.crystal.b_w, self.crystal.c_w
-        r2 = radius**2
+        max_index = 25
 
-        # function checking whether the point is in sphere
-        def _is_in_sphere(h, k, l):
-            v = h * a + k * b + l * c
-            return np.dot(v, v) <= r2
-            # return lin.norm(h * a + k * b + l * c) <= radius # distance method
+        # function to make a hkl rectangle
+        def _make_hkl_ball(i=max_index, r=radius):
+            hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
+            h = np.concatenate(np.concatenate(hkl_grid[0]))
+            k = np.concatenate(np.concatenate(hkl_grid[1]))
+            l = np.concatenate(np.concatenate(hkl_grid[2]))
+            _hkl = np.matrix((h, k, l)).T
+            return _hkl[lin.norm(_hkl @ np.matrix((a, b, c)), axis=1) <= r]
 
-        # non-negative values generator
-        def _positive_integers():
-            n = -1
-            while True:
-                n += 1
-                yield n
+        # grow the dataframe until all needed points are in
+        hkl = _make_hkl_ball()
+        previous_length = -1
+        while len(hkl) > previous_length:
+            previous_length = len(hkl)
+            max_index = max_index * 2
+            hkl = _make_hkl_ball(max_index)
 
-        # negative values generator
-        def _negative_integers():
-            n = 0
-            while True:
-                n -= 1
-                yield n
-
-        # prepare container for points
-        hkl_content = dict()
-        column_labels = ['h', 'k', 'l', 'I', 'si', 'b', 'm']
-        for key in column_labels:
-            hkl_content[key] = []
-        self.keys.set(column_labels)
-
-        def _add_hkl():
-            hkl_content['h'].append(h)
-            hkl_content['k'].append(k)
-            hkl_content['l'].append(l)
-            hkl_content['I'].append(1.0)
-            hkl_content['si'].append(1.0)
-            hkl_content['b'].append(1)
-            hkl_content['m'].append(1)
-
-        for h in _positive_integers():
-            for k in _positive_integers():
-                for l in _positive_integers():
-                    if _is_in_sphere(h, k, l):
-                        _add_hkl()
-                    else:
-                        break
-                for l in _negative_integers():
-                    if _is_in_sphere(h, k, l):
-                        _add_hkl()
-                    else:
-                        break
-                if not _is_in_sphere(h, k, 0):
-                    break
-            for k in _negative_integers():
-                for l in _positive_integers():
-                    if _is_in_sphere(h, k, l):
-                        _add_hkl()
-                    else:
-                        break
-                for l in _negative_integers():
-                    if _is_in_sphere(h, k, l):
-                        _add_hkl()
-                    else:
-                        break
-                if not _is_in_sphere(h, k, 0):
-                    break
-            if not _is_in_sphere(h, 0, 0):
-                break
-        for h in _negative_integers():
-            for k in _positive_integers():
-                for l in _positive_integers():
-                    if _is_in_sphere(h, k, l):
-                        _add_hkl()
-                    else:
-                        break
-                for l in _negative_integers():
-                    if _is_in_sphere(h, k, l):
-                        _add_hkl()
-                    else:
-                        break
-                if not _is_in_sphere(h, k, 0):
-                    break
-            for k in _negative_integers():
-                for l in _positive_integers():
-                    if _is_in_sphere(h, k, l):
-                        _add_hkl()
-                    else:
-                        break
-                for l in _negative_integers():
-                    if _is_in_sphere(h, k, l):
-                        _add_hkl()
-                    else:
-                        break
-                if not _is_in_sphere(h, k, 0):
-                    break
-            if not _is_in_sphere(h, 0, 0):
-                break
-
-        # produce new pandas frame with only considered points
-        self.data = self.data_from_dict(hkl_content)
-        # TODO vectorize
-
-    def count_points_in_sphere(self, radius):
-        """Calculate amount of points in a sphere of given radius"""
-
-        self.generate_ball(radius)
-        return len(self)
+        # create new dataframe using obtained ball of data
+        h, k, l = np.vsplit(hkl.T, 3)
+        ones = np.ones_like(np.array(h)[0])
+        data = {'h': np.array(h)[0], 'k': np.array(k)[0], 'l': np.array(l)[0],
+                'I': ones, 'si': ones, 'm': ones}
+        self.data = self.data_from_dict(data)
 
     def to_hklres(self, colored='m', master_key='I', path='hkl.res'):
 
@@ -1364,7 +1279,7 @@ class HklFrame:
         # resymmetrified unmerged dataframe
         hkl_base = copy.deepcopy(self)
         hkl_full = copy.deepcopy(self)
-        hkl_full.generate_ball(radius=max_resolution)
+        hkl_full.make_ball(radius=max_resolution)
         hkl_full.place()
         hkl_merged = copy.deepcopy(self)
         hkl_merged.reduce()
@@ -1415,9 +1330,8 @@ class HklFrame:
 
     def extinct(self, domain='hkl', condition=''):
         """Extinct all reflections which meet condition lll:rrr.
-        lll describes domain which is affected by condition [hkl]
-        rrr describes condition which must be met in the domain [none]"""
-
+        domain describes area which is affected by condition [hkl]
+        condition describes reflections which are preserved in domain [none]"""
         # obtain a copy of dataframe containing only reflections within domain
         dom = self.domain(domain)
         # obtain a part of dataframe which meets the condition
@@ -1427,20 +1341,14 @@ class HklFrame:
         # remove from self.data refls in domain which do NOT meet the condition
         self.data = self.data.loc[~self.data.isin(dom).all(1)]
         # reset the indices for other methods to use
-        self.data.reset_index(inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
 
 
 if __name__ == '__main__':
     p = HklFrame()
-#    p.crystal.edit_cell(a=10, b=10, c=10)
-    #p.crystal.edit_cell(a=16.9271, b=17.3291, c=20.3256, al=93, be=123, ga=71)
-    #p.generate_ball()
-    #p.place()
-    p.read('/home/dtchon/_/shelxt.hkl', 40)
-    #p.extinct('000')
-    q = copy.deepcopy(p)
-    p.calculate_uncertainty('I')
-    print(p.data['u'])
+#   p.crystal.edit_cell(a=10, b=10, c=10)
+#    p.crystal.edit_cell(a=16.9271, b=17.3291, c=20.3256, al=93, be=123, ga=71)
+    p.make_ball(radius=50.1)
 
 # TODO 3D call visualise and to pyqtplot
 # TODO some function changes something globally (try to cut some
