@@ -25,11 +25,11 @@ p, q = HklFrame(), HklFrame()
 p.read(input_target_hkl, input_target_hkl_format)
 q.read(input_overwriting_hkl, input_overwriting_hkl_format)
 q.resymmetrify(symmetry_operations)
-p.drop_zero()
-q.drop_zero()
+p.extinct('000')
 
 # Perform the overwriting and prepare new file
-q = p.overwrite_values(q, keys=['I', 'si'])
+p.overwrite_values(q, keys=['I', 'si'])
 q.write(output_directory + output_overwritten_hkl, output_hkl_format)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END OF FILE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# might not work after last changes - to be checked

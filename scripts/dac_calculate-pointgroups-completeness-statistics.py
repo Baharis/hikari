@@ -65,7 +65,7 @@ q.crystal.edit_cell(a=unit_cell_a, b=unit_cell_b, c=unit_cell_c,
                     al=unit_cell_al, be=unit_cell_be, ga=unit_cell_ga)
 q.edit_wavelength(hkl_wavelength)
 q.make_ball(radius=1. / resolution)
-q.reduce()
+q.merge()
 q.drop_zero()
 total_reflections = len(q)
 output_file.write('total_reflections: ' + str(total_reflections))
@@ -75,7 +75,7 @@ oa_in_radians = pressure_cell_oa * np.pi / 180.
 observed_radius = min((2.001*np.sin(oa_in_radians)/q.meta['wavelength'],
                        1./resolution))
 q.make_ball(radius=observed_radius)
-q.place()
+q._place()
 q.drop_zero()
 
 # Generate a list of points on sphere and for each...

@@ -26,7 +26,7 @@ p.read(input_hkl_path, input_hkl_format)
 # Apply all symmetry elements to the hkl
 p.resymmetrify(operations=point_group.operations)
 if merge_at_the_end is True:
-    p.reduce()
+    p.merge()
 
 # Write the output hkl file
 p.write(output_hkl_path, output_hkl_format)

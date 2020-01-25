@@ -32,7 +32,7 @@ p.read(input_hkl_path, input_hkl_format)
 p.drop_zero()
 
 # Assign reflections their positions and make statistics
-p.place()
+p._place()
 p.make_stats(point_group=point_group)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END OF FILE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #

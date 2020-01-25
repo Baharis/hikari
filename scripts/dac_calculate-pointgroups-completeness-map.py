@@ -80,8 +80,8 @@ ball_radius = 2./p.meta['wavelength']
 p.make_ball(radius=ball_radius)
 ball_trim_range = 1./resolution_cutoff
 p.drop_zero()
-p.reduce()
-p.place()
+p.merge()
+p._place()
 p.trim(limit=ball_trim_range)
 total_reflections = p.data.shape[0]
 log.write(20 * '-' + ' R A D I A T I O N ' + 20 * '-' + '\n')

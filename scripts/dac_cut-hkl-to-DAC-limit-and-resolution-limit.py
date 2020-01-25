@@ -60,7 +60,7 @@ if not use_vector_instead_of_orientation_matrix:
                                         (UB_21, UB_22, UB_23),
                                         (UB_31, UB_32, UB_33)))
 p.drop_zero()
-p.place()
+p._place()
 
 # Prepare list of interesting projections
 projections = (('h', 'k', 0), ('h', 0, 'l'), (0, 'k', 'l'),
@@ -72,7 +72,7 @@ p.trim(reslim)
 
 # Draw projections before dac operation
 q = deepcopy(p)
-q.reduce()
+q.merge()
 for projection in projections:
     output_png_path = output_directory + output_name + '_full_' + \
                       str(projection[0]) + \
@@ -95,7 +95,7 @@ for oa in pressure_cell_oa:
     output_hkl_path = output_directory + output_name +\
                       '_oa' + str(oa)[0:6] + '.hkl'
     q.write(hkl_path=output_hkl_path, hkl_format=output_hkl_format)
-    q.reduce()
+    q.merge()
     q.drop_zero()
     for projection in projections:
         output_png_path = output_directory + output_name + \

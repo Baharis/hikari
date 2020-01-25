@@ -67,15 +67,15 @@ elif options['-c'] != 'None':
     c.ga_d = np.radians(readers.ustrip(cif['_cell_angle_gamma']))
 
 if options['draw2d']:
-    p.place(c)
+    p._place(c)
     for times in range(eval(options['--reduce'])):
-        p.reduce()
+        p.merge()
     p.draw(color_scheme='gist_rainbow', dpi=600, itosigma=options['--itosigma'],
            legend=True, projection=eval(options['--plane']), savepath=True,
            savename=options['-s'], scale=eval(options['--scale']), showfig=None)
 
 elif options['modify']:
-    p.place(c)
+    p._place(c)
     if options['--trim'] != 'None':
         p.trim(eval(options['--trim']))
     if options['--thin'] != 'None':

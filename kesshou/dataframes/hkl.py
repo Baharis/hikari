@@ -92,9 +92,15 @@ class HklCrystal:
         self.__a_r = self.b_d * self.c_d * np.sin(self.al_d) / self.v_d
         self.__b_r = self.c_d * self.a_d * np.sin(self.be_d) / self.v_d
         self.__c_r = self.a_d * self.b_d * np.sin(self.ga_d) / self.v_d
-        self.__al_r = np.pi - self.al_d
-        self.__be_r = np.pi - self.be_d
-        self.__ga_r = np.pi - self.ga_d
+        self.__al_r = np.arccos((np.cos(self.be_d) * np.cos(self.ga_d)
+                                 - np.cos(self.al_d)) /
+                                (np.sin(self.be_d) * np.sin(self.ga_d)))
+        self.__be_r = np.arccos((np.cos(self.ga_d) * np.cos(self.al_d)
+                                 - np.cos(self.be_d)) /
+                                (np.sin(self.ga_d) * np.sin(self.al_d)))
+        self.__ga_r = np.arccos((np.cos(self.al_d) * np.cos(self.be_d)
+                                 - np.cos(self.ga_d)) /
+                                (np.sin(self.al_d) * np.sin(self.be_d)))
         self.__v_r = self.a_r * self.b_r * self.c_r * \
                      (1 - np.cos(self.al_r) ** 2 - np.cos(self.be_r) ** 2
                       - np.cos(self.ga_r) ** 2 + 2 * np.cos(self.al_r)
@@ -472,7 +478,6 @@ class HklFrame:
     def __init__(self):
         self.crystal = HklCrystal()
         self.data = pd.DataFrame()
-        self.rules = set()
         self.keys = HklKeys()
         self.meta = {'wavelength': 0.71069}
 
@@ -706,21 +711,23 @@ class HklFrame:
         self.data['si'] = self.data.apply(lambda row: 2*row['si']*row['F'],
                                           axis=1)
 
-    def data_from_dict(self, dictionary):
+    def from_dict(self, dictionary):
         """Produce pd DataFrame from dictionary of values"""
         new_data = pd.DataFrame()
+        self.keys.add(dictionary.keys())
         for key, value in dictionary.items():
             typ = self.keys.get_property(key, 'dtype')
             new_data[key] = pd.Series(value, dtype=typ, name=key)
-        return new_data
+        self.data = new_data
+        self._place()
 
     def edit_wavelength(self, wavelength):
         """Define wavelength: "CuKa", "Ag", "Polichromatic" or custom in A"""
-        sources = {'Cr': 2.2896,	'Fe': 1.9360,	'Co': 1.79,
-                   'Cu': 1.54056,	'Mo': 0.71073,	'Zr': 0.69,
-                   'Ag': 0.56087}
+        sources = {'cr': 2.2896,	'fe': 1.9360,	'co': 1.79,
+                   'cu': 1.54056,	'mo': 0.71073,	'zr': 0.69,
+                   'ag': 0.56087}
         try:
-            self.meta['wavelength'] = sources[wavelength[:2]]
+            self.meta['wavelength'] = sources[wavelength[:2].lower()]
         except TypeError:
             # IF CUSTOM VALUE WAS GIVEN
             self.meta['wavelength'] = float(wavelength)
@@ -729,7 +736,7 @@ class HklFrame:
             if wavelength[:3] in {'pol', 'Pol', 'POL', 'P'}:
                 self.meta['wavelength'] = -1.0
 
-    def place(self):
+    def _place(self):
         """Assign reflections their positions in reciprocal space (x, y, z)
         and calculate their distance from origin (r) in reciprocal Angstrom"""
         hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
@@ -748,7 +755,7 @@ class HklFrame:
         self.data['h'] = hkl[:, 0]
         self.data['k'] = hkl[:, 1]
         self.data['l'] = hkl[:, 2]
-        self.place()
+        self._place()
 
     def read(self, hkl_path, hkl_format):
         """Read .hkl file as specified by path and fields
@@ -815,7 +822,7 @@ class HklFrame:
             hkl_content[forgotten] = [default] * hkl_checksum
 
         # PRODUCE PANDAS DATAFRAME
-        self.data = self.data_from_dict(hkl_content)
+        self.from_dict(hkl_content)
 
     def rescale_f(self, factor=1.0):
         self.data['F'] = self.data.apply(lambda row: row['F']*factor, axis=1)
@@ -896,9 +903,9 @@ class HklFrame:
         assert 'x' in self.data.columns
         # calculate normal vector "n" in reciprocal lattice
         if vector is None:
-            l = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
+            l_v = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
             _UB = self.crystal.orient_matrix   # import UB orientation matrix
-            h = np.dot(lin.inv(_UB), l)        # calculate plane hkl indices
+            h = np.dot(lin.inv(_UB), l_v)        # calculate plane hkl indices
             n = h[0] * xl.a_w + h[1] * xl.b_w + h[2] * xl.c_w # perp. vector
         else:
             n = np.array(vector)
@@ -958,59 +965,33 @@ class HklFrame:
         """Cut the reflection further then the limit in A-1"""
         self.data = self.data.loc[self.data['r'] <= limit]
 
-    def reduce(self):
+    def merge(self):
         """Average down redundant reflections, e.g. for drawing"""
 
-        # SORT THE HKL DATAFRAME AND PREPARE NECESSARY OBJECTS
-        self.data = self.data.sort_values(['h', 'k', 'l'])
-        self.keys.add(set(self.data.keys()) - {'index'})
-        superreflections, redundants = dict(), list()
-        self.keys.remove(self.keys.reduce_behaviour['discard'])
-        for key in self.keys.all:
-            superreflections[key] = list()
+        # group the dataframe and obtain all existing keys
+        grouped = self.data.groupby(['h', 'k', 'l'])
+        grouped_first = grouped.first().reset_index()
+        grouped_mean = grouped.mean().reset_index()
+        grouped_sum = grouped.sum().reset_index()
+        keys = self.data.keys()
 
-        # IMPORT REDUCTION BEHAVIOURS
+        # import reduction behaviours for all keys
         _reduction_kept = self.keys.reduce_behaviour['keep']
         _reduction_added = self.keys.reduce_behaviour['add']
         _reduction_averaged = self.keys.reduce_behaviour['average']
 
-        # DEFINE HOW TO TREAT REDUNDANT REFLECTIONS
-        def average_down_redundant_reflections():
-            # DEAL WITH "KEEP"-TYPE KEYS OF REFLECTION
-            for key in _reduction_kept:
-                superreflections[key].append(redundants[0][key])
-            # DEAL WITH "ADD"-TYPE KEYS OF REFLECTION
-            for key in _reduction_added:
-                _sum = sum([redundant[key] for redundant in redundants])
-                superreflections[key].append(_sum)
-            # DEAL WITH "AVERAGE"-TYPE KEYS OF REFLECTION
-            for key in _reduction_averaged:
-                _sum = sum([redundant[key] for redundant in redundants])
-                _amount = len(redundants)
-                superreflections[key].append(_sum / _amount)
+        # for each key apply a necessary reflections and add it to data
+        data = dict()
+        for key in keys:
+            if key in _reduction_kept:
+                data[key] = grouped_first[key]
+            elif key in _reduction_added:
+                data[key] = grouped_sum[key]
+            elif key in _reduction_averaged:
+                data[key] = grouped_mean[key]
 
-        # ITERATE OVER REFLECTIONS
-        for index, reflection in self.data.iterrows():
-            # CHECK CURRENT REFLECTION
-            try:
-                _conditions = [reflection[i] == redundants[0][i] for i in 'hkl']
-                reflections_are_redundant = all(_conditions)
-            except IndexError:
-                # IF ITS THE VERY FIRST REFLECTION, ADD IT TO REDUNDANT ONES
-                redundants = [reflection]
-                continue
-            # IF IT IS, ADD IT TO THE LIST
-            if reflections_are_redundant:
-                redundants.append(reflection)
-            # IF IT ISN'T:
-            else:
-                average_down_redundant_reflections()
-                redundants = [reflection]
-
-        # INCLUDE LAST REDUNDANTS AND CREATE NEW DATAFRAME
-        average_down_redundant_reflections()
-        self.data = self.data_from_dict(superreflections)
-    # TODO vectorize, meaby?
+        # create dataframe based on obtained data
+        self.from_dict(data)
 
     def overwrite_values(self, other, keys):
         """Take one merged hkl and overwrite its keys to other merged hkl's"""
@@ -1046,8 +1027,7 @@ class HklFrame:
                     index1 += 1
                     continue
                 else:
-                    print('something went wrong')
-                    break
+                    raise ValueError('Problem with merging hkl files')
 
         # DELETE NOT OVERWRITTEN ELEMENTS AND RETURN NEW DATAFRAME
         new_dataframe = copy.deepcopy(self)
@@ -1055,8 +1035,8 @@ class HklFrame:
         new_dataframe.data.reset_index(drop=True, inplace=True)
         data1.drop(indices_to_delete, inplace=True)
         data1.reset_index(drop=True, inplace=True)
-        new_dataframe.data = data1
-        return new_dataframe
+        self.data = data1
+        self._place()
 
     def calculate_uncertainty(self, master_key):
         """For each reflection calculate u = master_key/sigma(master_key)"""
@@ -1176,10 +1156,10 @@ class HklFrame:
         # function to make a hkl rectangle
         def _make_hkl_ball(i=max_index, r=radius):
             hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
-            h = np.concatenate(np.concatenate(hkl_grid[0]))
-            k = np.concatenate(np.concatenate(hkl_grid[1]))
-            l = np.concatenate(np.concatenate(hkl_grid[2]))
-            _hkl = np.matrix((h, k, l)).T
+            _h = np.concatenate(np.concatenate(hkl_grid[0]))
+            _k = np.concatenate(np.concatenate(hkl_grid[1]))
+            _l = np.concatenate(np.concatenate(hkl_grid[2]))
+            _hkl = np.matrix((_h, _k, _l)).T
             return _hkl[lin.norm(_hkl @ np.matrix((a, b, c)), axis=1) <= r]
 
         # grow the dataframe until all needed points are in
@@ -1195,7 +1175,7 @@ class HklFrame:
         ones = np.ones_like(np.array(h)[0])
         data = {'h': np.array(h)[0], 'k': np.array(k)[0], 'l': np.array(l)[0],
                 'I': ones, 'si': ones, 'm': ones}
-        self.data = self.data_from_dict(data)
+        self.from_dict(data)
 
     def to_hklres(self, colored='m', master_key='I', path='hkl.res'):
 
@@ -1209,9 +1189,9 @@ class HklFrame:
         scale = 2./max((abs(hkl_maximum), abs(hkl_minimum)))
 
         # print the title line
-        a  = self.crystal.a_r * 1000
-        b  = self.crystal.b_r * 1000
-        c  = self.crystal.c_r * 1000
+        a = self.crystal.a_r * 1000
+        b = self.crystal.b_r * 1000
+        c = self.crystal.c_r * 1000
         al = np.degrees(self.crystal.al_r)
         be = np.degrees(self.crystal.be_r)
         ga = np.degrees(self.crystal.ga_r)
@@ -1230,9 +1210,9 @@ class HklFrame:
         # define function for getting good label initial - colour
         # labels = ('H', 'He',
         #          'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
-        #          'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar')     #18c.scale
-        labels = ('H', 'Li', 'B', 'N', 'F', 'Na', 'Al', 'P', 'Cl') #9c.scale
-        # labels = ('H')                                             #all red
+        #          'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar')     # 18c.scale
+        labels = ('H', 'Li', 'B', 'N', 'F', 'Na', 'Al', 'P', 'Cl')   # 9c.scale
+        # labels = ('H')                                             # all red
 
         def get_label(integer):
             return labels[(int(integer)-1) % len(labels)]
@@ -1257,15 +1237,16 @@ class HklFrame:
         hklres_file.close()
 
     def resymmetrify(self, operations=tuple(), reduce=True):
+        # prepare empty hkl holder
         q = copy.deepcopy(self)
-
-        # For each declared symmetry operation
+        # For each declared symmetry operation add hkl * operation
         for operation in operations:
             r = copy.deepcopy(self)
             r.transform(operation)
             q = q + r
         if reduce is True:
-            q.reduce()
+            q.merge()
+        # return the result to the dataframe
         self.data = q.data
 
     def make_stats(self, bins=10, point_group=PG_1):
@@ -1280,13 +1261,12 @@ class HklFrame:
         hkl_base = copy.deepcopy(self)
         hkl_full = copy.deepcopy(self)
         hkl_full.make_ball(radius=max_resolution)
-        hkl_full.place()
         hkl_merged = copy.deepcopy(self)
-        hkl_merged.reduce()
+        hkl_merged.merge()
         hkl_resy_u = copy.deepcopy(self)
         hkl_resy_u.resymmetrify(operations=point_group.operations, reduce=False)
         hkl_resy_m = copy.deepcopy(hkl_resy_u)
-        hkl_resy_m.reduce()
+        hkl_resy_m.merge()
 
         # group the dataframes by resolution
         res_limits = cubespace(0.0, max_resolution, num=bins+1)
@@ -1318,20 +1298,21 @@ class HklFrame:
         completeness_symm = independent_after_resy.div(theory)
         redundancy_symm = observed_after_resy.div(independent_after_resy)
 
+        print('>>> ', observed_after_resy)
+        print('>>> ', independent_after_resy)
+
         # make a final results table
         results = pd.concat([observed, independent, theory,
                              completeness_nosymm, redundancy_nosymm,
                              completeness_symm, redundancy_symm],
                             axis=1)
         results.columns = ['Obser', 'Indep', 'Theory',
-                           'Cplt_P1', 'Redu_P1',
-                           'Cplt', 'Redu']
+                           'Cplt_P1', 'Redu_P1', 'Cplt', 'Redu']
         print(results)
+        # TODO last big function to optimise (low priority)
 
-    def extinct(self, domain='hkl', condition=''):
-        """Extinct all reflections which meet condition lll:rrr.
-        domain describes area which is affected by condition [hkl]
-        condition describes reflections which are preserved in domain [none]"""
+    def _extinct(self, domain='hkl', condition=''):
+        """This extinct is faster, but does not work for 'hhl'-type reflns """
         # obtain a copy of dataframe containing only reflections within domain
         dom = self.domain(domain)
         # obtain a part of dataframe which meets the condition
@@ -1343,22 +1324,50 @@ class HklFrame:
         # reset the indices for other methods to use
         self.data.reset_index(drop=True, inplace=True)
 
+    def extinct(self, domain='hkl', condition='', laue_group=PG_1):
+        """Extinct all reflections which meet condition lll:rrr.
+        domain describes area which is affected by condition [hkl]
+        condition describes reflections which are preserved in domain [none]"""
+        # obtain a copy of dataframe containing only reflections within domain
+        dom = self.domain(domain)
+        # obtain a part of dataframe which meets the condition
+        con = self.condition(condition)
+        # obtain a part of domain which does NOT meet the condition
+        dom = dom.loc[~dom.isin(con).all(1)][['h', 'k', 'l']]
+        # make a set with all hkls which should be extinct
+        extinct_set = set()
+        for op in laue_group.operations:
+            extinct_set = extinct_set | {tuple(row) for row in dom.to_numpy() @ op}
+        # remove all reflections whose hkls are in extinct set
+        for h, k, l in list(extinct_set):
+            self.data = self.data[~((self.data['h'] == h) &
+                                    (self.data['k'] == k) &
+                                    (self.data['l'] == l))]
+        # reset the indices for other methods to use
+        self.data.reset_index(drop=True, inplace=True)
+
 
 if __name__ == '__main__':
     p = HklFrame()
-#   p.crystal.edit_cell(a=10, b=10, c=10)
+    p.crystal.edit_cell(a=2.456, b=2.456, c=6.694, al=90, be=90, ga=120)
 #    p.crystal.edit_cell(a=16.9271, b=17.3291, c=20.3256, al=93, be=123, ga=71)
-    p.make_ball(radius=50.1)
+    p.make_ball(1/0.83 * 0.7)
+    p.edit_wavelength('AgKa')
+    print(p.data)
+    p.extinct('hhl', 'l=2n', laue_group=PG6pmmm)
+    p.extinct('00l', 'l=2n', laue_group=PG6pmmm)
+    print(p.data)
+    p.resymmetrify(operations=PG6pmmm.hp_disc_transforming_symm_ops)
+    print(p.data)
+    # TODO make resymmetrify and scripts use point group instead of operations
+    # TODO add extintion functionality to make_stats module
 
-# TODO 3D call visualise and to pyqtplot
-# TODO some function changes something globally (try to cut some
+# TODO 3D call visualise and to pyqtplot (low priority)
 
-# TODO hkl3to4 had function to rescale data if it was too long to fit in format
-# TODO add it here if necessary; pasted below
-# p = HklFrame()
-# p.read(input_hkl_path, 3)
-# max_f = p.data['F'].max()
-# if max_f > 9999:
-#     p.rescale_f(9999 / max_f)
-# p.calculate_intensity_from_structure_factor()
-# p.write(input_hkl_path + 'f4', 4, columns_separator=False)
+# TODO not all operations are applied.
+# TODO check if matplotlib can make 2d maps of completeness
+
+# TODO prepare routine for making 2d completeness maps for custom compound
+# TODO prepare and check installing routines
+# TODO manual
+

@@ -51,7 +51,7 @@ p.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
 p.drop_zero()
 
 # Assign reflections their positions and make basic statistics
-p.place()
+p._place()
 p.dac(opening_angle=pressure_cell_oa)
 p.make_stats(point_group=point_group)
 
@@ -65,7 +65,7 @@ q.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
                                     (UB_21, UB_22, UB_23),
                                     (UB_31, UB_32, UB_33)))
 q.drop_zero()
-q.place()
+q._place()
 
 # analyse DAC completeness (relative to max cplt. in this DAC orientation)
 r_max = max(q.data['r'])

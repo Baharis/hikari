@@ -46,7 +46,7 @@ p.crystal.orient_matrix = np.array(((UB_11, UB_12, UB_13),
                                     (UB_31, UB_32, UB_33)))
 p.make_ball(radius=2 / p.meta['wavelength'])
 p.drop_zero()
-p.place()
+p._place()
 
 # Prepare list of interesting projections
 projections = (('h', 'k', 0), ('h', 0, 'l'), (0, 'k', 'l'),
@@ -55,7 +55,7 @@ projections = (('h', 'k', 0), ('h', 0, 'l'), (0, 'k', 'l'),
 
 # Draw projections before dac operation
 q = deepcopy(p)
-q.reduce()
+q.merge()
 q.drop_zero()
 for projection in projections:
     output_png_path = output_directory + output_name + '_full_' + \
@@ -75,7 +75,7 @@ for oa in pressure_cell_oa:
     output_hkl_path = output_directory + output_name +\
                       '_oa' + str(oa)[0:6] + '.hkl'
     q.write(hkl_path=output_hkl_path, hkl_format=output_hkl_format)
-    q.reduce()
+    q.merge()
     q.drop_zero()
     for projection in projections:
         output_png_path = output_directory + output_name + \
