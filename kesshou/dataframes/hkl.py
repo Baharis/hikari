@@ -20,6 +20,7 @@ class HklCrystal:
     Vector         | *_v           | *_w           |
 
     a, b, c        | unit cell lengths in Angstrom / Angstrom^-1
+    x, y, z        | normalised unit cell vectors
     al, be, ga     | unit cell angles in radians
     v              | unit cell volume in Angstrom^3 / Angstrom^-3"""
 
@@ -179,6 +180,18 @@ class HklCrystal:
         return self.__c_v
 
     @property
+    def x_v(self):
+        return self.__a_v / lin.norm(self.__a_v)
+
+    @property
+    def y_v(self):
+        return self.__b_v / lin.norm(self.__b_v)
+
+    @property
+    def z_v(self):
+        return self.__c_v / lin.norm(self.__c_v)
+
+    @property
     def a_r(self):
         return self.__a_r
 
@@ -217,6 +230,18 @@ class HklCrystal:
     @property
     def c_w(self):
         return self.__c_w
+
+    @property
+    def x_w(self):
+        return self.__a_w / lin.norm(self.__a_w)
+
+    @property
+    def y_w(self):
+        return self.__b_w / lin.norm(self.__b_w)
+
+    @property
+    def z_w(self):
+        return self.__c_w / lin.norm(self.__c_w)
 
 
 class HklKeys:
@@ -1249,18 +1274,24 @@ class HklFrame:
         # return the result to the dataframe
         self.data = q.data
 
-    def make_stats(self, bins=10, point_group=PG_1):
+    def make_stats(self, bins=10, point_group=PG_1, extinctions=(('000', ''),)):
         """This method analyses dataframe in terms of no. of reflections,
         Rint, completeness, redundancy in 'bins' resolution shells."""
 
-        # get max resolution for later calculations
+        # get max resolution for later calculations and extinct data
         max_resolution = max(self.data['r'])
+
+        # extinct wrong reflections
+        for domain, condition in extinctions:
+            self.extinct(domain=domain, condition=condition)
 
         # prepare merged, base, full, resymmetrified merged and
         # resymmetrified unmerged dataframe
         hkl_base = copy.deepcopy(self)
         hkl_full = copy.deepcopy(self)
         hkl_full.make_ball(radius=max_resolution)
+        for domain, condition in extinctions:
+            hkl_full.extinct(domain=domain, condition=condition)
         hkl_merged = copy.deepcopy(self)
         hkl_merged.merge()
         hkl_resy_u = copy.deepcopy(self)
@@ -1351,23 +1382,18 @@ if __name__ == '__main__':
     p = HklFrame()
     p.crystal.edit_cell(a=2.456, b=2.456, c=6.694, al=90, be=90, ga=120)
 #    p.crystal.edit_cell(a=16.9271, b=17.3291, c=20.3256, al=93, be=123, ga=71)
-    p.make_ball(1/0.83 * 0.7)
+    p.make_ball(1/0.83)
     p.edit_wavelength('AgKa')
-    print(p.data)
-    p.extinct('hhl', 'l=2n', laue_group=PG6pmmm)
-    p.extinct('00l', 'l=2n', laue_group=PG6pmmm)
-    print(p.data)
-    p.resymmetrify(operations=PG6pmmm.hp_disc_transforming_symm_ops)
-    print(p.data)
+    p.make_stats(point_group=PG6pmmm, extinctions=[('hhl', 'l=2n'),
+                                                   ('00l', 'l=2n')])
     # TODO make resymmetrify and scripts use point group instead of operations
     # TODO add extintion functionality to make_stats module
 
 # TODO 3D call visualise and to pyqtplot (low priority)
 
-# TODO not all operations are applied.
-# TODO check if matplotlib can make 2d maps of completeness
-
-# TODO prepare routine for making 2d completeness maps for custom compound
 # TODO prepare and check installing routines
 # TODO manual
 
+# TODO join methods 'transform' and 'resymmetrify'
+# TODO resymmetrify uses identity matrix twice
+# TODO (redundancy after resymm is one larger than it should be)
