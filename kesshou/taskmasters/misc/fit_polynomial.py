@@ -165,3 +165,5 @@ pp.legend()
 pp.show()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END OF FILE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+# TODO add documentation and scipy?

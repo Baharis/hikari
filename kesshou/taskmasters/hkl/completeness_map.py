@@ -111,7 +111,15 @@ def completeness_map(a, b, c, al, be, ga,
                 lst.write('\n')
                 _cplt_mesh[j][i] = len(q) / total_reflections
             lst.write('\n')
-        lst.write('\n')
+        index_max = np.unravel_index(np.argmax(_cplt_mesh), _cplt_mesh.shape)
+        best_th, best_ph = th_range[index_max[1]], ph_range[index_max[0]]
+        index_min = np.unravel_index(np.argmin(_cplt_mesh), _cplt_mesh.shape)
+        worst_th, worst_ph = th_range[index_min[1]], ph_range[index_min[0]]
+        lst.write('# best cplt = {_max} for th = {_th}, ph = {_ph}\n'.format(
+            _max=max(data_dict['cplt']), _th=best_th, _ph=best_ph))
+        lst.write('# worst cplt = {_min} for th = {_th}, ph = {_ph}\n'.format(
+            _min=min(data_dict['cplt']), _th=worst_th, _ph=worst_ph))
+        lst.write('# mean cplt = {}\n'.format(np.mean(data_dict['cplt'])))
         lst.close()
         np.savetxt(dat_path, _cplt_mesh)
         return data_dict, _cplt_mesh
@@ -133,7 +141,7 @@ def completeness_map(a, b, c, al, be, ga,
         # wireframe
         ax.plot_wireframe(x, y, z, colors='k', linewidth=0.25)
 
-        # color bar
+        # color map
         my_heatmap_colors = [(0.0, 0.0, 0.0),    # Black
                              (0.0, 0.0, 0.5),    # Indigo
                              (0.0, 0.0, 1.0),    # Blue
@@ -161,12 +169,19 @@ def completeness_map(a, b, c, al, be, ga,
         ax.add_line(art3d.Line3D((_z[0], _len * _z[0]), (_z[1], _len * _z[1]),
                                  (_z[2], _len * _z[2]), color='b', linewidth=5))
 
+        # color mesh for heatmap
+        color_mesh = cplt_mesh[:-1, :-1]
+        for i in range(cplt_mesh.shape[0]-1):
+            for j in range(cplt_mesh.shape[1]-1):
+                color_mesh[i, j] = (cplt_mesh[i + 1, j] + cplt_mesh[i, j + 1] +
+                                    cplt_mesh[i, j] + cplt_mesh[i + 1, j + 1])/4
+
         # heatmap surface
         for item in [fig, ax]:
             item.patch.set_visible(False)
         ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=my_colormap,
                         linewidth=0, antialiased=False,
-                        facecolors=my_colormap(cplt_mesh),
+                        facecolors=my_colormap(color_mesh),
                         vmin=min(data_dict['cplt']),
                         vmax=max(data_dict['cplt']))
         pyplot.savefig(png_path, dpi=600, format='png', bbox_inches=None)
@@ -282,7 +297,6 @@ def completeness_map(a, b, c, al, be, ga,
     _prepare_gnuplot_input()
 
 
-# TODO sth might be wrong with the scale on gnuplot graphic (too large values)
 if __name__ == '__main__':
     completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
                      laue_group=PG4pmmm, output_quality=2)

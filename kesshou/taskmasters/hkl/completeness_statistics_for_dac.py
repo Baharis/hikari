@@ -39,5 +39,5 @@ def dac_statistics(a, b, c, al, be, ga,
         print(rad, len(p), len(r), len(q))
 
 
-if __name__ == '__name__':
+if __name__ == '__main__':
     dac_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)

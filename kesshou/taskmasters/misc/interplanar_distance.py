@@ -82,15 +82,4 @@ print('Odległość między płaszczyznami: ', interplanar_magnitude, sep='\t')
 horizontal_magnitude = np.sqrt(vector_magnitude**2 - interplanar_magnitude**2)
 print('Odległość horyzontalna centroid:', horizontal_magnitude, sep='\t')
 
-
-# dalsza część rysowania płaszczyzny
-# d = -point.dot(normal)
-# xx, yy = np.meshgrid([-5, 10], [-5, 10])
-# z = (-normal[0] * xx - normal[1] * yy - d) * 1. / normal[2]
-# ax.plot_surface(xx, yy, z, alpha=0.2, color=[0, 1, 0])
-
-# ustal granicę i pokaż wizualizację
-# ax.set_xlim(-10, 10)
-# ax.set_ylim(-10, 10)
-# ax.set_zlim(0, 10)
-# plt.show()
+# TODO add documentation and translate to english

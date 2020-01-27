@@ -381,3 +381,5 @@ data_to_csv(data)
 print(data['cc_shape'])
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END OF FILE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+# TODO this object isn't updated for current version and wont work as taskmaster
