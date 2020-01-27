@@ -15,7 +15,7 @@ class PointGroup(Group):
         super().__init__(generators=generators)
 
     @property
-    def hp_disc_transforming_symm_ops(self):
+    def hp_disc_symm_ops(self):
         hp_disc_operations = [op for op in self.operations
                               if lin.det(op) > 0 and np.trace(op) < 3]
         return hp_disc_operations
@@ -76,4 +76,4 @@ PGm_3m = PointGroup(generators=[symm_ops['m_z'], symm_ops['-3_xyz'], symm_ops['m
 
 
 if __name__ == '__main__':
-    print(PG3.hp_disc_transforming_symm_ops)
+    print(PG3.hp_disc_symm_ops)

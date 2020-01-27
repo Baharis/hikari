@@ -916,6 +916,14 @@ class HklFrame:
             hkl_file.write(file_suffix + '\n')
         hkl_file.close()
 
+    def copy(self, empty=False):
+        """Make new dataframe which is an exact copy of self.
+         Remove all data from self.data if empty is True"""
+        new_dataframe = copy.deepcopy(self)
+        if empty:
+            new_dataframe.extinct()
+        return new_dataframe
+
     def dac(self, opening_angle=40, vector=None):
         """Cut the reflections based on DAC angle (degrees) and
         orientation matrix or perpendicular vector in rec. space (if given).
@@ -1261,7 +1269,7 @@ class HklFrame:
         # close the file
         hklres_file.close()
 
-    def resymmetrify(self, operations=tuple(), reduce=True):
+    def resymmetrify(self, operations=tuple(), merge=True):
         # prepare empty hkl holder
         q = copy.deepcopy(self)
         # For each declared symmetry operation add hkl * operation
@@ -1269,7 +1277,7 @@ class HklFrame:
             r = copy.deepcopy(self)
             r.transform(operation)
             q = q + r
-        if reduce is True:
+        if merge is True:
             q.merge()
         # return the result to the dataframe
         self.data = q.data
@@ -1295,7 +1303,7 @@ class HklFrame:
         hkl_merged = copy.deepcopy(self)
         hkl_merged.merge()
         hkl_resy_u = copy.deepcopy(self)
-        hkl_resy_u.resymmetrify(operations=point_group.operations, reduce=False)
+        hkl_resy_u.resymmetrify(operations=point_group.operations, merge=False)
         hkl_resy_m = copy.deepcopy(hkl_resy_u)
         hkl_resy_m.merge()
 

@@ -83,7 +83,7 @@ points = fibonacci_sphere(samples=precision)
 for point in points:
     p = copy.deepcopy(q)
     p.dac(opening_angle=pressure_cell_oa, vector=point)
-    p.resymmetrify(point_group.hp_disc_transforming_symm_ops)
+    p.resymmetrify(point_group.hp_disc_symm_ops)
     counted_reflections = len(p)
     output_file.write('\n' + str(point) + ' ' + str(counted_reflections))
     del p
