@@ -1180,7 +1180,7 @@ class HklFrame:
         if showfig:
             plt.show()
 
-    def make_ball(self, radius=2.0):
+    def make_ball(self, radius=2.0, hkl_limit=400):
         """Generate points in a sphere of given radius"""
         # prepare necessary abbreviations of known properties
         a, b, c = self.crystal.a_w, self.crystal.b_w, self.crystal.c_w
@@ -1198,7 +1198,7 @@ class HklFrame:
         # grow the dataframe until all needed points are in
         hkl = _make_hkl_ball()
         previous_length = -1
-        while len(hkl) > previous_length:
+        while len(hkl) > previous_length and max_index <= hkl_limit:
             previous_length = len(hkl)
             max_index = max_index * 2
             hkl = _make_hkl_ball(max_index)
@@ -1337,9 +1337,6 @@ class HklFrame:
         completeness_symm = independent_after_resy.div(theory)
         redundancy_symm = observed_after_resy.div(independent_after_resy)
 
-        print('>>> ', observed_after_resy)
-        print('>>> ', independent_after_resy)
-
         # make a final results table
         results = pd.concat([observed, independent, theory,
                              completeness_nosymm, redundancy_nosymm,
@@ -1387,13 +1384,7 @@ class HklFrame:
 
 
 if __name__ == '__main__':
-    p = HklFrame()
-    p.crystal.edit_cell(a=2.456, b=2.456, c=6.694, al=90, be=90, ga=120)
-#    p.crystal.edit_cell(a=16.9271, b=17.3291, c=20.3256, al=93, be=123, ga=71)
-    p.make_ball(1/0.83)
-    p.edit_wavelength('AgKa')
-    p.make_stats(point_group=PG6pmmm, extinctions=[('hhl', 'l=2n'),
-                                                   ('00l', 'l=2n')])
+    pass
     # TODO make resymmetrify and scripts use point group instead of operations
     # TODO add extintion functionality to make_stats module
 
