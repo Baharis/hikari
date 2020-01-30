@@ -1,5 +1,6 @@
 from kesshou.dataframes.hkl import HklFrame
 from kesshou.symmetry.pointgroup import *
+from kesshou.utility import make_absolute_path
 from matplotlib import cm, colors, pyplot
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import art3d
@@ -15,11 +16,11 @@ def completeness_map(a, b, c, al, be, ga,
                      resolution=0.83,
                      wavelength='MoKa'):
 
-    dat_path = output_directory + output_name + '.dat'
-    gnu_path = output_directory + output_name + '.gnu'
-    lst_path = output_directory + output_name + '.lst'
-    png_path = output_directory + output_name + '.png'
-    png2_path = output_directory + output_name + '_gnu.png'
+    dat_path = make_absolute_path(output_directory, output_name + '.dat')
+    gnu_path = make_absolute_path(output_directory, output_name + '.gnu')
+    lst_path = make_absolute_path(output_directory, output_name + '.lst')
+    png_path = make_absolute_path(output_directory, output_name + '.png')
+    png2_path = make_absolute_path(output_directory, output_name + '_gnu.png')
 
     def _make_reference_ball():
         """Make ball of hkl which will be cut in further steps"""
@@ -98,7 +99,7 @@ def completeness_map(a, b, c, al, be, ga,
                 v = _translate_angles_to_vector(theta=th, phi=ph)
                 q = p.copy()
                 q.dac(opening_angle=opening_angle, vector=v)
-                q.resymmetrify(operations=laue_group.hp_disc_symm_ops)
+                q.transform(operations=laue_group.chiral_operations)
                 q.merge()
                 data_dict['th'].append(th)
                 data_dict['ph'].append(ph)
@@ -299,4 +300,4 @@ def completeness_map(a, b, c, al, be, ga,
 
 if __name__ == '__main__':
     completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
-                     laue_group=PG4pmmm, output_quality=2)
+                     laue_group=PG4pmmm, output_quality=3)

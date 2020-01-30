@@ -793,9 +793,9 @@ class HklFrame:
         def _build_transformed_dataframe():
             dataframes = list()
             for op in ops:
-                df = self.data
+                df = copy.deepcopy(self.data)
                 mat = op[0:3, 0:3]
-                hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy() @ mat
+                hkl = self.data.loc[:, ['h', 'k', 'l']].to_numpy() @ mat
                 df['h'] = hkl[:, 0]
                 df['k'] = hkl[:, 1]
                 df['l'] = hkl[:, 2]
@@ -1387,12 +1387,16 @@ class HklFrame:
 if __name__ == '__main__':
     from kesshou.symmetry.symm_ops import symm_ops
     e = symm_ops['1']
+    r = symm_ops['4_z']
+    print(r.shape)
     p = HklFrame()
-    p.make_ball(20)
-    p.merge(point_group=PGmmm)
-    p.transform((e, e, e, e, e))
-    p.make_stats(point_group=PGmmm)
-
+    p.crystal.edit_cell(a=5, b=5, c=5)
+    p.make_ball(2.1)
+    p.rescale(key='I', factor=10)
+    p.dac(opening_angle=45, vector=(1, 1, 1))
+    p.to_hklres(path='/home/dtchon/_/test1hkl.res')
+    p.transform((e, r))
+    p.to_hklres(path='/home/dtchon/_/test2hkl.res')
 
 
 # TODO read and write free format

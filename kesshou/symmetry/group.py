@@ -14,6 +14,10 @@ class Group:
         self.equivalents = list()
         self.construct()
 
+    @property
+    def chiral_operations(self):
+        return [op for op in self.operations if lin.det(op) > 0]
+
     def construct(self):
         self.generate_operations()
         self.generate_equivalents()
@@ -49,7 +53,7 @@ class Group:
         self.equivalents = eqs
 
     @property
-    def is_enantiomorphic(self):
+    def is_chiral(self):
         return all(lin.det(op) > 0 for op in self.operations)
 
     @property

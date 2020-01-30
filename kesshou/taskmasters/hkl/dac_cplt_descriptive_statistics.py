@@ -35,7 +35,7 @@ def dac_cplt_descriptive_statistics(a, b, c, al, be, ga,
     for vector in vectors:
         q = p.copy()
         q.dac(opening_angle=opening_angle, vector=vector)
-        q.resymmetrify(laue_group.hp_disc_symm_ops, merge=True)
+        q.resymmetrify(laue_group.chiral_operations, merge=True)
         reflections.append(len(q))
         out.write('\n' + str(vector) + ': ' + str(len(q)))
     out.write('\nmax_reflections: ' + str(max(reflections)))

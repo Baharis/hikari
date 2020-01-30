@@ -28,7 +28,7 @@ def dac_statistics(a, b, c, al, be, ga,
     q.extinct('000')
 
     r = copy.deepcopy(q)
-    r.resymmetrify(point_group.hp_disc_symm_ops)
+    r.resymmetrify(point_group.chiral_operations)
 
     r_max = max(q.data['r'])
     print('limiting_radius experiment theory_no_symm theory_w/_symm')

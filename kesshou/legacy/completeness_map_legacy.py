@@ -68,7 +68,7 @@ log.write('> unit cell ga: ' + str(unit_cell_ga) + '\n')
 log.write('> primary orientation (hkl): ' + str(primary_orientation) + '\n')
 log.write('> secondary orientation (hkl): ' + str(secondary_orientation) + '\n')
 log.write('> symmetry operations: ' + '\n')
-for operation in point_group.hp_disc_symm_ops:
+for operation in point_group.chiral_operations:
     log.write('> ' + str(operation) + '\n')
 
 # generate reference ball
@@ -150,7 +150,7 @@ for phi_index, phi in enumerate(phi_range):
         # trim a copy of ball and calculate completeness
         q = copy.deepcopy(p)
         q.dac(opening_angle=pressure_cell_oa, vector=DAC_v)
-        q.resymmetrify(operations=point_group.hp_disc_symm_ops)
+        q.resymmetrify(operations=point_group.chiral_operations)
         phi_psi_matrix[phi_index+1, psi_index+1] = q.data.shape[0]
         dat.write('{:8.0f}'.format(phi))
         dat.write('{:8.0f}'.format(psi))
