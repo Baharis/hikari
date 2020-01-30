@@ -506,13 +506,16 @@ class HklFrame:
         self.keys = HklKeys()
         self.meta = {'wavelength': 0.71069}
 
-    def __len__(self):
-        return self.data.shape[0]
-
     def __add__(self, other):
         c = copy.deepcopy(self)
         c.data = pd.concat([self.data, other.data], ignore_index=True)
         return c
+
+    def __len__(self):
+        return self.data.shape[0]
+
+    def __str__(self):
+        return self.data.__str__()
 
     @property
     def la(self):
@@ -772,27 +775,33 @@ class HklFrame:
         self.data['z'] = xyz[:, 2]
         self.data['r'] = lin.norm(xyz, axis=1)
 
-    def resymmetrify(self, operations=tuple(), merge=True):
-        # prepare empty hkl holder
-        q = copy.deepcopy(self)
-        # For each declared symmetry operation add hkl * operation
-        for operation in operations:
-            r = copy.deepcopy(self)
-            r.transform(operation)
-            q = q + r
-        if merge is True:
-            q.merge()
-        # return the result to the dataframe
-        self.data = q.data
+    def transform(self, operations):
+        """This dataframe using single operation or list of operations"""
 
-    def transform(self, matrix):
-        """Transform reflection indices using given 3x3 or 4x4 matrix"""
-        mat = matrix[0:3, 0:3]
-        hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
-        hkl = hkl @ mat
-        self.data['h'] = hkl[:, 0]
-        self.data['k'] = hkl[:, 1]
-        self.data['l'] = hkl[:, 2]
+        def _make_a_list_of_operations():
+            _ops = np.array(operations)
+            if len(_ops.shape) == 1:
+                raise ValueError('Operations should be a list of matrices')
+            elif len(_ops.shape) == 2 and _ops.shape[0] == _ops.shape[1]:
+                return [_ops]
+            elif len(_ops.shape) == 3 and _ops.shape[1] == _ops.shape[2]:
+                return operations
+            else:
+                raise ValueError('Operations should be a list of matrices')
+        ops = _make_a_list_of_operations()
+
+        def _build_transformed_dataframe():
+            dataframes = list()
+            for op in ops:
+                df = self.data
+                mat = op[0:3, 0:3]
+                hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy() @ mat
+                df['h'] = hkl[:, 0]
+                df['k'] = hkl[:, 1]
+                df['l'] = hkl[:, 2]
+                dataframes.append(df)
+            return pd.concat(dataframes, axis=0, ignore_index=True)
+        self.data = _build_transformed_dataframe()
         self._place()
 
     def read(self, hkl_path, hkl_format):
@@ -1005,11 +1014,21 @@ class HklFrame:
         """Cut the reflection further then the limit in A-1"""
         self.data = self.data.loc[self.data['r'] <= limit]
 
-    def merge(self):
+    def merge(self, point_group=PG1):
         """Average down redundant reflections, e.g. for drawing"""
 
+        def find_largest_symmetry_equivalent_hkls():
+            self.data['equiv'] = [(-100000, -100000, -100000)] * len(self.data)
+            _hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
+            for op in point_group.operations:
+                new_hkl = pd.Series(map(tuple, _hkl @ op[0:3, 0:3]))
+                _to_update = self.data['equiv'] < new_hkl
+                self.data.loc[_to_update, 'equiv'] = new_hkl.loc[_to_update]
+            return self.data['equiv']
+        self.data['equiv'] = find_largest_symmetry_equivalent_hkls()
+
         # group the dataframe and obtain all existing keys
-        grouped = self.data.groupby(['h', 'k', 'l'])
+        grouped = self.data.groupby('equiv')
         grouped_first = grouped.first().reset_index()
         grouped_mean = grouped.mean().reset_index()
         grouped_sum = grouped.sum().reset_index()
@@ -1278,66 +1297,56 @@ class HklFrame:
         """This method analyses dataframe in terms of no. of reflections,
         Rint, completeness, redundancy in 'bins' resolution shells."""
 
-        # get max resolution for later calculations and extinct data
-        max_resolution = max(self.data['r'])
+        def prepare_base_copy_of_hkl():
+            _hkl_base = self.copy()
+            for _domain, _condition in extinctions:
+                _hkl_base.extinct(domain=_domain, condition=_condition)
+            return _hkl_base
+        hkl_base = prepare_base_copy_of_hkl()
 
-        # extinct wrong reflections
-        for domain, condition in extinctions:
-            self.extinct(domain=domain, condition=condition)
+        def prepare_ball_of_hkl(point_group=PG1):
+            _hkl_full = hkl_base.copy()
+            _hkl_full.make_ball(radius=max(self.data['r']))
+            _hkl_full.merge(point_group=point_group)
+            for _domain, _condition in extinctions:
+                _hkl_full.extinct(domain=_domain, condition=_condition)
+            return _hkl_full
+        hkl_full1 = prepare_ball_of_hkl(point_group=PG1)
+        hkl_full2 = prepare_ball_of_hkl(point_group=point_group)
 
-        # prepare merged, base, full, resymmetrified merged and
-        # resymmetrified unmerged dataframe
-        hkl_base = copy.deepcopy(self)
-        hkl_full = copy.deepcopy(self)
-        hkl_full.make_ball(radius=max_resolution)
-        for domain, condition in extinctions:
-            hkl_full.extinct(domain=domain, condition=condition)
-        hkl_merged = copy.deepcopy(self)
-        hkl_merged.merge()
-        hkl_resy_u = copy.deepcopy(self)
-        hkl_resy_u.resymmetrify(operations=point_group.operations, merge=False)
-        hkl_resy_m = copy.deepcopy(hkl_resy_u)
-        hkl_resy_m.merge()
+        def prepare_merged_hkl(point_group=PG1):
+            _hkl_merged_pg1 = hkl_base.copy()
+            _hkl_merged_pg1.merge(point_group=point_group)
+            return _hkl_merged_pg1
+        hkl_merged1 = prepare_merged_hkl(point_group=PG1)
+        hkl_merged2 = prepare_merged_hkl(point_group=point_group)
 
-        # group the dataframes by resolution
-        res_limits = cubespace(0.0, max_resolution, num=bins+1)
-        hkl_base_res_bins = pd.cut(hkl_base.data['r'], res_limits)
-        hkl_base_by_res = hkl_base.data.groupby(hkl_base_res_bins)
-        hkl_full_res_bins = pd.cut(hkl_full.data['r'], res_limits)
-        hkl_full_by_res = hkl_full.data.groupby(hkl_full_res_bins)
-        hkl_merged_res_bins = pd.cut(hkl_merged.data['r'], res_limits)
-        hkl_merged_by_res = hkl_merged.data.groupby(hkl_merged_res_bins)
-        hkl_resy_u_res_bins = pd.cut(hkl_resy_u.data['r'], res_limits)
-        hkl_resy_u_by_res = hkl_resy_u.data.groupby(hkl_resy_u_res_bins)
-        hkl_resy_m_res_bins = pd.cut(hkl_resy_m.data['r'], res_limits)
-        hkl_resy_m_by_res = hkl_resy_m.data.groupby(hkl_resy_m_res_bins)
+        def group_by_resolution(ungrouped_hkl, _bins=bins):
+            bins = cubespace(0.0, max(self.data['r']), num=_bins + 1)
+            grouped_hkl = ungrouped_hkl.data.groupby(
+                pd.cut(ungrouped_hkl.data['r'], bins))
+            return grouped_hkl
+        grouped_base = group_by_resolution(hkl_base)
+        grouped_full1 = group_by_resolution(hkl_full1)
+        grouped_full2 = group_by_resolution(hkl_full2)
+        grouped_merged1 = group_by_resolution(hkl_merged1)
+        grouped_merged2 = group_by_resolution(hkl_merged2)
 
-        # count observed, independent and theory reflns for each res. shell
-        observed = hkl_base_by_res.size()
-        independent = hkl_merged_by_res.size()
-        theory = hkl_full_by_res.size()
+        def make_table_with_stats(grouped_base, grouped_full, grouped_merged):
+            observed = grouped_base.size()
+            independent = grouped_merged.size()
+            theory = grouped_full.size()
+            completeness = independent.div(theory)
+            redundancy = observed.div(independent)
+            results = pd.concat([observed, independent, theory,
+                             completeness, redundancy], axis=1)
+            results.columns = ['Obser', 'Indep', 'Theory', 'Cplt', 'Redund.']
+            print(results)
 
-        # calculate completeness and redundancy in P1
-        completeness_nosymm = independent.div(theory)
-        redundancy_nosymm = observed.div(independent)
-
-        # count observed and independent after resymmetrization
-        observed_after_resy = hkl_resy_u_by_res.size()
-        independent_after_resy = hkl_resy_m_by_res.size()
-
-        # calculate completeness and redundancy in point_grpup
-        completeness_symm = independent_after_resy.div(theory)
-        redundancy_symm = observed_after_resy.div(independent_after_resy)
-
-        # make a final results table
-        results = pd.concat([observed, independent, theory,
-                             completeness_nosymm, redundancy_nosymm,
-                             completeness_symm, redundancy_symm],
-                            axis=1)
-        results.columns = ['Obser', 'Indep', 'Theory',
-                           'Cplt_P1', 'Redu_P1', 'Cplt', 'Redu']
-        print(results)
-        # TODO last big function to optimise (low priority)
+        print('\nStatistics in Point Group 1')
+        make_table_with_stats(grouped_base, grouped_full1, grouped_merged1)
+        print('\nStatistics in Selected Point Group')
+        make_table_with_stats(grouped_base, grouped_full2, grouped_merged2)
 
     def _extinct(self, domain='hkl', condition=''):
         """This extinct is faster, but does not work for 'hhl'-type reflns """
@@ -1376,15 +1385,14 @@ class HklFrame:
 
 
 if __name__ == '__main__':
-    pass
-    # TODO make resymmetrify and scripts use point group instead of operations
-    # TODO add extintion functionality to make_stats module
+    from kesshou.symmetry.symm_ops import symm_ops
+    e = symm_ops['1']
+    p = HklFrame()
+    p.make_ball(20)
+    p.merge(point_group=PGmmm)
+    p.transform((e, e, e, e, e))
+    p.make_stats(point_group=PGmmm)
 
-# TODO 3D call visualise and to pyqtplot (low priority)
 
-# TODO prepare and check installing routines
-# TODO manual
 
-# TODO join methods 'transform' and 'resymmetrify'
-# TODO resymmetrify uses identity matrix twice
-# TODO (redundancy after resymm is one larger than it should be)
+# TODO read and write free format
