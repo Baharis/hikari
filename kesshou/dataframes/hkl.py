@@ -772,6 +772,19 @@ class HklFrame:
         self.data['z'] = xyz[:, 2]
         self.data['r'] = lin.norm(xyz, axis=1)
 
+    def resymmetrify(self, operations=tuple(), merge=True):
+        # prepare empty hkl holder
+        q = copy.deepcopy(self)
+        # For each declared symmetry operation add hkl * operation
+        for operation in operations:
+            r = copy.deepcopy(self)
+            r.transform(operation)
+            q = q + r
+        if merge is True:
+            q.merge()
+        # return the result to the dataframe
+        self.data = q.data
+
     def transform(self, matrix):
         """Transform reflection indices using given 3x3 or 4x4 matrix"""
         mat = matrix[0:3, 0:3]
@@ -849,14 +862,8 @@ class HklFrame:
         # PRODUCE PANDAS DATAFRAME
         self.from_dict(hkl_content)
 
-    def rescale_f(self, factor=1.0):
-        self.data['F'] = self.data.apply(lambda row: row['F']*factor, axis=1)
-        self.data['si'] = self.data.apply(lambda row: row['si']*factor, axis=1)
-
-    def rescale_i(self, factor=1.0):
-        self.data['I'] = self.data.apply(lambda row: row['I']*factor, axis=1)
-        self.data['si'] = self.data.apply(lambda row: row['si']*factor, axis=1)
-        # TODO one of those might be wrong (should be square?) ask around which
+    def rescale(self, key, factor):
+        self.data[key] = self.data.apply(lambda row: row[key] * factor, axis=1)
 
     def write(self, hkl_path, hkl_format, columns_separator=True):
         """Write .hkl file as specified by path and write_format"""
@@ -1071,11 +1078,6 @@ class HklFrame:
         self.data = data1
         self._place()
 
-    def calculate_uncertainty(self, master_key):
-        """For each reflection calculate u = master_key/sigma(master_key)"""
-        self.data['u'] = [0 if si == 0 else abs(mk / si) for
-                          mk, si in zip(self.data[master_key], self.data['si'])]
-
     def draw(self, alpha=False, colored='b', dpi=600, legend=True,
              master_key='I', projection=('h', 'k', 0),
              savepath=False, scale=1.0, showfig=False):
@@ -1204,9 +1206,11 @@ class HklFrame:
             hkl = _make_hkl_ball(max_index)
 
         # create new dataframe using obtained ball of data
-        h, k, l = np.vsplit(hkl.T, 3)
-        ones = np.ones_like(np.array(h)[0])
-        data = {'h': np.array(h)[0], 'k': np.array(k)[0], 'l': np.array(l)[0],
+        _h, _k, _l = np.vsplit(hkl.T, 3)
+        ones = np.ones_like(np.array(_h)[0])
+        data = {'h': np.array(_h)[0],
+                'k': np.array(_k)[0],
+                'l': np.array(_l)[0],
                 'I': ones, 'si': ones, 'm': ones}
         self.from_dict(data)
 
@@ -1217,6 +1221,7 @@ class HklFrame:
         for key in list(self.keys.all):
             data_minima[key] = self.data[key].min()
             data_maxima[key] = self.data[key].max()
+
         hkl_minimum = min((data_minima['h'], data_minima['k'], data_minima['l']))
         hkl_maximum = max((data_maxima['h'], data_maxima['k'], data_maxima['l']))
         scale = 2./max((abs(hkl_maximum), abs(hkl_minimum)))
@@ -1268,19 +1273,6 @@ class HklFrame:
 
         # close the file
         hklres_file.close()
-
-    def resymmetrify(self, operations=tuple(), merge=True):
-        # prepare empty hkl holder
-        q = copy.deepcopy(self)
-        # For each declared symmetry operation add hkl * operation
-        for operation in operations:
-            r = copy.deepcopy(self)
-            r.transform(operation)
-            q = q + r
-        if merge is True:
-            q.merge()
-        # return the result to the dataframe
-        self.data = q.data
 
     def make_stats(self, bins=10, point_group=PG_1, extinctions=(('000', ''),)):
         """This method analyses dataframe in terms of no. of reflections,

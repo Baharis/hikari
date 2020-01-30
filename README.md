@@ -70,7 +70,7 @@ Finally it is necessary to tell your Python executable where to look for
 the library itself. Next, while in your virtual environment,
 append the "Kesshou" directory to the PYTHONPATH variable using:
 
-    $ export PYTHONPATH='/absolute/path/to/folder/Kesshou/
+    $ export PYTHONPATH='/absolute/path/to/folder/Kesshou/'
 
 The aforementioned steps can be performed on
 both **Windows** and **Mac** using analogous tools.
@@ -114,7 +114,8 @@ If you prefer to work with your own data, feel free to do so.
 
 ### Read and write
 
-After activating the virtual environment, run python in interactive shell.
+After activating the virtual environment, run python in command prompt
+or interactive shell.
 Since we are interested in the .hkl reflection file,
 we will load a dataframe made specifically to work with these files.
 Then we will create an object called `my_hkl`,
@@ -210,7 +211,7 @@ This will produce a new "hkl.res" file which, after some loading time,
 should be shown in *Mercury*. Basic settings of visualise will
 use atom size to present the I/sigma value. If the size of points is not to
 your liking, you might try increasing the intensity a few times (eg. 5) using
-`my_hkl.rescale_i(5)`.
+`my_hkl.rescale('I', 5)` and running the `to_hklres` method again.
 
 ### Show dac completeness map
 
