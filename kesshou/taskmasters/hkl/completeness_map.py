@@ -33,7 +33,7 @@ def completeness_map(a, b, c, al, be, ga,
         _hkl_frame.make_ball(radius=min(_hkl_frame.r_lim, 1/resolution))
         _hkl_frame.extinct('000')
         for extinction in extinctions:
-            _hkl_frame.extinct(*extinction.split(':', 1), laue_group=laue_group)
+            _hkl_frame.extinct(extinction, point_group=laue_group)
         return _hkl_frame
     p = _make_reference_ball()
     total_reflections = len(p)
@@ -311,4 +311,5 @@ def completeness_map(a, b, c, al, be, ga,
 
 if __name__ == '__main__':
     completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
+                     extinctions=('h00: h=2n', '0k0: k=2n', '00l: l=2n'),
                      laue_group=PG['2/m'], output_quality=2, fix_scale=False)

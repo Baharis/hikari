@@ -431,9 +431,17 @@ class HklKeys:
         'reduce_behaviour': 'keep',
         'type': float
     }
+    __equiv = {
+        'default': (0, 0, 0),
+        'description': 'tuple with lexicographically first equivalent hkl',
+        'imperative': False,
+        'dtype': None,
+        'reduce_behaviour': 'keep',
+        'type': tuple
+    }
     defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'b', 'm', 'la', 'ph',
                     'u', 'r', 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3',
-                    'x', 'y', 'z'}
+                    'x', 'y', 'z', 'equiv'}
 
     def __init__(self):
         # DEFINE ALL KNOWN KEYS
@@ -499,10 +507,10 @@ class HklKeys:
 
 class HklFrame:
     """Single crystal diffraction pattern container"""
-
     def __init__(self):
         self.crystal = HklCrystal()
         self.data = pd.DataFrame()
+        self.hkl_limit = 1000000
         self.keys = HklKeys()
         self.la = 0.71069
 
@@ -830,13 +838,13 @@ class HklFrame:
         # LOAD HKL COLUMN TAGS IF SUPERTYPE IS "XD"
         if format_string is 'XD':
             title_line = hkl_file.readline().strip().split()
-            hkl_mainkey = 'F' if title_line[1] == 'F' else 'I'
+            hkl_main_key = 'F' if title_line[1] == 'F' else 'I'
             if title_line[2] != 'NDAT':
                 raise KeyError('Loaded hkl file is not of "XD" type.')
             if int(title_line[3]) == -7:
-                column_labels = ('h', 'k', 'l', 'b', hkl_mainkey, 'si', 'ph')
+                column_labels = ('h', 'k', 'l', 'b', hkl_main_key, 'si', 'ph')
             elif 6 <= int(title_line[3]) <= 13:
-                column_labels = ('h', 'k', 'l', 'b', hkl_mainkey, 'si',
+                column_labels = ('h', 'k', 'l', 'b', hkl_main_key, 'si',
                                  't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3'
                                  )[0:int(title_line[3])]
             else:
@@ -862,8 +870,8 @@ class HklFrame:
         hkl_file.close()
 
         # IF IMPERATIVE DATA WAS NOT GIVEN, ADD DEFAULTS
-        forgottens = tuple(self.keys.imperatives - set(column_labels))
-        for forgotten in forgottens:
+        forgotten_keys = tuple(self.keys.imperatives - set(column_labels))
+        for forgotten in forgotten_keys:
             default = self.keys.get_property(forgotten, 'default')
             hkl_content[forgotten] = [default] * hkl_checksum
 
@@ -1013,19 +1021,20 @@ class HklFrame:
         """Cut the reflection further then the limit in A-1"""
         self.data = self.data.loc[self.data['r'] <= limit]
 
+    def find_equivalents(self, point_group=PG['1']):
+        l_hkl = self.hkl_limit
+        self.keys.add('equiv')
+        self.data['equiv'] = [(-l_hkl, -l_hkl, -l_hkl)] * len(self.data)
+        _hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
+        for op in point_group.operations:
+            new_hkl = pd.Series(map(tuple, _hkl @ op[0:3, 0:3]))
+            _to_update = self.data['equiv'] < new_hkl
+            self.data.loc[_to_update, 'equiv'] = new_hkl.loc[_to_update]
+
     def merge(self, point_group=PG['1']):
         """Average down redundant reflections, e.g. for drawing"""
 
-        def find_largest_symmetry_equivalent_hkls():
-            self.data['equiv'] = [(-100000, -100000, -100000)] * len(self.data)
-            _hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
-            for op in point_group.operations:
-                new_hkl = pd.Series(map(tuple, _hkl @ op[0:3, 0:3]))
-                _to_update = self.data['equiv'] < new_hkl
-                self.data.loc[_to_update, 'equiv'] = new_hkl.loc[_to_update]
-            return self.data['equiv']
-        self.data['equiv'] = find_largest_symmetry_equivalent_hkls()
-
+        self.find_equivalents(point_group=point_group)
         # group the dataframe and obtain all existing keys
         grouped = self.data.groupby('equiv')
         grouped_first = grouped.first().reset_index()
@@ -1350,19 +1359,28 @@ class HklFrame:
         self.data = self.data.loc[~self.data.isin(dom).all(1)]
         self.data.reset_index(drop=True, inplace=True)
 
-    def extinct(self, domain='hkl', condition='', laue_group=PG['-1']):
+    def extinct(self, rule='hkl', point_group=PG['1']):
         """Extinct all reflections which meet condition lll:rrr.
         domain describes area which is affected by condition [hkl]
         condition describes reflections which are preserved in domain [none]"""
-        # obtain a copy of dataframe containing only reflections within domain
-        dom = self.domain(domain)
-        # obtain a part of dataframe which meets the condition
-        con = self.condition(condition)
+
+        def _interpret_rule():
+            try:
+                _split_rule = [*rule.split(':', 1), '']
+            except AttributeError:
+                _split_rule = rule[0:2]
+            _domain_string = _split_rule[0].strip(' ')
+            _condition_string = _split_rule[1].strip(' ')
+            return _domain_string, _condition_string
+        domain_string, condition_string = _interpret_rule()
+        dom = self.domain(domain_string)
+        con = self.condition(condition_string)
         # obtain a part of domain which does NOT meet the condition
         dom = dom.loc[~dom.isin(con).all(1)][['h', 'k', 'l']]
         # make a set with all hkls which should be extinct
         extinct_set = set()
-        for op in laue_group.operations:
+        point_group.lauefy()
+        for op in point_group.operations:
             extinct_set = extinct_set | {tuple(row) for row in dom.to_numpy() @ op}
         # remove all reflections whose hkls are in extinct set
         for h, k, l in list(extinct_set):
