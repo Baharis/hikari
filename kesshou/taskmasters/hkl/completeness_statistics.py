@@ -1,9 +1,9 @@
 from kesshou.dataframes.hkl import HklFrame
-from kesshou.symmetry.pointgroup import *
+from kesshou.symmetry import PG
 
 
 def completeness_statistics(a, b, c, al, be, ga,
-                            point_group=PG_1,
+                            point_group=PG['-1'],
                             input_path='shelx.hkl',
                             input_format=4,
                             input_wavelength='CuKa'):

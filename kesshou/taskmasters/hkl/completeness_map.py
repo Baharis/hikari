@@ -1,13 +1,15 @@
 from kesshou.dataframes.hkl import HklFrame
-from kesshou.symmetry.pointgroup import *
+from kesshou.symmetry import PG
 from kesshou.utility import make_absolute_path
 from matplotlib import cm, colors, pyplot
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import art3d
+import numpy as np
+import numpy.linalg as lin
 
 
 def completeness_map(a, b, c, al, be, ga,
-                     laue_group=PG_1,
+                     laue_group=PG['1'],
                      extinctions=tuple(),
                      fix_scale=False,
                      opening_angle=35,
@@ -43,19 +45,21 @@ def completeness_map(a, b, c, al, be, ga,
         _v1 = p.crystal.z_w
         _v2 = p.crystal.x_v
         _v3 = np.cross(_v1, _v2)
-        if laue_group in {PG_1}:
+        if laue_group in {PG['1']}:
             _th_limits = [0, 180]
             _ph_limits = [0, 180]
         # MONOCLINIC
-        elif laue_group in {PG2pm}:
+        elif laue_group in {PG['2/m']}:
             _th_limits = [0, 180]
             _ph_limits = [0, 90]
         # ORTHORHOMBIC / TETRAGONAL / CUBIC
-        elif laue_group in {PGmmm, PG4pm, PG4pmmm, PGm_3, PGm_3m}:
+        elif laue_group in {PG['mmm'], PG['4/m'], PG['4/mmm'],
+                            PG['m-3'], PG['m-3m']}:
             _th_limits = [0, 90]
             _ph_limits = [0, 90]
         # TRIGONAL / CUBIC
-        elif laue_group in {PG_3, PG_3m1, PG6pm, PG6pmmm}:
+        elif laue_group in {PG['-3'], PG['-3m1'], PG['-31m'],
+                            PG['6/m'], PG['6/mmm']}:
             _th_limits = [0, 90]
             _ph_limits = [0, 120]
         else:
@@ -98,7 +102,7 @@ def completeness_map(a, b, c, al, be, ga,
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
                 v = _translate_angles_to_vector(theta=th, phi=ph)
-                q = p.copy()
+                q = p.duplicate()
                 q.dac(opening_angle=opening_angle, vector=v)
                 q.transform(operations=laue_group.chiral_operations)
                 q.merge()
@@ -307,4 +311,4 @@ def completeness_map(a, b, c, al, be, ga,
 
 if __name__ == '__main__':
     completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
-                     laue_group=PG2pm, output_quality=2, fix_scale=False)
+                     laue_group=PG['2/m'], output_quality=2, fix_scale=False)

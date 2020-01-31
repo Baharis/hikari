@@ -1,73 +1,67 @@
 import numpy as np
-import numpy.linalg as lin
 from .group import Group
-from .symm_ops import symm_ops
+from .symmetry_operations import symm_ops as so
 
 
 class PointGroup(Group):
     """Basic Point Group class info holder"""
 
-    unique_point = np.array([0.0 + np.pi / 100,
-                             0.1 + np.pi / 100,
-                             0.2 + np.pi / 100])
+    unique_point = np.array([np.pi / 100, 0.1 + np.pi / 100, 0.2 + np.pi / 100])
 
     def __init__(self, generators):
         super().__init__(generators=generators)
 
     @property
     def is_centrosymmetric(self):
-        return any(np.array_equal(op, symm_ops['-1']) for op in self.operations)
+        return any(np.array_equal(op, so['-1']) for op in self.operations)
 
     def lauefy(self):
-        self.generators.append(symm_ops['-1'])
+        self.generators.append(so['-1'])
         self.construct()
 
 
+PG = dict()
 # TRICLINIC
-PG1 = PointGroup(generators=[symm_ops['1']])
-PG_1 = PointGroup(generators=[symm_ops['-1']])
+PG['1'] = PointGroup(generators=[so['1']])
+PG['-1'] = PointGroup(generators=[so['-1']])
 # MONOCLINIC
-PG2 = PointGroup(generators=[symm_ops['2_y']])
-PGm = PointGroup(generators=[symm_ops['m_y']])
-PG2pm = PointGroup(generators=[symm_ops['2_y'], symm_ops['m_y']])
+PG['2'] = PointGroup(generators=[so['2_y']])
+PG['m'] = PointGroup(generators=[so['m_y']])
+PG['2/m'] = PointGroup(generators=[so['2_y'], so['m_y']])
 # ORTHORHOMBIC
-PG222 = PointGroup(generators=[symm_ops['2_x'], symm_ops['2_y'], symm_ops['2_z']])
-PGmm2 = PointGroup(generators=[symm_ops['m_x'], symm_ops['m_y'], symm_ops['2_z']])
-PGmmm = PointGroup(generators=[symm_ops['m_x'], symm_ops['m_y'], symm_ops['m_z']])
+PG['222'] = PointGroup(generators=[so['2_x'], so['2_y'], so['2_z']])
+PG['mm2'] = PointGroup(generators=[so['m_x'], so['m_y'], so['2_z']])
+PG['mmm'] = PointGroup(generators=[so['m_x'], so['m_y'], so['m_z']])
 # TETRAGONAL
-PG4 = PointGroup(generators=[symm_ops['4_z']])
-PG_4 = PointGroup(generators=[symm_ops['-4_z']])
-PG4pm = PointGroup(generators=[symm_ops['4_z'], symm_ops['m_z']])
-PG422 = PointGroup(generators=[symm_ops['4_z'], symm_ops['2_x'], symm_ops['2_xy']])
-PG4mm = PointGroup(generators=[symm_ops['4_z'], symm_ops['m_x'], symm_ops['m_xy']])
-PG_42m = PointGroup(generators=[symm_ops['-4_z'], symm_ops['2_x'], symm_ops['m_xy']])
-PG_4m2 = PointGroup(generators=[symm_ops['-4_z'], symm_ops['m_x'], symm_ops['2_xy']])
-PG4pmmm = PointGroup(generators=[symm_ops['4_z'], symm_ops['m_z'], symm_ops['m_x'], symm_ops['m_xy']])
+PG['4'] = PointGroup(generators=[so['4_z']])
+PG['-4'] = PointGroup(generators=[so['-4_z']])
+PG['4/m'] = PointGroup(generators=[so['4_z'], so['m_z']])
+PG['422'] = PointGroup(generators=[so['4_z'], so['2_x'], so['2_xy']])
+PG['4mm'] = PointGroup(generators=[so['4_z'], so['m_x'], so['m_xy']])
+PG['-42m'] = PointGroup(generators=[so['-4_z'], so['2_x'], so['m_xy']])
+PG['-4m2'] = PointGroup(generators=[so['-4_z'], so['m_x'], so['2_xy']])
+PG['4/mmm'] = PointGroup([so['4_z'], so['m_z'], so['m_x'], so['m_xy']])
 # TRIGONAL
-PG3 = PointGroup(generators=[symm_ops['h3_z']])
-PG_3 = PointGroup(generators=[symm_ops['h-3_z']])
-PG321 = PointGroup(generators=[symm_ops['h3_z'], symm_ops['h2_x2y']])
-PG312 = PointGroup(generators=[symm_ops['h3_z'], symm_ops['h2_x2y']])
-PG3m1 = PointGroup(generators=[symm_ops['h3_z'], symm_ops['hm_x']])
-PG31m = PointGroup(generators=[symm_ops['h3_z'], symm_ops['hm_x2y']])
-PG_3m1 = PointGroup(generators=[symm_ops['h-3_z'], symm_ops['hm_x']])
-PG_31m = PointGroup(generators=[symm_ops['h-3_z'], symm_ops['hm_x2y']])
+PG['3'] = PointGroup(generators=[so['h3_z']])
+PG['-3'] = PointGroup(generators=[so['h-3_z']])
+PG['321'] = PointGroup(generators=[so['h3_z'], so['h2_x2y']])
+PG['312'] = PointGroup(generators=[so['h3_z'], so['h2_x2y']])
+PG['3m1'] = PointGroup(generators=[so['h3_z'], so['hm_x']])
+PG['31m'] = PointGroup(generators=[so['h3_z'], so['hm_x2y']])
+PG['-3m1'] = PointGroup(generators=[so['h-3_z'], so['hm_x']])
+PG['-31m'] = PointGroup(generators=[so['h-3_z'], so['hm_x2y']])
 # HEXAGONAL
-PG6 = PointGroup(generators=[symm_ops['h6_z']])
-PG_6 = PointGroup(generators=[symm_ops['h-6_z']])
-PG6pm = PointGroup(generators=[symm_ops['h6_z'], symm_ops['hm_z']])
-PG622 = PointGroup(generators=[symm_ops['h6_z'], symm_ops['h2_x'], symm_ops['h2_x2y']])
-PG6mm = PointGroup(generators=[symm_ops['h6_z'], symm_ops['hm_x'], symm_ops['hm_x2y']])
-PG_6m2 = PointGroup(generators=[symm_ops['h-6_z'], symm_ops['hm_x'], symm_ops['h2_x2y']])
-PG_62m = PointGroup(generators=[symm_ops['h-6_z'], symm_ops['h2_x'], symm_ops['hm_x2y']])
-PG6pmmm = PointGroup(generators=[symm_ops['h6_z'], symm_ops['hm_z'], symm_ops['hm_x'], symm_ops['hm_x2y']])
+PG['6'] = PointGroup(generators=[so['h6_z']])
+PG['-6'] = PointGroup(generators=[so['h-6_z']])
+PG['6/m'] = PointGroup(generators=[so['h6_z'], so['hm_z']])
+PG['622'] = PointGroup(generators=[so['h6_z'], so['h2_x'], so['h2_x2y']])
+PG['6mm'] = PointGroup(generators=[so['h6_z'], so['hm_x'], so['hm_x2y']])
+PG['-6m2'] = PointGroup(generators=[so['h-6_z'], so['hm_x'], so['h2_x2y']])
+PG['-62m'] = PointGroup(generators=[so['h-6_z'], so['h2_x'], so['hm_x2y']])
+PG['6/mmm'] = PointGroup([so['h6_z'], so['hm_z'], so['hm_x'], so['hm_x2y']])
 # CUBIC
-PG23 = PointGroup(generators=[symm_ops['2_z'], symm_ops['3_xyz']])
-PGm_3 = PointGroup(generators=[symm_ops['m_z'], symm_ops['-3_xyz']])
-PG432 = PointGroup(generators=[symm_ops['4_z'], symm_ops['3_xyz'], symm_ops['2_xy']])
-PG_43m = PointGroup(generators=[symm_ops['-4_z'], symm_ops['3_xyz'], symm_ops['m_xy']])
-PGm_3m = PointGroup(generators=[symm_ops['m_z'], symm_ops['-3_xyz'], symm_ops['m_xy']])
-
-
-if __name__ == '__main__':
-    print(PG3.chiral_operations)
+PG['23'] = PointGroup(generators=[so['2_z'], so['3_xyz']])
+PG['m-3'] = PointGroup(generators=[so['m_z'], so['-3_xyz']])
+PG['432'] = PointGroup(generators=[so['4_z'], so['3_xyz'], so['2_xy']])
+PG['-43m'] = PointGroup(generators=[so['-4_z'], so['3_xyz'], so['m_xy']])
+PG['m-3m'] = PointGroup(generators=[so['m_z'], so['-3_xyz'], so['m_xy']])

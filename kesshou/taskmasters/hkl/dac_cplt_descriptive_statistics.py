@@ -1,10 +1,10 @@
 from kesshou.dataframes.hkl import HklFrame
 from kesshou.utility import fibonacci_sphere
-from kesshou.symmetry.pointgroup import *
+from kesshou.symmetry import PG
 
 
 def dac_cplt_descriptive_statistics(a, b, c, al, be, ga,
-                                    laue_group=PG_1,
+                                    laue_group=PG['-1'],
                                     output_path='output.txt',
                                     opening_angle=35,
                                     precision=1000,
@@ -33,7 +33,7 @@ def dac_cplt_descriptive_statistics(a, b, c, al, be, ga,
     vectors = fibonacci_sphere(samples=precision, seed=random_seed)
     reflections = list()
     for vector in vectors:
-        q = p.copy()
+        q = p.duplicate()
         q.dac(opening_angle=opening_angle, vector=vector)
         q.resymmetrify(laue_group.chiral_operations, merge=True)
         reflections.append(len(q))
@@ -47,4 +47,4 @@ def dac_cplt_descriptive_statistics(a, b, c, al, be, ga,
 if __name__ == '__main__':
     dac_cplt_descriptive_statistics(a=10.0, b=10.0, c=10.0,
                                     al=90.0, be=90.0, ga=90.0,
-                                    laue_group=PGm_3m)
+                                    laue_group=PG['m-3'])

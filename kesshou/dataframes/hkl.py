@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from kesshou.utility import cubespace, is2n, is3n, is4n, is6n
-from kesshou.symmetry.pointgroup import *
+from kesshou.symmetry import PG
 import copy
 import random
 import struct
@@ -504,7 +504,7 @@ class HklFrame:
         self.crystal = HklCrystal()
         self.data = pd.DataFrame()
         self.keys = HklKeys()
-        self.meta = {'wavelength': 0.71069}
+        self.la = 0.71069
 
     def __add__(self, other):
         c = copy.deepcopy(self)
@@ -518,12 +518,8 @@ class HklFrame:
         return self.data.__str__()
 
     @property
-    def la(self):
-        return self.meta['wavelength']
-
-    @property
     def r_lim(self):
-        return 2 / self.meta['wavelength']
+        return 2 / self.la
 
     def condition(self, equation=''):
         """This method returns part of self.data for which equation is True"""
@@ -750,19 +746,23 @@ class HklFrame:
         self._place()
 
     def edit_wavelength(self, wavelength):
-        """Define wavelength: "CuKa", "Ag", "Polichromatic" or custom in A"""
-        sources = {'cr': 2.2896,	'fe': 1.9360,	'co': 1.79,
-                   'cu': 1.54056,	'mo': 0.71073,	'zr': 0.69,
-                   'ag': 0.56087}
+        """Define wavelength:text or custom in A. ITC-C, Table 4.2.4.1, 3rdEd"""
+        characteristic_radiations = {'agka': 0.5608, 'agkb': 0.4970,
+                                     'coka': 1.7905, 'cokb': 1.6208,
+                                     'crka': 2.2909, 'crkb': 2.0848,
+                                     'cuka': 1.5418, 'cukb': 1.3922,
+                                     'feka': 1.9373, 'fekb': 1.7565,
+                                     'mnka': 2.1031, 'mnkb': 1.9102,
+                                     'moka': 0.7107, 'mokb': 0.6323,
+                                     'nika': 1.6591, 'nikb': 1.5001,
+                                     'pdka': 0.5869, 'pdkb': 0.5205,
+                                     'rhka': 0.6147, 'rhkb': 0.5456,
+                                     'tika': 2.7496, 'tikb': 2.5138,
+                                     'znka': 1.4364, 'znkb': 1.2952}
         try:
-            self.meta['wavelength'] = sources[wavelength[:2].lower()]
+            self.la = characteristic_radiations[wavelength[:4].lower()]
         except TypeError:
-            # IF CUSTOM VALUE WAS GIVEN
-            self.meta['wavelength'] = float(wavelength)
-        except KeyError:
-            # NEGATIVE WAVELENGTH SERVES AS SCALE FOR INDIVIDUAL REFLECT. VALUES
-            if wavelength[:3] in {'pol', 'Pol', 'POL', 'P'}:
-                self.meta['wavelength'] = -1.0
+            self.la = float(wavelength)
 
     def _place(self):
         """Assign reflections their positions in reciprocal space (x, y, z)
@@ -830,7 +830,6 @@ class HklFrame:
         # LOAD HKL COLUMN TAGS IF SUPERTYPE IS "XD"
         if format_string is 'XD':
             title_line = hkl_file.readline().strip().split()
-            hkl_id = title_line[0]
             hkl_mainkey = 'F' if title_line[1] == 'F' else 'I'
             if title_line[2] != 'NDAT':
                 raise KeyError('Loaded hkl file is not of "XD" type.')
@@ -932,7 +931,7 @@ class HklFrame:
             hkl_file.write(file_suffix + '\n')
         hkl_file.close()
 
-    def copy(self, empty=False):
+    def duplicate(self, empty=False):
         """Make new dataframe which is an exact copy of self.
          Remove all data from self.data if empty is True"""
         new_dataframe = copy.deepcopy(self)
@@ -1014,7 +1013,7 @@ class HklFrame:
         """Cut the reflection further then the limit in A-1"""
         self.data = self.data.loc[self.data['r'] <= limit]
 
-    def merge(self, point_group=PG1):
+    def merge(self, point_group=PG['1']):
         """Average down redundant reflections, e.g. for drawing"""
 
         def find_largest_symmetry_equivalent_hkls():
@@ -1208,13 +1207,14 @@ class HklFrame:
         max_index = 25
 
         # function to make a hkl rectangle
-        def _make_hkl_ball(i=max_index, r=radius):
+        def _make_hkl_ball(i=max_index, _radius=radius):
             hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
-            _h = np.concatenate(np.concatenate(hkl_grid[0]))
-            _k = np.concatenate(np.concatenate(hkl_grid[1]))
-            _l = np.concatenate(np.concatenate(hkl_grid[2]))
-            _hkl = np.matrix((_h, _k, _l)).T
-            return _hkl[lin.norm(_hkl @ np.matrix((a, b, c)), axis=1) <= r]
+            h_column = np.concatenate(np.concatenate(hkl_grid[0]))
+            k_column = np.concatenate(np.concatenate(hkl_grid[1]))
+            l_column = np.concatenate(np.concatenate(hkl_grid[2]))
+            hkl_column = np.matrix((h_column, k_column, l_column)).T
+            return hkl_column[lin.norm(hkl_column @ np.matrix((a, b, c)),
+                                       axis=1) <= _radius]
 
         # grow the dataframe until all needed points are in
         hkl = _make_hkl_ball()
@@ -1252,8 +1252,7 @@ class HklFrame:
         al = np.degrees(self.crystal.al_r)
         be = np.degrees(self.crystal.be_r)
         ga = np.degrees(self.crystal.ga_r)
-        la = self.meta['wavelength']
-        cell_list = (la, a, b, c, al, be, ga)
+        cell_list = (self.la, a, b, c, al, be, ga)
         hklres_file = open(path, 'w')
         hklres_file.write('TITL hkl visualisation\n')
         hklres_file.write('REM special hkl visualisation file, to be used in'
@@ -1293,49 +1292,46 @@ class HklFrame:
         # close the file
         hklres_file.close()
 
-    def make_stats(self, bins=10, point_group=PG_1, extinctions=(('000', ''),)):
+    def make_stats(self, bins=10, point_group=PG['1'], extinctions=(('000', ''),)):
         """This method analyses dataframe in terms of no. of reflections,
         Rint, completeness, redundancy in 'bins' resolution shells."""
 
         def prepare_base_copy_of_hkl():
-            _hkl_base = self.copy()
+            _hkl_base = self.duplicate()
             for _domain, _condition in extinctions:
                 _hkl_base.extinct(domain=_domain, condition=_condition)
             return _hkl_base
         hkl_base = prepare_base_copy_of_hkl()
 
-        def prepare_ball_of_hkl(point_group=PG1):
-            _hkl_full = hkl_base.copy()
+        def prepare_ball_of_hkl(_point_group=PG['1']):
+            _hkl_full = hkl_base.duplicate()
             _hkl_full.make_ball(radius=max(self.data['r']))
-            _hkl_full.merge(point_group=point_group)
+            _hkl_full.merge(point_group=_point_group)
             for _domain, _condition in extinctions:
                 _hkl_full.extinct(domain=_domain, condition=_condition)
             return _hkl_full
-        hkl_full1 = prepare_ball_of_hkl(point_group=PG1)
-        hkl_full2 = prepare_ball_of_hkl(point_group=point_group)
+        hkl_full = prepare_ball_of_hkl(_point_group=point_group)
 
-        def prepare_merged_hkl(point_group=PG1):
-            _hkl_merged_pg1 = hkl_base.copy()
-            _hkl_merged_pg1.merge(point_group=point_group)
+        def prepare_merged_hkl(_point_group=PG['1']):
+            _hkl_merged_pg1 = hkl_base.duplicate()
+            _hkl_merged_pg1.merge(point_group=_point_group)
             return _hkl_merged_pg1
-        hkl_merged1 = prepare_merged_hkl(point_group=PG1)
-        hkl_merged2 = prepare_merged_hkl(point_group=point_group)
+        hkl_merged = prepare_merged_hkl(_point_group=point_group)
 
         def group_by_resolution(ungrouped_hkl, _bins=bins):
-            bins = cubespace(0.0, max(self.data['r']), num=_bins + 1)
+            cube_bins = cubespace(0.0, max(self.data['r']), num=_bins + 1)
             grouped_hkl = ungrouped_hkl.data.groupby(
-                pd.cut(ungrouped_hkl.data['r'], bins))
+                pd.cut(ungrouped_hkl.data['r'], cube_bins))
             return grouped_hkl
         grouped_base = group_by_resolution(hkl_base)
-        grouped_full1 = group_by_resolution(hkl_full1)
-        grouped_full2 = group_by_resolution(hkl_full2)
-        grouped_merged1 = group_by_resolution(hkl_merged1)
-        grouped_merged2 = group_by_resolution(hkl_merged2)
+        grouped_full = group_by_resolution(hkl_full)
+        grouped_merged = group_by_resolution(hkl_merged)
 
-        def make_table_with_stats(grouped_base, grouped_full, grouped_merged):
-            observed = grouped_base.size()
-            independent = grouped_merged.size()
-            theory = grouped_full.size()
+        def make_table_with_stats(_grouped_base, _grouped_full,
+                                  _grouped_merged):
+            observed = _grouped_base.size()
+            independent = _grouped_merged.size()
+            theory = _grouped_full.size()
             completeness = independent.div(theory)
             redundancy = observed.div(independent)
             results = pd.concat([observed, independent, theory,
@@ -1343,25 +1339,18 @@ class HklFrame:
             results.columns = ['Obser', 'Indep', 'Theory', 'Cplt', 'Redund.']
             print(results)
 
-        print('\nStatistics in Point Group 1')
-        make_table_with_stats(grouped_base, grouped_full1, grouped_merged1)
         print('\nStatistics in Selected Point Group')
-        make_table_with_stats(grouped_base, grouped_full2, grouped_merged2)
+        make_table_with_stats(grouped_base, grouped_full, grouped_merged)
 
     def _extinct(self, domain='hkl', condition=''):
-        """This extinct is faster, but does not work for 'hhl'-type reflns """
-        # obtain a copy of dataframe containing only reflections within domain
+        """Legacy; faster extinct, but does not work for 'hhl'-type reflns """
         dom = self.domain(domain)
-        # obtain a part of dataframe which meets the condition
         con = self.condition(condition)
-        # obtain a part of domain which does NOT meet the condition
         dom = dom.loc[~dom.isin(con).all(1)]
-        # remove from self.data refls in domain which do NOT meet the condition
         self.data = self.data.loc[~self.data.isin(dom).all(1)]
-        # reset the indices for other methods to use
         self.data.reset_index(drop=True, inplace=True)
 
-    def extinct(self, domain='hkl', condition='', laue_group=PG_1):
+    def extinct(self, domain='hkl', condition='', laue_group=PG['-1']):
         """Extinct all reflections which meet condition lll:rrr.
         domain describes area which is affected by condition [hkl]
         condition describes reflections which are preserved in domain [none]"""
@@ -1385,7 +1374,7 @@ class HklFrame:
 
 
 if __name__ == '__main__':
-    from kesshou.symmetry.symm_ops import symm_ops
+    from kesshou.symmetry.symmetry_operations import symm_ops
     e = symm_ops['1']
     r = symm_ops['4_z']
     print(r.shape)

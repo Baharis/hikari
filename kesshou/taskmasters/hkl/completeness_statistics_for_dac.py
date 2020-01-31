@@ -1,11 +1,11 @@
 from kesshou.dataframes.hkl import HklFrame
-from kesshou.symmetry.pointgroup import *
+from kesshou.symmetry import PG
 from kesshou.utility import cubespace
-import copy
+import numpy as np
 
 
 def dac_statistics(a, b, c, al, be, ga,
-                   point_group=PG_1,
+                   point_group=PG['-1'],
                    opening_angle=35,
                    orientation=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
                    input_path='shelx.hkl',
@@ -21,13 +21,13 @@ def dac_statistics(a, b, c, al, be, ga,
     p.dac(opening_angle=opening_angle)
     p.make_stats(point_group=point_group)
 
-    q = copy.deepcopy(p)
+    q = p.duplicate()
     q.extinct()
     q.make_ball(radius=q.r_lim)
     q.dac(opening_angle=opening_angle)
     q.extinct('000')
 
-    r = copy.deepcopy(q)
+    r = q.duplicate()
     r.resymmetrify(point_group.chiral_operations)
 
     r_max = max(q.data['r'])
