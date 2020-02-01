@@ -17,26 +17,33 @@ def dac_statistics(a, b, c, al, be, ga,
     p.edit_wavelength(input_wavelength)
     p.read(input_path, input_format)
     p.crystal.orient_matrix = np.array(orientation)
+    p.merge()
     p.extinct('000')
     p.dac(opening_angle=opening_angle)
+    p.find_equivalents(point_group=point_group)
     p.make_stats(point_group=point_group)
 
     q = p.duplicate()
     q.extinct()
     q.make_ball(radius=q.r_lim)
-    q.dac(opening_angle=opening_angle)
     q.extinct('000')
-
-    r = q.duplicate()
-    r.resymmetrify(point_group.chiral_operations)
+    q.dac(opening_angle=opening_angle)
+    q.find_equivalents(point_group=point_group)
 
     r_max = max(q.data['r'])
-    print('limiting_radius experiment theory_no_symm theory_w/_symm')
+    print('radius    exp.      theory    exp.      theory    uniqueCplt')
+    print('range     all       all       unique    unique    exp/theory')
     for rad in reversed(cubespace(0, r_max, 10, include_start=False)):
         p.trim(rad)
         q.trim(rad)
-        r.trim(rad)
-        print(rad, len(p), len(r), len(q))
+        print(' {max_rad:9f} {exp_all:9d} {the_all:9d}' +
+              ' {exp_uni:9d} {the_uni:9d} {cplt:9f}'.format(
+                  max_rad=rad,
+                  exp_all=len(p),
+                  the_all=len(q),
+                  exp_uni=p.data['equiv'].nunique(),
+                  the_uni=q.data['equiv'].nunique(),
+                  cplt=p.data['equiv'].nunique() / q.data['equiv'].nunique()))
 
 
 if __name__ == '__main__':

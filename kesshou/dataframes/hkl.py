@@ -939,13 +939,10 @@ class HklFrame:
             hkl_file.write(file_suffix + '\n')
         hkl_file.close()
 
-    def duplicate(self, empty=False):
+    def duplicate(self):
         """Make new dataframe which is an exact copy of self.
          Remove all data from self.data if empty is True"""
-        new_dataframe = copy.deepcopy(self)
-        if empty:
-            new_dataframe.extinct()
-        return new_dataframe
+        return copy.deepcopy(self)
 
     def dac(self, opening_angle=40, vector=None):
         """Cut the reflections based on DAC angle (degrees) and
@@ -986,6 +983,7 @@ class HklFrame:
         in_torus2 = (m1 + t1) ** 2 + (m2 - t2) ** 2 <= (self.r_lim / 2) ** 2
         # leave only points which lie in both tori
         self.data = self.data[in_torus1 * in_torus2]
+        self.data.reset_index(drop=True, inplace=True)
 
     def thin_out(self, target_completeness=1.0, exponentially=False):
         """Randomly delete reflections to relative desired completeness"""
@@ -1023,7 +1021,7 @@ class HklFrame:
 
     def find_equivalents(self, point_group=PG['1']):
         l_hkl = self.hkl_limit
-        self.keys.add('equiv')
+        self.keys.add(('equiv',))
         self.data['equiv'] = [(-l_hkl, -l_hkl, -l_hkl)] * len(self.data)
         _hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
         for op in point_group.operations:
@@ -1379,7 +1377,6 @@ class HklFrame:
         dom = dom.loc[~dom.isin(con).all(1)][['h', 'k', 'l']]
         # make a set with all hkls which should be extinct
         extinct_set = set()
-        point_group.lauefy()
         for op in point_group.operations:
             extinct_set = extinct_set | {tuple(row) for row in dom.to_numpy() @ op}
         # remove all reflections whose hkls are in extinct set

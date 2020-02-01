@@ -1,6 +1,7 @@
+from enum import Enum
 from kesshou.dataframes.hkl import HklFrame
 from kesshou.symmetry import PG
-from kesshou.utility import make_absolute_path
+from kesshou.utility import make_absolute_path, home_directory
 from matplotlib import cm, colors, pyplot
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import art3d
@@ -12,8 +13,9 @@ def completeness_map(a, b, c, al, be, ga,
                      laue_group=PG['1'],
                      extinctions=tuple(),
                      fix_scale=False,
+                     legacy_cplt=False,
                      opening_angle=35,
-                     output_directory='/home/dtchon/_/',
+                     output_directory=home_directory,
                      output_name='cplt_map',
                      output_quality=3,
                      resolution=0.83,
@@ -36,7 +38,8 @@ def completeness_map(a, b, c, al, be, ga,
             _hkl_frame.extinct(extinction, point_group=laue_group)
         return _hkl_frame
     p = _make_reference_ball()
-    total_reflections = len(p)
+    p.find_equivalents(point_group=laue_group)
+    total_reflections = len(p) if legacy_cplt else p.data['equiv'].nunique()
 
     def _determine_theta_and_phi_limits():
         """Define the spherical coordinate system based on given point group.
@@ -45,7 +48,7 @@ def completeness_map(a, b, c, al, be, ga,
         _v1 = p.crystal.z_w
         _v2 = p.crystal.x_v
         _v3 = np.cross(_v1, _v2)
-        if laue_group in {PG['1']}:
+        if laue_group in {PG['-1']}:
             _th_limits = [0, 180]
             _ph_limits = [0, 180]
         # MONOCLINIC
@@ -74,7 +77,7 @@ def completeness_map(a, b, c, al, be, ga,
         towards secondary direction, and takes values from 0 to 180 degrees.
         Phi is "azimuth angle" which rotates perpendicularly to primary,
         from secondary to tertiary direction. Takes values from 0 to 360."""
-        assert output_quality in {1, 2, 3, 4, 5}
+        assert output_quality in {1, 2, 3, 4, 5}, 'Quality not 1, 2, 3, 4 or 5'
         angle_res = {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
         _th_range = np.arange(th_limits[0], th_limits[1] + 0.001, angle_res)
         _ph_range = np.arange(ph_limits[0], ph_limits[1] + 0.001, angle_res)
@@ -104,18 +107,22 @@ def completeness_map(a, b, c, al, be, ga,
                 v = _translate_angles_to_vector(theta=th, phi=ph)
                 q = p.duplicate()
                 q.dac(opening_angle=opening_angle, vector=v)
-                q.transform(operations=laue_group.chiral_operations)
-                q.merge()
+                if legacy_cplt:
+                    q.transform(operations=laue_group.chiral_operations)
+                    q.merge()
+                    hkl_len = len(q)
+                else:
+                    hkl_len = q.data['equiv'].nunique()
                 data_dict['th'].append(th)
                 data_dict['ph'].append(ph)
-                data_dict['cplt'].append(len(q) / total_reflections)
-                data_dict['reflns'].append(len(q))
+                data_dict['cplt'].append(hkl_len / total_reflections)
+                data_dict['reflns'].append(hkl_len)
                 lst.write('{:8.0f}'.format(th))
                 lst.write('{:8.0f}'.format(ph))
-                lst.write('{:8.5f}'.format(len(q) / total_reflections))
-                lst.write('{:8d}'.format(len(q)))
+                lst.write('{:8.5f}'.format(hkl_len / total_reflections))
+                lst.write('{:8d}'.format(hkl_len))
                 lst.write('\n')
-                _cplt_mesh[j][i] = len(q) / total_reflections
+                _cplt_mesh[j][i] = hkl_len / total_reflections
             lst.write('\n')
         index_max = np.unravel_index(np.argmax(_cplt_mesh), _cplt_mesh.shape)
         best_th, best_ph = th_range[index_max[1]], ph_range[index_max[0]]
@@ -312,4 +319,4 @@ def completeness_map(a, b, c, al, be, ga,
 if __name__ == '__main__':
     completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
                      extinctions=('h00: h=2n', '0k0: k=2n', '00l: l=2n'),
-                     laue_group=PG['2/m'], output_quality=2, fix_scale=False)
+                     laue_group=PG['m-3m'], output_quality=3, fix_scale=True)

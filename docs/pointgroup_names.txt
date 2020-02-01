@@ -1,53 +1,57 @@
 
-This file contains a list of names for available point groups.
+This file contains a list of names for available point groups in Kesshou.
 All point group names base on the short Hermann-Maugin notation,
-but some minor diverges had to be made in order to consider the limitations
-of python programming language (eg. overbar or minus could not be used).
+but minor divergences had to be made in order to consider the limitations
+of python language, available namespace and alternative choices of axes.
 This resulted in a "Internal notation", both human- and python- readable.
-Internal notation always start from PG, which stands for Point Group;
-their names use '_' instead of minus/overbar, and 'p' instead of slash.
+Internal notation names always start from PG, which stands for Point Group,
+followed by a name of the point group inside square brackets and single quotes.
 
 Abbreviations used in the table:
 Hermann-Maugin notation - HMNot
 Schoenflies notation    - SNot
-Internal notation  - INot
+Internal notation       - INot
 Asterisk (*) denotes alternative choice of axes
 
-No.     SYSTEM          HMNot       SNot        INot
-1       triclinic       1           C1          PG1
-2       triclinic       -1          Ci          PG_1
-3       monoclinic      2           C2          PG2
-4       monoclinic      m           Cs          PGm
-5       monoclinic      2/m         C2h         PG2pm
-6       orthorhombic    222         D2          PG222
-7       orthorhombic    mm2         C2v         PGmm2
-8       orthorhombic    mmm         D2h         PGmmm
-9       tetragonal      4           C4          PG4
-10      tetragonal      -4          S4          PG_4
-11      tetragonal      4/m         C4h         PG4pm
-12      tetragonal      422         D4          PG422
-13      tetragonal      4mm         C4v         PG4mm
-14      tetragonal      -42m        D2d         PG_42m
-14*     tetragonal      -4m2        D2d         PG_4m2
-15      tetragonal      4/mmm       D4h         PG4pmmm
-16      trigonal        3           C3          PG3
-17      trigonal        -3          C3i         PG_3
-18      trigonal        32          D3          PG321
-18*     trigonal        32          D3          PG312
-19      trigonal        3m          C3v         PG3m1
-19*     trigonal        3m          C3v         PG31m
-20      trigonal        -3m         D3d         PG_3m1
-20*     trigonal        -3m         D3d         PG_31m
-21      hexagonal       6           C6          PG6
-22      hexagonal       -6          C3h         PG_6
-23      hexagonal       6/m         C6h         PG6pm
-24      hexagonal       622         D6          PG622
-25      hexagonal       6mm         C6v         PG6mm
-26      hexagonal       -6m2        D3h         PG_6m2
-26*     hexagonal       -62m        D3h         PG_62m
-27      hexagonal       6/mmm       D6h         PG6pmmm
-28      cubic           23          T           PG23
-29      cubic           m-3         Th          PGm_3
-30      cubic           432         O           PG432
-31      cubic           -43m        Td          PG_43m
-32      cubic           m-3m        Oh          PGm_3m
+No.     CRYSTAL         Hermann-    Schoenflies Internal
+        SYSTEM          Maugin not. notation    notation
+------------------------------------------------------------
+1       triclinic       1           C1          PG['1']
+2       triclinic       -1          Ci          PG['-1']
+3       monoclinic      2           C2          PG['2']
+4       monoclinic      m           Cs          PG['m']
+5       monoclinic      2/m         C2h         PG['2/m']
+6       orthorhombic    222         D2          PG['222']
+7       orthorhombic    mm2         C2v         PG['mm2']
+8       orthorhombic    mmm         D2h         PG['mmm']
+9       tetragonal      4           C4          PG['4']
+10      tetragonal      -4          S4          PG['-4']
+11      tetragonal      4/m         C4h         PG['4/m']
+12      tetragonal      422         D4          PG['422']
+13      tetragonal      4mm         C4v         PG['4mm']
+14      tetragonal      -42m        D2d         PG['-42m']
+14*     tetragonal      -4m2        D2d         PG['-4m2']
+15      tetragonal      4/mmm       D4h         PG['4/mmm']
+16      trigonal        3           C3          PG['3']
+17      trigonal        -3          C3i         PG['-3']
+18      trigonal        32          D3          PG['321']
+18*     trigonal        32          D3          PG['312']
+19      trigonal        3m          C3v         PG['3m1']
+19*     trigonal        3m          C3v         PG['31m']
+20      trigonal        -3m         D3d         PG['-3m1']
+20*     trigonal        -3m         D3d         PG['-31m']
+21      hexagonal       6           C6          PG['6']
+22      hexagonal       -6          C3h         PG['-6']
+23      hexagonal       6/m         C6h         PG['6/m']
+24      hexagonal       622         D6          PG['622']
+25      hexagonal       6mm         C6v         PG['6mm']
+26      hexagonal       -6m2        D3h         PG['-6m2']
+26*     hexagonal       -62m        D3h         PG['-62m']
+27      hexagonal       6/mmm       D6h         PG['6/mmm']
+28      cubic           23          T           PG['23']
+29      cubic           m-3         Th          PG['m-3']
+30      cubic           432         O           PG['432']
+31      cubic           -43m        Td          PG['-43m']
+32      cubic           m-3m        Oh          PG['m-3m']
+------------------------------------------------------------
+Last edited 20/01/31 by Daniel Tchoń
