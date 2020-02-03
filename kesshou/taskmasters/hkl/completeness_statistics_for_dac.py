@@ -13,10 +13,10 @@ def dac_statistics(a, b, c, al, be, ga,
                    input_wavelength='CuKa'):
 
     p = HklFrame()
-    p.crystal.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+    p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.edit_wavelength(input_wavelength)
     p.read(input_path, input_format)
-    p.crystal.orient_matrix = np.array(orientation)
+    p.orientation = np.array(orientation)
     p.merge()
     p.extinct('000')
     p.dac(opening_angle=opening_angle)

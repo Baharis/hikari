@@ -17,14 +17,14 @@ def simulate_dac(a, b, c, al, be, ga,
     surface instead of using crystal orientation matrix.
     If input_path is given, use real hkl data instead of simulated one."""
     p = HklFrame()
-    p.crystal.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+    p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.edit_wavelength(wavelength)
     if not(input_path is None):
         p.read(input_path, input_format)
     else:
         p.make_ball(p.r_lim)
 
-    p.crystal.orient_matrix = np.array(orientation)
+    p.orientation = np.array(orientation)
     p.extinct('000')
     if not(resolution is None):
         p.trim(resolution)

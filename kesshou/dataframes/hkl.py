@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from kesshou.dataframes import BaseFrame
 from kesshou.utility import cubespace, is2n, is3n, is4n, is6n
 from kesshou.symmetry import PG
 import copy
@@ -10,238 +11,6 @@ import numpy.linalg as lin
 import pandas as pd
 import matplotlib.cm
 import matplotlib.pyplot as plt
-
-
-class HklCrystal:
-    """Simple class for storing crystal information.
-
-    Space          | Direct        | Reciprocal    |
-    Scalar         | *_d           | *_r           |
-    Vector         | *_v           | *_w           |
-
-    a, b, c        | unit cell lengths in Angstrom / Angstrom^-1
-    x, y, z        | normalised unit cell vectors
-    al, be, ga     | unit cell angles in radians
-    v              | unit cell volume in Angstrom^3 / Angstrom^-3"""
-
-    def __init__(self):
-        # DIRECT SPACE SCALARS
-        self.__a_d = 1.
-        self.__b_d = 1.
-        self.__c_d = 1.
-        self.__al_d = np.pi / 2
-        self.__be_d = np.pi / 2
-        self.__ga_d = np.pi / 2
-        self.__v_d = 1.
-        # DIRECT SPACE VECTORS
-        self.__a_v = np.array((1.0, 0.0, 0.0))
-        self.__b_v = np.array((0.0, 1.0, 0.0))
-        self.__c_v = np.array((0.0, 0.0, 1.0))
-        # RECIPROCAL SPACE SCALARS
-        self.__a_r = 1.
-        self.__b_r = 1.
-        self.__c_r = 1.
-        self.__al_r = np.pi / 2
-        self.__be_r = np.pi / 2
-        self.__ga_r = np.pi / 2
-        self.__v_r = 1.
-        # DIRECT SPACE VECTORS
-        self.__a_w = np.array((1.0, 0.0, 0.0))
-        self.__b_w = np.array((0.0, 1.0, 0.0))
-        self.__c_w = np.array((0.0, 0.0, 1.0))
-        # OTHERS
-        self.orient_matrix = np.array(((1.0, 0.0, 0.0),
-                                       (0.0, 1.0, 0.0),
-                                       (0.0, 0.0, 1.0)))
-
-    def edit_cell(self, **parameters):
-        """Edit direct space unit cell using dictionary with the following keys:
-        a, b, c [in Angstrom] and al, be, ga [in degrees or radians]."""
-
-        # INSERT NEW VALUES OF DIRECT CELL PARAMETERS
-        for key, value in parameters.items():
-            key = key[:2]
-            try:
-                value = max((0.01, float(value)))
-            except TypeError:
-                value = max((0.01, value.nominal_value))
-            if key in ('a', 'b', 'c'):
-                key = '_HklCrystal__{}_d'.format(key)
-                setattr(self, key, value)
-            elif key in ('al', 'be', 'ga'):
-                key = '_HklCrystal__{}_d'.format(key)
-                if value < np.pi:
-                    setattr(self, key, value)
-                else:
-                    setattr(self, key, np.radians(value))
-
-        # RECALCULATE REST OF THE PARAMETERS
-        # DIRECT CELL SCALARS
-        self.__v_d = self.a_d * self.b_d * self.c_d * \
-               (1 - np.cos(self.al_d) ** 2 - np.cos(self.be_d) ** 2
-                - np.cos(self.ga_d) ** 2 + 2 * np.cos(self.al_d)
-                * np.cos(self.be_d) * np.cos(self.ga_d)) ** 0.5
-        # DIRECT CELL VECTORS
-        self.__a_v = np.array((self.a_d, 0, 0))
-        self.__b_v = np.array((self.b_d * np.cos(self.ga_d),
-                        self.b_d * np.sin(self.ga_d), 0))
-        self.__c_v = np.array((self.c_d * np.cos(self.be_d),
-                        self.c_d * (np.cos(self.al_d) - np.cos(self.be_d)
-                        * np.cos(self.ga_d)) / np.sin(self.ga_d),
-                        self.v_d / (self.a_d * self.b_d * np.sin(self.ga_d))))
-        # RECIPROCAL CELL SCALARS
-        self.__a_r = self.b_d * self.c_d * np.sin(self.al_d) / self.v_d
-        self.__b_r = self.c_d * self.a_d * np.sin(self.be_d) / self.v_d
-        self.__c_r = self.a_d * self.b_d * np.sin(self.ga_d) / self.v_d
-        self.__al_r = np.arccos((np.cos(self.be_d) * np.cos(self.ga_d)
-                                 - np.cos(self.al_d)) /
-                                (np.sin(self.be_d) * np.sin(self.ga_d)))
-        self.__be_r = np.arccos((np.cos(self.ga_d) * np.cos(self.al_d)
-                                 - np.cos(self.be_d)) /
-                                (np.sin(self.ga_d) * np.sin(self.al_d)))
-        self.__ga_r = np.arccos((np.cos(self.al_d) * np.cos(self.be_d)
-                                 - np.cos(self.ga_d)) /
-                                (np.sin(self.al_d) * np.sin(self.be_d)))
-        self.__v_r = self.a_r * self.b_r * self.c_r * \
-                     (1 - np.cos(self.al_r) ** 2 - np.cos(self.be_r) ** 2
-                      - np.cos(self.ga_r) ** 2 + 2 * np.cos(self.al_r)
-                      * np.cos(self.be_r) * np.cos(self.ga_r)) ** 0.5
-        # RECIPROCAL CELL VECTORS
-        self.__a_w = np.cross(self.b_v, self.c_v) / self.v_d
-        self.__b_w = np.cross(self.c_v, self.a_v) / self.v_d
-        self.__c_w = np.cross(self.a_v, self.b_v) / self.v_d
-
-    def import_from_frame(self, frame):
-        """Import necessary crystal parameters from CifFrame"""
-
-        # IMPORT AND CHANGE LATTICE PARAMETERS
-        new_parameters = {
-            'a': float(frame.data['_cell_length_a']),
-            'b': float(frame.data['_cell_length_b']),
-            'c': float(frame.data['_cell_length_c']),
-            'al': float(frame.data['_cell_angle_alpha']),
-            'be': float(frame.data['_cell_angle_beta']),
-            'ga': float(frame.data['_cell_angle_gamma'])}
-        self.edit_cell(**new_parameters)
-
-        # IMPORT AND CHANGE ORIENTATION MATRIX
-        try:
-            self.orient_matrix = \
-                np.array(((float(frame.data['_diffrn_orient_matrix_UB_11']),
-                        float(frame.data['_diffrn_orient_matrix_UB_12']),
-                        float(frame.data['_diffrn_orient_matrix_UB_13'])),
-                       (float(frame.data['_diffrn_orient_matrix_UB_21']),
-                        float(frame.data['_diffrn_orient_matrix_UB_22']),
-                        float(frame.data['_diffrn_orient_matrix_UB_23'])),
-                       (float(frame.data['_diffrn_orient_matrix_UB_31']),
-                        float(frame.data['_diffrn_orient_matrix_UB_32']),
-                        float(frame.data['_diffrn_orient_matrix_UB_33']))))
-        except KeyError:
-            pass
-
-    @property
-    def a_d(self):
-        return self.__a_d
-
-    @property
-    def b_d(self):
-        return self.__b_d
-
-    @property
-    def c_d(self):
-        return self.__c_d
-
-    @property
-    def al_d(self):
-        return self.__al_d
-
-    @property
-    def be_d(self):
-        return self.__be_d
-
-    @property
-    def ga_d(self):
-        return self.__ga_d
-
-    @property
-    def v_d(self):
-        return self.__v_d
-
-    @property
-    def a_v(self):
-        return self.__a_v
-
-    @property
-    def b_v(self):
-        return self.__b_v
-
-    @property
-    def c_v(self):
-        return self.__c_v
-
-    @property
-    def x_v(self):
-        return self.__a_v / lin.norm(self.__a_v)
-
-    @property
-    def y_v(self):
-        return self.__b_v / lin.norm(self.__b_v)
-
-    @property
-    def z_v(self):
-        return self.__c_v / lin.norm(self.__c_v)
-
-    @property
-    def a_r(self):
-        return self.__a_r
-
-    @property
-    def b_r(self):
-        return self.__b_r
-
-    @property
-    def c_r(self):
-        return self.__c_r
-
-    @property
-    def al_r(self):
-        return self.__al_r
-
-    @property
-    def be_r(self):
-        return self.__be_r
-
-    @property
-    def ga_r(self):
-        return self.__ga_r
-
-    @property
-    def v_r(self):
-        return self.__v_r
-
-    @property
-    def a_w(self):
-        return self.__a_w
-
-    @property
-    def b_w(self):
-        return self.__b_w
-
-    @property
-    def c_w(self):
-        return self.__c_w
-
-    @property
-    def x_w(self):
-        return self.__a_w / lin.norm(self.__a_w)
-
-    @property
-    def y_w(self):
-        return self.__b_w / lin.norm(self.__b_w)
-
-    @property
-    def z_w(self):
-        return self.__c_w / lin.norm(self.__c_w)
 
 
 class HklKeys:
@@ -505,10 +274,10 @@ class HklKeys:
             self.reduce_behaviour[behaviour].add(key)
 
 
-class HklFrame:
+class HklFrame(BaseFrame):
     """Single crystal diffraction pattern container"""
     def __init__(self):
-        self.crystal = HklCrystal()
+        super().__init__()
         self.data = pd.DataFrame()
         self.hkl_limit = 1000000
         self.keys = HklKeys()
@@ -776,7 +545,7 @@ class HklFrame:
         """Assign reflections their positions in reciprocal space (x, y, z)
         and calculate their distance from origin (r) in reciprocal Angstrom"""
         hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
-        abc = np.matrix((self.crystal.a_w, self.crystal.b_w, self.crystal.c_w))
+        abc = np.matrix((self.a_w, self.b_w, self.c_w))
         xyz = hkl @ abc
         self.data['x'] = xyz[:, 0]
         self.data['y'] = xyz[:, 1]
@@ -888,7 +657,8 @@ class HklFrame:
         format_string, column_labels, file_prefix, file_suffix, zero_line = \
             self.interpret_hkl_format(hkl_format)
         if format_string == 'XD':
-            format_string, column_labels, file_prefix, file_suffix, zero_line = \
+            format_string, column_labels, file_prefix,\
+                file_suffix, zero_line = \
                 self.interpret_hkl_format(OrderedDict([('h', 5), ('k', 5),
                                                        ('l', 5), ('b', 5),
                                                        ('I', 10), ('si', 10)]))
@@ -948,19 +718,17 @@ class HklFrame:
         """Cut the reflections based on DAC angle (degrees) and
         orientation matrix or perpendicular vector in rec. space (if given).
         Please provide angle from normal vector, not double opening angle."""
-        # make the abbreviations for opening angle, self.data and self.crystal
-        xl = self.crystal
+        # make the abbreviations for opening angle and prepare objects
         oa = np.radians([float(opening_angle)])[0]
-        # extinct 000 and make sure
         self.extinct('000')
-        assert 'x' in self.data.columns
+        if not('x' in self.data.columns):
+            self._place()
         # calculate normal vector "n" in reciprocal lattice
         if vector is None:
-            l_v = np.array((1.0, 0.0, 0.0))      # vector parallel to beam
-            _UB = self.crystal.orient_matrix   # import UB orientation matrix
-            h = np.dot(lin.inv(_UB), l_v)        # calculate plane hkl indices
-            n = h[0] * xl.a_w + h[1] * xl.b_w + h[2] * xl.c_w # perp. vector
-        else:
+            l_v = np.array((1.0, 0.0, 0.0))             # vec. parallel to beam
+            h = np.dot(lin.inv(self.orientation), l_v)  # calculate hkl vector
+            n = h[0] * self.a_w + h[1] * self.b_w + h[2] * self.c_w
+        else:                                           # calculate xyz* vector
             n = np.array(vector)
         n = 1 / lin.norm(n) * n                        # normalise the n vector
         # extinct reflections further than max radius
@@ -1008,8 +776,7 @@ class HklFrame:
             falloff = 0.2
             indices_to_delete = []
             for index, reflection in self.data.iterrows():
-                v = np.array((reflection['x'], reflection['y'], reflection['z']))
-                if random.random() > np.exp(-lin.norm(v) * falloff):
+                if random.random() > np.exp(-reflection['r'] * falloff):
                     indices_to_delete.append(index)
             self.data.drop(indices_to_delete, inplace=True)
             self.data.reset_index(drop=True, inplace=True)
@@ -1210,18 +977,17 @@ class HklFrame:
     def make_ball(self, radius=2.0, hkl_limit=400):
         """Generate points in a sphere of given radius"""
         # prepare necessary abbreviations of known properties
-        a, b, c = self.crystal.a_w, self.crystal.b_w, self.crystal.c_w
+        a, b, c = self.a_w, self.b_w, self.c_w
         max_index = 25
 
         # function to make a hkl rectangle
-        def _make_hkl_ball(i=max_index, _radius=radius):
+        def _make_hkl_ball(i=max_index, _r=radius):
             hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
             h_column = np.concatenate(np.concatenate(hkl_grid[0]))
             k_column = np.concatenate(np.concatenate(hkl_grid[1]))
             l_column = np.concatenate(np.concatenate(hkl_grid[2]))
-            hkl_column = np.matrix((h_column, k_column, l_column)).T
-            return hkl_column[lin.norm(hkl_column @ np.matrix((a, b, c)),
-                                       axis=1) <= _radius]
+            hkls = np.matrix((h_column, k_column, l_column)).T
+            return hkls[lin.norm(hkls @ np.matrix((a, b, c)), axis=1) <= _r]
 
         # grow the dataframe until all needed points are in
         hkl = _make_hkl_ball()
@@ -1248,17 +1014,17 @@ class HklFrame:
             data_minima[key] = self.data[key].min()
             data_maxima[key] = self.data[key].max()
 
-        hkl_minimum = min((data_minima['h'], data_minima['k'], data_minima['l']))
-        hkl_maximum = max((data_maxima['h'], data_maxima['k'], data_maxima['l']))
-        scale = 2./max((abs(hkl_maximum), abs(hkl_minimum)))
+        hkl_min = min((data_minima['h'], data_minima['k'], data_minima['l']))
+        hkl_max = max((data_maxima['h'], data_maxima['k'], data_maxima['l']))
+        scale = 2./max((abs(hkl_max), abs(hkl_min)))
 
         # print the title line
-        a = self.crystal.a_r * 1000
-        b = self.crystal.b_r * 1000
-        c = self.crystal.c_r * 1000
-        al = np.degrees(self.crystal.al_r)
-        be = np.degrees(self.crystal.be_r)
-        ga = np.degrees(self.crystal.ga_r)
+        a = self.a_r * 1000
+        b = self.b_r * 1000
+        c = self.c_r * 1000
+        al = np.degrees(self.al_r)
+        be = np.degrees(self.be_r)
+        ga = np.degrees(self.ga_r)
         cell_list = (self.la, a, b, c, al, be, ga)
         hklres_file = open(path, 'w')
         hklres_file.write('TITL hkl visualisation\n')
@@ -1283,11 +1049,11 @@ class HklFrame:
         # for each reflection write a respective line to .res
         for index, reflection in self.data.iterrows():
             line_pars = dict()
-            line_pars['label'] = '{atom}({h},{k},{l})'.format(
+            line_pars['label'] = '{atom}({h_index},{k_index},{l_index})'.format(
                 atom=get_label(reflection[colored]),
-                h=int(reflection['h']),
-                k=int(reflection['k']),
-                l=int(reflection['l']))
+                h_index=int(reflection['h']),
+                k_index=int(reflection['k']),
+                l_index=int(reflection['l']))
             line_pars['x'] = float(reflection['h'] * scale)
             line_pars['y'] = float(reflection['k'] * scale)
             line_pars['z'] = float(reflection['l'] * scale)
@@ -1299,14 +1065,14 @@ class HklFrame:
         # close the file
         hklres_file.close()
 
-    def make_stats(self, bins=10, point_group=PG['1'], extinctions=(('000', ''),)):
+    def make_stats(self, bins=10, point_group=PG['1'], extinctions=('000',)):
         """This method analyses dataframe in terms of no. of reflections,
         Rint, completeness, redundancy in 'bins' resolution shells."""
 
         def prepare_base_copy_of_hkl():
             _hkl_base = self.duplicate()
-            for _domain, _condition in extinctions:
-                _hkl_base.extinct(domain=_domain, condition=_condition)
+            for _extinction in extinctions:
+                _hkl_base.extinct(_extinction)
             return _hkl_base
         hkl_base = prepare_base_copy_of_hkl()
 
@@ -1314,8 +1080,8 @@ class HklFrame:
             _hkl_full = hkl_base.duplicate()
             _hkl_full.make_ball(radius=max(self.data['r']))
             _hkl_full.merge(point_group=_point_group)
-            for _domain, _condition in extinctions:
-                _hkl_full.extinct(domain=_domain, condition=_condition)
+            for _extinction in extinctions:
+                _hkl_full.extinct(_extinction)
             return _hkl_full
         hkl_full = prepare_ball_of_hkl(_point_group=point_group)
 
@@ -1350,7 +1116,7 @@ class HklFrame:
         make_table_with_stats(grouped_base, grouped_full, grouped_merged)
 
     def _extinct(self, domain='hkl', condition=''):
-        """Legacy; faster extinct, but does not work for 'hhl'-type reflns """
+        """Legacy; faster extinct, does not work for 'hhl'-type reflections """
         dom = self.domain(domain)
         con = self.condition(condition)
         dom = dom.loc[~dom.isin(con).all(1)]
@@ -1376,11 +1142,11 @@ class HklFrame:
         # obtain a part of domain which does NOT meet the condition
         dom = dom.loc[~dom.isin(con).all(1)][['h', 'k', 'l']]
         # make a set with all hkls which should be extinct
-        extinct_set = set()
+        extinct = set()
         for op in point_group.operations:
-            extinct_set = extinct_set | {tuple(row) for row in dom.to_numpy() @ op}
+            extinct = extinct | {tuple(row) for row in dom.to_numpy() @ op}
         # remove all reflections whose hkls are in extinct set
-        for h, k, l in list(extinct_set):
+        for h, k, l in list(extinct):
             self.data = self.data[~((self.data['h'] == h) &
                                     (self.data['k'] == k) &
                                     (self.data['l'] == l))]
@@ -1394,9 +1160,10 @@ if __name__ == '__main__':
     r = symm_ops['4_z']
     print(r.shape)
     p = HklFrame()
-    p.crystal.edit_cell(a=5, b=5, c=5)
+    p.edit_cell(a=5, b=5, c=5)
+    print(p.a_r, p.b_r, p.c_r, p.al_r, p.be_r, p.ga_r)
     p.make_ball(2.1)
-    p.rescale(key='I', factor=10)
+#    p.rescale(key='I', factor=10)
     p.dac(opening_angle=45, vector=(1, 1, 1))
     p.to_hklres(path='/home/dtchon/_/test1hkl.res')
     p.transform((e, r))
@@ -1404,3 +1171,4 @@ if __name__ == '__main__':
 
 
 # TODO read and write free format
+# TODO fix size when making reshkl

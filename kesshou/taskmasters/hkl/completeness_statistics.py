@@ -9,7 +9,7 @@ def completeness_statistics(a, b, c, al, be, ga,
                             input_wavelength='CuKa'):
 
     p = HklFrame()
-    p.crystal.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+    p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.edit_wavelength(input_wavelength)
     p.read(input_path, input_format)
     p.extinct('000')

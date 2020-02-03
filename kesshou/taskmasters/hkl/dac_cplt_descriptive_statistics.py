@@ -16,7 +16,7 @@ def dac_cplt_descriptive_statistics(a, b, c, al, be, ga,
 
     def make_reference_ball():
         hkl_frame = HklFrame()
-        hkl_frame.crystal.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+        hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         hkl_frame.edit_wavelength(wavelength)
         hkl_frame.make_ball(radius=hkl_frame.r_lim)
         hkl_frame.merge()

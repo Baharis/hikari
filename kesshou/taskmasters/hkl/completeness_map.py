@@ -1,4 +1,3 @@
-from enum import Enum
 from kesshou.dataframes.hkl import HklFrame
 from kesshou.symmetry import PG
 from kesshou.utility import make_absolute_path, home_directory
@@ -30,7 +29,7 @@ def completeness_map(a, b, c, al, be, ga,
     def _make_reference_ball():
         """Make ball of hkl which will be cut in further steps"""
         _hkl_frame = HklFrame()
-        _hkl_frame.crystal.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+        _hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         _hkl_frame.edit_wavelength(wavelength)
         _hkl_frame.make_ball(radius=min(_hkl_frame.r_lim, 1/resolution))
         _hkl_frame.extinct('000')
@@ -45,8 +44,8 @@ def completeness_map(a, b, c, al, be, ga,
         """Define the spherical coordinate system based on given point group.
         v1, v2, v3 are normal vectors pointing in zenith direction z*,
         orthogonal direction (x) and direction orthogonal to them both."""
-        _v1 = p.crystal.z_w
-        _v2 = p.crystal.x_v
+        _v1 = p.z_w
+        _v2 = p.x_v
         _v3 = np.cross(_v1, _v2)
         if laue_group in {PG['-1']}:
             _th_limits = [0, 180]
@@ -180,7 +179,7 @@ def completeness_map(a, b, c, al, be, ga,
 
         # direction lines
         _len = 1.25
-        _x, _y, _z = p.crystal.x_w, p.crystal.y_w, p.crystal.z_w
+        _x, _y, _z = p.x_w, p.y_w, p.z_w
         ax.add_line(art3d.Line3D((_x[0], _len * _x[0]), (_x[1], _len * _x[1]),
                                  (_x[2], _len * _x[2]), color='r', linewidth=5))
         ax.add_line(art3d.Line3D((_y[0], _len * _y[0]), (_y[1], _len * _y[1]),
@@ -281,24 +280,24 @@ def completeness_map(a, b, c, al, be, ga,
                   r*cos(v)*cos({gnu_max_ph}),r*cos(v)*sin({gnu_max_ph}),r*sin(v) with line ls 2, \\
                   r*cos(0)*cos(u),r*cos(0)*sin(u),r*sin(0) with line ls 3
             """.format(
-            gnu_arrow_x1=p.crystal.x_w[0],
-            gnu_arrow_x2=p.crystal.x_w[1],
-            gnu_arrow_x3=p.crystal.x_w[2],
-            gnu_arrow_x4=p.crystal.x_w[0] * arrow_len,
-            gnu_arrow_x5=p.crystal.x_w[1] * arrow_len,
-            gnu_arrow_x6=p.crystal.x_w[2] * arrow_len,
-            gnu_arrow_y1=p.crystal.y_w[0],
-            gnu_arrow_y2=p.crystal.y_w[1],
-            gnu_arrow_y3=p.crystal.y_w[2],
-            gnu_arrow_y4=p.crystal.y_w[0] * arrow_len,
-            gnu_arrow_y5=p.crystal.y_w[1] * arrow_len,
-            gnu_arrow_y6=p.crystal.y_w[2] * arrow_len,
-            gnu_arrow_z1=p.crystal.z_w[0],
-            gnu_arrow_z2=p.crystal.z_w[1],
-            gnu_arrow_z3=p.crystal.z_w[2],
-            gnu_arrow_z4=p.crystal.z_w[0] * arrow_len,
-            gnu_arrow_z5=p.crystal.z_w[1] * arrow_len,
-            gnu_arrow_z6=p.crystal.z_w[2] * arrow_len,
+            gnu_arrow_x1=p.x_w[0],
+            gnu_arrow_x2=p.x_w[1],
+            gnu_arrow_x3=p.x_w[2],
+            gnu_arrow_x4=p.x_w[0] * arrow_len,
+            gnu_arrow_x5=p.x_w[1] * arrow_len,
+            gnu_arrow_x6=p.x_w[2] * arrow_len,
+            gnu_arrow_y1=p.y_w[0],
+            gnu_arrow_y2=p.y_w[1],
+            gnu_arrow_y3=p.y_w[2],
+            gnu_arrow_y4=p.y_w[0] * arrow_len,
+            gnu_arrow_y5=p.y_w[1] * arrow_len,
+            gnu_arrow_y6=p.y_w[2] * arrow_len,
+            gnu_arrow_z1=p.z_w[0],
+            gnu_arrow_z2=p.z_w[1],
+            gnu_arrow_z3=p.z_w[2],
+            gnu_arrow_z4=p.z_w[0] * arrow_len,
+            gnu_arrow_z5=p.z_w[1] * arrow_len,
+            gnu_arrow_z6=p.z_w[2] * arrow_len,
             gnu_avg_th=max(th_limits) / len(th_limits),
             gnu_avg_ph_plus90=max(ph_limits) / len(ph_limits) + 90,
             gnu_cplt_min=gnu_cplt_min,

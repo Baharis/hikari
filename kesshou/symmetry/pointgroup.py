@@ -22,6 +22,7 @@ class PointGroup(Group):
         pg_with_added_inversion.construct()
         return pg_with_added_inversion
 
+
 def initiate_point_group_dictionary():
     # TRICLINIC
     pg1 = PointGroup(generators=[so['1']])
