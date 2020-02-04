@@ -484,6 +484,12 @@ class HklFrame(BaseFrame):
                           '}\n' \
                           'REVERT'
             zero_line = False
+        elif hkl_format in {'FREE', 'Free', 'free'}:
+            column_labels = ('h', 'k', 'l', 'I', 'si', 'b')
+            format_string = '4s 4s 4s 8s 8s 4s'
+            file_prefix = False
+            file_suffix = False
+            zero_line = True
         elif type(hkl_format) in (dict, OrderedDict):
             column_labels = list()
             format_string = str()
@@ -600,6 +606,12 @@ class HklFrame(BaseFrame):
                 unpack = field_struct.unpack_from
                 return tuple(s.decode() for s in unpack(hkl_line.encode()))
 
+        # if free format
+        if str(format_string).lower() == 'free':
+            self.data = pd.read_csv(filepath_or_buffer=hkl_path, sep=' ',
+                                    names=column_labels, header=False)
+            return
+
         # OPEN HKL FILE AND PREPARE CONTAINER
         hkl_file = open(hkl_path, 'r')
         hkl_content = dict()
@@ -685,8 +697,14 @@ class HklFrame(BaseFrame):
                     dummy_column.append(default_value)
                 self.data[key] = pd.Series.from_array(dummy_column, dtype=dtype)
 
-        # WRITE PREFIX LINE
+        # WRITE THE FREE FORMAT
         hkl_file = open(hkl_path, 'w')
+        if str(hkl_format).lower() == 'free':
+            self.data.to_csv(path_or_buf=hkl_path, sep=' ',
+                             columns=column_labels, header=False)
+            return
+
+        # WRITE PREFIX LINE
         if file_prefix is not False:
             hkl_file.write(file_prefix + '\n')
 
@@ -1168,7 +1186,3 @@ if __name__ == '__main__':
     p.to_hklres(path='/home/dtchon/_/test1hkl.res')
     p.transform((e, r))
     p.to_hklres(path='/home/dtchon/_/test2hkl.res')
-
-
-# TODO read and write free format
-# TODO fix size when making reshkl
