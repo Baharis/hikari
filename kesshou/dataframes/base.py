@@ -4,16 +4,72 @@ import numpy.linalg as lin
 
 
 class BaseFrame:
-    """Base container for data common in Kesshou containers, eg.: unit cell
+    """
+    This class stores and manipulates basic information present
+    in majority of crystallographic information files such as unit cell
+    scalars and vectors.
 
-    Space          | Direct        | Reciprocal    |
-    Scalar         | *_d           | *_r           |
-    Vector         | *_v           | *_w           |
+    BaseFrame utilises the following notation for stored attributes:
 
-    a, b, c        | unit cell lengths in Angstrom / Angstrom^-1
-    x, y, z        | normalised unit cell vectors
-    al, be, ga     | unit cell angles in radians
-    v              | unit cell volume in Angstrom^3 / Angstrom^-3"""
+    - The name begins from a parameter or vector we are interested in:
+
+        - "a", "b", "c" are used to describe
+            lattice constants *a*, *b* and *c* as well as
+            lattice vectors **a**, **b**, and **c**,
+            as in unit cell parameter *a* or reciprocal vector **b\***,
+
+        - "al", "be", "ga" are used to describe lattice constants
+            *alpha*, *beta* and *gamma*,
+            as in angle between vectors **a**, **b** and **c**,
+
+        - "v" is used to describe the unit cell volume,
+            a mixed product between vectors **a**, **b** and **c**,
+
+        - "x", "y", "z" are used to describe normalised unit cell parameters,
+            also denoted as unit cell directions,
+            as in vector **z** being normalised vector **c**.
+
+    - The unit cell parameter symbol is then followed by an underscore "_".
+
+    - The name is ended by a single letter which describes
+        if we are working in direct or reciprocal space,
+        as well as if we want to access a scalar or a vector.
+
+        - "d" (from Direct) is used to denote direct space scalars,
+
+        - "r" (from Reciprocal) is used to denote reciprocal space scalars,
+
+        - "v" (from Vector) is used to denote direct space vectors,
+
+        - 'w" (similar to "v") is used to denote reciprocal space vectors.
+
+    The values can be accessed by referencing a given attribute in the object,
+    for example :class:`BaseFrame`. :attr:`a_d` stores information about
+    the lattice constant *a* in direct space as a floating point,
+    but :class:`BaseFrame`. :attr:`a_v` is a direct space vector.
+    Only the meaningful combinations of descriptors are defined;
+    attributes such as :class:`BaseFrame`.x_d (length of normalised vector x)
+    would either be constant or make no sense whatsoever
+    and thus have not been implemented.
+
+    Available attributes have been once again presented in a table below:
+
+    +----------+------------+------------------+------------------+------------+
+    |          | Available  | in direct        | in reciprocal    |Unit (^-1 in|
+    |          | constants: | space            | space            |reciprocal) |
+    +==========+============+==================+==================+============+
+    | Scalars  | a, b, c    | a_d, b_d, c_d    | a_r, b_r, c_r    | Angstrom   |
+    |          +------------+------------------+------------------+------------+
+    |          | al, be, ga | al_d, be_d, ga_d | al_r, be_r, ga_r | Radian     |
+    |          +------------+------------------+------------------+------------+
+    |          | v          | v_d              | v_r              | Angstrom^3 |
+    +----------+------------+------------------+------------------+------------+
+    | Vectors  | a, b, c    | a_v, b_v, c_v    | a_w, b_w, c_w    | Angstrom   |
+    |          +------------+------------------+------------------+------------+
+    |          | x, y, z    | x_v, y_v, z_v    | x_w, y_w, z_w    | Angstrom   |
+    +----------+------------+------------------+------------------+------------+
+
+    """
 
     def __init__(self):
         self.__a_d = self.__b_d = self.__c_d = 1.0
@@ -24,19 +80,52 @@ class BaseFrame:
         self.__a_w, self.__b_w, self.__c_w = np.eye(3)
         self.edit_cell(a=1.0, b=1.0, c=1.0, al=90.0, be=90.0, ga=90.0)
         self.orientation = np.array(((1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0)))
+        """3x3 orientation matrix of crystal in experiment"""
 
     def edit_cell(self, **parameters):
-        """Edit direct space unit cell using dictionary with the following keys:
-        a, b, c [in Angstrom] and al, be, ga [in degrees or radians]."""
+        """
+        Edit direct space unit cell using a dictionary.
 
-        # INSERT NEW VALUES OF DIRECT CELL PARAMETERS
+        The input dictionary accepts only the following keys:
+
+        - "a" - for unit cell parameter *a* given in Angstrom,
+
+        - "b" - for unit cell parameter *b* given in Angstrom,
+
+        - "c" - for unit cell parameter *c* given in Angstrom,
+
+        - "al" - for unit cell parameter *alpha* given in degrees or radians,
+
+        - "be" - for unit cell parameter *beta* given in degrees or radians,
+
+        - "ga" - for unit cell parameter *gamma* given in degrees or radians.
+
+        Please mind that the while the "a", "b" and "c" are always given in
+        Angstrom, the angles might be given either in degrees or in radians.
+        The program assumes that unit cell angles will always be in a range
+        between 2 and 178 degrees and interprets values outside this range
+        as given in radians.
+
+        It is not required for all previously stated keys to be present
+        at each method call. If a key has not been given, previously provided
+        and stored value is being used. If no value has been given,
+        the default length values of 1.0 for *a*, *b*, *c*,
+        and default angle values of 90.0 for *al*, *be*, *ga are used instead.
+
+        :param parameters: Values of unit cell parameters to be changed
+        :type parameters: float
+        """
         for key, value in parameters.items():
             assert key in ('a', 'b', 'c', 'al', 'be', 'ga'), "unknown parameter"
             setattr(self, '{}_d'.format(key), value)
         self._refresh_cell()
 
     def _refresh_cell(self):
-        """A function to refresh all vectors and scalars of unit cell"""
+        """
+        Recalculate all vectors and scalars other than :attr:`a_d`,
+        :attr:`b_d`, :attr:`c_d`, :attr:`al_d`, :attr:`be_d`, :attr:`ga_d`
+        based on the currently stored values of the aforementioned six.
+        """
 
         def calculate_volume(a, b, c, al, be, ga):
             return a * b * c * \
@@ -78,7 +167,18 @@ class BaseFrame:
         calculate_vectors()
 
     def from_cif_frame(self, frame):
-        """Import necessary crystal parameters from CifFrame"""
+        """
+        Attempt importing unit cell parameters and orientation matrix
+        from provided :class:`kesshou.dataframes.CifFrame` object.
+
+        This method requires at least cell parameters to be defined
+        in CifFrame object. It also attempts to import the orientation matrix,
+        but passes if unsuccessful.
+
+        :param frame: CifFrame containing cell parameters and,
+            optionally, crystal orientation matrix.
+        :type frame: kesshou.dataframes.CifFrame
+        """
 
         # IMPORT AND CHANGE LATTICE PARAMETERS
         new_parameters = {
@@ -107,6 +207,12 @@ class BaseFrame:
 
     @property
     def a_d(self):
+        """
+        Scalar length of unit cell vector **a** in direct space.
+
+        :return: Length of **a**.
+        :rtype: float
+        """
         return self.__a_d
 
     @a_d.setter
@@ -115,6 +221,12 @@ class BaseFrame:
 
     @property
     def b_d(self):
+        """
+        Scalar length of unit cell vector **b** in direct space.
+
+        :return: Length of **b**.
+        :rtype: float
+        """
         return self.__b_d
 
     @b_d.setter
@@ -123,6 +235,12 @@ class BaseFrame:
 
     @property
     def c_d(self):
+        """
+        Scalar length of unit cell vector **c** in direct space.
+
+        :return: Length of **c**.
+        :rtype: float
+        """
         return self.__c_d
 
     @c_d.setter
@@ -131,6 +249,12 @@ class BaseFrame:
 
     @property
     def al_d(self):
+        """
+        Scalar angle between unit cell vectors **b** and **c** in direct space.
+
+        :return: Angle between **b** and **c**.
+        :rtype: float
+        """
         return self.__al_d
 
     @al_d.setter
@@ -139,6 +263,12 @@ class BaseFrame:
 
     @property
     def be_d(self):
+        """
+        Scalar angle between unit cell vectors **c** and **a** in direct space.
+
+        :return: Angle between **c** and **a**.
+        :rtype: float
+        """
         return self.__be_d
 
     @be_d.setter
@@ -147,6 +277,12 @@ class BaseFrame:
 
     @property
     def ga_d(self):
+        """
+        Scalar angle between unit cell vectors **c** and **a** in direct space.
+
+        :return: Angle between **c** and **a**.
+        :rtype: float
+        """
         return self.__ga_d
 
     @ga_d.setter
@@ -155,34 +291,82 @@ class BaseFrame:
 
     @property
     def v_d(self):
+        """
+        Mixed product of vectors **a**, **b** and **c** in direct space.
+
+        :return: Unit cell volume in direct space.
+        :rtype: float
+        """
         return self.__v_d
 
     @property
     def a_v(self):
+        """
+        Unit cell vector **a** in direct space.
+
+        :return: Unit cell vector **a** in direct space.
+        :rtype: numpy.array
+        """
         return self.__a_v
 
     @property
     def b_v(self):
+        """
+        Unit cell vector **b** in direct space.
+
+        :return: Unit cell vector **b** in direct space.
+        :rtype: numpy.array
+        """
         return self.__b_v
 
     @property
     def c_v(self):
+        """
+        Unit cell vector **c** in direct space.
+
+        :return: Unit cell vector **c** in direct space.
+        :rtype: numpy.array
+        """
         return self.__c_v
 
     @property
     def x_v(self):
+        """
+        Crystallographic direction vector **x** in direct space.
+
+        :return: Normalised vector **a** in direct space.
+        :rtype: numpy.array
+        """
         return self.__a_v / lin.norm(self.__a_v)
 
     @property
     def y_v(self):
+        """
+        Crystallographic direction vector **y** in direct space.
+
+        :return: Normalised vector **b** in direct space.
+        :rtype: numpy.array
+        """
         return self.__b_v / lin.norm(self.__b_v)
 
     @property
     def z_v(self):
+        """
+        Crystallographic direction vector **z** in direct space.
+
+        :return: Normalised vector **c** in direct space.
+        :rtype: numpy.array
+        """
         return self.__c_v / lin.norm(self.__c_v)
 
     @property
     def a_r(self):
+        """
+        Scalar length of unit cell vector **a** in reciprocal space.
+
+        :return: Length of **a\***.
+        :rtype: float
+        """
         return self.__a_r
 
     @a_r.setter
@@ -191,6 +375,12 @@ class BaseFrame:
 
     @property
     def b_r(self):
+        """
+        Scalar length of unit cell vector **b** in reciprocal space.
+
+        :return: Length of **b\***.
+        :rtype: float
+        """
         return self.__b_r
 
     @b_r.setter
@@ -199,6 +389,12 @@ class BaseFrame:
 
     @property
     def c_r(self):
+        """
+        Scalar length of unit cell vector **c** in reciprocal space.
+
+        :return: Length of **c\***.
+        :rtype: float
+        """
         return self.__c_r
 
     @c_r.setter
@@ -207,6 +403,13 @@ class BaseFrame:
 
     @property
     def al_r(self):
+        """
+        Scalar angle between unit cell vectors **b\*** and **c\***
+        in reciprocal space.
+
+        :return: Angle between **b\*** and **c\***.
+        :rtype: float
+        """
         return self.__al_r
 
     @al_r.setter
@@ -215,6 +418,13 @@ class BaseFrame:
 
     @property
     def be_r(self):
+        """
+        Scalar angle between unit cell vectors **c\*** and **a\***
+        in reciprocal space.
+
+        :return: Angle between **c\*** and **a\***.
+        :rtype: float
+        """
         return self.__be_r
 
     @be_r.setter
@@ -223,6 +433,13 @@ class BaseFrame:
 
     @property
     def ga_r(self):
+        """
+        Scalar angle between unit cell vectors **a\*** and **b\***
+        in reciprocal space.
+
+        :return: Angle between **a\*** and **b\***.
+        :rtype: float
+        """
         return self.__ga_r
 
     @ga_r.setter
@@ -231,28 +448,71 @@ class BaseFrame:
 
     @property
     def v_r(self):
+        """
+        Mixed product of vectors **a\***, **b\*** and **c\***
+        in reciprocal space.
+
+        :return: Unit cell volume in direct space.
+        :rtype: float
+        """
         return self.__v_r
 
     @property
     def a_w(self):
+        """
+        Unit cell vector **a\*** in reciprocal space.
+
+        :return: Unit cell vector **a\*** in reciprocal space.
+        :rtype: numpy.array
+        """
         return self.__a_w
 
     @property
     def b_w(self):
+        """
+        Unit cell vector **b\*** in reciprocal space.
+
+        :return: Unit cell vector **b\*** in reciprocal space.
+        :rtype: numpy.array
+        """
         return self.__b_w
 
     @property
     def c_w(self):
+        """
+        Unit cell vector **c\*** in reciprocal space.
+
+        :return: Unit cell vector **c\*** in reciprocal space.
+        :rtype: numpy.array
+        """
         return self.__c_w
 
     @property
     def x_w(self):
+        """
+        Crystallographic direction vector **x\*** in reciprocal space.
+
+        :return: Normalised vector **a\*** in reciprocal space.
+        :rtype: numpy.array
+        """
         return self.__a_w / lin.norm(self.__a_w)
 
     @property
     def y_w(self):
+        """
+        Crystallographic direction vector **y\*** in reciprocal space.
+
+        :return: Normalised vector **b\*** in reciprocal space.
+        :rtype: numpy.array
+        """
         return self.__b_w / lin.norm(self.__b_w)
 
     @property
     def z_w(self):
+        """
+        Crystallographic direction vector **z\*** in reciprocal space.
+
+        :return: Normalised vector **c\*** in reciprocal space.
+        :rtype: numpy.array
+        """
         return self.__c_w / lin.norm(self.__c_w)
