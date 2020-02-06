@@ -1,4 +1,4 @@
-from kesshou.dataframes.hkl import HklFrame
+from kesshou.dataframes import HklFrame
 from kesshou.utility import fibonacci_sphere
 from kesshou.symmetry import PG
 

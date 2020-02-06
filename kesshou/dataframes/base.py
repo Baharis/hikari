@@ -7,40 +7,31 @@ class BaseFrame:
     """
     This class stores and manipulates basic information present
     in majority of crystallographic information files such as unit cell
-    scalars and vectors.
+    parameters stored in scalars and vectors.
 
     BaseFrame utilises the following notation for stored attributes:
 
-    - The name begins from a parameter or vector we are interested in:
-
+    - The name begins from a unit cell property we are interested in:
         - "a", "b", "c" are used to describe
-            lattice constants *a*, *b* and *c* as well as
-            lattice vectors **a**, **b**, and **c**,
-            as in unit cell parameter *a* or reciprocal vector **b\***,
-
+          lattice constants *a*, *b* and *c* as well as
+          lattice vectors **a**, **b**, and **c**,
         - "al", "be", "ga" are used to describe lattice constants
-            *alpha*, *beta* and *gamma*,
-            as in angle between vectors **a**, **b** and **c**,
-
+          *alpha*, *beta* and *gamma*,
+          as in angle between vectors **a**, **b** and **c**,
         - "v" is used to describe the unit cell volume,
-            a mixed product between vectors **a**, **b** and **c**,
-
+          a mixed product between vectors **a**, **b** and **c**,
         - "x", "y", "z" are used to describe normalised unit cell parameters,
-            also denoted as unit cell directions,
-            as in vector **z** being normalised vector **c**.
+          also denoted as unit cell directions,
+          as in vector **z** being a vector **c** of length equal one.
 
     - The unit cell parameter symbol is then followed by an underscore "_".
 
     - The name is ended by a single letter which describes
-        if we are working in direct or reciprocal space,
-        as well as if we want to access a scalar or a vector.
-
+      if we are working in direct or reciprocal space,
+      as well as if we want to access a scalar or a vector.
         - "d" (from Direct) is used to denote direct space scalars,
-
         - "r" (from Reciprocal) is used to denote reciprocal space scalars,
-
         - "v" (from Vector) is used to denote direct space vectors,
-
         - 'w" (similar to "v") is used to denote reciprocal space vectors.
 
     The values can be accessed by referencing a given attribute in the object,
@@ -49,6 +40,7 @@ class BaseFrame:
     but :class:`BaseFrame`. :attr:`a_v` is a direct space vector.
     Only the meaningful combinations of descriptors are defined;
     attributes such as :class:`BaseFrame`.x_d (length of normalised vector x)
+    or :class:`BaseFrame`.al_v (vector representation of alpha angle)
     would either be constant or make no sense whatsoever
     and thus have not been implemented.
 
@@ -80,13 +72,13 @@ class BaseFrame:
         self.__a_w, self.__b_w, self.__c_w = np.eye(3)
         self.edit_cell(a=1.0, b=1.0, c=1.0, al=90.0, be=90.0, ga=90.0)
         self.orientation = np.array(((1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0)))
-        """3x3 orientation matrix of crystal in experiment"""
+        """3x3 matrix describing orientation of crystal during experiment."""
 
     def edit_cell(self, **parameters):
         """
         Edit direct space unit cell using a dictionary.
 
-        The input dictionary accepts only the following keys:
+        The input dictionary accepts only the following six keys:
 
         - "a" - for unit cell parameter *a* given in Angstrom,
 
@@ -99,6 +91,11 @@ class BaseFrame:
         - "be" - for unit cell parameter *beta* given in degrees or radians,
 
         - "ga" - for unit cell parameter *gamma* given in degrees or radians.
+
+        This method is equivalent to manually setting all six unit cell
+        parameters in direct space, :attr:`a_d`, :attr:`b_d`, :attr:`c_d`,
+        :attr:`al_d`, :attr:`be_d`, :attr:`ga_d`, and then running a private
+        method :meth:`_refresh_cell` to update other values.
 
         Please mind that the while the "a", "b" and "c" are always given in
         Angstrom, the angles might be given either in degrees or in radians.
@@ -119,6 +116,45 @@ class BaseFrame:
             assert key in ('a', 'b', 'c', 'al', 'be', 'ga'), "unknown parameter"
             setattr(self, '{}_d'.format(key), value)
         self._refresh_cell()
+
+    def from_cif_frame(self, frame):
+        """
+        Attempt importing unit cell parameters and orientation matrix
+        from provided :class:`kesshou.dataframes.CifFrame` object.
+
+        This method requires at least cell parameters to be defined
+        in CifFrame object. It also attempts to import the orientation matrix,
+        but passes if unsuccessful.
+
+        :param frame: CifFrame containing cell parameters and,
+            optionally, crystal orientation matrix.
+        :type frame: kesshou.dataframes.CifFrame
+        """
+
+        # IMPORT AND CHANGE LATTICE PARAMETERS
+        new_parameters = {
+            'a': float(frame.data['_cell_length_a']),
+            'b': float(frame.data['_cell_length_b']),
+            'c': float(frame.data['_cell_length_c']),
+            'al': float(frame.data['_cell_angle_alpha']),
+            'be': float(frame.data['_cell_angle_beta']),
+            'ga': float(frame.data['_cell_angle_gamma'])}
+        self.edit_cell(**new_parameters)
+
+        # IMPORT AND CHANGE ORIENTATION MATRIX
+        try:
+            self.orientation = \
+                np.array(((float(frame.data['_diffrn_orient_matrix_UB_11']),
+                           float(frame.data['_diffrn_orient_matrix_UB_12']),
+                           float(frame.data['_diffrn_orient_matrix_UB_13'])),
+                          (float(frame.data['_diffrn_orient_matrix_UB_21']),
+                           float(frame.data['_diffrn_orient_matrix_UB_22']),
+                           float(frame.data['_diffrn_orient_matrix_UB_23'])),
+                          (float(frame.data['_diffrn_orient_matrix_UB_31']),
+                           float(frame.data['_diffrn_orient_matrix_UB_32']),
+                           float(frame.data['_diffrn_orient_matrix_UB_33']))))
+        except KeyError:
+            pass
 
     def _refresh_cell(self):
         """
@@ -165,45 +201,6 @@ class BaseFrame:
             self.__b_w = np.cross(self.c_v, self.a_v) / self.v_d
             self.__c_w = np.cross(self.a_v, self.b_v) / self.v_d
         calculate_vectors()
-
-    def from_cif_frame(self, frame):
-        """
-        Attempt importing unit cell parameters and orientation matrix
-        from provided :class:`kesshou.dataframes.CifFrame` object.
-
-        This method requires at least cell parameters to be defined
-        in CifFrame object. It also attempts to import the orientation matrix,
-        but passes if unsuccessful.
-
-        :param frame: CifFrame containing cell parameters and,
-            optionally, crystal orientation matrix.
-        :type frame: kesshou.dataframes.CifFrame
-        """
-
-        # IMPORT AND CHANGE LATTICE PARAMETERS
-        new_parameters = {
-            'a': float(frame.data['_cell_length_a']),
-            'b': float(frame.data['_cell_length_b']),
-            'c': float(frame.data['_cell_length_c']),
-            'al': float(frame.data['_cell_angle_alpha']),
-            'be': float(frame.data['_cell_angle_beta']),
-            'ga': float(frame.data['_cell_angle_gamma'])}
-        self.edit_cell(**new_parameters)
-
-        # IMPORT AND CHANGE ORIENTATION MATRIX
-        try:
-            self.orientation = \
-                np.array(((float(frame.data['_diffrn_orient_matrix_UB_11']),
-                           float(frame.data['_diffrn_orient_matrix_UB_12']),
-                           float(frame.data['_diffrn_orient_matrix_UB_13'])),
-                          (float(frame.data['_diffrn_orient_matrix_UB_21']),
-                           float(frame.data['_diffrn_orient_matrix_UB_22']),
-                           float(frame.data['_diffrn_orient_matrix_UB_23'])),
-                          (float(frame.data['_diffrn_orient_matrix_UB_31']),
-                           float(frame.data['_diffrn_orient_matrix_UB_32']),
-                           float(frame.data['_diffrn_orient_matrix_UB_33']))))
-        except KeyError:
-            pass
 
     @property
     def a_d(self):

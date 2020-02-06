@@ -1,4 +1,4 @@
-from kesshou.dataframes.hkl import HklFrame
+from kesshou.dataframes import HklFrame
 import numpy as np
 
 

@@ -1,11 +1,11 @@
 import numpy as np
 
 
-def edge_mask(frame_width=2048,
-              frame_height=2048,
-              opening_radius=1000,
-              output_path='/home/dtchon/edge_mask.mac',
-              resolution=100):
+def crysalis_edge_mask(frame_width=2048,
+                       frame_height=2048,
+                       opening_radius=1000,
+                       output_path='/home/dtchon/edge_mask.mac',
+                       resolution=100):
 
     angles = np.arange(0, 2 * np.pi, 2 * np.pi / resolution)
     file = open(output_path, 'w')

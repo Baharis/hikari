@@ -1,4 +1,4 @@
-from kesshou.dataframes.hkl import HklFrame
+from kesshou.dataframes import HklFrame
 from kesshou.symmetry import PG
 from kesshou.utility import make_absolute_path, home_directory
 from matplotlib import cm, colors, pyplot
