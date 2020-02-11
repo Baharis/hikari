@@ -466,7 +466,7 @@ class HklFrame(BaseFrame):
         either via specifying crystal orientation in
         :class:`kesshou.dataframes.BaseFrame`, in :attr:`orientation`
         or by providing a *vector*. The *vector* is perpendicular to
-        the dac-accesible space traced by the tori.
+        the dac-accessible space traced by the tori.
 
         In order to see further details about the shape of dac-accessible space
         and orientation matrix / vector please refer to
@@ -561,8 +561,7 @@ class HklFrame(BaseFrame):
         raise ValueError('Unknown domain address have been supplied')
 
     def draw(self, alpha=False, colored='b', dpi=600, legend=True,
-             master_key='I', projection=('h', 'k', 0),
-             savepath=False, scale=1.0, showfig=False):
+             projection=('h', 'k', 0), savepath=False, scale=1.0, showfig=False):
         """
         Draw a cross-section of reciprocal lattice for given pattern
 
@@ -580,6 +579,10 @@ class HklFrame(BaseFrame):
         This object should be deleted or cleared for the sake of release version
         """
         # TODO clear of delete
+        # TODO existance of bonds in mercury is independent on U
+        # TODO 3.4A is the max length of Uraniu-Uranium bond.
+        # TODO largest cells are around 1000A in each direction, but inorganics
+        # TODO and simple organics < 100; make adaptive scale
 
         # SET NECESSARY PARAMETERS
         color_scheme = 'gist_rainbow'
@@ -1463,31 +1466,27 @@ class HklIo:
     into and out of HklFrame's dataframe
     """
 
-    # TODO write hooks for read and write in HklFrame
-    # TODO add 'sf' (denoted using letter 'stigma') as alternative sigma for 'F'
-    # TODO Fix the documentation using this new object
-    # TODO Add hklres generator to this HklIo
-    # TODO think about space groups...
-
-    def __init__(self):
+    def __init__(self, hkl_file_path, hkl_format='shelx_4'):
         self.__format = 'shelx_4'
+        self.format = hkl_format
         self.keys = HklKeys()
-        self.use_separator = True
+        self.file_path = hkl_file_path
         self._load_format_dictionaries()
+        self.use_separator = True
 
-    def _build_format_string(self):
+    def _build_line_formatter(self):
         """
         Prepare an input string for string 'format' method to write hkl data.
         :return: String for str.format() to format hkl data while writing.
         :rtype: str
         """
-        built_format_string = str()
+        line_formatter = str()
         for l, w in zip(self._format_dict['labels'], self._format_dict['widths']):
-            built_format_string += ' ' * self.use_separator
+            line_formatter += ' ' * self.use_separator
             w = abs(w) - int(self.use_separator)
-            built_format_string += '{{{0}:>{1}}}'.format(l, w)
-        built_format_string += '\n'
-        self.__format_string = built_format_string
+            line_formatter += '{{{0}:>{1}}}'.format(l, w)
+        line_formatter += '\n'
+        self.__line_formatter = line_formatter
 
     @property
     def format(self):
@@ -1506,15 +1505,15 @@ class HklIo:
             self.__format = self.formats_aliases[new_format]
         else:
             raise KeyError('Unknown hkl format "{}" given'.format(new_format))
-        self._build_format_string()
+        self._build_line_formatter()
 
     @property
     def _format_dict(self):
         return self.formats_defined[self.__format]
 
     @property
-    def _format_string(self):
-        return self.__format_string
+    def _line_formatter(self):
+        return self.__line_formatter
 
     def _import_custom_format(self, custom_format_string):
         """
@@ -1556,6 +1555,16 @@ class HklIo:
         with open(path_of_aliases) as file:
             self.formats_aliases = json.load(file)
 
+
+class HklReader(HklIo):
+    """
+    A helper class for HklFrame,
+    Menages reading hkl files and importing data and keys from them
+    """
+
+    def __init__(self, hkl_file_path, hkl_format='shelx_4'):
+        super().__init__(hkl_file_path, hkl_format)
+
     def _parse_fixed_line(self, line):
         """
         Parse data from a line, where data from each *label* has fixed *width*.
@@ -1591,15 +1600,14 @@ class HklIo:
             return None
         return parsed
 
-    def read(self, hkl_path, hkl_format):
-        self.format = hkl_format
+    def read(self):
         self.keys.set(self._format_dict['labels'])
-        parse_line = self._parse_free_line if self.is_current_format_free() \
+        parse_line = self._parse_free_line if self.is_current_format_free \
             else self._parse_fixed_line
 
         def read_file_to_list_of_data():
             list_of_reflections = list()
-            with open(hkl_path, 'r') as hkl_file:
+            with open(self.file_path, 'r') as hkl_file:
                 for line in hkl_file.read().splitlines():
                     parsed_line = parse_line(line)
                     if parsed_line is None:
@@ -1615,20 +1623,31 @@ class HklIo:
                 dict_of_data[key] = _hkl_array[index].astype(key_dtype)
                 return dict_of_data
         return build_dict_of_reflections(array_of_reflections)
-        # TODO returns dict; should call some generator to return HklFrame.data?
 
-    def write(self, hkl_data, hkl_path, hkl_format):
+
+class HklWriter(HklIo):
+    """
+    A helper class for HklFrame,
+    Menages writing hkl files and exporting data to them
+    """
+    def __init__(self, hkl_file_path, hkl_format='shelx_4'):
+        super().__init__(hkl_file_path, hkl_format)
+
+    def write(self, hkl_data):
         """hkl_data must be pandas df!"""
-        self.format = hkl_format
-        with open(hkl_path, 'w') as hkl_file:
+        with open(self.file_path, 'w') as hkl_file:
             hkl_file.write(self._format_dict['file_prefix'])
             for index, row in hkl_data.iterrows():
-                hkl_file.write(self._format_string().format(**row))
+                hkl_file.write(self._line_formatter().format(**row))
             hkl_file.write(self._format_dict['file_suffix'])
-
-
-
 
 
 if __name__ == '__main__':
     pass
+
+    # TODO returns dict; should call some generator to return HklFrame.data?
+    # TODO write hooks for read and write in HklFrame
+    # TODO add 'sf' (denoted using letter 'stigma') as alternative sigma for 'F'
+    # TODO Fix the documentation using this new object
+    # TODO Add hklres generator to this HklIo
+    # TODO think about space groups...
