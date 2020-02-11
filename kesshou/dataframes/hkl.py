@@ -65,7 +65,15 @@ class HklKeys:
     }
     __si = {
         'default': 0.0,
-        'description': 'Structure factor/intensity uncertainty',
+        'description': 'Uncertainty of intensity determination',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'average',
+        'type': float
+    }
+    __sf = {
+        'default': 0.0,
+        'description': 'Uncertainty of structure factor determination',
         'imperative': False,
         'dtype': 'float64',
         'reduce_behaviour': 'average',
@@ -73,7 +81,7 @@ class HklKeys:
     }
     __u = {
         'default': 0.0,
-        'description': 'Structure factor/intensity to uncertainty ratio',
+        'description': 'Structure factor to its uncertainty ratio',
         'imperative': False,
         'dtype': 'float64',
         'reduce_behaviour': 'average',
@@ -215,11 +223,11 @@ class HklKeys:
         'reduce_behaviour': 'keep',
         'type': tuple
     }
-    defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'b', 'm', 'la', 'ph',
+    defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'sf', 'b', 'm', 'la', 'ph',
                     'u', 'r', 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3',
                     'x', 'y', 'z', 'equiv'}
 
-    def __init__(self):
+    def __init__(self, keys=set()):
         # DEFINE ALL KNOWN KEYS
         self.imperatives = set()
         for key in HklKeys.defined_keys:
@@ -227,6 +235,7 @@ class HklKeys:
                 self.imperatives.add(key)
         self.all = set()
         self.add(self.imperatives)
+        self.add(keys)
 
     def add(self, keys):
         """Add keys from a keys list to the HklKeys handler"""
@@ -569,7 +578,6 @@ class HklFrame(BaseFrame):
         color        (string)   Int value represented as colour or False
         dpi          (integer)  Dots Per Inch, quality of saved graphics
         legend       (boolean)  Legend of used colors should be printed
-        master_key   (string)   Value to be visualised as radius, 'I' or 'F'
         projection   (tuple)    desired cross-section, default ('h', 'k', 0)
         savepath     (string)   Path to the file to save the image or False
         scale        (float)    Scale factor for the reflection size
@@ -625,13 +633,13 @@ class HklFrame(BaseFrame):
             coordinates = {'h': 'x', 'k': 'y', 'l': 'z'}
             _x.append(row[coordinates[axes[0]]])
             _y.append(row[coordinates[axes[1]]])
-            _size.append(scale ** 2 * np.log(abs(row[master_key])+1.0) ** 2)
+            _size.append(scale ** 2 * np.log(abs(row['F'])+1.0) ** 2)
             if colored:
                 _rgb = colors[int(row[colored] - data_minima[colored])][:3]
             if alpha:
                 _alp = ((row[alpha]/data_maxima[alpha])**0.25, )
             _color.append(_rgb + _alp)
-            _edge.append('None') if row[master_key] > 0 else _edge.append('k')
+            _edge.append('None') if row['F'] > 0 else _edge.append('k')
 
         # CHECKING IF LIST IS NOT EMPTY
         if len(_color) == 0:
@@ -801,153 +809,8 @@ class HklFrame(BaseFrame):
             new_data[key] = pd.Series(value, dtype=typ, name=key)
         self.data = new_data
         self.place()
-
-    @staticmethod
-    def interpret_hkl_format(hkl_format):
-        """
-        Interpret hkl format and return format strings, column labels etc.
-        necessary for other parsers: readers and writers.
-
-        The hkl_format might be integer, string or ordered dictionary.
-        Available integer-type input formats consist of:
-
-        - 2: Standard hkl2 format containing h, k, l (4 digits each),
-          square of structure factor, its uncertainty (8 digits each),
-          batch number (4 digits) and wavelength (8 digits).
-
-        - 3: Standard hkl3 format containing h, k, l (4 digits each),
-          structure factor, its uncertainty (8 digits each)
-          and batch number (4 digits).
-
-        - 4: Standard hkl4 format containing h, k, l (4 digits each),
-          square of structure factor, its uncertainty (8 digits each)
-          and batch number (4 digits).
-
-        - 40: Modified hkl4 format containing h, k, l (4 digits each),
-          square of structure factor and its uncertainty (8 digits each).
-
-        - 5: Standard hkl5 format containing h, k, l (4 digits each),
-          square of structure factor, its uncertainty (8 digits each)
-          and crystal number (4 digits).
-
-        - 6: Standard hkl6 format containing h, k, l (4 digits each),
-          square of structure factor, its uncertainty (8 digits each)
-          and multiplicity (4 digits).
-
-        Available string-type input formats consist of:
-
-        - 'xd': hkl format accepted by program "XD", containing
-          h, k, l, batch number (5 digits each), square of structure factor
-          and its uncertainty (10 digits each).
-
-        - 'tonto': hkl format accepted by program "tonto", containing
-          square of structure factor and its uncertainty (8 digits each),
-          as well as relevant prefix and suffix lines.
-
-        - 'free': hkl space-separated free format containing
-          h, k, l, square of structure factor, its uncertainty and batch number.
-
-        Available ordered dictionary-type input should contains *key-value*
-        pairs, where key is a short string name of accepted information
-        (eg. "h", "I" or "si"; for full list please refer to :class:`HklKeys`)
-        and value is a length of given field in the hkl file.
-
-        This function returns a tuple containing five objects in this order:
-
-        - column_labels:: a tuple of keys - labels of subsequently read data
-
-        - format_string:: string used by other methods to read/write data
-
-        - file_prefix:: None or string which appears on beginning of the file
-
-        - file_suffix:: None or string which appears on end of the file
-
-        - zero_line:: True or False; should the file contain the 0, 0, 0 line.
-
-        :param hkl_format: Format of the hkl file to be read or written
-        :type hkl_format: int or str or OrderedDict
-        :return: A tuple of format characteristics of the read/written file
-        :rtype: tuple
-        """
-        if hkl_format == 2:
-            column_labels = ('h', 'k', 'l', 'I', 'si', 'b', 'la')
-            format_string = '4s 4s 4s 8s 8s 4s 8s'
-            file_prefix = False
-            file_suffix = False
-            zero_line = True
-        elif hkl_format == 3:
-            column_labels = ('h', 'k', 'l', 'F', 'si', 'b')
-            format_string = '4s 4s 4s 8s 8s 4s'
-            file_prefix = False
-            file_suffix = False
-            zero_line = True
-        elif hkl_format == 4:
-            column_labels = ('h', 'k', 'l', 'I', 'si', 'b')
-            format_string = '4s 4s 4s 8s 8s 4s'
-            file_prefix = False
-            file_suffix = False
-            zero_line = True
-        elif hkl_format == 40:
-            column_labels = ('h', 'k', 'l', 'I', 'si')
-            format_string = '4s 4s 4s 8s 8s'
-            file_prefix = False
-            file_suffix = False
-            zero_line = True
-        elif hkl_format == 5:
-            column_labels = ('h', 'k', 'l', 'I', 'si', 'c')
-            format_string = '4s 4s 4s 8s 8s 4s'
-            file_prefix = False
-            file_suffix = False
-            zero_line = True
-        elif hkl_format == 6:
-            column_labels = ('h', 'k', 'l', 'I', 'si', 'm')
-            format_string = '4s 4s 4s 8s 8s 4s'
-            file_prefix = False
-            file_suffix = False
-            zero_line = True
-        elif hkl_format in ('xd', 'Xd', 'xD', 'XD'):
-            column_labels, format_string = tuple(), 'XD'
-            file_prefix = False
-            file_suffix = False
-            zero_line = True
-        elif hkl_format in ('tonto', 'Tonto', 'TONTO', 'HAR', 'har', 'Har'):
-            column_labels = ('h', 'k', 'l', 'I', 'si')
-            format_string = '4s 4s 4s 8s 8s'
-            file_prefix = 'reflection_data= {\n' \
-                          'keys= { h= k= l= i_exp= i_sigma= }\n' \
-                          'data= {'
-            file_suffix = '}\n' \
-                          '}\n' \
-                          'REVERT'
-            zero_line = False
-        elif hkl_format in {'FREE', 'Free', 'free'}:
-            column_labels = ('h', 'k', 'l', 'I', 'si', 'b')
-            format_string = '4s 4s 4s 8s 8s 4s'
-            file_prefix = False
-            file_suffix = False
-            zero_line = True
-        elif type(hkl_format) in (dict, OrderedDict):
-            column_labels = list()
-            format_string = str()
-            file_prefix = 'COMPOUND_ID          F^2  NDAT 6'
-            file_suffix = False
-            zero_line = True
-            if type(hkl_format) is dict and sys.version_info[0] < 3:
-                format_items = hkl_format.iteritems()
-            else:
-                format_items = hkl_format.items()
-            for key, value in format_items:
-                column_labels.append(key)
-                if int(value) > 0:
-                    format_string += str(value) + 's '
-                else:
-                    format_string += str(abs(int(value))) + 'x '
-            column_labels = tuple(column_labels)
-            format_string.rstrip(' ')
-        else:
-            raise TypeError('Format type should be 2, 3, 4, 40, 5, 6,'
-                            '"XD", "TONTO", "free" or dict')
-        return format_string, column_labels, file_prefix, file_suffix, zero_line
+        self.extinct('000')
+        self._recalculate_structure_factors_and_intensities()
 
     def make_ball(self, radius=2.0):
         """
@@ -1149,96 +1012,85 @@ class HklFrame(BaseFrame):
         self.data['z'] = xyz[:, 2]
         self.data['r'] = lin.norm(xyz, axis=1)
 
-    def read(self, hkl_path, hkl_format):
+    def read(self, hkl_path, hkl_format='shelx_4'):
         """
         Read the contents of .hkl file as specified by path and format,
         and store them in the pandas dataframe in `self.data`.
         For a list of all available .hkl formats,
-        please refer to the documentation of :func:`interpret_hkl_format`.
+        please refer to :attr:`kesshou.dataframes.HklIo.format`.
 
         :param hkl_path: Absolute or relative path to the .hkl file.
         :type hkl_path: str
         :param hkl_format: Format of provided .hkl file.
         :type hkl_format: union[int, str, OrderedDict]
         """
-
-        # PREPARE OBJECTS RESPONSIBLE FOR PARSING INPUT
-        format_string, column_labels, file_prefix, file_suffix, zero_line = \
-            self.interpret_hkl_format(hkl_format)
-        self.keys.add(column_labels)
-
-        if format_string is 'XD':
-            def parse_line(hkl_line):
-                return tuple(hkl_line.strip().split())
-        else:
-            def parse_line(hkl_line):
-                field_struct = struct.Struct(format_string)
-                unpack = field_struct.unpack_from
-                return tuple(s.decode() for s in unpack(hkl_line.encode()))
-
-        # if free format
-        if str(format_string).lower() == 'free':
-            self.data = pd.read_csv(filepath_or_buffer=hkl_path, sep=' ',
-                                    names=column_labels, header=False)
-            return
-
-        # OPEN HKL FILE AND PREPARE CONTAINER
-        hkl_file = open(hkl_path, 'r')
-        hkl_content = dict()
-
-        # LOAD HKL COLUMN TAGS IF SUPERTYPE IS "XD"
-        if format_string is 'XD':
-            title_line = hkl_file.readline().strip().split()
-            hkl_main_key = 'F' if title_line[1] == 'F' else 'I'
-            if title_line[2] != 'NDAT':
-                raise KeyError('Loaded hkl file is not of "XD" type.')
-            if int(title_line[3]) == -7:
-                column_labels = ('h', 'k', 'l', 'b', hkl_main_key, 'si', 'ph')
-            elif 6 <= int(title_line[3]) <= 13:
-                column_labels = ('h', 'k', 'l', 'b', hkl_main_key, 'si',
-                                 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3'
-                                 )[0:int(title_line[3])]
-            else:
-                raise KeyError('"NDAT" parameter of loaded hkl file lies'
-                               'outside of the expected range')
-
-        # LOAD THE KEYS
-        for key in column_labels:
-            hkl_content[key] = []
-        self.keys.set(column_labels)
-
-        # INTERPRET THE FILE
-        hkl_checksum = 0
-        for line in hkl_file:
-            # IGNORE EMPTY LINES
-            if not line.strip():
-                continue
-            # SAVE EACH LINE TO THE LIST
-            hkl_checksum += 1
-            for key, value in zip(column_labels, parse_line(line)):
-                value = self.keys.get_property(key, 'type')(value)
-                hkl_content[key].append(value)
-        hkl_file.close()
-
-        # IF IMPERATIVE DATA WAS NOT GIVEN, ADD DEFAULTS
-        forgotten_keys = tuple(self.keys.imperatives - set(column_labels))
+        reader = HklReader(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
+        dict_of_data = reader.read()
+        self.keys.set(dict_of_data.keys())
+        forgotten_keys = tuple(self.keys.imperatives - set(dict_of_data.keys()))
         for forgotten in forgotten_keys:
             default = self.keys.get_property(forgotten, 'default')
-            hkl_content[forgotten] = [default] * hkl_checksum
+            length_of_data = max([len(v) for v in dict_of_data.values()])
+            dict_of_data[forgotten] = [default] * length_of_data
+        self.from_dict(dict_of_data)
 
-        # PRODUCE PANDAS DATAFRAME
-        self.from_dict(hkl_content)
+    def _recalculate_structure_factors_and_intensities(self):
+        """
+        Calculate 'I' and 'si' or 'F' and 'sf', depending on which are missing.
+        """
+        if 'I' in self.keys.all and not('si' in self.keys.all):
+            raise KeyError('Intensities "I" are defined, but "si" not.')
+        if 'F' in self.keys.all and not('sf' in self.keys.all):
+            raise KeyError('Structure factors "F" are defined, but "sf" not.')
+        if all(('I' in self.keys.all,
+               'si' in self.keys.all,
+                not('F' in self.keys.all),
+                not('sf' in self.keys.all))):
+            self._recalculate_structure_factors_from_intensities()
+        if all(('F' in self.keys.all,
+               'sf' in self.keys.all,
+                not('I' in self.keys.all),
+                not('si' in self.keys.all))):
+            self._recalculate_intensities_from_structure_factors()
 
-    def rescale(self, key, factor):
+    def _recalculate_structure_factors_from_intensities(self):
         """
-        Multiply all values stored in a column *key* in the dataframe
-        by a *factor*. Accepts a single key and a single rescale factor.
-        :param key: Column of dataframe to be rescaled by a factor
-        :type key: str
-        :param factor: A number to multiply all values in column *key* by.
-        :type factor: float
+        Recalculate the structure factor F and its uncertainty sf.
+
+        Structure factor is calculated as follows:
+        *F = signum(I) \* sqrt(abs(I))*.
+
+        Structure factor's uncertainty is calculated as follows:
+        *sf = si / (2 \* sqrt(abs(I)))*.
         """
-        self.data[key] = self.data.apply(lambda row: row[key] * factor, axis=1)
+        new_data = copy.deepcopy(self.data)
+        signum_of_i = new_data['I'].copy()
+        signum_of_i[signum_of_i > 0] = 1
+        signum_of_i[signum_of_i < 0] = -1
+        absolute_sqrt_of_i = abs(new_data["I"]) ** 0.5
+        new_data['F'] = signum_of_i * absolute_sqrt_of_i
+        new_data['sf'] = new_data["si"] / (2 * absolute_sqrt_of_i)
+        self.data = new_data
+        self.keys.add({'F', 'sf'})
+
+    def _recalculate_intensities_from_structure_factors(self):
+        """
+        Recalculate the intensity I and its uncertainty si.
+
+        Intensity is calculated as follows:
+        *I = signum(F) \* F \*\* 2*.
+
+        Intensity's uncertainty is calculated as follows:
+        *si = 2 \* sf \* abs(F)*.
+        """
+        new_data = copy.deepcopy(self.data)
+        signum_of_f = new_data['F'].copy()
+        signum_of_f[signum_of_f > 0] = 1
+        signum_of_f[signum_of_f < 0] = -1
+        new_data['I'] = signum_of_f * (abs(new_data['F']) ** 2)
+        new_data['si'] = 2 * new_data["sf"] * abs(new_data["F"])
+        self.data = new_data
+        self.keys.add({'I', 'si'})
 
     def transform(self, operations):
         """
@@ -1381,82 +1233,20 @@ class HklFrame(BaseFrame):
         """
         self.data = self.data.loc[self.data['r'] <= limit]
 
-    def write(self, hkl_path, hkl_format, columns_separator=True):
+    def write(self, hkl_path, hkl_format='shelx_4'):
         """
         Write the contents of dataframe to a .hkl file using specified
         *path* and *format*.
         For a list of all available .hkl formats,
-        please refer to the documentation of :func:`interpret_hkl_format`.
+        please refer to :attr:`kesshou.dataframes.HklIo.format`.
 
         :param hkl_path: Absolute or relative path to the .hkl file.
         :type hkl_path: str
         :param hkl_format: Desired format of .hkl file.
         :type hkl_format: union[int, str, OrderedDict]
-        :param columns_separator: should columns be separated using whitespace?
-        :type columns_separator: bool
         """
-
-        # PREPARE OBJECTS RESPONSIBLE FOR WRITING OUTPUT
-        format_string, column_labels, file_prefix, file_suffix, zero_line = \
-            self.interpret_hkl_format(hkl_format)
-        if format_string == 'XD':
-            format_string, column_labels, file_prefix,\
-                file_suffix, zero_line = \
-                self.interpret_hkl_format(OrderedDict([('h', 5), ('k', 5),
-                                                       ('l', 5), ('b', 5),
-                                                       ('I', 10), ('si', 10)]))
-        column_sizes, column_formats = [], []
-        for column in format_string.split():
-            number, letter = int(column[:-1]), column[-1]
-            if letter == 'x':
-                column_sizes.append(0)
-            elif letter == 's':
-                column_sizes.append(number)
-        for size in column_sizes:
-            cs = int(columns_separator)
-            column_formats.append('{{:>{}.{}}}'.format(size, size-cs))
-
-        # PREPARE NON-EXISTED, BUT DEMANDED ROWS
-        for key in column_labels:
-            try:
-                self.data[key]
-            except KeyError:
-                dummy_column = []
-                default_value = self.keys.get_property(key, 'default')
-                dtype = self.keys.get_property(key, 'dtype')
-                for index in range(self.data.shape[0]):
-                    dummy_column.append(default_value)
-                self.data[key] = pd.Series.from_array(dummy_column, dtype=dtype)
-
-        # WRITE THE FREE FORMAT
-        hkl_file = open(hkl_path, 'w')
-        if str(hkl_format).lower() == 'free':
-            self.data.to_csv(path_or_buf=hkl_path, sep=' ',
-                             columns=column_labels, header=False)
-            return
-
-        # WRITE PREFIX LINE
-        if file_prefix is not False:
-            hkl_file.write(file_prefix + '\n')
-
-        # WRITE SELF.DATA CONTENTS
-        for index, row in self.data.iterrows():
-            # FOR EACH DEMANDED KEY PRINT IT ACCORDING TO FORMATS
-            for key, form in zip(column_labels, column_formats):
-                hkl_file.write(form.format(
-                    str(self.keys.get_property(key, 'type')(row[key]))))
-            hkl_file.write('\n')
-
-        # WRITE 0 0 0 LINE
-        if zero_line is True:
-            for key, form in zip(column_labels, column_formats):
-                hkl_file.write(form.format(
-                    str(self.keys.get_property(key, 'default'))))
-
-        # WRITE SUFFIX LINE
-        if file_suffix is not False:
-            hkl_file.write(file_suffix + '\n')
-        hkl_file.close()
+        writer = HklWriter(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
+        writer.write(hkl_data=self.data)
 
 
 class HklIo:
@@ -1466,13 +1256,13 @@ class HklIo:
     into and out of HklFrame's dataframe
     """
 
-    def __init__(self, hkl_file_path, hkl_format='shelx_4'):
-        self.__format = 'shelx_4'
-        self.format = hkl_format
+    def __init__(self, hkl_file_path, hkl_file_format):
         self.keys = HklKeys()
+        self.use_separator = True
         self.file_path = hkl_file_path
         self._load_format_dictionaries()
-        self.use_separator = True
+        self.__format = 'shelx_4'
+        self.format = hkl_file_format
 
     def _build_line_formatter(self):
         """
@@ -1480,19 +1270,117 @@ class HklIo:
         :return: String for str.format() to format hkl data while writing.
         :rtype: str
         """
-        line_formatter = str()
-        for l, w in zip(self._format_dict['labels'], self._format_dict['widths']):
-            line_formatter += ' ' * self.use_separator
-            w = abs(w) - int(self.use_separator)
-            line_formatter += '{{{0}:>{1}}}'.format(l, w)
-        line_formatter += '\n'
-        self.__line_formatter = line_formatter
+        formatter = str()
+        for label, width in zip(self._format_dict['labels'], self._format_dict['widths']):
+            width = abs(width)
+            text_width = abs(width) - int(self.use_separator)
+            formatter += '{{{0}:>{1}.{2}}}'.format(label, width, text_width)
+        formatter += '\n'
+        self.__line_formatter = formatter
 
     @property
     def format(self):
         """
-        Return a name of currently used format.
-        :return: String with internal representation of hkl format.
+        Return a name of currently used hkl file format. Available file formats
+        and their aliases are defined internally in .json files and
+        have been presented in a table below:
+
+        +----------+----------+------------------------+------+------+--------+
+        | Name     | Aliases  | Contents               |Prefix|Suffix| Free   |
+        |          |          | (format string)        |      |      | format |
+        +==========+==========+========================+======+======+========+
+        | free_2   |          | h -4 k -4 l -4 I -8    | NO   | YES  | YES    |
+        |          |          | si -8 b -4 la -8       |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | free_3   |          | h -4 k -4 l -4         | NO   | YES  | YES    |
+        |          |          | F -8 sf -8 b -4        |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | free_4   |          | h -4 k -4 l -4         | NO   | YES  | YES    |
+        |          |          | I -8 si -8 b -4        |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | free_40  | free     | h -4 k -4 l -4         | NO   | YES  | YES    |
+        |          |          | I -8 si -8             |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | free_5   |          | h -4 k -4 l -4         | NO   | YES  | YES    |
+        |          |          | I -8 si -8 c -4        |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | free_6   |          | h -4 k -4 l -4         | NO   | YES  | YES    |
+        |          |          | I -8 si -8 m -4        |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | shelx_2  | 2        | h 4 k 4 l 4 I 8 si 8   | NO   | YES  | NO     |
+        |          |          | b 4 la 8               |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | shelx_3  | 3        | h 4 k 4 l 4            | NO   | YES  | NO     |
+        |          |          | F 8 sf 8 b 4           |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | shelx_4  | 4        | h 4 k 4 l 4            | NO   | YES  | NO     |
+        |          |          | I 8 si 8               |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | shelx_40 | 40       | h 4 k 4 l 4            | NO   | YES  | NO     |
+        |          |          | I 8 si 8               |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | shelx_5  | 5        | h 4 k 4 l 4            | NO   | YES  | NO     |
+        |          |          | I 8 si 8 c 4           |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | shelx_6  | 6        | h 4 k 4 l 4            | NO   | YES  | NO     |
+        |          |          | I 8 si 8 m 4           |      | (a)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | tonto_F  |          | h -4 k -4 l -4         | YES  | YES  | YES    |
+        |          |          | F -8 sf -8             | (b)  | (b)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | tonto_I  | tonto    | h -4 k -4 l -4         | YES  | YES  | YES    |
+        |          |          | I -8 si -8             | (b)  | (b)  |        |
+        +----------+----------+------------------------+------+------+--------+
+        | xd_F6    |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
+        |          |          | F -13 sf -13           | (c)  |      |        |
+        +----------+----------+------------------------+------+------+--------+
+        | xd_F7    |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
+        |          |          | F -13 sf -13 t -10     | (c)  |      |        |
+        +----------+----------+------------------------+------+------+--------+
+        | xd_F-7   |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
+        |          |          | F -13 sf -13 ph -10    | (c)  |      |        |
+        +----------+----------+------------------------+------+------+--------+
+        | xd_F13   |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
+        |          |          | F -13 sf -13 t -10     | (c)  |      |        |
+        |          |          | u1 -10 u2 -10 u3 -10   |      |      |        |
+        |          |          | v1 -10 v2 -10 v3 -10   |      |      |        |
+        +----------+----------+------------------------+------+------+--------+
+        | xd_I6    | xd       | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
+        |          |          | I -13 si -13           | (c)  |      |        |
+        +----------+----------+------------------------+------+------+--------+
+        | xd_I7    |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
+        |          |          | I -13 si -13 t -10     | (c)  |      |        |
+        +----------+----------+------------------------+------+------+--------+
+        | xd_I-7   |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
+        |          |          | I -13 si -13 ph -10    | (c)  |      |        |
+        +----------+----------+------------------------+------+------+--------+
+        | xd_I13   |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
+        |          |          | I -13 si -13 t -10     | (c)  |      |        |
+        |          |          | u1 -10 u2 -10 u3 -10   |      |      |        |
+        |          |          | v1 -10 v2 -10 v3 -10   |      |      |        |
+        +----------+----------+------------------------+------+------+--------+
+        | *custom* |          | custom string as above | NO   | NO   | if all |
+        |          |          | with keys and widths   |      |      | widths |
+        |          |          |                        |      |      | in     |
+        |          |          |                        |      |      | format |
+        |          |          |                        |      |      | are <0 |
+        +----------+----------+------------------------+------+------+--------+
+
+        Three different types of prefix / suffix are supported at the moment:
+
+        - Suffix (a) is a zero-line: a shelx ending line with h = k = l = 0,
+
+        - Prefix and suffix (b) are tonto-characteristic beginning/end of file,
+
+        - Prefix (c) is an xd-characteristic line with info about file content.
+
+        A custom hkl file format can be defined by providing
+        a *format string* instead of 'Name'.
+        The string should look like the ones in column "contents".
+        For the meaning of keys ('I', 'b', 'c' etc.),
+        please refer to :class:`HklKeys`.
+
+        :return: Returns a name of currently used format.
         :rtype: str
         """
         return self.__format
@@ -1562,8 +1450,8 @@ class HklReader(HklIo):
     Menages reading hkl files and importing data and keys from them
     """
 
-    def __init__(self, hkl_file_path, hkl_format='shelx_4'):
-        super().__init__(hkl_file_path, hkl_format)
+    def __init__(self, hkl_file_path, hkl_file_format):
+        super().__init__(hkl_file_path, hkl_file_format)
 
     def _parse_fixed_line(self, line):
         """
@@ -1621,7 +1509,7 @@ class HklReader(HklIo):
             for index, key in enumerate(self._format_dict['labels']):
                 key_dtype = self.keys.get_property(key, 'dtype')
                 dict_of_data[key] = _hkl_array[index].astype(key_dtype)
-                return dict_of_data
+            return dict_of_data
         return build_dict_of_reflections(array_of_reflections)
 
 
@@ -1630,24 +1518,34 @@ class HklWriter(HklIo):
     A helper class for HklFrame,
     Menages writing hkl files and exporting data to them
     """
-    def __init__(self, hkl_file_path, hkl_format='shelx_4'):
-        super().__init__(hkl_file_path, hkl_format)
+    def __init__(self, hkl_file_path, hkl_file_format):
+        super().__init__(hkl_file_path, hkl_file_format)
 
     def write(self, hkl_data):
         """hkl_data must be pandas df!"""
+        needed_data = hkl_data.loc[:, self._format_dict['labels']].astype(str)
         with open(self.file_path, 'w') as hkl_file:
-            hkl_file.write(self._format_dict['file_prefix'])
-            for index, row in hkl_data.iterrows():
-                hkl_file.write(self._line_formatter().format(**row))
-            hkl_file.write(self._format_dict['file_suffix'])
+            hkl_file.write(self._format_dict['prefix'])
+            for row_tuple in needed_data.itertuples(index=False):
+                row_dict = dict(zip(self._format_dict['labels'], row_tuple))
+                hkl_file.write(self._line_formatter.format(**row_dict))
+            hkl_file.write(self._format_dict['suffix'])
 
 
 if __name__ == '__main__':
-    pass
+    from kesshou.dataframes import HklFrame
+    h1 = HklFrame()
+    h1.read('/home/dtchon/_/shelxt.hkl', '40')
+    h2 = h1.duplicate()
+    print(h1.data.head(15))
+    h1._recalculate_intensities_from_structure_factors()
+    print(h1.data.head(15))
+    h1._recalculate_structure_factors_from_intensities()
+    print(h1.data.head(15))
+    print(50 * '-')
+    print(h1.data['F'] - h2.data['F'])
+    print(50 * '-')
+    print(h1.data['sf'] - h2.data['sf'])
 
-    # TODO returns dict; should call some generator to return HklFrame.data?
-    # TODO write hooks for read and write in HklFrame
-    # TODO add 'sf' (denoted using letter 'stigma') as alternative sigma for 'F'
     # TODO Fix the documentation using this new object
-    # TODO Add hklres generator to this HklIo
     # TODO think about space groups...
