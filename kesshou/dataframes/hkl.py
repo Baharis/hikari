@@ -2,8 +2,10 @@ from collections import OrderedDict
 from kesshou.dataframes import BaseFrame
 from kesshou.utility import cubespace, is2n, is3n, is4n, is6n
 from kesshou.symmetry import PG
+from pathlib import Path
 from typing import Union
 import copy
+import json
 import random
 import struct
 import sys
@@ -15,7 +17,11 @@ import matplotlib.pyplot as plt
 
 
 class HklKeys:
-    """Object managing .hkl file keys for HklFrame"""
+    """
+    A helper class supporting HklFrame.
+    Menages properties and presence of keys
+    present in HklFrame's dataframe
+    """
     # DEFINE ALL POSSIBLE HKL KEYS
     __h = {
         'default': 0,
@@ -277,8 +283,9 @@ class HklKeys:
 
 class HklFrame(BaseFrame):
     """
-    This class imports, stores, manipulates and outputs information
-    about single-crystal diffraction patterns.
+    This is a master object, which utilises all other
+    Hkl classes to import, store, manipulate and output
+    information about single-crystal diffraction patterns.
 
     An empty container which stores the diffraction data
     using python's Pandas library and elementary crystal cell data.
@@ -1313,6 +1320,7 @@ class HklFrame(BaseFrame):
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
+        # TODO mercury accepts max of Uiso == 4.999 - fix to this value
         # prepare minima and maxima for scaling purposes
         data_minima, data_maxima = dict(), dict()
         for key in list(self.keys.all):
@@ -1448,17 +1456,179 @@ class HklFrame(BaseFrame):
         hkl_file.close()
 
 
+class HklIo:
+    """
+    A helper class supporting HklFrame.
+    Menages reading and writing hkl files
+    into and out of HklFrame's dataframe
+    """
+
+    # TODO write hooks for read and write in HklFrame
+    # TODO add 'sf' (denoted using letter 'stigma') as alternative sigma for 'F'
+    # TODO Fix the documentation using this new object
+    # TODO Add hklres generator to this HklIo
+    # TODO think about space groups...
+
+    def __init__(self):
+        self.__format = 'shelx_4'
+        self.keys = HklKeys()
+        self.use_separator = True
+        self._load_format_dictionaries()
+
+    def _build_format_string(self):
+        """
+        Prepare an input string for string 'format' method to write hkl data.
+        :return: String for str.format() to format hkl data while writing.
+        :rtype: str
+        """
+        built_format_string = str()
+        for l, w in zip(self._format_dict['labels'], self._format_dict['widths']):
+            built_format_string += ' ' * self.use_separator
+            w = abs(w) - int(self.use_separator)
+            built_format_string += '{{{0}:>{1}}}'.format(l, w)
+        built_format_string += '\n'
+        self.__format_string = built_format_string
+
+    @property
+    def format(self):
+        """
+        Return a name of currently used format.
+        :return: String with internal representation of hkl format.
+        :rtype: str
+        """
+        return self.__format
+
+    @format.setter
+    def format(self, new_format):
+        if new_format in self.formats_defined.keys():
+            self.__format = new_format
+        elif new_format in self.formats_aliases.keys():
+            self.__format = self.formats_aliases[new_format]
+        else:
+            raise KeyError('Unknown hkl format "{}" given'.format(new_format))
+        self._build_format_string()
+
+    @property
+    def _format_dict(self):
+        return self.formats_defined[self.__format]
+
+    @property
+    def _format_string(self):
+        return self.__format_string
+
+    def _import_custom_format(self, custom_format_string):
+        """
+        Import format string such as 'h 4 k 4 l 4 I 8 si 8' as format 'custom'.
+
+        :param custom_format_string: string containing alternating data labels
+            and column widths (all negative if free format) separated using ' '.
+        :type custom_format_string: str
+        :return: None
+        """
+        custom_format_list = custom_format_string.strip(' ').split(' ')
+        custom_labels = custom_format_list[0::2]
+        custom_widths = [int(width) for width in custom_format_list[1::2]]
+        assert len(custom_labels) == len(custom_widths), "Bad custom format"
+        self.formats_defined['custom'] = {'labels': custom_labels,
+                                          'widths': custom_widths,
+                                          'prefix': '',
+                                          'suffix': ''}
+
+    @property
+    def is_current_format_free(self):
+        """
+        Return true if currently defined format is free
+        :return: True if all format widths are negative; False otherwise.
+        :rtype: bool
+        """
+        return all(width < 0 for width in self._format_dict['widths'])
+
+    def _load_format_dictionaries(self):
+        """
+        Load dictionaries of defined formats and their aliases from json files.
+        :return: None
+        """
+        current_file_path = Path(__file__).parent.absolute()
+        path_of_defined = current_file_path.joinpath('hkl_formats_defined.json')
+        path_of_aliases = current_file_path.joinpath('hkl_formats_aliases.json')
+        with open(path_of_defined) as file:
+            self.formats_defined = json.load(file)
+        with open(path_of_aliases) as file:
+            self.formats_aliases = json.load(file)
+
+    def _parse_fixed_line(self, line):
+        """
+        Parse data from a line, where data from each *label* has fixed *width*.
+        :param line: string to be parsed based on format dictionary.
+        :type line: str
+        :return: list of strings extracted from parsed line
+        :rtype: list
+        """
+        slice_end = list(np.cumsum(self._format_dict['widths']))
+        slice_beg = [0] + slice_end[:-1]
+        parsed = [line[beg:end] for beg, end in zip(slice_beg, slice_end)]
+        parsed = np.array(parsed)
+        try:
+            parsed.astype('float64')
+            assert len(parsed) == len(self._format_dict['widths'])
+        except (ValueError, AssertionError):
+            return None
+        return parsed
+
+    def _parse_free_line(self, line):
+        """
+        Parse data from line, where data from *labels* is separated with space.
+        :param line: string to be parsed based on format dictionary.
+        :type line: str
+        :return: list of strings extracted from parsed line
+        :rtype: list
+        """
+        parsed = np.array(line.strip().split())
+        try:
+            parsed.astype('float64')
+            assert len(parsed) == len(self._format_dict['widths'])
+        except (ValueError, AssertionError):
+            return None
+        return parsed
+
+    def read(self, hkl_path, hkl_format):
+        self.format = hkl_format
+        self.keys.set(self._format_dict['labels'])
+        parse_line = self._parse_free_line if self.is_current_format_free() \
+            else self._parse_fixed_line
+
+        def read_file_to_list_of_data():
+            list_of_reflections = list()
+            with open(hkl_path, 'r') as hkl_file:
+                for line in hkl_file.read().splitlines():
+                    parsed_line = parse_line(line)
+                    if parsed_line is None:
+                        continue
+                    list_of_reflections.append(parsed_line)
+            return np.array(list_of_reflections).transpose()
+        array_of_reflections = read_file_to_list_of_data()
+
+        def build_dict_of_reflections(_hkl_array):
+            dict_of_data = dict()
+            for index, key in enumerate(self._format_dict['labels']):
+                key_dtype = self.keys.get_property(key, 'dtype')
+                dict_of_data[key] = _hkl_array[index].astype(key_dtype)
+                return dict_of_data
+        return build_dict_of_reflections(array_of_reflections)
+        # TODO returns dict; should call some generator to return HklFrame.data?
+
+    def write(self, hkl_data, hkl_path, hkl_format):
+        """hkl_data must be pandas df!"""
+        self.format = hkl_format
+        with open(hkl_path, 'w') as hkl_file:
+            hkl_file.write(self._format_dict['file_prefix'])
+            for index, row in hkl_data.iterrows():
+                hkl_file.write(self._format_string().format(**row))
+            hkl_file.write(self._format_dict['file_suffix'])
+
+
+
+
+
 if __name__ == '__main__':
-    from kesshou.symmetry import symm_ops
-    e = symm_ops['1']
-    r = symm_ops['4_z']
-    print(r.shape)
-    p = HklFrame()
-    p.edit_cell(a=5, b=5, c=5)
-    print(p.a_r, p.b_r, p.c_r, p.al_r, p.be_r, p.ga_r)
-    p.make_ball(2.1)
-#    p.rescale(key='I', factor=10)
-    p.dac(opening_angle=45, vector=(1, 1, 1))
-    p.to_hklres(path='/home/dtchon/_/test1hkl.res')
-    p.transform((e, r))
-    p.to_hklres(path='/home/dtchon/_/test2hkl.res')
+    pass
