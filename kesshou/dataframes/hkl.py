@@ -1,6 +1,6 @@
-from collections import OrderedDict
 from kesshou.dataframes import BaseFrame
-from kesshou.utility import cubespace, is2n, is3n, is4n, is6n
+from kesshou.utility import cubespace, elements_list, is2n, is3n, is4n, is6n
+from kesshou.utility import rescale_list_to_range, rescale_list_to_other
 from kesshou.symmetry import PG
 from pathlib import Path
 from typing import Union
@@ -569,116 +569,6 @@ class HklFrame(BaseFrame):
         # raise exception if the address is unknown
         raise ValueError('Unknown domain address have been supplied')
 
-    def draw(self, alpha=False, colored='b', dpi=600, legend=True,
-             projection=('h', 'k', 0), savepath=False, scale=1.0, showfig=False):
-        """
-        Draw a cross-section of reciprocal lattice for given pattern
-
-        alpha        (string)   Value to be visualised as alpha or False
-        color        (string)   Int value represented as colour or False
-        dpi          (integer)  Dots Per Inch, quality of saved graphics
-        legend       (boolean)  Legend of used colors should be printed
-        projection   (tuple)    desired cross-section, default ('h', 'k', 0)
-        savepath     (string)   Path to the file to save the image or False
-        scale        (float)    Scale factor for the reflection size
-        showfig      (boolean)  Figure should be shown in matplotlib window
-        uncertainty  (boolean)  master/sigma(master) drawn as transparency
-
-        This object should be deleted or cleared for the sake of release version
-        """
-        # TODO clear of delete
-        # TODO existance of bonds in mercury is independent on U
-        # TODO 3.4A is the max length of Uraniu-Uranium bond.
-        # TODO largest cells are around 1000A in each direction, but inorganics
-        # TODO and simple organics < 100; make adaptive scale
-
-        # SET NECESSARY PARAMETERS
-        color_scheme = 'gist_rainbow'
-        distance = 1
-        axes = list()
-        self.extinct('000')
-        fig = plt.figure()
-
-        # INTERPRET PROJECTION
-        for value in projection:
-            try:
-                distance = int(value)
-            except ValueError:
-                axes.append(value)
-        direction = ({'h', 'k', 'l'} - set(axes)).pop()
-        title = str(projection).replace(', ', '').replace('\'', '')
-        ax = fig.add_subplot(1, 1, 1)
-
-        # PREPARE MINIMA AND MAXIMA FOR SCALING PURPOSES
-        data_minima, data_maxima = dict(), dict()
-        for key in list(self.keys.all):
-            data_minima[key] = self.data[key].min()
-            data_maxima[key] = self.data[key].max()
-
-        # PREPARE COLOUR PALETTE
-        color_map = matplotlib.cm.get_cmap(color_scheme)
-        color_range = 1
-        if colored:
-            color_range += int(data_maxima[colored] - data_minima[colored])
-        colors, _rgb, _alp = [], (1.0, 0.0, 0.0), (1,)
-        [colors.append(color_map(i / color_range)) for i in range(color_range)]
-
-        # PREPARE NECESSARY LISTS FOR MATPLOTLIB
-        _x, _y, _size, _color, _edge = list(), list(), list(), list(), list()
-        actual_index = -1
-        for index, row in self.data.iterrows():
-            if row[direction] != distance:
-                continue
-            actual_index += 1
-            coordinates = {'h': 'x', 'k': 'y', 'l': 'z'}
-            _x.append(row[coordinates[axes[0]]])
-            _y.append(row[coordinates[axes[1]]])
-            _size.append(scale ** 2 * np.log(abs(row['F'])+1.0) ** 2)
-            if colored:
-                _rgb = colors[int(row[colored] - data_minima[colored])][:3]
-            if alpha:
-                _alp = ((row[alpha]/data_maxima[alpha])**0.25, )
-            _color.append(_rgb + _alp)
-            _edge.append('None') if row['F'] > 0 else _edge.append('k')
-
-        # CHECKING IF LIST IS NOT EMPTY
-        if len(_color) == 0:
-            print("Reflection set intended to be drawn is empty! Aborting")
-            return
-
-        # DRAW THE PLOT
-        directions = {'h': 'a* [A^-1]', 'k': 'b* [A^-1]', 'l': 'c* [A^-1]'}
-        ax.set_title(title)
-        ax.set_xlabel(directions[axes[0]])
-        ax.set_ylabel(directions[axes[1]])
-        ax.scatter(0, 0, s=20, c='k', marker='x')
-        ax.scatter(_x, _y, s=_size, c=_color, marker='.',
-                   edgecolors=_edge, linewidth=[0.05 * s for s in _size])
-        ax.axis('equal')
-
-        # ADD LEGEND IF APPLICABLE
-        if legend and colored:
-            legend_colors, legend_batches = [], []
-            color_skip = int(color_range / 25) + 1
-            for i in range(0, color_range, color_skip):
-                legend_colors.append(plt.Rectangle((0, 0), 1, 1, fc=colors[i]))
-                legend_batches.append(str(i + data_minima[colored]))
-            # if color_range < 10:
-            ax.legend(legend_colors, legend_batches, loc=1, prop={'size': 7})
-            # elif color_range < 25:
-            #     ax.legend(legend_colors, legend_batches, loc=1, ncol=2,
-            #               prop={'size': 6})
-            # else:
-            #     ax.legend(legend_colors, legend_batches, loc=1, ncol=3,
-            #               prop={'size': 5})
-
-        # SAVE OR SHOW FIGURE IF APPLICABLE
-        fig = plt.gcf()
-        if savepath:
-            fig.savefig(savepath, bbox_inches=None, dpi=dpi)
-        if showfig:
-            plt.show()
-
     def duplicate(self):
         """
         Make and return an exact deep copy of this HklFrame.
@@ -1160,69 +1050,19 @@ class HklFrame(BaseFrame):
         self.data.drop(indices_to_delete, inplace=True)
         self.data.reset_index(drop=True, inplace=True)
 
-    def to_hklres(self, colored='m', master_key='I', path='hkl.res'):
+    def to_res(self, path='hkl.res', colored='m'):
         """
         Export the reflection information from dataframe to .res file,
         so that a software used to visualize .res files can be used
-        to visualise a diffraction data in three dimentions.
+        to visualise a diffraction data in three dimensions.
 
-        :param colored: Which dataframe key, "m" or "b", should be used to
-        provide the color to the reflection in final image.
+        :param colored: Which key of dataframe should be visualised using color.
         :type colored: str
-        :param master_key: Which dataframe key, "I" or "F", should be used to
-        provide the intensity of the reflection.
-        :type master_key: str
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
-        # TODO mercury accepts max of Uiso == 4.999 - fix to this value
-        # prepare minima and maxima for scaling purposes
-        data_minima, data_maxima = dict(), dict()
-        for key in list(self.keys.all):
-            data_minima[key] = self.data[key].min()
-            data_maxima[key] = self.data[key].max()
-
-        hkl_min = min((data_minima['h'], data_minima['k'], data_minima['l']))
-        hkl_max = max((data_maxima['h'], data_maxima['k'], data_maxima['l']))
-        scale = 2./max((abs(hkl_max), abs(hkl_min)))
-
-        # print the title line
-        a = self.a_r * 1000
-        b = self.b_r * 1000
-        c = self.c_r * 1000
-        al = np.degrees(self.al_r)
-        be = np.degrees(self.be_r)
-        ga = np.degrees(self.ga_r)
-        cell_list = (self.la, a, b, c, al, be, ga)
-        hklres_file = open(path, 'w')
-        hklres_file.write('TITL hkl visualisation\n')
-        hklres_file.write('REM special hkl visualisation file, to be used in'
-                          'mercury with hkl.msd style applied\n')
-        hklres_file.write('REM reciprocal unit cell has been inflated '
-                          'thousandfold for technical reasons\n')
-        hklres_file.write('CELL {0:7f} {1:7f} {2:7f} {3:7f} {4:7f} {5:7f} '
-                          '{6:7f}\n'.format(*cell_list))
-        hklres_file.write('LATT -1\n\n')
-
-        def get_label(integer):
-            labels = ('H', 'Li', 'B', 'N', 'F', 'Na', 'Al', 'P', 'Cl')
-            return labels[(int(integer)-1) % len(labels)]
-
-        for index, reflection in self.data.iterrows():
-            line_pars = dict()
-            line_pars['label'] = '{atom}({h_index},{k_index},{l_index})'.format(
-                atom=get_label(reflection[colored]),
-                h_index=int(reflection['h']),
-                k_index=int(reflection['k']),
-                l_index=int(reflection['l']))
-            line_pars['x'] = float(reflection['h'] * scale)
-            line_pars['y'] = float(reflection['k'] * scale)
-            line_pars['z'] = float(reflection['l'] * scale)
-            line_pars['size'] = np.log(abs(reflection[master_key])+1.0) ** 2 \
-                                * 5 * scale ** 2
-            hklres_file.write('{label:16}   1 {x: .4f} {y: .4f} {z: .4f} '
-                              '11.0000 {size: .12f}\n'.format(**line_pars))
-        hklres_file.close()
+        artist = HklArtist(self)
+        artist.write_res(path=path, colored=colored)
 
     def trim(self, limit):
         """
@@ -1532,20 +1372,156 @@ class HklWriter(HklIo):
             hkl_file.write(self._format_dict['suffix'])
 
 
+class HklArtist:
+    """
+    A class responsible for representing the HklData using either images
+    or other files, which can be further visualised.
+    """
+
+    RES_MIN_ATOM_DISTANCE = 10.0
+    "Minimum available value of reciprocal unit cell length parameter"
+
+    RES_MIN_ATOM_SIZE = 0.00001
+    "Maximum available value of U_iso while defining atom sizes"
+
+    RES_MAX_ATOM_SIZE = 4.99999
+    "Maximum available value of U_iso while defining atom sizes"
+
+    def __init__(self, hkl_dataframe = HklFrame()):
+        self.df = hkl_dataframe
+
+    @property
+    def maximum_index(self):
+        """
+        Return largest absolute value of the following: h, k, l, -h, -k, -l.
+        :return: Largest absolute hkl index
+        :rtype: int
+        """
+        maxima_dict, minima_dict = self.maxima, self.minima
+        return max(maxima_dict['h'], maxima_dict['k'], maxima_dict['l'],
+                   -minima_dict['h'], -minima_dict['k'], -minima_dict['l'])
+
+    @property
+    def maxima(self):
+        """
+        Return maxima of current dataframe
+        :return: Dictionary of maxima of current values in linked dataframe
+        :rtype: dict
+        """
+        return {key: self.df.data[key].max() for key in self.df.data.keys()}
+
+    @property
+    def minima(self):
+        """
+        Return minima of current dataframe
+        :return: Dictionary of minima of current values in linked dataframe
+        :rtype: dict
+        """
+        return {key: self.df.data[key].min() for key in self.df.data.keys()}
+
+    @property
+    def res_distance_scale(self):
+        """
+        Define and return a scale so that the shortest of reciprocal vectors
+        a, b and c has a length of :attr:`RES_MIN_ATOM_DISTANCE`.
+        :return: A scale factor to multiply call distances by
+        :rtype: float
+        """
+        min_cell_length = min(self.df.a_r, self.df.b_r, self.df.c_r)
+        return self.maximum_index * self.RES_MIN_ATOM_DISTANCE / min_cell_length
+
+    @property
+    def res_reciprocal_cell(self):
+        """
+        Return dictionary of seven unit cell parameters from file's header,
+        with distances rescaled to prevent software from showing bonds.
+
+        :return: Dictionary containing la, a, b, c, al, be, ga values.
+        :rtype: dict
+        """
+        return {'la': self.df.la,
+                'a': self.df.a_r * self.res_distance_scale,
+                'b': self.df.b_r * self.res_distance_scale,
+                'c': self.df.c_r * self.res_distance_scale,
+                'al': np.rad2deg(self.df.al_r),
+                'be': np.rad2deg(self.df.be_r),
+                'ga': np.rad2deg(self.df.ga_r)}
+
+    @property
+    def res_header(self):
+        return "TITL Reflection visualisation\n" \
+               "REM Special file to be used in mercury with hkl.msd style.\n" \
+               "REM Reciprocal unit cell scaled by {sc} to prevent bonding\n" \
+               "CELL {la:7f} {a:7f} {b:7f} {c:7f} {al:7f} {be:7f} {ga:7f}\n" \
+               "LATT -1\n\n".format(sc=self.res_distance_scale,
+                                    **self.res_reciprocal_cell)
+
+    @staticmethod
+    def res_line(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso):
+        """
+        Tool to transform given element symbol, h, k, l indices,
+        reflection positions and size into printable line.
+
+        :return: string filled with provided reflection data.
+        :rtype: str
+        """
+        label = '{}({},{},{})'.format(color, h_ind, k_ind, l_ind)
+        pos = ' {: 7.5f} {: 7.5f} {: 7.5f}'.format(x_pos, y_pos, z_pos)
+        size = ' {: 7.5f}\n'.format(u_iso)
+        return '{:16}   1{} 11.0000{}'.format(label, pos, size)
+
+    def write_res(self, path='hkl.res', colored='m'):
+        """
+        Write the reflection information in .res file according to the data
+        passed to the artist object.
+
+        :param colored: Which key of dataframe should be visualised using color.
+        :type colored: str
+        :param path: Absolute or relative path where the file should be saved
+        :type path: str
+        """
+        if self.maxima[colored] == self.minima[colored]:
+            color = ['H'] * len(self.df)
+        else:
+            color = rescale_list_to_other(self.df.data[colored], elements_list)
+        h_ind = self.df.data['h']
+        k_ind = self.df.data['k']
+        l_ind = self.df.data['l']
+        x_pos = (1.0 / self.maximum_index) * self.df.data['h']
+        y_pos = (1.0 / self.maximum_index) * self.df.data['k']
+        z_pos = (1.0 / self.maximum_index) * self.df.data['l']
+        u_iso = rescale_list_to_range(self.df.data['F'],
+                                      (self.RES_MIN_ATOM_SIZE,
+                                       self.RES_MAX_ATOM_SIZE))
+        zipped = zip(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso)
+
+        file = open(path, 'w')
+        file.write(self.res_header)
+        for c, h, k, l, x, y, z, u in zipped:
+            file.write(self.res_line(color=c, h_ind=h, k_ind=k, l_ind=l,
+                                     x_pos=x, y_pos=y, z_pos=z, u_iso=u))
+        file.close()
+
+
+# TODO still sth wrong with labels - look at that based on labels for 'h' or 'k'
+# for h = -19 Talium (Z = 81 was chosen). for h = 0: Fm (Z=99)
+
+
+
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
     from kesshou.dataframes import HklFrame
     h1 = HklFrame()
-    h1.read('/home/dtchon/_/shelxt.hkl', '40')
-    h2 = h1.duplicate()
-    print(h1.data.head(15))
-    h1._recalculate_intensities_from_structure_factors()
-    print(h1.data.head(15))
-    h1._recalculate_structure_factors_from_intensities()
-    print(h1.data.head(15))
-    print(50 * '-')
-    print(h1.data['F'] - h2.data['F'])
-    print(50 * '-')
-    print(h1.data['sf'] - h2.data['sf'])
+    h1.read('/home/dtchon/_/shelxt2c.hkl', 'tonto_I')
+    h1.trim(15)
+    h1.to_res('/home/dtchon/_/shelxt2c.res', colored='h')
 
     # TODO Fix the documentation using this new object
     # TODO think about space groups...

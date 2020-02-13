@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 from .group import Group
-from .symmetry_operations import symm_ops as so
+from .operations import symm_ops as so
 
 
 class PointGroup(Group):
