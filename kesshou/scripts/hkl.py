@@ -168,7 +168,7 @@ def completeness_map(a, b, c, al, be, ga,
         _hkl_frame = HklFrame()
         _hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         _hkl_frame.edit_wavelength(wavelength)
-        _hkl_frame.make_ball(radius=min(_hkl_frame.r_lim, 1 / resolution))
+        _hkl_frame.fill(radius=min(_hkl_frame.r_lim, 1 / resolution))
         _hkl_frame.extinct('000')
         for extinction in extinctions:
             _hkl_frame.extinct(extinction, point_group=laue_group)
@@ -176,7 +176,7 @@ def completeness_map(a, b, c, al, be, ga,
 
     p = _make_reference_ball()
     p.find_equivalents(point_group=laue_group)
-    total_reflections = len(p) if legacy_cplt else p.data['equiv'].nunique()
+    total_reflections = len(p) if legacy_cplt else p.table['equiv'].nunique()
 
     def _determine_theta_and_phi_limits():
         """Define the spherical coordinate system based on given point group.
@@ -245,13 +245,13 @@ def completeness_map(a, b, c, al, be, ga,
             for j, ph in enumerate(ph_range):
                 v = _translate_angles_to_vector(theta=th, phi=ph)
                 q = p.duplicate()
-                q.dac(opening_angle=opening_angle, vector=v)
+                q.dac(opening_angle_in_radians=opening_angle, vector=v)
                 if legacy_cplt:
                     q.transform(operations=laue_group.chiral_operations)
                     q.merge()
                     hkl_len = len(q)
                 else:
-                    hkl_len = q.data['equiv'].nunique()
+                    hkl_len = q.table['equiv'].nunique()
                 data_dict['th'].append(th)
                 data_dict['ph'].append(ph)
                 data_dict['cplt'].append(hkl_len / total_reflections)
@@ -498,7 +498,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     p.edit_wavelength(input_wavelength)
     p.read(input_path, input_format)
     p.extinct('000')
-    p.make_stats(point_group=point_group)
+    p.stats(point_group=point_group)
 
 
 def dac_point_group_statistics(a, b, c, al, be, ga,
@@ -547,7 +547,7 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
         hkl_frame = HklFrame()
         hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         hkl_frame.edit_wavelength(wavelength)
-        hkl_frame.make_ball(radius=hkl_frame.r_lim)
+        hkl_frame.fill(radius=hkl_frame.r_lim)
         hkl_frame.merge()
         hkl_frame.extinct('000')
         if not(resolution is None):
@@ -555,7 +555,7 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
         return hkl_frame
     p = _make_reference_ball()
     total_reflections = len(p)
-    max_resolution = max(p.data['r'])
+    max_resolution = max(p.table['r'])
     out = open(output_path, 'w', buffering=1)
     out.write('total_reflections: ' + str(total_reflections) + '\n')
     out.write('maximum_r_in_reciprocal_coordinates: ' + str(max_resolution))
@@ -563,7 +563,7 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
     reflections = list()
     for vector in vectors:
         q = p.duplicate()
-        q.dac(opening_angle=opening_angle, vector=vector)
+        q.dac(opening_angle_in_radians=opening_angle, vector=vector)
         q.transform(operations=point_group.chiral_operations)
         reflections.append(len(q))
         out.write('\n' + str(vector) + ': ' + str(len(q)))
@@ -622,18 +622,18 @@ def dac_statistics(a, b, c, al, be, ga,
     p.orientation = np.array(orientation)
     p.merge()
     p.extinct('000')
-    p.dac(opening_angle=opening_angle)
+    p.dac(opening_angle_in_radians=opening_angle)
     p.find_equivalents(point_group=point_group)
-    p.make_stats(point_group=point_group)
+    p.stats(point_group=point_group)
 
     q = p.duplicate()
     q.extinct()
-    q.make_ball(radius=q.r_lim)
+    q.fill(radius=q.r_lim)
     q.extinct('000')
-    q.dac(opening_angle=opening_angle)
+    q.dac(opening_angle_in_radians=opening_angle)
     q.find_equivalents(point_group=point_group)
 
-    r_max = max(q.data['r'])
+    r_max = max(q.table['r'])
     print('radius    exp.      theory    exp.      theory    uniqueCplt')
     print('range     all       all       unique    unique    exp/theory')
     for rad in reversed(cubespace(0, r_max, 10, include_start=False)):
@@ -644,9 +644,9 @@ def dac_statistics(a, b, c, al, be, ga,
                   max_rad=rad,
                   exp_all=len(p),
                   the_all=len(q),
-                  exp_uni=p.data['equiv'].nunique(),
-                  the_uni=q.data['equiv'].nunique(),
-                  cplt=p.data['equiv'].nunique() / q.data['equiv'].nunique()))
+                  exp_uni=p.table['equiv'].nunique(),
+                  the_uni=q.table['equiv'].nunique(),
+                  cplt=p.table['equiv'].nunique() / q.table['equiv'].nunique()))
 
 
 def simulate_dac(a, b, c, al, be, ga,
@@ -711,7 +711,7 @@ def simulate_dac(a, b, c, al, be, ga,
     p.extinct('000')
     if not(resolution is None):
         p.trim(resolution)
-    p.dac(opening_angle=opening_angle, vector=vector)
+    p.dac(opening_angle_in_radians=opening_angle, vector=vector)
     p.write(hkl_path=output_path, hkl_format=output_format)
 
 

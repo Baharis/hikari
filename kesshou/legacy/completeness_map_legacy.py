@@ -77,13 +77,13 @@ p.crystal.edit_cell(a=unit_cell_a, b=unit_cell_b, c=unit_cell_c,
                     al=unit_cell_al, be=unit_cell_be, ga=unit_cell_ga)
 p.edit_wavelength(hkl_wavelength)
 ball_radius = 2./p.meta['wavelength']
-p.make_ball(radius=ball_radius)
+p.fill(radius=ball_radius)
 ball_trim_range = 1./resolution_cutoff
 p.drop_zero()
 p.merge()
 p.place()
 p.trim(limit=ball_trim_range)
-total_reflections = p.data.shape[0]
+total_reflections = p.table.shape[0]
 log.write(20 * '-' + ' R A D I A T I O N ' + 20 * '-' + '\n')
 log.write('> radiation wavelength (A): ' + str(p.meta['wavelength']) + '\n')
 log.write('< reference ball full radius (1/A): ' + str(ball_radius) + '\n')
@@ -149,13 +149,13 @@ for phi_index, phi in enumerate(phi_range):
         DAC_v = DAC_v_parallel + DAC_v_perpend
         # trim a copy of ball and calculate completeness
         q = copy.deepcopy(p)
-        q.dac(opening_angle=pressure_cell_oa, vector=DAC_v)
+        q.dac(opening_angle_in_radians=pressure_cell_oa, vector=DAC_v)
         q.resymmetrify(operations=point_group.chiral_operations)
-        phi_psi_matrix[phi_index+1, psi_index+1] = q.data.shape[0]
+        phi_psi_matrix[phi_index+1, psi_index+1] = q.table.shape[0]
         dat.write('{:8.0f}'.format(phi))
         dat.write('{:8.0f}'.format(psi))
-        dat.write('{:8.5f}'.format(q.data.shape[0] / total_reflections))
-        dat.write('{:8d}'.format(q.data.shape[0]))
+        dat.write('{:8.5f}'.format(q.table.shape[0] / total_reflections))
+        dat.write('{:8d}'.format(q.table.shape[0]))
         dat.write('\n')
         log.write('| ORIENTATION ' + str(orientation_no) + '/' +
               str(orientations_to_calculate) + '; TIME PASSED: ' +

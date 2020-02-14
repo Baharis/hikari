@@ -3,17 +3,13 @@ from kesshou.utility import cubespace, elements_list, is2n, is3n, is4n, is6n
 from kesshou.utility import rescale_list_to_range, rescale_list_to_other
 from kesshou.symmetry import PG
 from pathlib import Path
-from typing import Union
 import copy
 import json
 import random
-import struct
-import sys
 import numpy as np
 import numpy.linalg as lin
 import pandas as pd
 import matplotlib.cm
-import matplotlib.pyplot as plt
 
 
 class HklKeys:
@@ -292,60 +288,69 @@ class HklKeys:
 
 class HklFrame(BaseFrame):
     """
-    This is a master object, which utilises all other
-    Hkl classes to import, store, manipulate and output
+    A master object which menages single-crystal diffraction files.
+    It utilises other "Hkl" classes to import, store, manipulate and output
     information about single-crystal diffraction patterns.
 
-    An empty container which stores the diffraction data
-    using python's Pandas library and elementary crystal cell data.
+    HklFrame acts as an container which stores
+    the diffraction data (Pandas dataframe, :attr:`table`)
+    and elementary crystal cell data (:class:`kesshou.dataframes.Base`).
     Demanding methods belonging to this class are vectorized,
-    providing relatively satisfactory performance and high data capacity.
+    providing relatively satisfactory performance and high memory capacity.
     HklFrame methods are designed to work in-place, so the work strategy
     is to create a new instance of HklFrame for each reflection dataset,
-    manipulate it using methods, eg. :func:`merge` or :func:`trim`,
-    and than :func:`duplicate` or :func:`write` if needed.
+    manipulate it using methods, eg. :func:`merge` or :func:`trim`, and
+    :func:`duplicate` to other object or output using :func:`write` if needed.
 
     The HklFrame always initiates empty and does not accept any arguments.
-    It also does not return anything, though some magic methods, such as
-    :func:`__len__` and :func:`__add__` are defined.
+    Some of the magic methods, such as :func:`__len__` and :func:`__add__`
+    are defined and describe/operate on the :attr:`frame`.
     """
+
+    HKL_LIMIT = 99
+    """Highest absolute value of h, k or l index, which can be
+    interpreted correctly by current version of the software."""
+
     def __init__(self):
         """HklFrame constructor"""
         super().__init__()
 
-        self.data = pd.DataFrame()
-        """Pandas dataframe containing diffraction data information."""
-
-        self.hkl_limit = 999
-        """Highest absolute value of h, k or l index,
-        which can be interpreted correctly (default 999)."""
-
         self.keys = HklKeys()
-        """Object managing keys (column names) of :attr:`a`."""
+        """Object managing keys (column names) of :attr:`table`."""
 
-        self.la = 0.71069
+        self.__la = 0.71069
         """Wavelength of radiation used in experiment."""
+
+        self.table = pd.DataFrame()
+        """
+        Pandas dataframe containing diffraction data information.
+        Each row represents one reflection observation,
+        while each column has one piece of information about the reflections.
+        For a list of available keys, see :class:`HklKeys`,
+        whose instance is used to menage the keys of this table.
+        """
 
     def __add__(self, other):
         """
-        Add magic method. Adds contents of two `self.data` while preserving
-        meta-information from the first `HklFrame` object.
+        Add magic method. Stacks contents of two :attr:`table` while preserving
+        meta-information from the first :class:`HklFrame` object.
+
         :param other: HklFrame to be added to data
         :type other: HklFrame
         :return: HklFrame with concatenated HklFrame.data pandas dataframes
         :rtype: HklFrame
         """
         _copied = self.duplicate()
-        _copied.data = pd.concat([self.data, other.data], ignore_index=True)
+        _copied.table = pd.concat([self.table, other.table], ignore_index=True)
         return _copied
 
     def __len__(self):
         """
-        Len magic method, defined as a number of individual reflections
+        Len magic method, number of individual data points in :attr:`table`.
         :return: Number of rows (individual reflections) in `self.data`
         :rtype: int
         """
-        return self.data.shape[0]
+        return self.table.shape[0]
 
     def __str__(self):
         """
@@ -353,12 +358,46 @@ class HklFrame(BaseFrame):
         :return: Human-readable representation of `self.data`
         :rtype: str
         """
-        return self.data.__str__()
+        return self.table.__str__()
+
+    @property
+    def la(self):
+        """
+        Wavelength of radiation used in the diffraction experiment.
+        Can be set using popular definitions such as "MoKa" or "CuKb",
+        where a and b stand for *alpha* and *beta*.
+        Implemented cathode materials include:
+        "Ag", "Co", "Cr", "Cu", "Fe", "Mn", "Mo", "Ni", "Pd", "Rh", "Ti", "Zn"
+        and have been imported from International Tables
+        of Crystallography, Volume C, Table 4.2.4.1, 3rd Edition.
+        :return: wavelength of radiation used in experiment
+        :rtype: float
+        """
+        return self.__la
+
+    @la.setter
+    def la(self, wavelength):
+        characteristic_radiations = {'agka': 0.5608, 'agkb': 0.4970,
+                                     'coka': 1.7905, 'cokb': 1.6208,
+                                     'crka': 2.2909, 'crkb': 2.0848,
+                                     'cuka': 1.5418, 'cukb': 1.3922,
+                                     'feka': 1.9373, 'fekb': 1.7565,
+                                     'mnka': 2.1031, 'mnkb': 1.9102,
+                                     'moka': 0.7107, 'mokb': 0.6323,
+                                     'nika': 1.6591, 'nikb': 1.5001,
+                                     'pdka': 0.5869, 'pdkb': 0.5205,
+                                     'rhka': 0.6147, 'rhkb': 0.5456,
+                                     'tika': 2.7496, 'tikb': 2.5138,
+                                     'znka': 1.4364, 'znkb': 1.2952}
+        try:
+            self.la = characteristic_radiations[wavelength[:4].lower()]
+        except TypeError:
+            self.la = float(wavelength)
 
     @property
     def r_lim(self):
         """
-        Calculate limiting sphere radius based on :ivar:`la`.
+        Calculate limiting sphere radius based on :attr:`la`.
 
         :return: Value of limiting sphere radius in reciprocal Angstrom
         :rtype: float
@@ -368,13 +407,14 @@ class HklFrame(BaseFrame):
     def _condition(self, equation=''):
         """
         This method limits the reflection data based on truth of equation
+
         :param equation: Equation which must be met for data to be preserved
         :type equation: str
         :return: Dataframe containing only reflections which meet the equation
         :rtype: pd.DataFrame
         """
         equation = equation.lower().replace(' ', '').replace('_', '')
-        df = self.data
+        df = self.table
         # no variables return dataframe with no rows
         if equation == '':
             return df.iloc[0:0]
@@ -485,15 +525,11 @@ class HklFrame(BaseFrame):
         :param opening_angle: DAC single opening angle in degrees
         :type opening_angle: float
         :param vector: Provides information about orientation of crystal
-            relative to DAC. If None, current :attr:`orientation` is used instead.
+          relative to DAC. If None, current :attr:`orientation` is used instead.
         :type vector: Tuple[float, float, float]
         """
-        # make the abbreviations for opening angle and prepare objects
-        oa = np.radians([float(opening_angle)])[0]
-        self.extinct('000')
-        if not('x' in self.data.columns):
-            self.place()
-        # calculate normal vector "n" in reciprocal lattice
+
+        opening_angle_in_radians = np.deg2rad(opening_angle)
         if vector is None:
             l_v = np.array((1.0, 0.0, 0.0))             # vec. parallel to beam
             h = np.dot(lin.inv(self.orientation), l_v)  # calculate hkl vector
@@ -501,31 +537,32 @@ class HklFrame(BaseFrame):
         else:                                           # calculate xyz* vector
             n = np.array(vector)
         n = 1 / lin.norm(n) * n                        # normalise the n vector
-        # extinct reflections further than max radius
-        self.trim(limit=self.r_lim * np.sin(oa))
+
+        self.trim(limit=self.r_lim * np.sin(opening_angle_in_radians))
         # remove reflections perpendicular to disc's normal vector
-        xyz = self.data.loc[:, ('x', 'y', 'z')].to_numpy()
-        self.data = self.data.loc[~np.isclose(xyz @ n, self.data['r'])]
+        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
+        self.table = self.table.loc[~np.isclose(xyz @ n, self.table['r'])]
         # calculate reflection's position in 2D disc reference system "m"
         # m1 / m2 is a coordinate parallel / perpendicular to vector n
-        xyz = self.data.loc[:, ('x', 'y', 'z')].to_numpy()
+        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
         m1 = np.outer(xyz @ n, n)
         m2 = xyz - m1
         m1 = m1 @ n
         m2 = lin.norm(m2, axis=1)
         # find the middle of two tori, which trace the DAC-limiting shape
-        t1 = 1 / 2 * self.r_lim * np.cos(oa)
-        t2 = 1 / 2 * self.r_lim * np.sin(oa)
+        t1 = 1 / 2 * self.r_lim * np.cos(opening_angle_in_radians)
+        t2 = 1 / 2 * self.r_lim * np.sin(opening_angle_in_radians)
         # check if points lie in one of two tori making the DAC shape
         in_torus1 = (m1 - t1) ** 2 + (m2 - t2) ** 2 <= (self.r_lim / 2) ** 2
         in_torus2 = (m1 + t1) ** 2 + (m2 - t2) ** 2 <= (self.r_lim / 2) ** 2
         # leave only points which lie in both tori
-        self.data = self.data[in_torus1 * in_torus2]
-        self.data.reset_index(drop=True, inplace=True)
+        self.table = self.table[in_torus1 * in_torus2]
+        self.table.reset_index(drop=True, inplace=True)
 
     def _domain(self, address='hkl'):
         """
-        This method limits the reflection data to the ones living in address
+        This method limits the reflection data to the ones "living" in address.
+
         :param address: Address which the reflections must have to be preserved
         :type address: str
         :return: Dataframe containing only reflections with given address
@@ -533,7 +570,8 @@ class HklFrame(BaseFrame):
         """
 
         address = address.lower().replace(' ', '').replace('_', '')
-        df = self.data
+        df = self.table
+
         # no zeroes in address
         if address == 'hkl':
             return df
@@ -543,6 +581,7 @@ class HklFrame(BaseFrame):
             return df.loc[df['h'] == df['l']]
         if address in ('hkk', 'hll'):
             return df.loc[df['k'] == df['l']]
+
         # one zero in address
         if address == 'hk0':
             return df.loc[df['l'] == 0]
@@ -556,6 +595,7 @@ class HklFrame(BaseFrame):
             return df.loc[(df['h'] == df['l']) & (df['k'] == 0)]
         if address in ('0kk', '0ll'):
             return df.loc[(df['k'] == df['l']) & (df['h'] == 0)]
+
         # two zeroes in address
         if address == 'h00':
             return df.loc[(df['k'] == 0) & (df['l'] == 0)]
@@ -563,8 +603,10 @@ class HklFrame(BaseFrame):
             return df.loc[(df['h'] == 0) & (df['l'] == 0)]
         if address == '00l':
             return df.loc[(df['h'] == 0) & (df['k'] == 0)]
+
         # three zeroes in address
         if address == '000':
+
             return df.loc[(df['h'] == 0) & (df['k'] == 0) & (df['l'] == 0)]
         # raise exception if the address is unknown
         raise ValueError('Unknown domain address have been supplied')
@@ -578,43 +620,11 @@ class HklFrame(BaseFrame):
         """
         return copy.deepcopy(self)
 
-    def edit_wavelength(self, wavelength):
-        """
-        Define wavelength of radiation used in the diffraction experiment
-        for the sake of other methods.
-
-        Alternative to manually setting `HklFrame.la`,
-        but can accept and interpret string values such as "MoKa".
-        Interprets the definitions of the alpha and beta1 radiation of: "Ag",
-        "Co", "Cr", "Cu", "Fe", "Mn", "Mo", "Ni", "Pd", "Rh", "Ti" and "Zn".
-        The values of wavelengths have been imported from International Tables
-        of Crystallography, Volume C, Table 4.2.4.1, 3rd Edition.
-
-        :param wavelength: Wavelength of the radiation used in the experiment.
-        :type wavelength: str or float
-        """
-        characteristic_radiations = {'agka': 0.5608, 'agkb': 0.4970,
-                                     'coka': 1.7905, 'cokb': 1.6208,
-                                     'crka': 2.2909, 'crkb': 2.0848,
-                                     'cuka': 1.5418, 'cukb': 1.3922,
-                                     'feka': 1.9373, 'fekb': 1.7565,
-                                     'mnka': 2.1031, 'mnkb': 1.9102,
-                                     'moka': 0.7107, 'mokb': 0.6323,
-                                     'nika': 1.6591, 'nikb': 1.5001,
-                                     'pdka': 0.5869, 'pdkb': 0.5205,
-                                     'rhka': 0.6147, 'rhkb': 0.5456,
-                                     'tika': 2.7496, 'tikb': 2.5138,
-                                     'znka': 1.4364, 'znkb': 1.2952}
-        try:
-            self.la = characteristic_radiations[wavelength[:4].lower()]
-        except TypeError:
-            self.la = float(wavelength)
-
     def extinct(self, rule='hkl:', point_group=PG['1']):
         """
         Removes from dataframe all reflections which are in a specified
         *domain*, but do not meet the *condition*.
-        The *rules* have a format "domain:condition*,
+        The *rules* have a format "domain:condition",
         where the domain specifies a part of reciprocal space which
         we plan to extinct, while the condition describes all the reflections,
         which should **not** be extinct despite belonging to domain.
@@ -627,7 +637,7 @@ class HklFrame(BaseFrame):
         In the current release the *domains* are hard-coded and thus not all
         theoretically possible domains can be specified.
         However, all domains specified in the International Tables
-        should be accesible.
+        should be accessible.
 
         :param rule: A string with *domain* and *condition* separated by colon.
         :type rule: str
@@ -655,11 +665,11 @@ class HklFrame(BaseFrame):
             extinct = extinct | {tuple(row) for row in dom.to_numpy() @ op}
         # remove all reflections whose hkls are in extinct set
         for h, k, l in list(extinct):
-            self.data = self.data[~((self.data['h'] == h) &
-                                    (self.data['k'] == k) &
-                                    (self.data['l'] == l))]
+            self.table = self.table[~((self.table['h'] == h) &
+                                      (self.table['k'] == k) &
+                                      (self.table['l'] == l))]
         # reset the indices for other methods to use
-        self.data.reset_index(drop=True, inplace=True)
+        self.table.reset_index(drop=True, inplace=True)
 
     def find_equivalents(self, point_group=PG['1']):
         """
@@ -673,14 +683,14 @@ class HklFrame(BaseFrame):
         :param point_group: Point Group used to determine symmetry equivalence
         :type point_group: kesshou.symmetry.PointGroup
         """
-        hkl_lim = self.hkl_limit
+        hkl_lim = self.HKL_LIMIT
         self.keys.add(('equiv',))
-        self.data['equiv'] = [(-hkl_lim, -hkl_lim, -hkl_lim)] * len(self.data)
-        _hkl_matrix = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
+        self.table['equiv'] = [(-hkl_lim, -hkl_lim, -hkl_lim)] * len(self.table)
+        _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
         for op in point_group.operations:
             new_hkl = pd.Series(map(tuple, _hkl_matrix @ op[0:3, 0:3]))
-            _to_update = self.data['equiv'] < new_hkl
-            self.data.loc[_to_update, 'equiv'] = new_hkl.loc[_to_update]
+            _to_update = self.table['equiv'] < new_hkl
+            self.table.loc[_to_update, 'equiv'] = new_hkl.loc[_to_update]
 
     def from_dict(self, dictionary):
         """
@@ -697,12 +707,13 @@ class HklFrame(BaseFrame):
         for key, value in dictionary.items():
             typ = self.keys.get_property(key, 'dtype')
             new_data[key] = pd.Series(value, dtype=typ, name=key)
-        self.data = new_data
-        self.place()
+        self.table = new_data
         self.extinct('000')
+        if not('x' in self.table.columns):
+            self.place()
         self._recalculate_structure_factors_and_intensities()
 
-    def make_ball(self, radius=2.0):
+    def fill(self, radius=2.0):
         """
         Fill the dataframe with all possible reflections within
         the distance *radius* from the reciprocal space origin.
@@ -724,12 +735,11 @@ class HklFrame(BaseFrame):
             hkls = np.matrix((h_column, k_column, l_column)).T
             xyz = np.matrix((self.a_w, self.b_w, self.c_w))
             return hkls[lin.norm(hkls @ xyz, axis=1) <= _r]
-
         hkl = _make_hkl_ball()
 
         # increase the ball size until all needed points are in
         previous_length = -1
-        while len(hkl) > previous_length and max_index <= self.hkl_limit:
+        while len(hkl) > previous_length and max_index <= self.HKL_LIMIT:
             previous_length = len(hkl)
             max_index = max_index * 2
             hkl = _make_hkl_ball(max_index)
@@ -740,7 +750,7 @@ class HklFrame(BaseFrame):
         self.from_dict({'h': np.array(_h)[0], 'k': np.array(_k)[0],
                         'l': np.array(_l)[0], 'I': ones, 'si': ones, 'm': ones})
 
-    def make_stats(self, bins=10, point_group=PG['1'], extinctions=('000',)):
+    def stats(self, bins=10, point_group=PG['1'], extinctions=('000',)):
         """
         Analyses dataframe in terms of number of individual, unique and
         theoretically possible reflections, as well as completeness and
@@ -758,7 +768,6 @@ class HklFrame(BaseFrame):
         :param extinctions: Iterable of extinction rules to be applied
         :type extinctions: tuple
         """
-
         def prepare_base_copy_of_hkl():
             _hkl_base = self.duplicate()
             for _extinction in extinctions:
@@ -769,7 +778,7 @@ class HklFrame(BaseFrame):
 
         def prepare_ball_of_hkl(_point_group=PG['1']):
             _hkl_full = hkl_base.duplicate()
-            _hkl_full.make_ball(radius=max(self.data['r']))
+            _hkl_full.fill(radius=max(self.table['r']))
             _hkl_full.merge(point_group=_point_group)
             for _extinction in extinctions:
                 _hkl_full.extinct(_extinction)
@@ -785,7 +794,7 @@ class HklFrame(BaseFrame):
         hkl_merged = prepare_merged_hkl(_point_group=point_group)
 
         def group_by_resolution(ungrouped_hkl, _bins=bins):
-            cube_bins = cubespace(0.0, max(self.data['r']), num=_bins + 1)
+            cube_bins = cubespace(0.0, max(self.table['r']), num=_bins + 1)
             grouped_hkl = ungrouped_hkl.data.groupby(
                 pd.cut(ungrouped_hkl.data['r'], cube_bins))
             return grouped_hkl
@@ -804,14 +813,12 @@ class HklFrame(BaseFrame):
             results = pd.concat([observed, independent, theory,
                                  completeness, redundancy], axis=1)
             results.columns = ['Obser', 'Indep', 'Theory', 'Cplt', 'Redund.']
-            print(results)
-
-        print('\nStatistics in Selected Point Group')
+            return results
         make_table_with_stats(grouped_base, grouped_full, grouped_merged)
 
     def merge(self, point_group=PG['1']):
         """
-        Average down each set of redundant reflections present in the dataframe,
+        Average down each set of redundant reflections present in the table,
         to one reflection.
 
         The redundancy of reflections is determined using the
@@ -873,13 +880,13 @@ class HklFrame(BaseFrame):
         """
         self.find_equivalents(point_group=point_group)
         # group the dataframe and obtain all existing keys
-        grouped = self.data.groupby('equiv')
+        grouped = self.table.groupby('equiv')
         grouped_first = grouped.first().reset_index()
         grouped_mean = grouped.mean().reset_index()
         grouped_sum = grouped.sum().reset_index()
         # for each key apply a necessary reduce operation and add it to data
         data = dict()
-        for key in self.data.keys():
+        for key in self.table.keys():
             if key in self.keys.reduce_behaviour['keep']:
                 data[key] = grouped_first[key]
             elif key in self.keys.reduce_behaviour['add']:
@@ -894,13 +901,14 @@ class HklFrame(BaseFrame):
         and calculate their distance from origin ("r") in reciprocal Angstrom.
         Save four new keys and their values into the dataframe.
         """
-        hkl = self.data.loc[:, ('h', 'k', 'l')].to_numpy()
+        hkl = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
         abc = np.matrix((self.a_w, self.b_w, self.c_w))
         xyz = hkl @ abc
-        self.data['x'] = xyz[:, 0]
-        self.data['y'] = xyz[:, 1]
-        self.data['z'] = xyz[:, 2]
-        self.data['r'] = lin.norm(xyz, axis=1)
+        self.table['x'] = xyz[:, 0]
+        self.table['y'] = xyz[:, 1]
+        self.table['z'] = xyz[:, 2]
+        self.table['r'] = lin.norm(xyz, axis=1)
+        self.keys.add(('x', 'y', 'z', 'r'))
 
     def read(self, hkl_path, hkl_format='shelx_4'):
         """
@@ -953,14 +961,14 @@ class HklFrame(BaseFrame):
         Structure factor's uncertainty is calculated as follows:
         *sf = si / (2 \* sqrt(abs(I)))*.
         """
-        new_data = copy.deepcopy(self.data)
+        new_data = copy.deepcopy(self.table)
         signum_of_i = new_data['I'].copy()
         signum_of_i[signum_of_i > 0] = 1
         signum_of_i[signum_of_i < 0] = -1
         absolute_sqrt_of_i = abs(new_data["I"]) ** 0.5
         new_data['F'] = signum_of_i * absolute_sqrt_of_i
         new_data['sf'] = new_data["si"] / (2 * absolute_sqrt_of_i)
-        self.data = new_data
+        self.table = new_data
         self.keys.add({'F', 'sf'})
 
     def _recalculate_intensities_from_structure_factors(self):
@@ -973,13 +981,13 @@ class HklFrame(BaseFrame):
         Intensity's uncertainty is calculated as follows:
         *si = 2 \* sf \* abs(F)*.
         """
-        new_data = copy.deepcopy(self.data)
+        new_data = copy.deepcopy(self.table)
         signum_of_f = new_data['F'].copy()
         signum_of_f[signum_of_f > 0] = 1
         signum_of_f[signum_of_f < 0] = -1
         new_data['I'] = signum_of_f * (abs(new_data['F']) ** 2)
         new_data['si'] = 2 * new_data["sf"] * abs(new_data["F"])
-        self.data = new_data
+        self.table = new_data
         self.keys.add({'I', 'si'})
 
     def transform(self, operations):
@@ -1026,15 +1034,15 @@ class HklFrame(BaseFrame):
         def _build_transformed_dataframe():
             dataframes = list()
             for op in ops:
-                df = copy.deepcopy(self.data)
+                df = copy.deepcopy(self.table)
                 mat = op[0:3, 0:3]
-                hkl = self.data.loc[:, ['h', 'k', 'l']].to_numpy() @ mat
+                hkl = self.table.loc[:, ['h', 'k', 'l']].to_numpy() @ mat
                 df['h'] = hkl[:, 0]
                 df['k'] = hkl[:, 1]
                 df['l'] = hkl[:, 2]
                 dataframes.append(df)
             return pd.concat(dataframes, axis=0, ignore_index=True)
-        self.data = _build_transformed_dataframe()
+        self.table = _build_transformed_dataframe()
         self.place()
 
     def thin_out(self, target_cplt=1.0):
@@ -1047,12 +1055,12 @@ class HklFrame(BaseFrame):
         assert 0.0 <= target_cplt <= 1.0, 'target_cplt outside the 0--1 range'
         number_to_delete = int((1 - target_cplt) * len(self))
         indices_to_delete = random.sample(range(0, len(self)), number_to_delete)
-        self.data.drop(indices_to_delete, inplace=True)
-        self.data.reset_index(drop=True, inplace=True)
+        self.table.drop(indices_to_delete, inplace=True)
+        self.table.reset_index(drop=True, inplace=True)
 
     def to_res(self, path='hkl.res', colored='m'):
         """
-        Export the reflection information from dataframe to .res file,
+        Export the reflection information from table to .res file,
         so that a software used to visualize .res files can be used
         to visualise a diffraction data in three dimensions.
 
@@ -1066,12 +1074,12 @@ class HklFrame(BaseFrame):
 
     def trim(self, limit):
         """
-        Remove from dataframes those reflections, which lie further than *limit*
+        Remove from table those reflections, which lie further than *limit*
         from the reciprocal space origin point.
         :param limit: Radius of the trimming sphere in reciprocal Angstrom
         :type limit: float
         """
-        self.data = self.data.loc[self.data['r'] <= limit]
+        self.table = self.table.loc[self.table['r'] <= limit]
 
     def write(self, hkl_path, hkl_format='shelx_4'):
         """
@@ -1086,7 +1094,7 @@ class HklFrame(BaseFrame):
         :type hkl_format: union[int, str, OrderedDict]
         """
         writer = HklWriter(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
-        writer.write(hkl_data=self.data)
+        writer.write(hkl_data=self.table)
 
 
 class HklIo:
@@ -1106,12 +1114,14 @@ class HklIo:
 
     def _build_line_formatter(self):
         """
-        Prepare an input string for string 'format' method to write hkl data.
+        Prepare :meth:`line_formatter` to format hkl data while writing.
+
         :return: String for str.format() to format hkl data while writing.
         :rtype: str
         """
         formatter = str()
-        for label, width in zip(self._format_dict['labels'], self._format_dict['widths']):
+        for label, width in zip(self._format_dict['labels'],
+                                self._format_dict['widths']):
             width = abs(width)
             text_width = abs(width) - int(self.use_separator)
             formatter += '{{{0}:>{1}.{2}}}'.format(label, width, text_width)
@@ -1237,10 +1247,12 @@ class HklIo:
 
     @property
     def _format_dict(self):
+        """A dictionary with details concerning current format."""
         return self.formats_defined[self.__format]
 
     @property
     def _line_formatter(self):
+        """A string used by string.format() method to print hkl data."""
         return self.__line_formatter
 
     def _import_custom_format(self, custom_format_string):
@@ -1264,7 +1276,9 @@ class HklIo:
     @property
     def is_current_format_free(self):
         """
-        Return true if currently defined format is free
+        Return true if currently defined format is free,
+        i.e. the columns are separated by whitespace.
+
         :return: True if all format widths are negative; False otherwise.
         :rtype: bool
         """
@@ -1273,7 +1287,6 @@ class HklIo:
     def _load_format_dictionaries(self):
         """
         Load dictionaries of defined formats and their aliases from json files.
-        :return: None
         """
         current_file_path = Path(__file__).parent.absolute()
         path_of_defined = current_file_path.joinpath('hkl_formats_defined.json')
@@ -1296,6 +1309,7 @@ class HklReader(HklIo):
     def _parse_fixed_line(self, line):
         """
         Parse data from a line, where data from each *label* has fixed *width*.
+
         :param line: string to be parsed based on format dictionary.
         :type line: str
         :return: list of strings extracted from parsed line
@@ -1315,6 +1329,7 @@ class HklReader(HklIo):
     def _parse_free_line(self, line):
         """
         Parse data from line, where data from *labels* is separated with space.
+
         :param line: string to be parsed based on format dictionary.
         :type line: str
         :return: list of strings extracted from parsed line
@@ -1329,6 +1344,13 @@ class HklReader(HklIo):
         return parsed
 
     def read(self):
+        """
+        Read the contents of file currently pointed by :attr:`hkl_file_path`
+        and format :attr:`hkl_file_format` and return them to a dictionary.
+
+        :return: A dictionary containing information read from .hkl file.
+        :rtype: dict
+        """
         self.keys.set(self._format_dict['labels'])
         parse_line = self._parse_free_line if self.is_current_format_free \
             else self._parse_fixed_line
@@ -1362,7 +1384,15 @@ class HklWriter(HklIo):
         super().__init__(hkl_file_path, hkl_file_format)
 
     def write(self, hkl_data):
-        """hkl_data must be pandas df!"""
+        """
+        Write data from pandas dataframe `hkl_data` to the file specified 
+        at :attr:`hkl_file_path` of format :attr:`hkl_file_format`.
+        
+        :param hkl_data: Dataframe containing reflection information.
+        :type hkl_data: pandas.dataframe
+        """"""
+        
+        hkl_data must be pandas df!"""
         needed_data = hkl_data.loc[:, self._format_dict['labels']].astype(str)
         with open(self.file_path, 'w') as hkl_file:
             hkl_file.write(self._format_dict['prefix'])
@@ -1377,58 +1407,59 @@ class HklArtist:
     A class responsible for representing the HklData using either images
     or other files, which can be further visualised.
     """
+    COLORMAP = matplotlib.cm.get_cmap('gist_rainbow')
+    "Colourmap used to signify the 'colored' property in hkl.res"
 
-    RES_MIN_ATOM_DISTANCE = 10.0
+    ELEMENT_NAMES = elements_list
+    "List of chemical elements used to give reflections in hkl.res a colour"
+
+    MIN_ATOM_DISTANCE = 10.0
     "Minimum available value of reciprocal unit cell length parameter"
 
-    RES_MIN_ATOM_SIZE = 0.00001
+    MIN_ATOM_SIZE = 0.00001
     "Maximum available value of U_iso while defining atom sizes"
 
-    RES_MAX_ATOM_SIZE = 4.99999
+    MAX_ATOM_SIZE = 4.99999
     "Maximum available value of U_iso while defining atom sizes"
 
-    def __init__(self, hkl_dataframe = HklFrame()):
+    def __init__(self, hkl_dataframe):
         self.df = hkl_dataframe
 
     @property
     def maximum_index(self):
         """
         Return largest absolute value of the following: h, k, l, -h, -k, -l.
-        :return: Largest absolute hkl index
+
+        :return: Largest absolute hkl index.
         :rtype: int
         """
-        maxima_dict, minima_dict = self.maxima, self.minima
-        return max(maxima_dict['h'], maxima_dict['k'], maxima_dict['l'],
-                   -minima_dict['h'], -minima_dict['k'], -minima_dict['l'])
+        maxima = {key: self.df.data[key].max() for key in self.df.data.keys()}
+        minima = {key: self.df.data[key].min() for key in self.df.data.keys()}
+        return max(maxima['h'], maxima['k'], maxima['l'],
+                   -minima['h'], -minima['k'], -minima['l'])
 
     @property
-    def maxima(self):
+    def color_dict(self):
         """
-        Return maxima of current dataframe
-        :return: Dictionary of maxima of current values in linked dataframe
+        Adictionary containing colours used for current map.
+        :return: Dictionary of element_name:rgb_colour pairs.
         :rtype: dict
         """
-        return {key: self.df.data[key].max() for key in self.df.data.keys()}
-
-    @property
-    def minima(self):
-        """
-        Return minima of current dataframe
-        :return: Dictionary of minima of current values in linked dataframe
-        :rtype: dict
-        """
-        return {key: self.df.data[key].min() for key in self.df.data.keys()}
+        linspace = np.linspace([0], [1], len(self.ELEMENT_NAMES))
+        elements = self.ELEMENT_NAMES
+        return {k: self.COLORMAP(float(v)) for k, v in zip(elements, linspace)}
 
     @property
     def res_distance_scale(self):
         """
-        Define and return a scale so that the shortest of reciprocal vectors
-        a, b and c has a length of :attr:`RES_MIN_ATOM_DISTANCE`.
+        Define and return a distance scale so that all reciprocal vectors
+        a, b and c have length of at least :attr:`RES_MIN_ATOM_DISTANCE`.
+
         :return: A scale factor to multiply call distances by
         :rtype: float
         """
         min_cell_length = min(self.df.a_r, self.df.b_r, self.df.c_r)
-        return self.maximum_index * self.RES_MIN_ATOM_DISTANCE / min_cell_length
+        return self.maximum_index * self.MIN_ATOM_DISTANCE / min_cell_length
 
     @property
     def res_reciprocal_cell(self):
@@ -1449,6 +1480,13 @@ class HklArtist:
 
     @property
     def res_header(self):
+        """
+        String containing information which should be find of top of res file -
+        title line, file description and unit cell information.
+
+        :return: String containing res file header.
+        :rtype: str
+        """
         return "TITL Reflection visualisation\n" \
                "REM Special file to be used in mercury with hkl.msd style.\n" \
                "REM Reciprocal unit cell scaled by {sc} to prevent bonding\n" \
@@ -1456,10 +1494,25 @@ class HklArtist:
                "LATT -1\n\n".format(sc=self.res_distance_scale,
                                     **self.res_reciprocal_cell)
 
+    def res_legend(self, colored='m'):
+        """
+        Return a legend - a least of meanings of colors used in hklres.
+
+        :return: String of res commands containing details of color meaning.
+        :rtype: str
+        """
+        value_range = np.arange(min(self.df.data[colored]),
+                                max(self.df.data[colored]))
+        elements_range = rescale_list_to_other(list(value_range), elements_list)
+        line_string = 'REM {0} = {{v}}: {{e}}, rgba{{c}}.'.format(colored)
+        line_list = [line_string.format(v=v, e=e, c=self.color_dict[e])
+                     for v, e in zip(value_range, elements_range)]
+        return '\n'.join(line_list) + '\n\n'
+
     @staticmethod
     def res_line(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso):
         """
-        Tool to transform given element symbol, h, k, l indices,
+        Transform given element symbol, h, k, l indices,
         reflection positions and size into printable line.
 
         :return: string filled with provided reflection data.
@@ -1480,10 +1533,7 @@ class HklArtist:
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
-        if self.maxima[colored] == self.minima[colored]:
-            color = ['H'] * len(self.df)
-        else:
-            color = rescale_list_to_other(self.df.data[colored], elements_list)
+        color = rescale_list_to_other(self.df.data[colored], elements_list)
         h_ind = self.df.data['h']
         k_ind = self.df.data['k']
         l_ind = self.df.data['l']
@@ -1491,37 +1541,32 @@ class HklArtist:
         y_pos = (1.0 / self.maximum_index) * self.df.data['k']
         z_pos = (1.0 / self.maximum_index) * self.df.data['l']
         u_iso = rescale_list_to_range(self.df.data['F'],
-                                      (self.RES_MIN_ATOM_SIZE,
-                                       self.RES_MAX_ATOM_SIZE))
+                                      (self.MIN_ATOM_SIZE,
+                                       self.MAX_ATOM_SIZE))
         zipped = zip(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso)
 
         file = open(path, 'w')
         file.write(self.res_header)
+        file.write(self.res_legend(colored=colored))
         for c, h, k, l, x, y, z, u in zipped:
             file.write(self.res_line(color=c, h_ind=h, k_ind=k, l_ind=l,
                                      x_pos=x, y_pos=y, z_pos=z, u_iso=u))
         file.close()
 
-
-# TODO still sth wrong with labels - look at that based on labels for 'h' or 'k'
-# for h = -19 Talium (Z = 81 was chosen). for h = 0: Fm (Z=99)
-
-
-
-
-
-
-
-
-
+# TODO method to export the style file using "inspect" module
+# TODO get all fixed files to templates
 
 
 if __name__ == '__main__':
     from kesshou.dataframes import HklFrame
     h1 = HklFrame()
-    h1.read('/home/dtchon/_/shelxt2c.hkl', 'tonto_I')
-    h1.trim(15)
-    h1.to_res('/home/dtchon/_/shelxt2c.res', colored='h')
+    h1.read('/home/dtchon/_/shelxt2c_mod.hkl', 'tonto_I')
+    h1.to_res('/home/dtchon/_/shelxt2c_mod.res', colored='h')
 
     # TODO Fix the documentation using this new object
     # TODO think about space groups...
+
+    # TODO wrap table/data in getter/setter and make it automatically place,
+    # TODO refresh, set keys etc.
+
+    # TODO add point group and extinctions to object, update other methods.
