@@ -2,7 +2,7 @@
 <!DOCTYPE CCDC_XML>
 <All>
  <style type="VisLibDisplayStyle" >
-  <name type="string" >hkl</name>
+  <name type="string" >hkl_3.10+</name>
   <renderer_settings type="RendererSettings" >
    <light_settings type="RendererLightSettings" >
     <lights type="Container" >
@@ -183,7 +183,7 @@
      <alpha type="float" >1</alpha>
     </label_color>
     <atom_labels_optimise_positioning type="bool" >false</atom_labels_optimise_positioning>
-    <label_font type="string" >Nimbus Sans L,24,-1,5,63,0,0,0,0,0,Regular</label_font>
+    <label_font type="string" >Nimbus Sans L,24,-1,5,63,0,0,0,0,0</label_font>
     <label_font_style_name type="string" >Regular</label_font_style_name>
    </label_display_settings>
    <ellipsoid_style_settings type="RendererEllipsoidStyleSettings" >
@@ -203,1028 +203,1015 @@
      <alpha type="float" >1</alpha>
     </principal_ellipses_color>
    </ellipsoid_style_settings>
-   <polyhedral_style_settings type="RendererPolyhedralStyleSettings" >
-    <central_elements type="ElementSet" >
-     <elements type="string" >Li,Na,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Al,Ga,In,Tl,Ge,Sn,Pb,Sb,Bi,Po,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,La,Hf,Ta,W,Re,Os,Ir,Pt,Au,Hg,Ac,Rf,Db,Sg,Bh,Hs,Mt,Ds,Rg,Cn,Ce,Pr,Nd,Pm,Sm,Eu,Gd,Tb,Dy,Ho,Er,Tm,Yb,Lu,Th,Pa,U,Np,Pu,Am,Cm,Bk,Cf,Es,Fm,Md,No,Lr,Nh,Fl,Mc,Lv,Ts,Og</elements>
-    </central_elements>
-    <ligand_elements type="ElementSet" >
-     <elements type="string" >B,C,Si,N,P,As,O,S,Se,Te,F,Cl,Br,I,At,He,Ne,Ar,Kr,Xe,Rn,H,D</elements>
-    </ligand_elements>
-    <include_pi_bonds type="bool" >false</include_pi_bonds>
-    <draw_edges type="bool" >true</draw_edges>
-    <opacity type="float" >1</opacity>
-    <show_selection_sphere type="bool" >false</show_selection_sphere>
-    <selection_radius_multiplier type="float" >0.29999999999999999</selection_radius_multiplier>
-   </polyhedral_style_settings>
    <element_color_settings type="RendererElementColorSettings" >
     <color_map type="Container" >
      <count type="int" >112</count>
      <item type="Pair" >
       <first type="string" >Ac</first>
       <second type="RGBA" >
-       <red type="float" >0.43921568989753723</red>
-       <green type="float" >0.67058825492858887</green>
-       <blue type="float" >0.98039215803146362</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.65324</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ag</first>
       <second type="RGBA" >
-       <red type="float" >0.75294119119644165</red>
-       <green type="float" >0.75294119119644165</green>
-       <blue type="float" >0.75294119119644165</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.33734</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Al</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.49497</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Am</first>
       <second type="RGBA" >
-       <red type="float" >0.32941177487373352</red>
-       <green type="float" >0.36078432202339172</green>
-       <blue type="float" >0.94901961088180542</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.99425</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ar</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0</green>
-       <blue type="float" >0.3333333432674408</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.74934</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >As</first>
       <second type="RGBA" >
-       <red type="float" >0.74117648601531982</red>
-       <green type="float" >0.50196081399917603</green>
-       <blue type="float" >0.89019608497619629</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.42395</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >At</first>
       <second type="RGBA" >
-       <red type="float" >0.45882353186607361</red>
-       <green type="float" >0.30980393290519714</green>
-       <blue type="float" >0.27058824896812439</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.44011</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Au</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0.81960785388946533</green>
-       <blue type="float" >0.13725490868091583</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.09910</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >B</first>
       <second type="RGBA" >
-       <red type="float" >0.66666668653488159</red>
-       <green type="float" >1</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.04981</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ba</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.78823530673980713</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.84335</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Be</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >1</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.01359</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Bh</first>
       <second type="RGBA" >
-       <red type="float" >0.87843137979507446</red>
+       <red type="float" >0</red>
        <green type="float" >0</green>
-       <blue type="float" >0.21960784494876862</blue>
-       <alpha type="float" >1</alpha>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Bi</first>
       <second type="RGBA" >
-       <red type="float" >0.61960786581039429</red>
-       <green type="float" >0.30980393290519714</green>
-       <blue type="float" >0.70980393886566162</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.33355</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Bk</first>
       <second type="RGBA" >
-       <red type="float" >0.54117649793624878</red>
-       <green type="float" >0.30980393290519714</green>
-       <blue type="float" >0.89019608497619629</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.89919</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Br</first>
       <second type="RGBA" >
-       <red type="float" >0.7450980544090271</red>
-       <green type="float" >0.50980395078659058</green>
-       <blue type="float" >0.23529411852359772</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.31797</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >C</first>
       <second type="RGBA" >
-       <red type="float" >0.32941177487373352</red>
-       <green type="float" >1</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.09221</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ca</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.3333333432674408</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.87652</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Cd</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0.85098040103912354</green>
-       <blue type="float" >0.56078433990478516</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.40059</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ce</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.94877</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Cf</first>
       <second type="RGBA" >
-       <red type="float" >0.63137257099151611</red>
-       <green type="float" >0.21176470816135406</green>
-       <blue type="float" >0.83137255907058716</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.85656</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Cl</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0</green>
-       <blue type="float" >0.66666668653488159</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.70694</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Cm</first>
       <second type="RGBA" >
-       <red type="float" >0.47058823704719543</red>
-       <green type="float" >0.36078432202339172</green>
-       <blue type="float" >0.89019608497619629</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.96313</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Co</first>
       <second type="RGBA" >
-       <red type="float" >0.30196079611778259</red>
-       <green type="float" >0.20000000298023224</green>
-       <blue type="float" >0.80000001192092896</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.74192</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Cr</first>
       <second type="RGBA" >
-       <red type="float" >0.54117649793624878</red>
-       <green type="float" >0.60000002384185791</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.91150</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Cs</first>
       <second type="RGBA" >
-       <red type="float" >0.34117648005485535</red>
-       <green type="float" >0.090196080505847931</green>
-       <blue type="float" >0.56078433990478516</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.78010</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Cu</first>
       <second type="RGBA" >
-       <red type="float" >0.80000001192092896</red>
-       <green type="float" >0.30196079611778259</green>
-       <blue type="float" >0.10196078568696976</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.63593</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >D</first>
       <second type="RGBA" >
-       <red type="float" >0.70196080207824707</red>
-       <green type="float" >0.70196080207824707</green>
-       <blue type="float" >0.70196080207824707</blue>
+       <red type="float" >0</red>
+       <green type="float" >0</green>
+       <blue type="float" >0</blue>
        <alpha type="float" >1</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Db</first>
       <second type="RGBA" >
-       <red type="float" >0.81960785388946533</red>
+       <red type="float" >0</red>
        <green type="float" >0</green>
-       <blue type="float" >0.30980393290519714</blue>
-       <alpha type="float" >1</alpha>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Dy</first>
       <second type="RGBA" >
-       <red type="float" >0.12156862765550613</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.60422</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Er</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.90196079015731812</green>
-       <blue type="float" >0.45882353186607361</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.49766</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Es</first>
       <second type="RGBA" >
-       <red type="float" >0.70196080207824707</red>
-       <green type="float" >0.12156862765550613</green>
-       <blue type="float" >0.83137255907058716</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.79263</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Eu</first>
       <second type="RGBA" >
-       <red type="float" >0.3803921639919281</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.77472</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >F</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.66666668653488159</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.26179</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Fe</first>
       <second type="RGBA" >
-       <red type="float" >0.90196079015731812</red>
-       <green type="float" >0.30196079611778259</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.80551</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Fm</first>
       <second type="RGBA" >
-       <red type="float" >0.70196080207824707</red>
-       <green type="float" >0.12156862765550613</green>
-       <blue type="float" >0.729411780834198</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.75000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Fr</first>
       <second type="RGBA" >
-       <red type="float" >0.25882354378700256</red>
-       <green type="float" >0</green>
-       <blue type="float" >0.40000000596046448</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.54668</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ga</first>
       <second type="RGBA" >
-       <red type="float" >0.7607843279838562</red>
-       <green type="float" >0.56078433990478516</green>
-       <blue type="float" >0.56078433990478516</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.52994</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Gd</first>
       <second type="RGBA" >
-       <red type="float" >0.27058824896812439</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.73210</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ge</first>
       <second type="RGBA" >
-       <red type="float" >0.40000000596046448</red>
-       <green type="float" >0.56078433990478516</green>
-       <blue type="float" >0.56078433990478516</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.46635</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >H</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.16000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >He</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0.3333333432674408</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.11817</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Hf</first>
       <second type="RGBA" >
-       <red type="float" >0.30196079611778259</red>
-       <green type="float" >0.7607843279838562</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.28453</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Hg</first>
       <second type="RGBA" >
-       <red type="float" >0.72156864404678345</red>
-       <green type="float" >0.72156864404678345</green>
-       <blue type="float" >0.81568628549575806</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.16304</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ho</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.61176472902297974</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.56159</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Hs</first>
       <second type="RGBA" >
-       <red type="float" >0.90196079015731812</red>
+       <red type="float" >0</red>
        <green type="float" >0</green>
-       <blue type="float" >0.18039216101169586</blue>
-       <alpha type="float" >1</alpha>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >I</first>
       <second type="RGBA" >
-       <red type="float" >0.60000002384185791</red>
-       <green type="float" >0</green>
-       <blue type="float" >0.60000002384185791</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.67468</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >In</first>
       <second type="RGBA" >
-       <red type="float" >0.65098041296005249</red>
-       <green type="float" >0.45882353186607361</green>
-       <blue type="float" >0.45098039507865906</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.46384</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ir</first>
       <second type="RGBA" >
-       <red type="float" >0.090196080505847931</red>
-       <green type="float" >0.32941177487373352</green>
-       <blue type="float" >0.52941179275512695</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.00746</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >K</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.66666668653488159</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.81293</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Kr</first>
       <second type="RGBA" >
-       <red type="float" >0.36078432202339172</red>
-       <green type="float" >0.72156864404678345</green>
-       <blue type="float" >0.81960785388946533</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.25437</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >La</first>
       <second type="RGBA" >
-       <red type="float" >0.43921568989753723</red>
-       <green type="float" >0.83137255907058716</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.88552</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Li</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0.66666668653488159</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >0.05542</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Lr</first>
       <second type="RGBA" >
-       <red type="float" >0.78039216995239258</red>
+       <red type="float" >0</red>
        <green type="float" >0</green>
-       <blue type="float" >0.40000000596046448</blue>
-       <alpha type="float" >1</alpha>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Lu</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.67058825492858887</green>
-       <blue type="float" >0.14117647707462311</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.32715</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Md</first>
       <second type="RGBA" >
-       <red type="float" >0.70196080207824707</red>
-       <green type="float" >0.050980392843484879</green>
-       <blue type="float" >0.65098041296005249</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0</red>
+       <green type="float" >0</green>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Mg</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.3333333432674408</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.43137</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Mn</first>
       <second type="RGBA" >
-       <red type="float" >0.61176472902297974</red>
-       <green type="float" >0.47843137383460999</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.84791</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Mo</first>
       <second type="RGBA" >
-       <red type="float" >0.32941177487373352</red>
-       <green type="float" >0.70980393886566162</green>
-       <blue type="float" >0.70980393886566162</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.08433</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Mt</first>
       <second type="RGBA" >
-       <red type="float" >0.92156863212585449</red>
+       <red type="float" >0</red>
        <green type="float" >0</green>
-       <blue type="float" >0.14901961386203766</blue>
-       <alpha type="float" >1</alpha>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >N</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >1</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.15580</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Na</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.66666668653488159</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.36778</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Nb</first>
       <second type="RGBA" >
-       <red type="float" >0.45098039507865906</red>
-       <green type="float" >0.7607843279838562</green>
-       <blue type="float" >0.78823530673980713</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.02108</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Nd</first>
       <second type="RGBA" >
-       <red type="float" >0.78039216995239258</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.94523</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ne</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >1</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.32538</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ni</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.80000001192092896</green>
-       <blue type="float" >0.40000000596046448</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.69952</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >No</first>
       <second type="RGBA" >
-       <red type="float" >0.74117648601531982</red>
-       <green type="float" >0.050980392843484879</green>
-       <blue type="float" >0.52941179275512695</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0</red>
+       <green type="float" >0</green>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Np</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.50196081399917603</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.86637</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >O</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.3333333432674408</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.21940</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Os</first>
       <second type="RGBA" >
-       <red type="float" >0.14901961386203766</red>
-       <green type="float" >0.40000000596046448</green>
-       <blue type="float" >0.58823531866073608</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.07140</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Other</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
+       <red type="float" >0</red>
        <green type="float" >0</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >P</first>
       <second type="RGBA" >
-       <red type="float" >0.66666668653488159</red>
-       <green type="float" >0</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.60095</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Pa</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.63137257099151611</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.75980</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Pb</first>
       <second type="RGBA" >
-       <red type="float" >0.34117648005485535</red>
-       <green type="float" >0.3490196168422699</green>
-       <blue type="float" >0.3803921639919281</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.26961</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Pd</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.4117647111415863</green>
-       <blue type="float" >0.5215686559677124</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.29517</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Pm</first>
       <second type="RGBA" >
-       <red type="float" >0.63921570777893066</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.88129</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Po</first>
       <second type="RGBA" >
-       <red type="float" >0.67058825492858887</red>
-       <green type="float" >0.36078432202339172</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.37617</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Pr</first>
       <second type="RGBA" >
-       <red type="float" >0.85098040103912354</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.99093</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Pt</first>
       <second type="RGBA" >
-       <red type="float" >0.81568628549575806</red>
-       <green type="float" >0.81568628549575806</green>
-       <blue type="float" >0.87843137979507446</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.05648</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Pu</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.41960784792900085</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.93031</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ra</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.49019607901573181</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.58930</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Rb</first>
       <second type="RGBA" >
-       <red type="float" >0.43921568989753723</red>
-       <green type="float" >0.18039216101169586</green>
-       <blue type="float" >0.69019609689712524</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.19078</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Re</first>
       <second type="RGBA" >
-       <red type="float" >0.14901961386203766</red>
-       <green type="float" >0.49019607901573181</green>
-       <blue type="float" >0.67058825492858887</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.11402</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Rf</first>
       <second type="RGBA" >
-       <red type="float" >0.80000001192092896</red>
+       <red type="float" >0</red>
        <green type="float" >0</green>
-       <blue type="float" >0.3490196168422699</blue>
-       <alpha type="float" >1</alpha>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Rh</first>
       <second type="RGBA" >
-       <red type="float" >0.039215687662363052</red>
-       <green type="float" >0.49019607901573181</green>
-       <blue type="float" >0.54901963472366333</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.23192</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Rn</first>
       <second type="RGBA" >
-       <red type="float" >0.25882354378700256</red>
-       <green type="float" >0.50980395078659058</green>
-       <blue type="float" >0.58823531866073608</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.48274</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ru</first>
       <second type="RGBA" >
-       <red type="float" >0.14117647707462311</red>
-       <green type="float" >0.56078433990478516</green>
-       <blue type="float" >0.56078433990478516</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.18975</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >S</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.64335</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Sb</first>
       <second type="RGBA" >
-       <red type="float" >0.61960786581039429</red>
-       <green type="float" >0.38823530077934265</green>
-       <blue type="float" >0.70980393886566162</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.56926</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Sc</first>
       <second type="RGBA" >
-       <red type="float" >0.90196079015731812</red>
-       <green type="float" >0.90196079015731812</green>
-       <blue type="float" >0.90196079015731812</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.91892</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Se</first>
       <second type="RGBA" >
-       <red type="float" >1</red>
-       <green type="float" >0.63137257099151611</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.36036</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Sg</first>
       <second type="RGBA" >
-       <red type="float" >0.85098040103912354</red>
+       <red type="float" >0</red>
        <green type="float" >0</green>
-       <blue type="float" >0.27058824896812439</blue>
-       <alpha type="float" >1</alpha>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Si</first>
       <second type="RGBA" >
-       <red type="float" >0.3333333432674408</red>
-       <green type="float" >0</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.53736</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Sm</first>
       <second type="RGBA" >
-       <red type="float" >0.56078433990478516</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.83866</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Sn</first>
       <second type="RGBA" >
-       <red type="float" >0.40000000596046448</red>
-       <green type="float" >0.50196081399917603</green>
-       <blue type="float" >0.50196081399917603</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.50601</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Sr</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >1</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.14838</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ta</first>
       <second type="RGBA" >
-       <red type="float" >0.30196079611778259</red>
-       <green type="float" >0.65098041296005249</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.22059</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Tb</first>
       <second type="RGBA" >
-       <red type="float" >0.18823529779911041</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.66816</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Tc</first>
       <second type="RGBA" >
-       <red type="float" >0.23137255012989044</red>
-       <green type="float" >0.61960786581039429</green>
-       <blue type="float" >0.61960786581039429</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.12650</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Te</first>
       <second type="RGBA" >
-       <red type="float" >0.83137255907058716</red>
-       <green type="float" >0.47843137383460999</green>
-       <blue type="float" >0</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.61143</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Th</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.729411780834198</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.71718</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Ti</first>
       <second type="RGBA" >
-       <red type="float" >0.74901962280273438</red>
-       <green type="float" >0.7607843279838562</green>
-       <blue type="float" >0.78039216995239258</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >1.00000</red>
+       <green type="float" >0.98251</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Tl</first>
       <second type="RGBA" >
-       <red type="float" >0.65098041296005249</red>
-       <green type="float" >0.32941177487373352</green>
-       <blue type="float" >0.30196079611778259</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.20567</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Tm</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.83137255907058716</green>
-       <blue type="float" >0.32156863808631897</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.45503</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >U</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.56078433990478516</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.82374</red>
+       <green type="float" >0.00000</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Unknown</first>
       <second type="RGBA" >
-       <red type="float" >0.76862746477127075</red>
-       <green type="float" >1</green>
-       <blue type="float" >0.74117648601531982</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0</red>
+       <green type="float" >0</green>
+       <blue type="float" >0</blue>
+       <alpha type="float" >0</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >V</first>
       <second type="RGBA" >
-       <red type="float" >0.65098041296005249</red>
-       <green type="float" >0.65098041296005249</green>
-       <blue type="float" >0.67058825492858887</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.97509</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >W</first>
       <second type="RGBA" >
-       <red type="float" >0.12941177189350128</red>
-       <green type="float" >0.58039218187332153</green>
-       <blue type="float" >0.83921569585800171</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.17796</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Xe</first>
       <second type="RGBA" >
-       <red type="float" >0.25882354378700256</red>
-       <green type="float" >0.61960786581039429</green>
-       <blue type="float" >0.69019609689712524</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.73793</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Y</first>
       <second type="RGBA" >
-       <red type="float" >0.58039218187332153</red>
-       <green type="float" >1</green>
-       <blue type="float" >1</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.08479</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Yb</first>
       <second type="RGBA" >
-       <red type="float" >0</red>
-       <green type="float" >0.74901962280273438</green>
-       <blue type="float" >0.21960784494876862</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.00000</red>
+       <green type="float" >0.39109</green>
+       <blue type="float" >1.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Zn</first>
       <second type="RGBA" >
-       <red type="float" >0.49019607901573181</red>
-       <green type="float" >0.50196081399917603</green>
-       <blue type="float" >0.69019609689712524</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.59353</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
      <item type="Pair" >
       <first type="string" >Zr</first>
       <second type="RGBA" >
-       <red type="float" >0.58039218187332153</red>
-       <green type="float" >0.87843137979507446</green>
-       <blue type="float" >0.87843137979507446</blue>
-       <alpha type="float" >1</alpha>
+       <red type="float" >0.04240</red>
+       <green type="float" >1.00000</green>
+       <blue type="float" >0.00000</blue>
+       <alpha type="float" >1.00000</alpha>
       </second>
      </item>
     </color_map>
@@ -1391,7 +1378,7 @@
   <graphics_crystal_settings type="GraphicsCrystalStyle" >
    <non_hydrogen_atoms type="GraphicsObjectStyle" >
     <style type="GraphicsObject::RenderingStyle" >
-     <enumerator type="int" >8</enumerator>
+     <enumerator type="int" >1</enumerator>
     </style>
     <colour_mode type="GraphicsObjectStyleSettings::ColorMode" >
      <enumerator type="int" >202</enumerator>
@@ -1405,7 +1392,7 @@
    </non_hydrogen_atoms>
    <hydrogen_atoms type="GraphicsObjectStyle" >
     <style type="GraphicsObject::RenderingStyle" >
-     <enumerator type="int" >8</enumerator>
+     <enumerator type="int" >1</enumerator>
     </style>
     <colour_mode type="GraphicsObjectStyleSettings::ColorMode" >
      <enumerator type="int" >202</enumerator>
@@ -1419,7 +1406,7 @@
    </hydrogen_atoms>
    <bonds type="GraphicsObjectStyle" >
     <style type="GraphicsObject::RenderingStyle" >
-     <enumerator type="int" >8</enumerator>
+     <enumerator type="int" >1</enumerator>
     </style>
     <colour_mode type="GraphicsObjectStyleSettings::ColorMode" >
      <enumerator type="int" >101</enumerator>

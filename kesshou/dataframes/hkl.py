@@ -1,5 +1,5 @@
 from kesshou.dataframes import BaseFrame
-from kesshou.utility import cubespace, elements_list, is2n, is3n, is4n, is6n
+from kesshou.utility import cubespace, chemical_elements, is2n, is3n, is4n, is6n
 from kesshou.utility import rescale_list_to_range, rescale_list_to_other
 from kesshou.symmetry import PG
 from pathlib import Path
@@ -354,7 +354,8 @@ class HklFrame(BaseFrame):
 
     def __str__(self):
         """
-        Str magic method, provides human-readable representation of data
+        Str magic method, provides human-readable representation of data.
+
         :return: Human-readable representation of `self.data`
         :rtype: str
         """
@@ -365,11 +366,12 @@ class HklFrame(BaseFrame):
         """
         Wavelength of radiation used in the diffraction experiment.
         Can be set using popular definitions such as "MoKa" or "CuKb",
-        where a and b stand for *alpha* and *beta*.
+        where *a* and *b* stand for *alpha* and *beta*.
         Implemented cathode materials include:
         "Ag", "Co", "Cr", "Cu", "Fe", "Mn", "Mo", "Ni", "Pd", "Rh", "Ti", "Zn"
         and have been imported from International Tables
         of Crystallography, Volume C, Table 4.2.4.1, 3rd Edition.
+
         :return: wavelength of radiation used in experiment
         :rtype: float
         """
@@ -719,7 +721,7 @@ class HklFrame(BaseFrame):
         the distance *radius* from the reciprocal space origin.
 
         :param radius: Maximum distance from the reciprocal space origin
-        to placed reflection (in reciprocal Angstrom).
+            to placed reflection (in reciprocal Angstrom).
         :type radius: float
         """
 
@@ -854,13 +856,13 @@ class HklFrame(BaseFrame):
             - symmetry equivalence *equiv* (see :meth:`find_equivalents`)
 
         - Parameters such as intensity *I*, structure factor *F* and
-        their uncertainty *si* will be averaged using arithmetic mean.
+            their uncertainty *si* will be averaged using arithmetic mean.
 
         - Multiplicity of occurrence *m* will be summed
 
         - Other parameters which lose their meaning during the merging
-        procedure such as batch number *b* will lose their meaning
-        and thus will be discarded.
+            procedure such as batch number *b* will lose their meaning
+            and thus will be discarded.
 
         The merging inevitably removes some information from the dataframe,
         but it can be necessary for some operations. For example, the drawing
@@ -992,7 +994,6 @@ class HklFrame(BaseFrame):
 
     def transform(self, operations):
         """
-
         Apply a symmetry operation or list of symmetry operations to transform
         the diffraction pattern.
 
@@ -1049,6 +1050,7 @@ class HklFrame(BaseFrame):
         """
         Randomly remove reflections from dataframe in order to decrease
         the completeness to *target_cplt* (relatively to initial completeness).
+
         :param target_cplt: Percentage of data not removed from dataframe
         :type target_cplt: float
         """
@@ -1390,9 +1392,7 @@ class HklWriter(HklIo):
         
         :param hkl_data: Dataframe containing reflection information.
         :type hkl_data: pandas.dataframe
-        """"""
-        
-        hkl_data must be pandas df!"""
+        """
         needed_data = hkl_data.loc[:, self._format_dict['labels']].astype(str)
         with open(self.file_path, 'w') as hkl_file:
             hkl_file.write(self._format_dict['prefix'])
@@ -1410,7 +1410,7 @@ class HklArtist:
     COLORMAP = matplotlib.cm.get_cmap('gist_rainbow')
     "Colourmap used to signify the 'colored' property in hkl.res"
 
-    ELEMENT_NAMES = elements_list
+    ELEMENT_NAMES = chemical_elements[:100]
     "List of chemical elements used to give reflections in hkl.res a colour"
 
     MIN_ATOM_DISTANCE = 10.0
@@ -1503,7 +1503,7 @@ class HklArtist:
         """
         value_range = np.arange(min(self.df.data[colored]),
                                 max(self.df.data[colored]))
-        elements_range = rescale_list_to_other(list(value_range), elements_list)
+        elements_range = rescale_list_to_other(list(value_range), chemical_elements)
         line_string = 'REM {0} = {{v}}: {{e}}, rgba{{c}}.'.format(colored)
         line_list = [line_string.format(v=v, e=e, c=self.color_dict[e])
                      for v, e in zip(value_range, elements_range)]
@@ -1533,7 +1533,7 @@ class HklArtist:
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
-        color = rescale_list_to_other(self.df.data[colored], elements_list)
+        color = rescale_list_to_other(self.df.data[colored], chemical_elements)
         h_ind = self.df.data['h']
         k_ind = self.df.data['k']
         l_ind = self.df.data['l']

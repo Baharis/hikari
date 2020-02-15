@@ -1,4 +1,4 @@
-from kesshou.utility import angle
+from kesshou.utility import angle2rad
 import numpy as np
 import numpy.linalg as lin
 
@@ -37,18 +37,14 @@ class BaseFrame:
     The values can be accessed by referencing a given attribute in the object,
     for example :class:`BaseFrame`. :attr:`a_d` stores information about
     the lattice constant *a* in direct space as a floating point,
-    but :class:`BaseFrame`. :attr:`a_v` is a direct space vector.
-    Only the meaningful combinations of descriptors are defined;
-    attributes such as :class:`BaseFrame`.x_d (length of normalised vector x)
-    or :class:`BaseFrame`.al_v (vector representation of alpha angle)
-    would either be constant or make no sense whatsoever
-    and thus have not been implemented.
+    but :class:`BaseFrame`. :attr:`a_v` is a direct space vector. Please mind
+    that only the meaningful combinations of descriptors are defined.
 
     Available attributes have been once again presented in a table below:
 
     +----------+------------+------------------+------------------+------------+
     |          | Available  | in direct        | in reciprocal    |Unit (^-1 in|
-    |          | constants: | space            | space            |reciprocal) |
+    |          | constants  | space            | space            |reciprocal) |
     +==========+============+==================+==================+============+
     | Scalars  | a, b, c    | a_d, b_d, c_d    | a_r, b_r, c_r    | Angstrom   |
     |          +------------+------------------+------------------+------------+
@@ -60,7 +56,6 @@ class BaseFrame:
     |          +------------+------------------+------------------+------------+
     |          | x, y, z    | x_v, y_v, z_v    | x_w, y_w, z_w    | Angstrom   |
     +----------+------------+------------------+------------------+------------+
-
     """
 
     def __init__(self):
@@ -99,15 +94,14 @@ class BaseFrame:
 
         Please mind that the while the "a", "b" and "c" are always given in
         Angstrom, the angles might be given either in degrees or in radians.
-        The program assumes that unit cell angles will always be in a range
-        between 2 and 178 degrees and interprets values outside this range
-        as given in radians.
+        For further details, please consult
+        :func:`kesshou.utility.math_tools.both2rad` function.
 
         It is not required for all previously stated keys to be present
         at each method call. If a key has not been given, previously provided
         and stored value is being used. If no value has been given,
-        the default length values of 1.0 for *a*, *b*, *c*,
-        and default angle values of 90.0 for *al*, *be*, *ga are used instead.
+        the default length values of 1.0 for *a*, *b*, *c* and default angle
+        values of *pi/2* for *al*, *be*, *ga* are used instead.
 
         :param parameters: Values of unit cell parameters to be changed
         :type parameters: float
@@ -120,7 +114,7 @@ class BaseFrame:
     def from_cif_frame(self, frame):
         """
         Attempt importing unit cell parameters and orientation matrix
-        from provided :class:`kesshou.dataframes.CifFrame` object.
+        from provided :class:`kesshou.dataframes.cif.CifFrame` object.
 
         This method requires at least cell parameters to be defined
         in CifFrame object. It also attempts to import the orientation matrix,
@@ -248,6 +242,8 @@ class BaseFrame:
     def al_d(self):
         """
         Scalar angle between unit cell vectors **b** and **c** in direct space.
+        Setting this value will perform degrees / radian check according to
+        documentation of :func:`kesshou.utility.math_tools.both2rad`.
 
         :return: Angle between **b** and **c**.
         :rtype: float
@@ -256,12 +252,14 @@ class BaseFrame:
 
     @al_d.setter
     def al_d(self, value):
-        self.__al_d = angle(value)
+        self.__al_d = angle2rad(value)
 
     @property
     def be_d(self):
         """
         Scalar angle between unit cell vectors **c** and **a** in direct space.
+        Setting this value will perform degrees / radian check according to
+        documentation of :func:`kesshou.utility.math_tools.both2rad`.
 
         :return: Angle between **c** and **a**.
         :rtype: float
@@ -270,12 +268,14 @@ class BaseFrame:
 
     @be_d.setter
     def be_d(self, value):
-        self.__be_d = angle(value)
+        self.__be_d = angle2rad(value)
 
     @property
     def ga_d(self):
         """
         Scalar angle between unit cell vectors **c** and **a** in direct space.
+        Setting this value will perform degrees / radian check according to
+        documentation of :func:`kesshou.utility.math_tools.both2rad`.
 
         :return: Angle between **c** and **a**.
         :rtype: float
@@ -284,7 +284,7 @@ class BaseFrame:
 
     @ga_d.setter
     def ga_d(self, value):
-        self.__ga_d = angle(value)
+        self.__ga_d = angle2rad(value)
 
     @property
     def v_d(self):
@@ -404,6 +404,7 @@ class BaseFrame:
         Scalar angle between unit cell vectors **b\*** and **c\***
         in reciprocal space.
 
+
         :return: Angle between **b\*** and **c\***.
         :rtype: float
         """
@@ -411,7 +412,7 @@ class BaseFrame:
 
     @al_r.setter
     def al_r(self, value):
-        self.__al_r = angle(value)
+        self.__al_r = angle2rad(value)
 
     @property
     def be_r(self):
@@ -426,7 +427,7 @@ class BaseFrame:
 
     @be_r.setter
     def be_r(self, value):
-        self.__be_r = angle(value)
+        self.__be_r = angle2rad(value)
 
     @property
     def ga_r(self):
@@ -441,7 +442,7 @@ class BaseFrame:
 
     @ga_r.setter
     def ga_r(self, value):
-        self.__ga_r = angle(value)
+        self.__ga_r = angle2rad(value)
 
     @property
     def v_r(self):
