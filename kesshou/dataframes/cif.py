@@ -102,3 +102,5 @@ if __name__ == '__main__':
     print(len(cif.data.items()))
     for key, value in cif.data.items():
         print(key, '::', value)
+
+# TODO Try using pyCIFrw package to read and write cif information.

@@ -1,29 +1,55 @@
+"""
+This file contains class definition and necessary tools for constructing
+and evaluating all symmetry groups.
+"""
 import numpy as np
 import numpy.linalg as lin
 from itertools import product as itertools_product
 
 
 class Group:
-    """Basic Group class info holder"""
+    """
+    Base class containing information about symmetry groups. It acts as a base
+    object for :class:`kesshou.symmetry.pointgroup.PointGroup` and
+    :class:`kesshou.symmetry.spacegroup.SpaceGroup`.
+
+    In the future it is planned to expand this group using getter/setter
+    operations to automatically refresh operations and symmetry equivalents
+    whenever a list of generators is changed.
+    """
 
     unique_point = np.array([1])
+    """Unique point to be transformed by symmetry operations."""
 
     def __init__(self, generators):
         self.generators = generators
+        """A list of all group generators."""
         self.operations = list()
+        """A list of all group elements."""
         self.equivalents = list()
+        """A list of all points equivalent by symmetry."""
         self.construct()
 
     @property
     def chiral_operations(self):
+        """
+        A list of symmetry operations which preserve structure chirality.
+
+        :return: Symmetry operations whose matrix determinant is positive.
+        :rtype: list
+        """
         return [op for op in self.operations if lin.det(op) > 0]
 
     def construct(self):
-        self.generate_operations()
-        self.generate_equivalents()
+        """
+        Prepare a list of symmetry group operations and symmetry equivalent
+        points using the list of generators.
+        """
+        self._generate_operations()
+        self._generate_equivalents()
 
-    def generate_operations(self):
-        """generate whole point group based on its generators"""
+    def _generate_operations(self):
+        """Generate a list of operations based on the generators."""
         operations = self.generators
 
         def _is_in(op, ops):
@@ -45,8 +71,8 @@ class Group:
         operations = _find_new_product(operations)
         self.operations = operations
 
-    def generate_equivalents(self):
-        """generate all equivalent points based on its operations"""
+    def _generate_equivalents(self):
+        """Generate a list of equivalent points based on group operations."""
         eqs = list()
         for op in self.operations:
             eqs.append(np.dot(op, self.unique_point))
@@ -54,9 +80,24 @@ class Group:
 
     @property
     def is_chiral(self):
+        """
+        Check whether all group operations preserve the chirality.
+
+        :return: True if matrix determinant of all group operations is positive,
+            False otherwise.
+        :rtype: bool
+        """
         return all(lin.det(op) > 0 for op in self.operations)
 
     @property
     def is_polar(self):
+        """
+        Check whether all group operations preserve the polarity.
+
+        :return: True if a general polar property is preserved, False otherwise.
+        :rtype: bool
+        """
         sum_of_equivalents = sum(self.equivalents)
         return lin.norm(sum_of_equivalents) > 0.1
+
+# TODO Think about integrating / using / following "mantis" package
