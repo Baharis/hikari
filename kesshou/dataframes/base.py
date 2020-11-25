@@ -29,6 +29,7 @@ class BaseFrame:
     - The name is ended by a single letter which describes
       if we are working in direct or reciprocal space,
       as well as if we want to access a scalar or a vector.
+
         - "d" (from Direct) is used to denote direct space scalars,
         - "r" (from Reciprocal) is used to denote reciprocal space scalars,
         - "v" (from Vector) is used to denote direct space vectors,

@@ -16,6 +16,9 @@ def ustrip(ufloat):
 
 
 class CifFrame:
+    """
+
+    """
     def __init__(self, file_path=None, file_data_block='I'):
         self.data = OrderedDict()
         self.meta = dict()

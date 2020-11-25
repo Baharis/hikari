@@ -94,10 +94,12 @@ class Group:
         """
         Check whether all group operations preserve the polarity.
 
-        :return: True if a general polar property is preserved, False otherwise.
+        :return: True if a general polar property is preserved,
+            e.g. if a sum of symmetry equivalent vectors is 0, False otherwise.
         :rtype: bool
         """
         sum_of_equivalents = sum(self.equivalents)
         return lin.norm(sum_of_equivalents) > 0.1
 
-# TODO Think about integrating / using / following "mantis" package
+# TODO Think about integrating / using / following "xcore" package -
+# TODO very useful, but must be rewritten from Python2/c

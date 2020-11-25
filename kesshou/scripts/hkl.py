@@ -167,7 +167,7 @@ def completeness_map(a, b, c, al, be, ga,
         """Make ball of hkl which will be cut in further steps"""
         _hkl_frame = HklFrame()
         _hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-        _hkl_frame.edit_wavelength(wavelength)
+        _hkl_frame.la = wavelength
         _hkl_frame.fill(radius=min(_hkl_frame.r_lim, 1 / resolution))
         _hkl_frame.extinct('000')
         for extinction in extinctions:
@@ -245,7 +245,7 @@ def completeness_map(a, b, c, al, be, ga,
             for j, ph in enumerate(ph_range):
                 v = _translate_angles_to_vector(theta=th, phi=ph)
                 q = p.duplicate()
-                q.dac(opening_angle_in_radians=opening_angle, vector=v)
+                q.dac(opening_angle=opening_angle, vector=v)
                 if legacy_cplt:
                     q.transform(operations=laue_group.chiral_operations)
                     q.merge()
@@ -495,7 +495,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     """
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-    p.edit_wavelength(input_wavelength)
+    p.la = input_wavelength
     p.read(input_path, input_format)
     p.extinct('000')
     p.stats(point_group=point_group)
@@ -546,7 +546,7 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
     def _make_reference_ball():
         hkl_frame = HklFrame()
         hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-        hkl_frame.edit_wavelength(wavelength)
+        hkl_frame.la = wavelength
         hkl_frame.fill(radius=hkl_frame.r_lim)
         hkl_frame.merge()
         hkl_frame.extinct('000')
@@ -554,7 +554,8 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
             hkl_frame.trim(resolution)
         return hkl_frame
     p = _make_reference_ball()
-    total_reflections = len(p)
+    p.find_equivalents(point_group=point_group)
+    total_reflections = p.table['equiv'].nunique()
     max_resolution = max(p.table['r'])
     out = open(output_path, 'w', buffering=1)
     out.write('total_reflections: ' + str(total_reflections) + '\n')
@@ -563,10 +564,9 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
     reflections = list()
     for vector in vectors:
         q = p.duplicate()
-        q.dac(opening_angle_in_radians=opening_angle, vector=vector)
-        q.transform(operations=point_group.chiral_operations)
-        reflections.append(len(q))
-        out.write('\n' + str(vector) + ': ' + str(len(q)))
+        q.dac(opening_angle=opening_angle, vector=vector)
+        reflections.append(q.table['equiv'].nunique())
+        out.write('\n' + str(vector) + ': ' + str(q.table['equiv'].nunique()))
     out.write('\nmax_reflections: ' + str(max(reflections)))
     out.write('\nmin_reflections: ' + str(min(reflections)))
     out.write('\navg_reflections: ' + str(sum(reflections) / len(reflections)))
@@ -617,12 +617,12 @@ def dac_statistics(a, b, c, al, be, ga,
 
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-    p.edit_wavelength(input_wavelength)
+    p.la = input_wavelength
     p.read(input_path, input_format)
     p.orientation = np.array(orientation)
     p.merge()
     p.extinct('000')
-    p.dac(opening_angle_in_radians=opening_angle)
+    p.dac(opening_angle=opening_angle)
     p.find_equivalents(point_group=point_group)
     p.stats(point_group=point_group)
 
@@ -630,7 +630,7 @@ def dac_statistics(a, b, c, al, be, ga,
     q.extinct()
     q.fill(radius=q.r_lim)
     q.extinct('000')
-    q.dac(opening_angle_in_radians=opening_angle)
+    q.dac(opening_angle=opening_angle)
     q.find_equivalents(point_group=point_group)
 
     r_max = max(q.table['r'])
@@ -705,17 +705,19 @@ def simulate_dac(a, b, c, al, be, ga,
     """
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-    p.edit_wavelength(input_wavelength)
+    p.la = input_wavelength
     p.read(input_path, input_format)
     p.orientation = np.array(orientation)
     p.extinct('000')
     if not(resolution is None):
         p.trim(resolution)
-    p.dac(opening_angle_in_radians=opening_angle, vector=vector)
+    p.dac(opening_angle=opening_angle, vector=vector)
     p.write(hkl_path=output_path, hkl_format=output_format)
 
 
 if __name__ == '__name__':
+    completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=120.0,
+                     laue_group=PG['-3'], output_quality=1)
     # completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
     #                 extinctions=('hkl: h+k+l=2n',), laue_group=PG['m-3m'])
     # completeness_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)

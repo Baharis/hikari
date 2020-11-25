@@ -392,9 +392,9 @@ class HklFrame(BaseFrame):
                                      'tika': 2.7496, 'tikb': 2.5138,
                                      'znka': 1.4364, 'znkb': 1.2952}
         try:
-            self.la = characteristic_radiations[wavelength[:4].lower()]
+            self.__la = characteristic_radiations[wavelength[:4].lower()]
         except TypeError:
-            self.la = float(wavelength)
+            self.__la = float(wavelength)
 
     @property
     def r_lim(self):
@@ -687,6 +687,7 @@ class HklFrame(BaseFrame):
         """
         hkl_lim = self.HKL_LIMIT
         self.keys.add(('equiv',))
+        self.table.reset_index(drop=True, inplace=True)
         self.table['equiv'] = [(-hkl_lim, -hkl_lim, -hkl_lim)] * len(self.table)
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
         for op in point_group.operations:
@@ -911,6 +912,8 @@ class HklFrame(BaseFrame):
         self.table['z'] = xyz[:, 2]
         self.table['r'] = lin.norm(xyz, axis=1)
         self.keys.add(('x', 'y', 'z', 'r'))
+        # TODO SettingWithCopyWarning is triggered-edit external copy,then join
+
 
     def read(self, hkl_path, hkl_format='shelx_4'):
         """
@@ -1433,8 +1436,8 @@ class HklArtist:
         :return: Largest absolute hkl index.
         :rtype: int
         """
-        maxima = {key: self.df.data[key].max() for key in self.df.data.keys()}
-        minima = {key: self.df.data[key].min() for key in self.df.data.keys()}
+        maxima = {key: self.df.table[key].max() for key in self.df.table.keys()}
+        minima = {key: self.df.table[key].min() for key in self.df.table.keys()}
         return max(maxima['h'], maxima['k'], maxima['l'],
                    -minima['h'], -minima['k'], -minima['l'])
 
@@ -1501,8 +1504,8 @@ class HklArtist:
         :return: String of res commands containing details of color meaning.
         :rtype: str
         """
-        value_range = np.arange(min(self.df.data[colored]),
-                                max(self.df.data[colored]))
+        value_range = np.arange(min(self.df.table[colored]),
+                                max(self.df.table[colored]))
         elements_range = rescale_list_to_other(list(value_range), chemical_elements)
         line_string = 'REM {0} = {{v}}: {{e}}, rgba{{c}}.'.format(colored)
         line_list = [line_string.format(v=v, e=e, c=self.color_dict[e])
@@ -1533,14 +1536,14 @@ class HklArtist:
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
-        color = rescale_list_to_other(self.df.data[colored], chemical_elements)
-        h_ind = self.df.data['h']
-        k_ind = self.df.data['k']
-        l_ind = self.df.data['l']
-        x_pos = (1.0 / self.maximum_index) * self.df.data['h']
-        y_pos = (1.0 / self.maximum_index) * self.df.data['k']
-        z_pos = (1.0 / self.maximum_index) * self.df.data['l']
-        u_iso = rescale_list_to_range(self.df.data['F'],
+        color = rescale_list_to_other(self.df.table[colored], chemical_elements)
+        h_ind = self.df.table['h']
+        k_ind = self.df.table['k']
+        l_ind = self.df.table['l']
+        x_pos = (1.0 / self.maximum_index) * self.df.table['h']
+        y_pos = (1.0 / self.maximum_index) * self.df.table['k']
+        z_pos = (1.0 / self.maximum_index) * self.df.table['l']
+        u_iso = rescale_list_to_range(self.df.table['F'],
                                       (self.MIN_ATOM_SIZE,
                                        self.MAX_ATOM_SIZE))
         zipped = zip(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso)
