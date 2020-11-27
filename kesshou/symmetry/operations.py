@@ -43,6 +43,7 @@ symm_ops['hm_z'] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]])
 
 
 class SymmOpType(Enum):
+    rotoinversion = 4
     identity = 3
     reflection = 2
     rotation = 1
@@ -77,8 +78,11 @@ class SymmOp:
         return SymmOp(self.transformation, np.mod(self.translation, other))
 
     def __str__(self):
-        return ','.join([self._row_to_str(xyz, r) for xyz, r
+        code = ','.join([self._row_to_str(xyz, r) for xyz, r
                          in zip(self.transformation, self.translation)])
+        origin = ','.join([str(Fraction(o).limit_denominator(9))
+                           for o in self.origin])
+        return self.name + ': ' + code + ' (' + origin + ')'
 
     @classmethod
     def from_code(cls, code):
@@ -109,17 +113,21 @@ class SymmOp:
         for var, char in zip(xyz, 'xyz'):
             if np.isclose(abs(var), 0):
                 continue
-            s += '{:+d}'.format(int(var))[0]
+            s += '{:+f}'.format(var)[0]
             if np.isclose(abs(var), 1):
                 s += char
                 continue
-            s += str(Fraction(abs(var)).limit_denominator(9))
+            s += str(Fraction(abs(var)).limit_denominator(9)) + char
         if np.isclose(abs(r), 0):
             pass
         else:
             s += '{:+f}'.format(float(r))[0]
             s += str(Fraction(abs(r)).limit_denominator(9))
         return s.strip('+')
+
+    @staticmethod
+    def _project(vector, onto):
+        return (np.dot(vector, onto) / np.sqrt(sum(onto ** 2)) ** 2) * onto
 
     @property
     def matrix3x3(self):
@@ -134,11 +142,45 @@ class SymmOp:
 
     @property
     def det(self):
-        return int(np.linalg.det(self.transformation))
+        return int(round(np.linalg.det(self.transformation)))
 
     @property
     def typ(self):
-        return SymmOpType((3+self.trace)/2 * (1 if self.translational else -1))
+        return SymmOpType((3 if self.trace == 3 else 0 if self.trace == -3 else
+                           4 if len(self.invariants) == 0 else 2 if self.det < 0
+                           else 1) * (1 if self.translational else -1))
+
+    @property
+    def name(self):
+        _g = self.glide
+        _glide_fold = ((Fraction(np.max(_g)).limit_denominator(9) % 1) *
+                       self.fold).numerator
+        _glide_dir = 'n' if np.linalg.norm(_g) < 1e-8 else 'x'
+        d = {(1, 0, 0): 'a', (0, 1, 0): 'b', (0, 0, 1): 'c',
+             (0, 1, 1): 'A', (1, 0, 1): 'B', (1, 1, 0): 'C', (1, 1, 1): 'I'}
+        for key, value in d.items():
+            if np.allclose(_g, self._project(_g, np.array(key))):
+                _glide_dir = value
+
+        if self.typ is SymmOpType.identity:
+            return '1'
+        elif self.typ is SymmOpType.reflection:
+            return 'm'
+        elif self.typ is SymmOpType.rotation:
+            return str(self.fold)
+        elif self.typ is SymmOpType.inversion:
+            return '-1'
+        elif self.typ is SymmOpType.rototranslation:
+            return str(self.fold) + '_' + str(_glide_fold)
+        elif self.typ is SymmOpType.transflection:
+            return _glide_dir.replace('A', 'n').replace('B', 'n').\
+                replace('C', 'n') if self.fold is 2 else 'd'
+        elif self.typ is SymmOpType.translation:
+            return 't_' + _glide_dir
+        elif self.typ is SymmOpType.rotoinversion:
+            return str(-self.fold)
+        else:
+            return '?'
 
     @property
     def fold(self):
@@ -174,93 +216,134 @@ class SymmOp:
     def translational(self):
         return np.linalg.norm(self.glide) < 1e-8
 
-    def at(self, pt):
-        shift = np.array(pt) - self.origin
-        return SymmOp(self.transformation, self.glide + 2 * shift)
+    @property
+    def _eigenpairs(self):
+        return np.linalg.eig(self.matrix3x3)
 
-    # botched approach to try to conside that you cannot move operation
-    # in invariant directions, works only for glide vectrors
-    #
-    # def at2(self, pt):
-    #     shift = np.array(pt) - self.origin
-    #     if np.linalg.norm(self.glide) > 0:
-    #         glide_dir = self.glide / np.linalg.norm(self.glide)
-    #         shift_perp_to_glide = shift - glide_dir * np.dot(glide_dir, shift)
-    #         return SymmOp(self.transformation,
-    #                       self.glide + 2 * shift_perp_to_glide)
-    #     else:
-    #         return SymmOp(self.transformation,
-    #                       self.glide + 2 * shift)
+    @property
+    def invariants(self):
+        eigenvalues, eigenvectors = np.linalg.eig(self.matrix3x3)
+        return eigenvectors.T[np.isclose(eigenvalues.real, 1)].real
+
+    @property
+    def orientation(self):
+        if self.typ in {SymmOpType.rotation, SymmOpType.rototranslation}:
+            return self.invariants[0]
+        elif self.typ in {SymmOpType.reflection, SymmOpType.transflection,
+                          SymmOpType.rotoinversion}:
+            return SymmOp(-1 * self.transformation).orientation
+        else:
+            return None
+
+    def at(self, point):
+        shift = np.array(point) - self.origin
+        for invariant in self.invariants:
+            shift -= self._project(shift, onto=invariant)
+        return SymmOp(self.transformation, self.translation + 2 * shift)
+
+    def into(self, direction, hexagonal=False):
+        """Warning: works only if axis are orthogonal!"""
+        d = np.array(direction) / np.linalg.norm(direction)
+        o = self.orientation / np.linalg.norm(self.orientation)
+        ref_change = np.array(((1, -1/2, 0), (0, np.sqrt(3)/2, 0), (0, 0, 1))) \
+            if hexagonal else np.eye(3)
+        d = ref_change @ d
+        d /= np.linalg.norm(d)
+        o = ref_change @ o / np.linalg.norm(o)
+        d /= np.linalg.norm(o)
+        print(d, 'new direction')
+        print(o, 'old orientation')
+
+        def are_parallel(v, w):
+            return np.isclose(np.dot(v, w), 1)
+
+        if o is None:
+            return self
+        elif are_parallel(d, o):
+            return self
+        elif are_parallel(-d, o):
+            x, y = np.array((1, 0, 0)), np.array((0, 1, 0))
+            temp_vector = y if are_parallel(d, x) or are_parallel(d, -x) else x
+            return self.into(temp_vector, hexagonal).into(d, hexagonal)
+        else:
+            p = np.cross(o, d)
+            v = np.array(((0, -p[2], p[1]), (p[2], 0, -p[0]), (-p[1], p[0], 0)))
+            rot_m = np.eye(3) + v + (1 / (1 + np.dot(o, d))) * v @ v
+
+            # print(o)
+            # print(d)
+            # print(rot_m, ":rot_m")
+            # print(np.linalg.det(rot_m), ":det rot_m")
+            # print(np.linalg.eig(rot_m)[0], ":eigval rot_m")
+            # print(np.linalg.eig(rot_m)[1], ":eigvec rot_m")
+            # print(SymmOp(rot_m).fold, ":fold of rot_m")
+
+            #dubugging block - WORKS AS LONG AS ORIGINAL OPERATION IS IN ORTHORTOMBIC (eg 2||z)
+            print('_' * 40)
+            x = np.array((0.2, 0.4, 0.0))
+            print(' mój punkt to:', x)
+            print('zmieniam jego współrzędne na takie w układzie ortogonalnym')
+            print(str(ref_change @ x))
+            print('obracam go wstecz od d', str(d), 'do poprzedniego kierunku o:', str(o))
+            print(str(np.linalg.inv(rot_m) @ ref_change @ x))
+            print('obracam go wokół osi wokół poprzedniego kierunku o:', o)
+            print(str(self.transformation @ np.linalg.inv(rot_m) @ ref_change @ x))
+            print('obracam go od o', str(o), 'do nowego kierunku d:', str(d))
+            print(str(rot_m @ self.transformation @ np.linalg.inv(rot_m) @ ref_change @ x))
+            print('zmieniam współrzędne spowrotem na heksagonalne; mój punkt to:')
+            print(str(np.linalg.inv(ref_change) @ rot_m @ self.transformation @ np.linalg.inv(rot_m) @ ref_change @ x))
+            print('_'*40)
+
+            return SymmOp(np.linalg.inv(ref_change) @ rot_m @ ref_change @ self.transformation @ np.linalg.inv(ref_change) @ np.linalg.inv(rot_m) @ ref_change,
+                          np.linalg.inv(ref_change) @ rot_m @ self.translation)
 
     def _transform_hkl(self, hkl):
         return self.reciprocal.transformation @ np.array(hkl)
 
+    def _transform_xyz(self, xyz):
+        pass
+
     def _extincts_hkl(self, hkl):
         hkl = np.array(hkl)
-        cond1 = np.allclose(hkl, self.reciprocal.transformation @ hkl)
+        cond1 = np.allclose(hkl, self._transform_hkl(hkl))
         cond2 = np.isclose(np.dot(hkl, self.glide) % 1, 0)
-        return cond1, cond2
+        return cond1 and cond2
 
 
 if __name__ == '__main__':
-    t = SymmOp.from_code('-x, -y, z').at((1, 1, 0))
-    print(t)
+    #t = SymmOp.from_code('x-y, x, z+2/3')
+    t = SymmOp.from_code('-x,-y,z').into2((1, 1, 0), hexagonal=True).into2((1, 0, 0), hexagonal=True)
+    #t = SymmOp.from_code('y,x,-z').into((0, 0, 1), hexagonal=True)
+    print(t.invariants)
     print(t.matrix4x4)
-    print(t.glide)
-    print(t.origin)
+    print(t.det)
+    print(t, t.glide)
+    print('----------')
     print(t.typ)
+    print(t.orientation)
 
-
-    print('t')
-    print(t)
-    print('-'*30)
-
-    print('t.matrix4x4')
-    print(t.matrix4x4)
-    print('-'*30)
-
-    print('t.order')
-    print(t.order)
-    print('-' * 30)
-
-    print('t.fold')
-    print(t.fold)
-    print('-' * 30)
-
-    print('t.glide')
-    print(t.glide)
-    print('-'*30)
-
-    print('t.origin')
-    print(t.origin)
-    print('-'*30)
-
-    print('t.at((2, 0, 0))')
-    print(t.at((2, 0, 0)))
-    print('-' * 30)
-
-    print('t.reciprocal')
-    print(t.reciprocal)
-    print('-' * 30)
-
-    print('t._transform_hkl((1, 0, 0))')
-    print(t._transform_hkl((0, 0, 1)))
-    print('-' * 30)
-
-    print('t._extincts_hkl((0, 0, 1))')
-    print(t._extincts_hkl((0, 0, 1)))
-    print('-' * 30)
-
-    print('t._extincts_hkl((0, 0, 4))')
-    print(t._extincts_hkl((0, 0, 4)))
-    print('-' * 30)
-
-    print('t._extincts_hkl((0, 1, 4))')
-    print(t._extincts_hkl((0, 1, 4)))
-    print('-'*30)
-
-    print(t * np.array(((1.6, 1.8, 2.2), (1.6, 1.8, 2.2))).T)
-    print(t**2 * np.array((1.6, 1.8, 2.2)))
-    print(t**3 * np.array((1.6, 1.8, 2.2)))
-    print(t**4 * np.array((1.6, 1.8, 2.2)))
-    print(t ** 5 * np.array((1.6, 1.8, 2.2)))
+    # print('t._transform_hkl((1, 0, 0))')
+    # print(t._transform_hkl((0, 0, 1)))
+    # print('-' * 30)
+    #
+    # print('t._extincts_hkl((0, 0, 1))')
+    # print(t._extincts_hkl((0, 0, 1)))
+    # print('-' * 30)
+    #
+    # print('t._extincts_hkl((0, 0, 3))')
+    # print(t._extincts_hkl((0, 0, 3)))
+    # print('-' * 30)
+    #
+    # print('t._extincts_hkl((0, 0, 4))')
+    # print(t._extincts_hkl((0, 0, 4)))
+    # print('-' * 30)
+    #
+    # print('t._extincts_hkl((0, 1, 4))')
+    # print(t._extincts_hkl((0, 1, 4)))
+    # print('-'*30)
+    #
+    # print(t * np.array((1.6, 1.8, 2.2)))
+    # print(t**2 * np.array((1.6, 1.8, 2.2)))
+    # print(t**3 * np.array((1.6, 1.8, 2.2)))
+    # print(t**4 * np.array((1.6, 1.8, 2.2)))
+    # print(t ** 5 * np.array((1.6, 1.8, 2.2)))
