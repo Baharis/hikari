@@ -43,6 +43,7 @@ symm_ops['hm_z'] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]])
 
 
 class SymmOpType(Enum):
+    """Enumerator class storing information about type of symmetry operation"""
     rotoinversion = 4
     identity = 3
     reflection = 2
@@ -54,25 +55,34 @@ class SymmOpType(Enum):
 
 
 class SymmOp:
+    """
+    Class storing information about symmetry operations, with clear string
+    representation and intuitive syntax for combining / utilising operations:
+    "=" to compare two symmetry operations for logical equivalence,
+    "*" to combine two symmetry operations or transform a vector,
+    "** n" to apply symmetry operation n times,
+    "% n" to restrict symmetry operation to n unit cells.
+    """
+
     def __init__(self, transformation, translation=np.array([0, 0, 0])):
         self.transformation = np.array(transformation, dtype=float)
         self.translation = np.array(translation, dtype=float)
 
     def __eq__(self, other):
-        return np.allclose(self.matrix4x4, other.matrix4x4)
+        return np.allclose(self.matrix, other.matrix)
 
     def __mul__(self, other):
         if isinstance(other, SymmOp):
-            return SymmOp.from_matrix(self.matrix4x4 @ other.matrix4x4)
+            return SymmOp.from_matrix(self.matrix @ other.matrix)
         if isinstance(other, np.ndarray):
-            if other.shape[0] == 3:
-                return self.matrix3x3 @ other + self.translation #this works only for 1x1, could work for multiple? see
+            if other.shape[0] == 3:  # works only for 1,could work for multiple?
+                return self.transformation @ other + self.translation
             elif other.shape[0] == 4:
-                return self.matrix4x4 @ other
+                return self.matrix @ other
         raise TypeError('Cannot multiply "{}" and "{}"'.format(self, other))
 
     def __pow__(self, power, modulo=None):
-        return SymmOp.from_matrix(np.linalg.matrix_power(self.matrix4x4, power))
+        return SymmOp.from_matrix(np.linalg.matrix_power(self.matrix, power))
 
     def __mod__(self, other):
         return SymmOp(self.transformation, np.mod(self.translation, other))
@@ -86,6 +96,15 @@ class SymmOp:
 
     @classmethod
     def from_code(cls, code):
+        """
+        Create new symmetry operation using symmetry code "x',y',z'" containing
+        transformation of each individual coordinate from x,y,z to x',y',z'.
+
+        :param code: string representing new coordinates after operation
+        :type code: str
+        :return: Symmetry operation generated from given coordinate triplet code
+        :rtype: SymmOp
+        """
         coords = str(code).replace(';', ',').replace(' ', '').lower().split(',')
         tf = np.zeros((3, 3))
         tl = np.zeros(3)
@@ -101,14 +120,43 @@ class SymmOp:
 
     @classmethod
     def from_matrix(cls, matrix):
-        matrix = np.array(matrix)
-        if matrix.shape[0] == matrix.shape[1] == 3:
-            return cls(matrix)
-        if matrix.shape[0] == matrix.shape[1] == 4:
-            return cls(matrix[0:3, 0:3], matrix[0:3, 3])
+        """
+        Create new symmetry operation using augmented 4x4 transformation matrix
+
+        :param matrix: augmented 4x4 matrix
+        :type matrix: np.ndarray
+        :return: Symmetry operation generated based on augmented matrix
+        :rtype: SymmOp
+        """
+        return cls(matrix[0:3, 0:3], matrix[0:3, 3])
+
+    @classmethod
+    def from_pair(cls, matrix, vector):
+        """
+        Create new symmetry operation using point transformation 3x3 matrix
+        and 3-length translation vector. Alias for standard creation method.
+
+        :param matrix: 3x3 point transformation matrix
+        :type matrix: np.ndarray
+        :param vector: 3-length translation vector
+        :type vector: np.ndarray
+        :return: Symmetry operation generated based on matrix - vector pair
+        :rtype: SymmOp
+        """
+        return cls(matrix, vector)
 
     @staticmethod
     def _row_to_str(xyz, r):
+        """
+        Convert xyz: 3-el. list and r - number to single element of code triplet
+
+        :param xyz: 3-element list of coordinates, eg
+        :type xyz: Union[list, np.ndarray]
+        :param r: translation applied to the row
+        :type r: Union[float, Fraction]
+        :return: string representing change of coordinate
+        :rtype: str
+        """
         s = ''
         for var, char in zip(xyz, 'xyz'):
             if np.isclose(abs(var), 0):
@@ -118,23 +166,22 @@ class SymmOp:
                 s += char
                 continue
             s += str(Fraction(abs(var)).limit_denominator(9)) + char
-        if np.isclose(abs(r), 0):
-            pass
-        else:
+        if not np.isclose(abs(r), 0):
             s += '{:+f}'.format(float(r))[0]
             s += str(Fraction(abs(r)).limit_denominator(9))
         return s.strip('+')
 
     @staticmethod
     def _project(vector, onto):
+        """Return projection of np.ndarray "vector" to np.ndarray "onto" """
         return (np.dot(vector, onto) / np.sqrt(sum(onto ** 2)) ** 2) * onto
 
     @property
-    def matrix3x3(self):
-        return self.transformation
-
-    @property
-    def matrix4x4(self):
+    def matrix(self):
+        """
+        :return: Augmented 4 x 4 transformation matrix with float-type values
+        :rtype: np.ndarray
+        """
         matrix = np.eye(4, dtype=float)
         matrix[0:3, 0:3] = self.transformation
         matrix[0:3, 3] = self.translation
@@ -142,19 +189,37 @@ class SymmOp:
 
     @property
     def det(self):
+        """
+        :return: determinant of 3x3 transformation part of operation's matrix
+        :rtype: int
+        """
         return int(round(np.linalg.det(self.transformation)))
 
     @property
     def typ(self):
-        return SymmOpType((3 if self.trace == 3 else 0 if self.trace == -3 else
-                           4 if len(self.invariants) == 0 else 2 if self.det < 0
-                           else 1) * (1 if self.translational else -1))
+        """
+        :return: crystallographic type of this symmetry operation
+        :rtype: SymmOpType
+        """
+        _trans = self.translational
+        if np.isclose(self.trace, 3):
+            return SymmOpType.translation if _trans else SymmOpType.identity
+        elif np.isclose(self.trace, -3):
+            return SymmOpType.inversion
+        elif len(self.invariants) == 0:
+            return SymmOpType.rotoinversion
+        elif self.det < 0:
+            return SymmOpType.transflection if _trans else SymmOpType.reflection
+        else:
+            return SymmOpType.rototranslation if _trans else SymmOpType.rotation
 
     @property
     def name(self):
+        """
+        :return: short name of symmetry operation, eg.: "m", "3" or "2_1"
+        :rtype: str
+        """
         _g = self.glide
-        _glide_fold = ((Fraction(np.max(_g)).limit_denominator(9) % 1) *
-                       self.fold).numerator
         _glide_dir = 'n' if np.linalg.norm(_g) < 1e-8 else 'x'
         d = {(1, 0, 0): 'a', (0, 1, 0): 'b', (0, 0, 1): 'c',
              (0, 1, 1): 'A', (1, 0, 1): 'B', (1, 1, 0): 'C', (1, 1, 1): 'I'}
@@ -171,10 +236,11 @@ class SymmOp:
         elif self.typ is SymmOpType.inversion:
             return '-1'
         elif self.typ is SymmOpType.rototranslation:
-            return str(self.fold) + '_' + str(_glide_fold)
+            return str(self.fold) + '_' + str(min(np.rint([g * self.glide_fold
+                            for g in _g if not np.isclose(g, 0)]).astype(int)))
         elif self.typ is SymmOpType.transflection:
             return _glide_dir.replace('A', 'n').replace('B', 'n').\
-                replace('C', 'n') if self.fold is 2 else 'd'
+                replace('C', 'n') if self.glide_fold is 2 else 'd'
         elif self.typ is SymmOpType.translation:
             return 't_' + _glide_dir
         elif self.typ is SymmOpType.rotoinversion:
@@ -184,6 +250,11 @@ class SymmOp:
 
     @property
     def fold(self):
+        """
+        :return: number of times operation has to be repeated to become
+        translation, eg.: n for all n-fold axes, 2 for reflections (max 6)
+        :rtype: int
+        """
         point_self = SymmOp(self.transformation)
         for f in (1, 2, 3, 4, 5, 6):
             if point_self ** f == SymmOp(np.eye(3)):
@@ -191,6 +262,11 @@ class SymmOp:
 
     @property
     def order(self):
+        """
+        :return: number of times operation has to be repeated to become
+        identity: equal to fold for non-translational, inf for translational ops
+        :rtype: Union[int, float]
+        """
         for f in (1, 2, 3, 4, 5, 6):
             if self ** f == SymmOp(np.eye(3)):
                 return f
@@ -198,35 +274,69 @@ class SymmOp:
 
     @property
     def glide(self):
+        """
+        :return: part of the translation vector stemming from operations' glide
+        :rtype: np.ndarray
+        """
         return (self ** self.fold).translation / self.fold
 
     @property
+    def glide_fold(self):
+        """
+        :return: number of types glide component of the operation must be
+        repeated to contain only integer values, eg.: 3 for "6_2", 4 for "d"
+        :rtype:
+        """
+        return max([Fraction(comp).limit_denominator(9).denominator
+                    for comp in self.glide])
+
+    @property
     def origin(self):
+        """
+        :return: selected point belonging to symmetry element of the operation
+        :rtype: np.ndarray
+        """
         return (self.translation - self.glide) * 1/2
 
     @property
     def reciprocal(self):
+        """
+        :return: relevant symmetry operation in reciprocal hkl space
+        :rtype: SymmOp
+        """
         return SymmOp(np.linalg.inv(self.transformation).T)
 
     @property
     def trace(self):
-        return int(np.trace(self.transformation))
+        """
+        :return: trace of 3x3 transformation part of operation's matrix
+        :rtype:
+        """
+        return np.trace(self.transformation)
 
     @property
     def translational(self):
-        return np.linalg.norm(self.glide) < 1e-8
-
-    @property
-    def _eigenpairs(self):
-        return np.linalg.eig(self.matrix3x3)
+        """
+        :return: True if operation has any glide component, False otherwise
+        :rtype: bool
+        """
+        return not np.allclose(self.glide, np.zeros_like(self.glide))
 
     @property
     def invariants(self):
-        eigenvalues, eigenvectors = np.linalg.eig(self.matrix3x3)
+        """
+        :return: List of directions not affected by this symmetry operation
+        :rtype: list[np.ndarray]
+        """
+        eigenvalues, eigenvectors = np.linalg.eig(self.transformation)
         return eigenvectors.T[np.isclose(eigenvalues.real, 1)].real
 
     @property
     def orientation(self):
+        """
+        :return: Direction of symmetry element (if can be defined) else None
+        :rtype: Union[np.ndarray, None]
+        """
         if self.typ in {SymmOpType.rotation, SymmOpType.rototranslation}:
             return self.invariants[0]
         elif self.typ in {SymmOpType.reflection, SymmOpType.transflection,
@@ -236,13 +346,30 @@ class SymmOp:
             return None
 
     def at(self, point):
+        """
+        Transform operation as little as possible so that its symmetry element
+        contains "point". To be used after "into" if used together.
+        :param point: Target coordinates of point which should lie in element
+        :type point: np.array
+        :return: New symmetry operation which contains "point" in its element
+        :rtype: SymmOp
+        """
         shift = np.array(point) - self.origin
         for invariant in self.invariants:
             shift -= self._project(shift, onto=invariant)
         return SymmOp(self.transformation, self.translation + 2 * shift)
 
     def into(self, direction, hexagonal=False):
-        """Warning: works only if axis are orthogonal!"""
+        """
+        Rotate operation so that its orientation changes to "direction", while
+        preserving fractional glide. To be used before respective "at" method.
+        :param direction: Target orientation for element of symmetry operation
+        :type direction: np.ndarray
+        :param hexagonal: True if operation is defined in hexagonal coordinates
+        :type hexagonal: bool
+        :return: New symmetry operation whose orientation is "direction"
+        :rtype: SymmOp
+        """
         d = np.array(direction) / np.linalg.norm(direction)
         o = self.orientation / np.linalg.norm(self.orientation)
         ref_change = np.array(((1, -1/2, 0), (0, np.sqrt(3)/2, 0), (0, 0, 1))) \
@@ -251,8 +378,6 @@ class SymmOp:
         d /= np.linalg.norm(d)
         o = ref_change @ o / np.linalg.norm(o)
         d /= np.linalg.norm(o)
-        print(d, 'new direction')
-        print(o, 'old orientation')
 
         def are_parallel(v, w):
             return np.isclose(np.dot(v, w), 1)
@@ -269,58 +394,60 @@ class SymmOp:
             p = np.cross(o, d)
             v = np.array(((0, -p[2], p[1]), (p[2], 0, -p[0]), (-p[1], p[0], 0)))
             rot_m = np.eye(3) + v + (1 / (1 + np.dot(o, d))) * v @ v
-
-            # print(o)
-            # print(d)
-            # print(rot_m, ":rot_m")
-            # print(np.linalg.det(rot_m), ":det rot_m")
-            # print(np.linalg.eig(rot_m)[0], ":eigval rot_m")
-            # print(np.linalg.eig(rot_m)[1], ":eigvec rot_m")
-            # print(SymmOp(rot_m).fold, ":fold of rot_m")
-
-            #dubugging block - WORKS AS LONG AS ORIGINAL OPERATION IS IN ORTHORTOMBIC (eg 2||z)
-            print('_' * 40)
-            x = np.array((0.2, 0.4, 0.0))
-            print(' mój punkt to:', x)
-            print('zmieniam jego współrzędne na takie w układzie ortogonalnym')
-            print(str(ref_change @ x))
-            print('obracam go wstecz od d', str(d), 'do poprzedniego kierunku o:', str(o))
-            print(str(np.linalg.inv(rot_m) @ ref_change @ x))
-            print('obracam go wokół osi wokół poprzedniego kierunku o:', o)
-            print(str(self.transformation @ np.linalg.inv(rot_m) @ ref_change @ x))
-            print('obracam go od o', str(o), 'do nowego kierunku d:', str(d))
-            print(str(rot_m @ self.transformation @ np.linalg.inv(rot_m) @ ref_change @ x))
-            print('zmieniam współrzędne spowrotem na heksagonalne; mój punkt to:')
-            print(str(np.linalg.inv(ref_change) @ rot_m @ self.transformation @ np.linalg.inv(rot_m) @ ref_change @ x))
-            print('_'*40)
-
+            new_origin = self.origin
+            new_glide = np.linalg.inv(ref_change) @ rot_m @ ref_change @ self.glide
+            new_glide_comps = [abs(comp) for comp in new_glide if not np.isclose(comp, 0)]
+            new_glide = new_glide if len(new_glide_comps) == 0 else (new_glide / min(new_glide_comps)) / self.glide_fold
             return SymmOp(np.linalg.inv(ref_change) @ rot_m @ ref_change @ self.transformation @ np.linalg.inv(ref_change) @ np.linalg.inv(rot_m) @ ref_change,
-                          np.linalg.inv(ref_change) @ rot_m @ self.translation)
+                          2 * new_origin + new_glide)
+        # TODO clean this bullcrap and implement hkl/xyz transformation
 
     def _transform_hkl(self, hkl):
-        return self.reciprocal.transformation @ np.array(hkl)
+        raise NotImplementedError
+        #return self.reciprocal.transformation @ np.array(hkl)
 
     def _transform_xyz(self, xyz):
-        pass
+        raise NotImplementedError
 
     def _extincts_hkl(self, hkl):
-        hkl = np.array(hkl)
-        cond1 = np.allclose(hkl, self._transform_hkl(hkl))
-        cond2 = np.isclose(np.dot(hkl, self.glide) % 1, 0)
-        return cond1 and cond2
+        raise NotImplementedError
+        # hkl = np.array(hkl)
+        # cond1 = np.allclose(hkl, self._transform_hkl(hkl))
+        # cond2 = np.isclose(np.dot(hkl, self.glide) % 1, 0)
+        # return cond1 and cond2
 
 
 if __name__ == '__main__':
-    #t = SymmOp.from_code('x-y, x, z+2/3')
-    t = SymmOp.from_code('-x,-y,z').into2((1, 1, 0), hexagonal=True).into2((1, 0, 0), hexagonal=True)
-    #t = SymmOp.from_code('y,x,-z').into((0, 0, 1), hexagonal=True)
-    print(t.invariants)
-    print(t.matrix4x4)
-    print(t.det)
-    print(t, t.glide)
-    print('----------')
-    print(t.typ)
-    print(t.orientation)
+    t = SymmOp.from_code('-x,y+1/2,-z')
+    u = SymmOp.from_code('x,-y,z+1/2')
+
+    o1 = SymmOp.from_code('x+1/2, y+1/2, z')
+    o2 = SymmOp.from_code('x+1/2, y, z+1/2')
+    o3 = SymmOp.from_code('x, y+1/2, z+1/2')
+    o4 = SymmOp.from_code('1/4-x, 1/4+y, 1/4+z')
+    o5 = SymmOp.from_code('1/4+x, 1/4-y, 1/4+z')
+    o6 = SymmOp.from_code('-x, -y, z')
+    # print('glide fold:', t.glide_fold)
+    # print(t.invariants)
+    # print(t.matrix4x4)
+    # print(t.det)
+    # print(t, t.glide)
+    # print('----------')
+    # print(t.typ)
+    # print(t.orientation)
+
+    def build(*gens):
+        new_gens = list(gens)
+        for g1 in gens:
+            for g2 in gens:
+                if not g1 * g2 % 1 in new_gens:
+                    new_gens.append(g1 * g2 % 1)
+        if new_gens == list(gens):
+            print('\n'.join([str(g) for g in gens]))
+        else:
+            build(*new_gens)
+
+    build(o1, o2, o3, o4, o5, o6)
 
     # print('t._transform_hkl((1, 0, 0))')
     # print(t._transform_hkl((0, 0, 1)))
