@@ -449,28 +449,3 @@ if __name__ == '__main__':
 
     build(o1, o2, o3, o4, o5, o6)
 
-    # print('t._transform_hkl((1, 0, 0))')
-    # print(t._transform_hkl((0, 0, 1)))
-    # print('-' * 30)
-    #
-    # print('t._extincts_hkl((0, 0, 1))')
-    # print(t._extincts_hkl((0, 0, 1)))
-    # print('-' * 30)
-    #
-    # print('t._extincts_hkl((0, 0, 3))')
-    # print(t._extincts_hkl((0, 0, 3)))
-    # print('-' * 30)
-    #
-    # print('t._extincts_hkl((0, 0, 4))')
-    # print(t._extincts_hkl((0, 0, 4)))
-    # print('-' * 30)
-    #
-    # print('t._extincts_hkl((0, 1, 4))')
-    # print(t._extincts_hkl((0, 1, 4)))
-    # print('-'*30)
-    #
-    # print(t * np.array((1.6, 1.8, 2.2)))
-    # print(t**2 * np.array((1.6, 1.8, 2.2)))
-    # print(t**3 * np.array((1.6, 1.8, 2.2)))
-    # print(t**4 * np.array((1.6, 1.8, 2.2)))
-    # print(t ** 5 * np.array((1.6, 1.8, 2.2)))
