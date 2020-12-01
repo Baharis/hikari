@@ -715,9 +715,9 @@ def simulate_dac(a, b, c, al, be, ga,
     p.write(hkl_path=output_path, hkl_format=output_format)
 
 
-if __name__ == '__name__':
+if __name__ == '__main__':
     completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=120.0,
-                     laue_group=PG['-3'], output_quality=1)
+                     laue_group=PG['-3'], output_quality=1, output_directory='/home/dtchon/_')
     # completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
     #                 extinctions=('hkl: h+k+l=2n',), laue_group=PG['m-3m'])
     # completeness_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)

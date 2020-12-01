@@ -62,6 +62,7 @@ class SymmOp:
     "*" to combine two symmetry operations or transform a vector,
     "** n" to apply symmetry operation n times,
     "% n" to restrict symmetry operation to n unit cells.
+    Some of the functions may work incorrectly for rhombohedral unit cells #TODO
     """
 
     def __init__(self, transformation, translation=np.array([0, 0, 0])):
@@ -72,13 +73,16 @@ class SymmOp:
         return np.allclose(self.matrix, other.matrix)
 
     def __mul__(self, other):
-        if isinstance(other, SymmOp):
-            return SymmOp.from_matrix(self.matrix @ other.matrix)
-        if isinstance(other, np.ndarray):
-            if other.shape[0] == 3:  # works only for 1,could work for multiple?
-                return self.transformation @ other + self.translation
-            elif other.shape[0] == 4:
-                return self.matrix @ other
+        assert isinstance(other, SymmOp)
+        return SymmOp(self.transformation @ other.transformation,
+                    self.transformation @ other.translation + self.translation)
+
+    def __matmul__(self, other):
+        if other.shape[0] == 3:
+            transformed = self.transformation @ other
+            return (transformed.T + self.translation).T
+        elif other.shape[0] == 4:
+            return self.matrix @ other
         raise TypeError('Cannot multiply "{}" and "{}"'.format(self, other))
 
     def __pow__(self, power, modulo=None):
@@ -363,6 +367,7 @@ class SymmOp:
         """
         Rotate operation so that its orientation changes to "direction", while
         preserving fractional glide. To be used before respective "at" method.
+        Probably will not work correctly for rhombohedral unit cell #TODO
         :param direction: Target orientation for element of symmetry operation
         :type direction: np.ndarray
         :param hexagonal: True if operation is defined in hexagonal coordinates
@@ -370,14 +375,13 @@ class SymmOp:
         :return: New symmetry operation whose orientation is "direction"
         :rtype: SymmOp
         """
-        d = np.array(direction) / np.linalg.norm(direction)
-        o = self.orientation / np.linalg.norm(self.orientation)
-        ref_change = np.array(((1, -1/2, 0), (0, np.sqrt(3)/2, 0), (0, 0, 1))) \
+
+        rebase = np.array(((1, -1/2, 0), (0, np.sqrt(3)/2, 0), (0, 0, 1))) \
             if hexagonal else np.eye(3)
-        d = ref_change @ d
+        d = rebase @ np.array(direction)
         d /= np.linalg.norm(d)
-        o = ref_change @ o / np.linalg.norm(o)
-        d /= np.linalg.norm(o)
+        o = rebase @ self.orientation
+        o /= np.linalg.norm(o)
 
         def are_parallel(v, w):
             return np.isclose(np.dot(v, w), 1)
@@ -393,21 +397,18 @@ class SymmOp:
         else:
             p = np.cross(o, d)
             v = np.array(((0, -p[2], p[1]), (p[2], 0, -p[0]), (-p[1], p[0], 0)))
-            rot_m = np.eye(3) + v + (1 / (1 + np.dot(o, d))) * v @ v
-            new_origin = self.origin
-            new_glide = np.linalg.inv(ref_change) @ rot_m @ ref_change @ self.glide
-            new_glide_comps = [abs(comp) for comp in new_glide if not np.isclose(comp, 0)]
-            new_glide = new_glide if len(new_glide_comps) == 0 else (new_glide / min(new_glide_comps)) / self.glide_fold
-            return SymmOp(np.linalg.inv(ref_change) @ rot_m @ ref_change @ self.transformation @ np.linalg.inv(ref_change) @ np.linalg.inv(rot_m) @ ref_change,
-                          2 * new_origin + new_glide)
-        # TODO clean this bullcrap and implement hkl/xyz transformation
+            rot = np.eye(3) + v + (1 / (1 + np.dot(o, d))) * v @ v
+            rot_h = np.linalg.inv(rebase) @ rot @ rebase
 
-    def _transform_hkl(self, hkl):
-        raise NotImplementedError
-        #return self.reciprocal.transformation @ np.array(hkl)
+            if np.allclose(self.glide, 0):
+                new_glide = np.array((0, 0, 0))
+            else:
+                new_glide = rot_h @ self.glide
+                glide_els = [abs(g) for g in new_glide if not np.isclose(g, 0)]
+                new_glide = (new_glide / min(glide_els)) / self.glide_fold
 
-    def _transform_xyz(self, xyz):
-        raise NotImplementedError
+            return SymmOp(rot_h @ self.transformation @ np.linalg.inv(rot_h),
+                          2 * self.origin + new_glide)
 
     def _extincts_hkl(self, hkl):
         raise NotImplementedError
@@ -417,24 +418,32 @@ class SymmOp:
         # return cond1 and cond2
 
 
-if __name__ == '__main__':
+if __name__ == '__main__2':
     t = SymmOp.from_code('-x,y+1/2,-z')
-    u = SymmOp.from_code('x,-y,z+1/2')
+    print(t)
+#    print(np.array([1, 2, 3]))
+    print(t * np.array([1, 2, 3]))
+#    print(np.array([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]))
+#    print(t * np.array([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]))
+
+if __name__ == '__main__':
+    o1 = SymmOp.from_code('-x, -y, z+1/2')
+    o2 = SymmOp.from_code('x, -y, -z')
+    print((o1 * o1**-1)@np.array((0, 0, 1)))
+    assert False
+
+    # TODO __mul__ --> __matmul__
+
+
+
 
     o1 = SymmOp.from_code('x+1/2, y+1/2, z')
     o2 = SymmOp.from_code('x+1/2, y, z+1/2')
-    o3 = SymmOp.from_code('x, y+1/2, z+1/2')
-    o4 = SymmOp.from_code('1/4-x, 1/4+y, 1/4+z')
-    o5 = SymmOp.from_code('1/4+x, 1/4-y, 1/4+z')
-    o6 = SymmOp.from_code('-x, -y, z')
-    # print('glide fold:', t.glide_fold)
-    # print(t.invariants)
-    # print(t.matrix4x4)
-    # print(t.det)
-    # print(t, t.glide)
-    # print('----------')
-    # print(t.typ)
-    # print(t.orientation)
+    o3 = SymmOp.from_code('1/4-x, 1/4+y, 1/4+z')
+    o4 = SymmOp.from_code('1/4+x, 1/4-y, 1/4+z')
+    o5 = SymmOp.from_code('-x, -y, z')
+
+
 
     def build(*gens):
         new_gens = list(gens)
@@ -447,5 +456,5 @@ if __name__ == '__main__':
         else:
             build(*new_gens)
 
-    build(o1, o2, o3, o4, o5, o6)
+    build(o1, o2, o3, o4, o5)
 
