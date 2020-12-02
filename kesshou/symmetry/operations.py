@@ -66,21 +66,19 @@ class SymmOp:
     """
 
     def __init__(self, transformation, translation=np.array([0, 0, 0])):
-        self.transformation = np.array(transformation, dtype=float)
-        self.translation = np.array(translation, dtype=float)
+        self.tf = transformation
+        self.tl = translation
 
     def __eq__(self, other):
         return np.allclose(self.matrix, other.matrix)
 
     def __mul__(self, other):
         assert isinstance(other, SymmOp)
-        return SymmOp(self.transformation @ other.transformation,
-                    self.transformation @ other.translation + self.translation)
+        return SymmOp(self.tf @ other.tf, self.tf @ other.tl + self.tl)
 
     def __matmul__(self, other):
         if other.shape[0] == 3:
-            transformed = self.transformation @ other
-            return (transformed.T + self.translation).T
+            return ((self.tf @ other).T + self.tl).T
         elif other.shape[0] == 4:
             return self.matrix @ other
         raise TypeError('Cannot multiply "{}" and "{}"'.format(self, other))
@@ -89,11 +87,11 @@ class SymmOp:
         return SymmOp.from_matrix(np.linalg.matrix_power(self.matrix, power))
 
     def __mod__(self, other):
-        return SymmOp(self.transformation, np.mod(self.translation, other))
+        return SymmOp(self.tf, np.mod(self.tl, other))
 
     def __str__(self):
         code = ','.join([self._row_to_str(xyz, r) for xyz, r
-                         in zip(self.transformation, self.translation)])
+                         in zip(self.tf, self.tl)])
         origin = ','.join([str(Fraction(o).limit_denominator(9))
                            for o in self.origin])
         return self.name + ': ' + code + ' (' + origin + ')'
@@ -181,14 +179,30 @@ class SymmOp:
         return (np.dot(vector, onto) / np.sqrt(sum(onto ** 2)) ** 2) * onto
 
     @property
+    def tf(self):
+        return self.__tf
+
+    @tf.setter
+    def tf(self, value):
+        self.__tf = np.rint(value).astype(int)
+
+    @property
+    def tl(self):
+        return self.__tl_times_12 / 12
+
+    @tl.setter
+    def tl(self, value):
+        self.__tl_times_12 = np.rint(value * 12).astype(int)
+
+    @property
     def matrix(self):
         """
         :return: Augmented 4 x 4 transformation matrix with float-type values
         :rtype: np.ndarray
         """
         matrix = np.eye(4, dtype=float)
-        matrix[0:3, 0:3] = self.transformation
-        matrix[0:3, 3] = self.translation
+        matrix[0:3, 0:3] = self.tf
+        matrix[0:3, 3] = self.tl
         return matrix
 
     @property
@@ -197,7 +211,7 @@ class SymmOp:
         :return: determinant of 3x3 transformation part of operation's matrix
         :rtype: int
         """
-        return int(round(np.linalg.det(self.transformation)))
+        return int(round(np.linalg.det(self.tf)))
 
     @property
     def typ(self):
@@ -255,26 +269,29 @@ class SymmOp:
     @property
     def fold(self):
         """
-        :return: number of times operation has to be repeated to become
-        translation, eg.: n for all n-fold axes, 2 for reflections (max 6)
+        :return: number of times operation must be repeated to become inversion
+        or translation: n for n-fold axes, 2 for reflections, 1 for other (max6)
         :rtype: int
         """
-        point_self = SymmOp(self.transformation)
+        op = SymmOp(self.tf) if self.det > 0 \
+            else SymmOp(-self.tf)
         for f in (1, 2, 3, 4, 5, 6):
-            if point_self ** f == SymmOp(np.eye(3)):
+            if op ** f == SymmOp(np.eye(3)):
                 return f
+        raise NotImplementedError('fold is not in range 1 to 6')
 
     @property
     def order(self):
         """
         :return: number of times operation has to be repeated to become
-        identity: equal to fold for non-translational, inf for translational ops
-        :rtype: Union[int, float]
+        translation, eg.: n for all n-fold axes, 2 for other (max 6)
+        :rtype: int
         """
+        op = SymmOp(self.tf)
         for f in (1, 2, 3, 4, 5, 6):
-            if self ** f == SymmOp(np.eye(3)):
+            if op ** f == SymmOp(np.eye(3)):
                 return f
-        return float('Inf')
+        raise NotImplementedError('order is not in range 1 to 6')
 
     @property
     def glide(self):
@@ -282,7 +299,7 @@ class SymmOp:
         :return: part of the translation vector stemming from operations' glide
         :rtype: np.ndarray
         """
-        return (self ** self.fold).translation / self.fold
+        return (self ** self.fold).tl / self.fold
 
     @property
     def glide_fold(self):
@@ -300,7 +317,7 @@ class SymmOp:
         :return: selected point belonging to symmetry element of the operation
         :rtype: np.ndarray
         """
-        return (self.translation - self.glide) * 1/2
+        return (self.tl - self.glide) * 1 / 2
 
     @property
     def reciprocal(self):
@@ -308,7 +325,7 @@ class SymmOp:
         :return: relevant symmetry operation in reciprocal hkl space
         :rtype: SymmOp
         """
-        return SymmOp(np.linalg.inv(self.transformation).T)
+        return SymmOp(np.linalg.inv(self.tf).T)
 
     @property
     def trace(self):
@@ -316,7 +333,7 @@ class SymmOp:
         :return: trace of 3x3 transformation part of operation's matrix
         :rtype:
         """
-        return np.trace(self.transformation)
+        return np.trace(self.tf)
 
     @property
     def translational(self):
@@ -332,7 +349,7 @@ class SymmOp:
         :return: List of directions not affected by this symmetry operation
         :rtype: list[np.ndarray]
         """
-        eigenvalues, eigenvectors = np.linalg.eig(self.transformation)
+        eigenvalues, eigenvectors = np.linalg.eig(self.tf)
         return eigenvectors.T[np.isclose(eigenvalues.real, 1)].real
 
     @property
@@ -345,7 +362,7 @@ class SymmOp:
             return self.invariants[0]
         elif self.typ in {SymmOpType.reflection, SymmOpType.transflection,
                           SymmOpType.rotoinversion}:
-            return SymmOp(-1 * self.transformation).orientation
+            return SymmOp(-1 * self.tf).orientation
         else:
             return None
 
@@ -361,7 +378,7 @@ class SymmOp:
         shift = np.array(point) - self.origin
         for invariant in self.invariants:
             shift -= self._project(shift, onto=invariant)
-        return SymmOp(self.transformation, self.translation + 2 * shift)
+        return SymmOp(self.tf, self.tl + 2 * shift)
 
     def into(self, direction, hexagonal=False):
         """
@@ -407,7 +424,7 @@ class SymmOp:
                 glide_els = [abs(g) for g in new_glide if not np.isclose(g, 0)]
                 new_glide = (new_glide / min(glide_els)) / self.glide_fold
 
-            return SymmOp(rot_h @ self.transformation @ np.linalg.inv(rot_h),
+            return SymmOp(rot_h @ self.tf @ np.linalg.inv(rot_h),
                           2 * self.origin + new_glide)
 
     def _extincts_hkl(self, hkl):
@@ -426,17 +443,7 @@ if __name__ == '__main__2':
 #    print(np.array([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]))
 #    print(t * np.array([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]))
 
-if __name__ == '__main__':
-    o1 = SymmOp.from_code('-x, -y, z+1/2')
-    o2 = SymmOp.from_code('x, -y, -z')
-    print((o1 * o1**-1)@np.array((0, 0, 1)))
-    assert False
-
-    # TODO __mul__ --> __matmul__
-
-
-
-
+if __name__ == '__main__22':
     o1 = SymmOp.from_code('x+1/2, y+1/2, z')
     o2 = SymmOp.from_code('x+1/2, y, z+1/2')
     o3 = SymmOp.from_code('1/4-x, 1/4+y, 1/4+z')

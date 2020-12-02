@@ -4,4 +4,5 @@ to be used by other objects.
 """
 
 from .pointgroup import PG, PointGroup
-from .operations import symm_ops
+from .operations import symm_ops, SymmOp
+from .group2 import Group
