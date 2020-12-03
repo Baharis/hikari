@@ -4,7 +4,7 @@ This file contains class definition and necessary tools for point groups.
 
 import copy
 import numpy as np
-from .group import Group
+from .group_old import Group
 from .operations import symm_ops as so
 
 

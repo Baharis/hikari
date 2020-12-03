@@ -645,7 +645,7 @@ class HklFrame(BaseFrame):
         :type rule: str
         :param point_group: Point group containing information about present
             symmetry operations, necessary to correctly apply the extinction.
-        :type point_group: kesshou.symmetry.pointgroup.PointGroup
+        :type point_group: kesshou.symmetry.group_old.Group
         """
 
         def _interpret_rule():
@@ -664,7 +664,7 @@ class HklFrame(BaseFrame):
         # make a set with all hkls which should be extinct
         extinct = set()
         for op in point_group.operations:
-            extinct = extinct | {tuple(row) for row in dom.to_numpy() @ op}
+            extinct = extinct | {tuple(row) for row in op.transform(dom.to_numpy())}
         # remove all reflections whose hkls are in extinct set
         for h, k, l in list(extinct):
             self.table = self.table[~((self.table['h'] == h) &
@@ -683,7 +683,7 @@ class HklFrame(BaseFrame):
         be found within :mod:`kesshou.symmetry` sub-package.
 
         :param point_group: Point Group used to determine symmetry equivalence
-        :type point_group: kesshou.symmetry.PointGroup
+        :type point_group: kesshou.symmetry.Group
         """
         hkl_lim = self.HKL_LIMIT
         self.keys.add(('equiv',))
@@ -691,7 +691,7 @@ class HklFrame(BaseFrame):
         self.table['equiv'] = [(-hkl_lim, -hkl_lim, -hkl_lim)] * len(self.table)
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
         for op in point_group.operations:
-            new_hkl = pd.Series(map(tuple, _hkl_matrix @ op[0:3, 0:3]))
+            new_hkl = pd.Series(map(tuple, op.transform(_hkl_matrix)))
             _to_update = self.table['equiv'] < new_hkl
             self.table.loc[_to_update, 'equiv'] = new_hkl.loc[_to_update]
 
@@ -767,7 +767,7 @@ class HklFrame(BaseFrame):
         :param bins: Number of individual bins to divide the data into.
         :type bins: int
         :param point_group: Point group used to calculate the statistics.
-        :type point_group: kesshou.symmetry.PointGroup
+        :type point_group: kesshou.symmetry.Group
         :param extinctions: Iterable of extinction rules to be applied
         :type extinctions: tuple
         """
@@ -879,7 +879,7 @@ class HklFrame(BaseFrame):
         previously defined values in "equiv" will be overwritten by this method.
 
         :param point_group: Point Group used to determine symmetry equivalence
-        :type point_group: kesshou.symmetry.PointGroup
+        :type point_group: kesshou.symmetry.Group
         """
         self.find_equivalents(point_group=point_group)
         # group the dataframe and obtain all existing keys
@@ -913,7 +913,6 @@ class HklFrame(BaseFrame):
         self.table['r'] = lin.norm(xyz, axis=1)
         self.keys.add(('x', 'y', 'z', 'r'))
         # TODO SettingWithCopyWarning is triggered-edit external copy,then join
-
 
     def read(self, hkl_path, hkl_format='shelx_4'):
         """

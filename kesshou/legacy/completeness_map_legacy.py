@@ -3,7 +3,7 @@ from kesshou.dataframes.hkl import HklFrame
 import numpy as np
 import copy
 from datetime import datetime as dt
-from kesshou.symmetry.pointgroup import PG4pmmm
+from kesshou.symmetry.pointgroup_old import PG4pmmm
 
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
 # Unit Cell (in Angstrom in degrees)

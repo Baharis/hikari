@@ -130,8 +130,8 @@ def completeness_map(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param laue_group: Laue group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.PointGroup`
-    :type laue_group: kesshou.symmetry.PointGroup
+        defined as an instance of :class:`kesshou.symmetry.Group`
+    :type laue_group: kesshou.symmetry.Group
     :param extinctions: A list of extinctions, given in International Tables of
         Crystallography format. For more details please refer to
         :meth:`kesshou.dataframes.HklFrame.extinct`.
@@ -482,8 +482,8 @@ def completeness_statistics(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param point_group: Point group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.PointGroup`
-    :type point_group: kesshou.symmetry.PointGroup
+        defined as an instance of :class:`kesshou.symmetry.Group`
+    :type point_group: kesshou.symmetry.Group
     :param input_path: Path to the input .hkl file.
     :type input_path: str
     :param input_format: Format of the .hkl file. For reference see
@@ -526,8 +526,8 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param point_group: Point group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.PointGroup`
-    :type point_group: kesshou.symmetry.PointGroup
+        defined as an instance of :class:`kesshou.symmetry.Group`
+    :type point_group: kesshou.symmetry.Group
     :param output_path: Path of created file containing calculated data.
     :type output_path: str
     :param opening_angle:
@@ -597,8 +597,8 @@ def dac_statistics(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param point_group: Point group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.PointGroup`
-    :type point_group: kesshou.symmetry.PointGroup
+        defined as an instance of :class:`kesshou.symmetry.Group`
+    :type point_group: kesshou.symmetry.Group
     :param opening_angle: Value of single opening angle as defined in
         :meth:`kesshou.dataframes.HklFrame.dac`.
     :type opening_angle: float
@@ -716,13 +716,14 @@ def simulate_dac(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=120.0,
-                     laue_group=PG['-3'], output_quality=1, output_directory='/home/dtchon/_')
+    #completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=120.0,
+    #                 extinctions=('hkl: h+k+l=2n',), laue_group=PG['2/m'],
+    #                 output_quality=3, output_directory='/home/dtchon/_')
     # completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
     #                 extinctions=('hkl: h+k+l=2n',), laue_group=PG['m-3m'])
     # completeness_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
-    # dac_point_group_statistics(a=10.0, b=10.0, c=10.0, al=90.0,
-    #                            be=90.0, ga=90.0, laue_group=PG['-3'])
+    dac_point_group_statistics(a=10.0, b=10.0, c=10.0, al=90.0,
+                               be=90.0, ga=90.0, point_group=PG['-3'])
     # dac_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
     # simulate_dac(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
     pass
