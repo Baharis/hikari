@@ -1,45 +1,10 @@
 """
-This file contains the definition of 3-dimensional point symmetry operations.
+This file contains class and definitions of 3-dimensional symmetry operations.
 """
 
 import numpy as np
 from fractions import Fraction
 from enum import Enum
-
-symm_ops = dict()
-"""
-Dictionary containing 3x3 matrices of all 3-dimensional point-symmetry 
-generators. Please mind that this file does not contain all symmetry operations,
-but only those that are necessary to generate the point groups.
-
-The names of symmetry operations follow the international crystallographic
-naming convention wherever possible. For trigonal and hexagonal system case,
-the names are additionally prefixed with the letter 'h'. 
-"""
-symm_ops['1'] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-symm_ops['-1'] = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, -1]])
-symm_ops['2_x'] = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-symm_ops['2_y'] = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
-symm_ops['2_z'] = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
-symm_ops['2_xy'] = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
-symm_ops['-3_z'] = np.array([[1, 1, 0], [-1, 0, 0], [0, 0, -1]])
-symm_ops['3_xyz'] = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
-symm_ops['-3_xyz'] = np.array([[0, 0, -1], [-1, 0, 0], [0, -1, 0]])
-symm_ops['4_z'] = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
-symm_ops['-4_z'] = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, -1]])
-symm_ops['m_x'] = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
-symm_ops['m_y'] = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]])
-symm_ops['m_z'] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]])
-symm_ops['m_xy'] = np.array([[0, -1, 0], [-1, 0, 0], [0, 0, 1]])
-symm_ops['h2_x'] = np.array([[1, -1, 0], [0, -1, 0], [0, 0, -1]])
-symm_ops['h2_x2y'] = np.array([[-1, 1, 0], [0, 1, 0], [0, 0, -1]])
-symm_ops['h3_z'] = np.array([[0, -1, 0], [1, -1, 0], [0, 0, 1]])
-symm_ops['h-3_z'] = np.array([[0, 1, 0], [-1, 1, 0], [0, 0, -1]])
-symm_ops['h6_z'] = np.array([[1, -1, 0], [1, 0, 0], [0, 0, 1]])
-symm_ops['h-6_z'] = np.array([[-1, 1, 0], [-1, 0, 0], [0, 0, -1]])
-symm_ops['hm_x'] = np.array([[-1, 1, 0], [0, 1, 0], [0, 0, 1]])
-symm_ops['hm_x2y'] = np.array([[1, -1, 0], [0, -1, 0], [0, 0, 1]])
-symm_ops['hm_z'] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]])
 
 
 class SymmOp:
@@ -53,7 +18,7 @@ class SymmOp:
     Some of the functions may work incorrectly for rhombohedral unit cells #TODO
     """
     class Type(Enum):
-        """Enumerator class storing information about type of symmetry operation"""
+        """Enumerator class storing information about type of operation"""
         rotoinversion = 4
         identity = 3
         reflection = 2
@@ -74,13 +39,6 @@ class SymmOp:
     def __mul__(self, other):
         assert isinstance(other, SymmOp)
         return SymmOp(self.tf @ other.tf, self.tf @ other.tl + self.tl)
-
-    def __matmul__(self, other):
-        if other.shape[0] == 3:
-            return ((self.tf @ other).T + self.tl).T
-        elif other.shape[0] == 4:
-            return self.matrix @ other
-        raise TypeError('Cannot multiply "{}" and "{}"'.format(self, other))
 
     def __pow__(self, power, modulo=None):
         return SymmOp.from_matrix(np.linalg.matrix_power(self.matrix, power))
@@ -455,5 +413,3 @@ if __name__ == '__main__':
 
     print(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)]))
     print(o1.transform(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])))
-
-
