@@ -645,7 +645,7 @@ class HklFrame(BaseFrame):
         :type rule: str
         :param point_group: Point group containing information about present
             symmetry operations, necessary to correctly apply the extinction.
-        :type point_group: kesshou.symmetry.group_old.Group
+        :type point_group: kesshou.symmetry.Group
         """
 
         def _interpret_rule():

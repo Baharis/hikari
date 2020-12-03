@@ -215,7 +215,7 @@ class SymmOp:
                                               .limit_denominator(9).numerator)
         elif self.typ is self.Type.transflection:
             return _glide_dir.replace('A', 'n').replace('B', 'n').\
-                replace('C', 'n') if self.glide_fold is 2 else 'd'
+                replace('C', 'n') if self.glide_fold == 2 else 'd'
         elif self.typ is self.Type.translation:
             return 't_' + _glide_dir
         elif self.typ is self.Type.rotoinversion:
@@ -255,7 +255,7 @@ class SymmOp:
         :return: part of the translation vector stemming from operations' glide
         :rtype: np.ndarray
         """
-        return (self ** self.fold).tl / self.fold
+        return (self ** 12).__tl12 / 144
 
     @property
     def glide_fold(self):
@@ -297,7 +297,7 @@ class SymmOp:
         :return: True if operation has any glide component, False otherwise
         :rtype: bool
         """
-        return np.any(self.__tl12)
+        return not np.allclose(self.glide, 0)
 
     @property
     def invariants(self):
