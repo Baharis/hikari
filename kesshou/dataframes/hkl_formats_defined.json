@@ -1,0 +1,495 @@
+{
+    "free_2": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si",
+            "b",
+            "la"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1     1.0",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -8,
+            -8,
+            -4,
+            -8
+        ]
+    },
+    "free_3": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "F",
+            "sf",
+            "b"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -8,
+            -8,
+            -4
+        ]
+    },
+    "free_4": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si",
+            "b"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -8,
+            -8,
+            -4
+        ]
+    },
+    "free_40": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -8,
+            -8
+        ]
+    },
+    "free_5": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si",
+            "c"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -8,
+            -8,
+            -4,
+            -8
+        ]
+    },
+    "free_6": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si",
+            "m"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -8,
+            -8,
+            -4
+        ]
+    },
+    "shelx_2": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si",
+            "b",
+            "la"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1     1.0",
+        "widths": [
+            4,
+            4,
+            4,
+            8,
+            8,
+            4,
+            8
+        ]
+    },
+    "shelx_3": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "F",
+            "sf",
+            "b"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1",
+        "widths": [
+            4,
+            4,
+            4,
+            8,
+            8,
+            4
+        ]
+    },
+    "shelx_4": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si",
+            "b"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1",
+        "widths": [
+            4,
+            4,
+            4,
+            8,
+            8,
+            4
+        ]
+    },
+    "shelx_40": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0",
+        "widths": [
+            4,
+            4,
+            4,
+            8,
+            8
+        ]
+    },
+    "shelx_5": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si",
+            "c"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1",
+        "widths": [
+            4,
+            4,
+            4,
+            8,
+            8,
+            4
+        ]
+    },
+    "shelx_6": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si",
+            "m"
+        ],
+        "prefix": "",
+        "suffix": "   0   0   0     1.0     1.0   1",
+        "widths": [
+            4,
+            4,
+            4,
+            8,
+            8,
+            4
+        ]
+    },
+    "shelx_fcf": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "Ic",
+            "I",
+            "si"
+        ],
+        "prefix": "KESSHOU unsupported prefix",
+        "suffix": "",
+        "widths": [
+            4,
+            4,
+            4,
+            14,
+            14,
+            13
+        ]
+    },
+    "tonto_F": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "F",
+            "sf"
+        ],
+        "prefix": "reflection_data= {\nkeys= { h= k= l= f_exp= f_sigma= }\ndata= {\n",
+        "suffix": "}\n}\nREVERT",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -8,
+            -8
+        ]
+    },
+    "tonto_I": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "I",
+            "si"
+        ],
+        "prefix": "reflection_data= {\nkeys= { h= k= l= i_exp= i_sigma= }\ndata= {\n",
+        "suffix": "}\n}\nREVERT",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -8,
+            -8
+        ]
+    },
+    "xd_F-7": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "F",
+            "sf",
+            "ph"
+        ],
+        "prefix": "KESSHOU      F          NDAT   -7\n",
+        "suffix": "",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -3,
+            -13,
+            -13,
+            -10
+        ]
+    },
+    "xd_F13": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "F",
+            "sf",
+            "t",
+            "u1",
+            "u2",
+            "u3",
+            "v1",
+            "v2",
+            "v3"
+        ],
+        "prefix": "KESSHOU      F          NDAT   13\n",
+        "suffix": "",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -3,
+            -13,
+            -13,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10
+        ]
+    },
+    "xd_F6": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "F",
+            "sf"
+        ],
+        "prefix": "KESSHOU      F          NDAT    6\n",
+        "suffix": "",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -3,
+            -13,
+            -13
+        ]
+    },
+    "xd_F7": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "F",
+            "sf",
+            "t"
+        ],
+        "prefix": "KESSHOU      F          NDAT    7\n",
+        "suffix": "",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -3,
+            -13,
+            -13,
+            -10
+        ]
+    },
+    "xd_I-7": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "I",
+            "si",
+            "ph"
+        ],
+        "prefix": "KESSHOU      F^2        NDAT   -7\n",
+        "suffix": "",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -3,
+            -13,
+            -13,
+            -10
+        ]
+    },
+    "xd_I13": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "I",
+            "si",
+            "t",
+            "u1",
+            "u2",
+            "u3",
+            "v1",
+            "v2",
+            "v3"
+        ],
+        "prefix": "KESSHOU      F^2        NDAT   13\n",
+        "suffix": "",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -3,
+            -13,
+            -13,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10
+        ]
+    },
+    "xd_I6": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "I",
+            "si"
+        ],
+        "prefix": "KESSHOU      F^2        NDAT    6\n",
+        "suffix": "",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -3,
+            -13,
+            -13
+        ]
+    },
+    "xd_I7": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "I",
+            "si",
+            "t"
+        ],
+        "prefix": "KESSHOU      F^2        NDAT    7\n",
+        "suffix": "",
+        "widths": [
+            -4,
+            -4,
+            -4,
+            -3,
+            -13,
+            -13,
+            -10
+        ]
+    }
+}

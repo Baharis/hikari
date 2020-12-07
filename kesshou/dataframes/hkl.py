@@ -53,7 +53,15 @@ class HklKeys:
     }
     __I = {
         'default': 1.0,
-        'description': 'Intensity',
+        'description': 'Observed intensity',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'average',
+        'type': float
+    }
+    __Ic = {
+        'default': 1.0,
+        'description': 'Calculated intensity',
         'imperative': False,
         'dtype': 'float64',
         'reduce_behaviour': 'average',
@@ -61,7 +69,7 @@ class HklKeys:
     }
     __si = {
         'default': 0.0,
-        'description': 'Uncertainty of intensity determination',
+        'description': 'Uncertainty of intensity I determination',
         'imperative': False,
         'dtype': 'float64',
         'reduce_behaviour': 'average',
@@ -211,6 +219,38 @@ class HklKeys:
         'reduce_behaviour': 'keep',
         'type': float
     }
+    __ze = {
+        'default': 0.0,
+        'description': 'weighted diff. in observed I - calculated Ic intensity',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'average',
+        'type': float
+    }
+    __ze2 = {
+        'default': 0.0,
+        'description': 'weighted diff. in obs. I - calculated Ic int., squared',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'average',
+        'type': float
+    }
+    __Icsi = {
+        'default': 1.0,
+        'description': 'Calculated intensity of reflection div. by exp. sigma',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'average',
+        'type': float
+    }
+    __Iosi = {
+        'default': 1.0,
+        'description': 'Observed intensity of reflection div. by exp. sigma',
+        'imperative': False,
+        'dtype': 'float64',
+        'reduce_behaviour': 'average',
+        'type': float
+    }
     __equiv = {
         'default': (0, 0, 0),
         'description': 'tuple with lexicographically first equivalent hkl',
@@ -221,7 +261,8 @@ class HklKeys:
     }
     defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'sf', 'b', 'm', 'la', 'ph',
                     'u', 'r', 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3',
-                    'x', 'y', 'z', 'equiv'}
+                    'x', 'y', 'z', 'ze', 'ze2', 'Iosi', 'Icsi', 'equiv'}
+    #TODO check if needed and cplt?
 
     def __init__(self, keys=set()):
         # DEFINE ALL KNOWN KEYS
@@ -914,6 +955,18 @@ class HklFrame(BaseFrame):
         self.keys.add(('x', 'y', 'z', 'r'))
         # TODO SettingWithCopyWarning is triggered-edit external copy,then join
 
+    def calculate_fcf_statistics(self):
+        """
+        Calculate values of zeta (I - Ic) / si on other stats based on contents
+        of fcf files. Save new key and its values into the dataframe.
+        """
+        ze = (self.table['I'] - self.table['Ic']) / self.table['si']
+        self.table['ze'] = ze
+        self.table['ze2'] = ze ** 2
+        self.table['Iosi'] = self.table['I'] / self.table['si']
+        self.table['Icsi'] = self.table['Ic'] / self.table['si']
+        self.keys.add(('ze', 'ze2', 'Iosi', 'Icsi'))
+
     def read(self, hkl_path, hkl_format='shelx_4'):
         """
         Read the contents of .hkl file as specified by path and format,
@@ -1179,6 +1232,9 @@ class HklIo:
         | shelx_6  | 6        | h 4 k 4 l 4            | NO   | YES  | NO     |
         |          |          | I 8 si 8 m 4           |      | (a)  |        |
         +----------+----------+------------------------+------+------+--------+
+        | shelx_fcf| fcf      | h 4 k 4 l 4            | YES  | NO   | NO     |
+        |          |          | Ic 14 I 14 si 13       | (*)  |      |        |
+        +----------+----------+------------------------+------+------+--------+
         | tonto_F  |          | h -4 k -4 l -4         | YES  | YES  | YES    |
         |          |          | F -8 sf -8             | (b)  | (b)  |        |
         +----------+----------+------------------------+------+------+--------+
@@ -1228,6 +1284,7 @@ class HklIo:
 
         - Prefix (c) is an xd-characteristic line with info about file content.
 
+        Pre/suffixes denoted with (*) are not suported in terms of writing.
         A custom hkl file format can be defined by providing
         a *format string* instead of 'Name'.
         The string should look like the ones in column "contents".
@@ -1505,7 +1562,8 @@ class HklArtist:
         """
         value_range = np.arange(min(self.df.table[colored]),
                                 max(self.df.table[colored]))
-        elements_range = rescale_list_to_other(list(value_range), chemical_elements)
+        elements_range = rescale_list_to_other(list(value_range),
+                                               self.ELEMENT_NAMES)
         line_string = 'REM {0} = {{v}}: {{e}}, rgba{{c}}.'.format(colored)
         line_list = [line_string.format(v=v, e=e, c=self.color_dict[e])
                      for v, e in zip(value_range, elements_range)]
@@ -1562,8 +1620,10 @@ class HklArtist:
 if __name__ == '__main__':
     from kesshou.dataframes import HklFrame
     h1 = HklFrame()
-    h1.read('/home/dtchon/_/shelxt2c_mod.hkl', 'tonto_I')
-    h1.to_res('/home/dtchon/_/shelxt2c_mod.res', colored='h')
+    h1.read('/home/dtchon/x/1AP+F4TCNQ/refinement/1AP+F4TCNQ.fcf', 'shelx_fcf')
+    h1.edit_cell(a=9.7708, b=10.6392, c=10.6875, al=62.597, be=64.798, ga=83.561)
+    h1.calculate_fcf_statistics()
+    h1.to_res('/home/dtchon/x/1AP+F4TCNQ/refinement/kesshouIc-fcf.res', colored='ze')
 
     # TODO Fix the documentation using this new object
     # TODO think about space groups...

@@ -13,8 +13,11 @@ from kesshou.utility import cubespace, fibonacci_sphere, home_directory, \
 from matplotlib import cm, colors, pyplot
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import art3d
+from math import erf, erfc
 import numpy as np
 import numpy.linalg as lin
+from scipy.special import erfinv
+
 
 
 def completeness_map(a, b, c, al, be, ga,
@@ -715,6 +718,137 @@ def simulate_dac(a, b, c, al, be, ga,
     p.write(hkl_path=output_path, hkl_format=output_format)
 
 
+def baycon_plot(x_key='ze', y_key='si',
+                a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
+                input_path='shelx.fcf',
+                input_format='shelx_fcf',
+                input_wavelength='MoKa',
+                output_path='baycon.png'):
+    """
+    For a given .fcf file prepare a bayesian conditional probability plot
+    between x_key and y_key.
+
+    :param x_key: Parameter of HklFrame which will be placed on x axis
+    :type x_key: str
+    :param y_key: Parameter of HklFrame which will be placed on x axis
+    :type y_key: str
+    :param a: Unit cell parameter *a* in Angstrom.
+    :type a: float
+    :param b: Unit cell parameter *b* in Angstrom.
+    :type b: float
+    :param c: Unit cell parameter *c* in Angstrom.
+    :type c: float
+    :param al: Unit cell parameter *alpha* in degrees.
+    :type al: float
+    :param be: Unit cell parameter *alpha* in degrees.
+    :type be: float
+    :param ga: Unit cell parameter *alpha* in degrees.
+    :type ga: float
+    :param input_path: Path to the input .fcf file.
+    :type input_path: str
+    :param input_format: Format of the input .fcf file. For reference see
+        :meth:`kesshou.dataframes.HklFrame.interpret_hkl_format`.
+    :type input_format: int or str or dict
+    :param input_wavelength: Wavelength of radiation utilised in experiment.
+    :type input_wavelength: float or str
+    :param output_path: Path to the output .png file.
+    :type output_path: str
+    """
+    no_of_bins = 10
+    p = HklFrame()
+    p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+    p.la = input_wavelength
+    p.read(input_path, input_format)
+    #TODO temp - remove lated
+    # p.table['si'] = p.table['si'] + 0.5
+    #TODO end of temp
+    p.place()
+    p.calculate_fcf_statistics()
+    x = p.table.loc[:, x_key].rank(pct=True).to_numpy()
+    y = p.table.loc[:, y_key].rank(pct=True).to_numpy()
+    bins = np.zeros(shape=(no_of_bins, no_of_bins))
+    lims = [-1.e-8] + [(i + 1) / no_of_bins for i in range(no_of_bins)]
+    for i in range(no_of_bins):
+        for j in range(no_of_bins):
+            bins[i, j] = ((lims[i] < x) & (x <= lims[i+1]) &
+                          (lims[j] < y) & (y <= lims[j+1])).sum()
+    n_avg = len(x) / no_of_bins ** 2
+    chi2 = np.sum((bins - n_avg) ** 2 / n_avg)
+    fig = pyplot.figure()
+    ax = fig.add_subplot(111, aspect='equal')
+    pyplot.xlim(0, 1)
+    pyplot.ylim(0, 1)
+    h = ax.hist2d(x, y, bins=no_of_bins, alpha=0.25, cmap=cm.get_cmap('PiYG'))
+    cb = pyplot.colorbar(h[3], ax=ax)
+    cb.set_label('Number of observations')
+    ax.scatter(x=x, y=y, s=5.0, c='#000080', marker='.', alpha=0.75)
+    pyplot.title('Bayesian CoNditional probability, chi2 = {:.2f}'.format(chi2))
+    pyplot.xlabel('"' +  x_key + '" rank')
+    pyplot.ylabel('"' +  y_key + '" rank')
+    pyplot.tight_layout()
+    pyplot.savefig(fname=output_path, dpi=300)
+
+
+def observed_vs_calculated_plot(input_path='shelx.fcf',
+                                input_format='shelx_fcf',
+                                output_path='Io_vs_Ic.png'):
+    p = HklFrame()
+    p.read(input_path, input_format)
+    icalc = p.table.loc[:, 'Ic'].to_numpy()
+    iobs = p.table.loc[:, 'I'].to_numpy()
+    i_min = min(np.min(icalc[icalc > 0]), np.min(iobs[iobs > 0]))
+    i_max = max(np.max(icalc[icalc > 0]), np.max(iobs[iobs > 0]))
+    fig = pyplot.figure()
+    ax = fig.add_subplot(111) # , aspect='equal'
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim([i_min, i_max])
+    ax.set_ylim([i_min, i_max])
+    print(i_min)
+    ax.plot(np.linspace(0, i_max), np.linspace(0, i_max), '-k', lw=1, zorder=0)
+    ax.scatter(x=icalc, y=iobs, s=5.0, c='r', marker='.', alpha=0.75, zorder=10)
+    pyplot.title('Calculated vs observed intensities plot')
+    pyplot.xlabel('I_cal')
+    pyplot.ylabel('I_obs')
+    pyplot.tight_layout()
+    pyplot.savefig(fname=output_path, dpi=300)
+
+
+def normal_probability_plot(input_path='shelx.fcf',
+                            input_format='shelx_fcf',
+                            output_path='Io_vs_Ic.png'):
+    p = HklFrame()
+    p.read(input_path, input_format)
+    icalc = p.table.loc[:, 'Ic'].to_numpy()
+    iobs = p.table.loc[:, 'I'].to_numpy()
+    si = p.table.loc[:, 'si'].to_numpy()
+    fcalc = np.sign(icalc) * np.sqrt(np.abs(icalc))
+    fobs =  np.sign(iobs)  * np.sqrt(np.abs(iobs))
+
+    def p(x):
+        return abs(erf(x / np.sqrt(2)) - erf(-x / np.sqrt(2))) / 2
+
+    experimental_delta_m = np.sort((fobs - fcalc) / np.sqrt(2 * si))
+    expected_delta_m = np.array([p(i) * np.sign(i) for i in experimental_delta_m])
+    quantiles = np.linspace(0, 1, len(experimental_delta_m) + 2)[1:-1]
+    #print(len(experimental_delta_m))
+    #print(len(quantiles))
+    # #TODO clearly a lot is wrong here, waiting for lecture to fix this
+    expected_delta_m = [np.sqrt(2) * erfinv(2 * q - 1) for q in quantiles]
+    #delta_m_rank = delta_m.rank()
+    fig = pyplot.figure()
+    ax = fig.add_subplot(111, aspect='equal')
+    ax.set_xlim([-3, 3])
+    ax.set_ylim([-3, 3])
+    ax.plot(np.linspace(-3, 3), np.linspace(-3, 3), '-k', lw=1, zorder=0)
+    ax.scatter(expected_delta_m, experimental_delta_m, s=5.0, c='r', marker='.', alpha=0.75, zorder=10)
+    pyplot.title('npp')
+    pyplot.xlabel('delta_m expected')
+    pyplot.ylabel('delta_m experimental')
+    pyplot.tight_layout()
+    pyplot.savefig(fname=output_path, dpi=300)
+
+
 if __name__ == '__main__':
     #completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=120.0,
     #                 extinctions=('hkl: h+k+l=2n',), laue_group=PG['2/m'],
@@ -722,8 +856,18 @@ if __name__ == '__main__':
     # completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
     #                 extinctions=('hkl: h+k+l=2n',), laue_group=PG['m-3m'])
     # completeness_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
-    dac_point_group_statistics(a=10.0, b=10.0, c=10.0, al=90.0,
-                               be=90.0, ga=90.0, point_group=PG['-3'])
+    #dac_point_group_statistics(a=10.0, b=10.0, c=10.0, al=90.0,
+    #                           be=90.0, ga=90.0, point_group=PG['-3'])
     # dac_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
     # simulate_dac(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
+    # baycon_plot(x_key='ze2', y_key='si',
+    #             a=7.1553, b=10.9193, c=17.7858, al=90.0, be=102.540, ga=90.0,
+    #             input_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4.fcf',
+    #             output_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4_baycon_ze2_vs_si.png')
+    # observed_vs_calculated_plot(
+    #     input_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4.fcf',
+    #     output_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4_Io_vs_Ic.png')
+    normal_probability_plot(
+        input_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4.fcf',
+        output_path='/home/dtchon/x/_/npp.png')
     pass
