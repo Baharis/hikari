@@ -7,7 +7,7 @@ which utilise DAC - diamond anvil cell.
 """
 
 from kesshou.dataframes import HklFrame
-from kesshou.symmetry import PG
+from kesshou.symmetry import PG, SG, Group
 from kesshou.utility import cubespace, fibonacci_sphere, home_directory, \
     make_absolute_path
 from matplotlib import cm, colors, pyplot
@@ -21,8 +21,7 @@ from scipy.special import erfinv
 
 
 def completeness_map(a, b, c, al, be, ga,
-                     laue_group=PG['1'],
-                     extinctions=tuple(),
+                     space_group=SG['P1'],
                      fix_scale=False,
                      legacy_cplt=False,
                      opening_angle=35,
@@ -132,16 +131,11 @@ def completeness_map(a, b, c, al, be, ga,
     :type be: float
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
-    :param laue_group: Laue group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.Group`
-    :type laue_group: kesshou.symmetry.Group
-    :param extinctions: A list of extinctions, given in International Tables of
-        Crystallography format. For more details please refer to
-        :meth:`kesshou.dataframes.HklFrame.extinct`.
-    :type extinctions: tuple
+    :param space_group: Instance of :class:`kesshou.symmetry.Group`
+        describing symmetry of the crystal
+    :type space_group: kesshou.symmetry.Group
     :param fix_scale: If true, the colour scheme will not adapt to
-        be fixed to the range
-        from 0 to 100%
+        be fixed to the range from 0 to 100%
     :type fix_scale:
     :param legacy_cplt:
     :type legacy_cplt:
@@ -172,13 +166,11 @@ def completeness_map(a, b, c, al, be, ga,
         _hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         _hkl_frame.la = wavelength
         _hkl_frame.fill(radius=min(_hkl_frame.r_lim, 1 / resolution))
-        _hkl_frame.extinct('000')
-        for extinction in extinctions:
-            _hkl_frame.extinct(extinction, point_group=laue_group)
+        _hkl_frame.extinct(space_group)
         return _hkl_frame
 
     p = _make_reference_ball()
-    p.find_equivalents(point_group=laue_group)
+    p.find_equivalents(point_group=space_group.reciprocate())
     total_reflections = len(p) if legacy_cplt else p.table['equiv'].nunique()
 
     def _determine_theta_and_phi_limits():
@@ -188,21 +180,19 @@ def completeness_map(a, b, c, al, be, ga,
         _v1 = p.z_w
         _v2 = p.x_v
         _v3 = np.cross(_v1, _v2)
-        if laue_group in {PG['-1']}:
+        if space_group.system is Group.CrystalSystem.triclinic:
             _th_limits = [0, 180]
             _ph_limits = [0, 180]
-        # MONOCLINIC
-        elif laue_group in {PG['2/m']}:
+        elif space_group.system is Group.CrystalSystem.monoclinic:
             _th_limits = [0, 180]
             _ph_limits = [0, 90]
-        # ORTHORHOMBIC / TETRAGONAL / CUBIC
-        elif laue_group in {PG['mmm'], PG['4/m'], PG['4/mmm'],
-                            PG['m-3'], PG['m-3m']}:
+        elif space_group.system in {Group.CrystalSystem.orthorhombic,
+                                    Group.CrystalSystem.tetragonal,
+                                    Group.CrystalSystem.cubic}:
             _th_limits = [0, 90]
             _ph_limits = [0, 90]
-        # TRIGONAL / CUBIC
-        elif laue_group in {PG['-3'], PG['-3m1'], PG['-31m'],
-                            PG['6/m'], PG['6/mmm']}:
+        elif space_group.system in {Group.CrystalSystem.trigonal,
+                                    Group.CrystalSystem.hexagonal}:
             _th_limits = [0, 90]
             _ph_limits = [0, 120]
         else:
@@ -250,7 +240,7 @@ def completeness_map(a, b, c, al, be, ga,
                 q = p.duplicate()
                 q.dac(opening_angle=opening_angle, vector=v)
                 if legacy_cplt:
-                    q.transform(operations=laue_group.chiral_operations)
+                    q.transform(operations=space_group.chiral_operations)
                     q.merge()
                     hkl_len = len(q)
                 else:
@@ -500,8 +490,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
     p.read(input_path, input_format)
-    p.extinct('000')
-    p.stats(point_group=point_group)
+    p.stats(space_group=point_group)
 
 
 def dac_point_group_statistics(a, b, c, al, be, ga,
@@ -552,7 +541,6 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
         hkl_frame.la = wavelength
         hkl_frame.fill(radius=hkl_frame.r_lim)
         hkl_frame.merge()
-        hkl_frame.extinct('000')
         if not(resolution is None):
             hkl_frame.trim(resolution)
         return hkl_frame
@@ -624,15 +612,12 @@ def dac_statistics(a, b, c, al, be, ga,
     p.read(input_path, input_format)
     p.orientation = np.array(orientation)
     p.merge()
-    p.extinct('000')
     p.dac(opening_angle=opening_angle)
     p.find_equivalents(point_group=point_group)
-    p.stats(point_group=point_group)
+    p.stats(space_group=point_group)
 
     q = p.duplicate()
-    q.extinct()
     q.fill(radius=q.r_lim)
-    q.extinct('000')
     q.dac(opening_angle=opening_angle)
     q.find_equivalents(point_group=point_group)
 
@@ -711,7 +696,6 @@ def simulate_dac(a, b, c, al, be, ga,
     p.la = input_wavelength
     p.read(input_path, input_format)
     p.orientation = np.array(orientation)
-    p.extinct('000')
     if not(resolution is None):
         p.trim(resolution)
     p.dac(opening_angle=opening_angle, vector=vector)

@@ -1,0 +1,430 @@
+{
+    "P1": {
+        "number": 1,
+        "H-M_short": "P1",
+        "generators": ["x,y,z"],
+        "origin": 1
+    },
+    "P-1": {
+        "number": 2,
+        "H-M_short": "P-1",
+        "generators": ["x,y,z", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P4": {
+        "number": 75,
+        "H-M_short": "P4",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z"],
+        "origin": 1
+    },
+    "P41": {
+        "number": 76,
+        "H-M_short": "P41",
+        "generators": ["x,y,z", "-x,-y,z+1/2", "-y,x,z+1/4"],
+        "origin": 1
+    },
+    "P42": {
+        "number": 77,
+        "H-M_short": "P42",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2"],
+        "origin": 1
+    },
+    "P43": {
+        "number": 78,
+        "H-M_short": "P43",
+        "generators": ["x,y,z", "-x,-y,z+1/2", "-y,x,z+3/4"],
+        "origin": 1
+    },
+    "I4": {
+        "number": 79,
+        "H-M_short": "I4",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I41": {
+        "number": 80,
+        "H-M_short": "I41",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z+1/2", "-y,x+1/2,z+1/4",
+            "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "P-4": {
+        "number": 81,
+        "H-M_short": "P-4",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z"],
+        "origin": 1
+    },
+    "I-4": {
+        "number": 82,
+        "H-M_short": "I-4",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "P4/m": {
+        "number": 83,
+        "H-M_short": "P4/m",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P42/m": {
+        "number": 84,
+        "H-M_short": "P42/m",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P4/n": {
+        "number": 85,
+        "H-M_short": "P4/n",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z", "-x,-y,-z"],
+        "origin": 2
+    },
+    "P42/n": {
+        "number": 86,
+        "H-M_short": "P42/n",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y,x+1/2,z+1/2", "-x,-y,-z"],
+        "origin": 2
+    },
+    "I4/m": {
+        "number": 87,
+        "H-M_short": "I4/m",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x,-y,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I41/a": {
+        "number": 88,
+        "H-M_short": "I41/a",
+        "generators": ["x,y,z", "-x+1/2,-y,z+1/2", "-y+3/4,x+1/4,z+1/4",
+            "-x,-y,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 2
+    },
+    "P422": {
+        "number": 89,
+        "H-M_short": "P422",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x,y,-z"],
+        "origin": 1
+    },
+    "P4212": {
+        "number": 90,
+        "H-M_short": "P4212",
+        "generators": ["x,y,z", "-x,-y,z", "-y+1/2,x+1/2,z", "-x+1/2,y+1/2,-z"],
+        "origin": 1
+    },
+    "P4122": {
+        "number": 91,
+        "H-M_short": "P4122",
+        "generators": ["x,y,z", "-x,-y,z+1/2", "-y,x,z+1/4", "-x,y,-z"],
+        "origin": 1
+    },
+    "P41212": {
+        "number": 92,
+        "H-M_short": "P41212",
+        "generators": ["x,y,z", "-x,-y,z+1/2", "-y+1/2,x+1/2,z+1/4", "-x+1/2,y+1/2,-z+1/4"],
+        "origin": 1
+    },
+    "P4222": {
+        "number": 93,
+        "H-M_short": "P4222",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2", "-x,y,-z"],
+        "origin": 1
+    },
+    "P42212": {
+        "number": 94,
+        "H-M_short": "P42212",
+        "generators": ["x,y,z", "-x,-y,z", "-y+1/2,x+1/2,z+1/2", "-x+1/2,y+1/2,-z+1/2"],
+        "origin": 1
+    },
+    "P4322": {
+        "number": 95,
+        "H-M_short": "P4322",
+        "generators": ["x,y,z", "-x,-y,z+1/2", "-y,x,z+3/4", "-x,y,-z"],
+        "origin": 1
+    },
+    "P43212": {
+        "number": 96,
+        "H-M_short": "P43212",
+        "generators": ["x,y,z", "-x,-y,z+1/2", "-y+1/2,x+1/2,z+3/4", "-x+1/2,y+1/2,-z+3/4"],
+        "origin": 1
+    },
+    "I422": {
+        "number": 97,
+        "H-M_short": "I422",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x,y,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I4122": {
+        "number": 98,
+        "H-M_short": "I4122",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z+1/2", "-y,x+1/2,z+1/4", "-x+1/2,y,-z+3/4", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "P4mm": {
+        "number": 99,
+        "H-M_short": "P4mm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "x,-y,z"],
+        "origin": 1
+    },
+    "P4bm": {
+        "number": 100,
+        "H-M_short": "P4bm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "x+1/2,-y+1/2,z"],
+        "origin": 1
+    },
+    "P42cm": {
+        "number": 101,
+        "H-M_short": "P42cm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2", "x,-y,z+1/2"],
+        "origin": 1
+    },
+    "P42nm": {
+        "number": 102,
+        "H-M_short": "P42nm",
+        "generators": ["x,y,z", "-x,-y,z", "-y+1/2,x+1/2,z+1/2", "x+1/2,-y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "P4cc": {
+        "number": 103,
+        "H-M_short": "P4cc",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "x,-y,z+1/2"],
+        "origin": 1
+    },
+    "P4nc": {
+        "number": 104,
+        "H-M_short": "P4nc",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "x+1/2,-y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "P42mc": {
+        "number": 105,
+        "H-M_short": "P42mc",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2", "x,-y,z"],
+        "origin": 1
+    },
+    "P42bc": {
+        "number": 106,
+        "H-M_short": "P42bc",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2", "x+1/2,-y+1/2,z"],
+        "origin": 1
+    },
+    "I4mm": {
+        "number": 107,
+        "H-M_short": "I4mm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "x,-y,z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I4cm": {
+        "number": 108,
+        "H-M_short": "I4cm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "x,-y,z+1/2", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I41md": {
+        "number": 109,
+        "H-M_short": "I41md",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z+1/2", "-y,x+1/2,z+1/4", "x,-y,z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I41cd": {
+        "number": 110,
+        "H-M_short": "I41cd",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z+1/2", "-y,x+1/2,z+1/4", "x,-y,z+1/2", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "P-42m": {
+        "number": 111,
+        "H-M_short": "P-42m",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "-x,y,-z"],
+        "origin": 1
+    },
+    "P-42c": {
+        "number": 112,
+        "H-M_short": "P-42c",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "-x,y,-z+1/2"],
+        "origin": 1
+    },
+    "P-421m": {
+        "number": 113,
+        "H-M_short": "P-421m",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "-x+1/2,y+1/2,-z"],
+        "origin": 1
+    },
+    "P-421c": {
+        "number": 114,
+        "H-M_short": "P-421c",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "-x+1/2,y+1/2,-z+1/2"],
+        "origin": 1
+    },
+    "P-4m2": {
+        "number": 115,
+        "H-M_short": "P-4m2",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "x,-y,z"],
+        "origin": 1
+    },
+    "P-4c2": {
+        "number": 116,
+        "H-M_short": "P-4c2",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "x,-y,z+1/2"],
+        "origin": 1
+    },
+    "P-4b2": {
+        "number": 117,
+        "H-M_short": "P-4b2",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "x+1/2,-y+1/2,z"],
+        "origin": 1
+    },
+    "P-4n2": {
+        "number": 118,
+        "H-M_short": "P-4n2",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "x+1/2,-y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I-4m2": {
+        "number": 119,
+        "H-M_short": "I-4m2",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "x,-y,z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I-4c2": {
+        "number": 120,
+        "H-M_short": "I-4c2",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "x,-y,z+1/2", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I-42m": {
+        "number": 121,
+        "H-M_short": "I-42m",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "-x,y,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I-42d": {
+        "number": 122,
+        "H-M_short": "I-42d",
+        "generators": ["x,y,z", "-x,-y,z", "y,-x,-z", "-x+1/2,y,-z+3/4", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "P4/mmm": {
+        "number": 123,
+        "H-M_short": "P4/mmm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x,y,-z", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P4/mcc": {
+        "number": 124,
+        "H-M_short": "P4/mcc",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x,y,-z+1/2", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P4/nbm": {
+        "number": 125,
+        "H-M_short": "P4/nbm",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z", "-x+1/2,y,-z", "-x,-y,-z"],
+        "origin": 2
+    },
+    "P4/nnc": {
+        "number": 126,
+        "H-M_short": "P4/nnc",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z", "-x+1/2,y,-z+1/2", "-x,-y,-z"],
+        "origin": 2
+    },
+    "P4/mbm": {
+        "number": 127,
+        "H-M_short": "P4/mbm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x+1/2,y+1/2,-z", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P4/mnc": {
+        "number": 128,
+        "H-M_short": "P4/mnc",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x+1/2,y+1/2,-z+1/2", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P4/nmm": {
+        "number": 129,
+        "H-M_short": "P4/nmm",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z", "-x,y+1/2,-z", "-x,-y,-z"],
+        "origin": 2
+    },
+    "P4/ncc": {
+        "number": 130,
+        "H-M_short": "P4/ncc",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z", "-x,y+1/2,-z+1/2", "-x,-y,-z"],
+        "origin": 2
+    },
+    "P42/mmc": {
+        "number": 131,
+        "H-M_short": "P42/mmc",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2", "-x,y,-z", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P42/mcm": {
+        "number": 132,
+        "H-M_short": "P42/mcm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2", "-x,y,-z+1/2", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P42/nbc": {
+        "number": 133,
+        "H-M_short": "P42/nbc",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z+1/2", "-x+1/2,y,-z", "-x,-y,-z"],
+        "origin": 2
+    },
+    "P42/nnm": {
+        "number": 134,
+        "H-M_short": "P42/nnm",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z+1/2", "-x+1/2,y,-z+1/2", "-x,-y,-z"],
+        "origin": 2
+    },
+    "P42/mbc": {
+        "number": 135,
+        "H-M_short": "P42/mbc",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z+1/2", "-x+1/2,y+1/2,-z", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P42/mnm": {
+        "number": 136,
+        "H-M_short": "P42/mnm",
+        "generators": ["x,y,z", "-x,-y,z", "-y+1/2,x+1/2,z+1/2", "-x+1/2,y+1/2,-z+1/2", "-x,-y,-z"],
+        "origin": 1
+    },
+    "P42/nmc": {
+        "number": 137,
+        "H-M_short": "P42/nmc",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z+1/2", "-x,y+1/2,-z", "-x,-y,-z"],
+        "origin": 2
+    },
+    "P42/ncm": {
+        "number": 138,
+        "H-M_short": "P42/ncm",
+        "generators": ["x,y,z", "-x+1/2,-y+1/2,z", "-y+1/2,x,z+1/2", "-x,y+1/2,-z+1/2", "-x,-y,-z"],
+        "origin": 2
+    },
+    "I4/mmm": {
+        "number": 139,
+        "H-M_short": "I4/mmm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x,y,-z", "-x,-y,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I4/mcm": {
+        "number": 140,
+        "H-M_short": "I4/mcm",
+        "generators": ["x,y,z", "-x,-y,z", "-y,x,z", "-x,y,-z+1/2", "-x,-y,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 1
+    },
+    "I41/amd": {
+        "number": 141,
+        "H-M_short": "I41/amd",
+        "generators": ["x,y,z", "-x+1/2,-y,z+1/2", "-y+1/4,x+3/4,z+1/4", "-x+1/2,y,-z+1/2", "-x,-y,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 2
+    },
+    "I41/acd": {
+        "number": 142,
+        "H-M_short": "I41/acd",
+        "generators": ["x,y,z", "-x+1/2,-y,z+1/2", "-y+1/4,x+3/4,z+1/4", "-x+1/2,y,-z", "-x,-y,-z", "x+1/2,y+1/2,z+1/2"],
+        "origin": 2
+    },
+    "id": {
+        "number": 0,
+        "H-M_short": "",
+        "generators": ["x,y,z", "", "", "", ""],
+        "origin": 1
+    }
+}

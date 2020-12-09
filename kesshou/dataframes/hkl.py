@@ -1,7 +1,7 @@
 from kesshou.dataframes import BaseFrame
 from kesshou.utility import cubespace, chemical_elements, is2n, is3n, is4n, is6n
 from kesshou.utility import rescale_list_to_range, rescale_list_to_other
-from kesshou.symmetry import PG
+from kesshou.symmetry import PG, SG
 from pathlib import Path
 import copy
 import json
@@ -373,12 +373,9 @@ class HklFrame(BaseFrame):
 
     def __add__(self, other):
         """
-        Add magic method. Stacks contents of two :attr:`table` while preserving
-        meta-information from the first :class:`HklFrame` object.
-
         :param other: HklFrame to be added to data
         :type other: HklFrame
-        :return: HklFrame with concatenated HklFrame.data pandas dataframes
+        :return: concatenated :attr:`table` dataframes, with metadata from first
         :rtype: HklFrame
         """
         _copied = self.duplicate()
@@ -387,7 +384,6 @@ class HklFrame(BaseFrame):
 
     def __len__(self):
         """
-        Len magic method, number of individual data points in :attr:`table`.
         :return: Number of rows (individual reflections) in `self.data`
         :rtype: int
         """
@@ -395,8 +391,6 @@ class HklFrame(BaseFrame):
 
     def __str__(self):
         """
-        Str magic method, provides human-readable representation of data.
-
         :return: Human-readable representation of `self.data`
         :rtype: str
         """
@@ -446,105 +440,6 @@ class HklFrame(BaseFrame):
         :rtype: float
         """
         return 2 / self.la
-
-    def _condition(self, equation=''):
-        """
-        This method limits the reflection data based on truth of equation
-
-        :param equation: Equation which must be met for data to be preserved
-        :type equation: str
-        :return: Dataframe containing only reflections which meet the equation
-        :rtype: pd.DataFrame
-        """
-        equation = equation.lower().replace(' ', '').replace('_', '')
-        df = self.table
-        # no variables return dataframe with no rows
-        if equation == '':
-            return df.iloc[0:0]
-        # one variable
-        if equation == 'h=2n':
-            return df.loc[is2n(df['h'])]
-        if equation == 'k=2n':
-            return df.loc[is2n(df['k'])]
-        if equation == 'l=2n':
-            return df.loc[is2n(df['l'])]
-        if equation == 'h=3n':
-            return df.loc[is3n(df['h'])]
-        if equation == 'k=3n':
-            return df.loc[is3n(df['k'])]
-        if equation == 'l=3n':
-            return df.loc[is3n(df['l'])]
-        if equation == 'h=4n':
-            return df.loc[is4n(df['h'])]
-        if equation == 'k=4n':
-            return df.loc[is4n(df['k'])]
-        if equation == 'l=4n':
-            return df.loc[is4n(df['l'])]
-        if equation == 'h=6n':
-            return df.loc[is6n(df['h'])]
-        if equation == 'k=6n':
-            return df.loc[is6n(df['k'])]
-        if equation == 'l=6n':
-            return df.loc[is6n(df['l'])]
-        # sum of variables
-        if equation in ('h+k=2n', 'k+h=2n'):
-            return df.loc[is2n(df['h'] + df['k'])]
-        if equation in ('h+l=2n', 'l+h=2n'):
-            return df.loc[is2n(df['h'] + df['l'])]
-        if equation in ('k+l=2n', 'l+k=2n'):
-            return df.loc[is2n(df['k'] + df['l'])]
-        if equation in ('2h+k=4n', 'k+2h=4n'):
-            return df.loc[is4n(df['h'] + df['h'] + df['k'])]
-        if equation in ('h+2k=4n', '2k+h=4n'):
-            return df.loc[is4n(df['h'] + df['k'] + df['k'])]
-        if equation in ('2h+l=4n', 'l+2h=4n'):
-            return df.loc[is4n(df['h'] + df['h'] + df['l'])]
-        if equation in ('h+2l=4n', '2l+h=4n'):
-            return df.loc[is4n(df['h'] + df['l'] + df['l'])]
-        if equation in ('2k+l=4n', 'l+2k=4n'):
-            return df.loc[is4n(df['k'] + df['k'] + df['l'])]
-        if equation in ('k+2l=4n', '2l+k=4n'):
-            return df.loc[is4n(df['k'] + df['l'] + df['l'])]
-        if equation in ('h+k+l=2n', 'h+l+k=2n', 'k+h+l=2n',
-                        'k+l+h=2n', 'l+h+k=2n', 'l+k+h=2n'):
-            return df.loc[is2n(df['h'] + df['k'] + df['l'])]
-        # mixed sum and multiple variables
-        if equation in ('h,k=2n,h+k=4n', 'h+k=4n,h,k=2n',
-                        'k,h=2n,h+k=4n', 'h+k=4n,k,h=2n',
-                        'h,k=2n,k+h=4n', 'k+h=4n,h,k=2n',
-                        'k,h=2n,k+h=4n', 'k+h=4n,k,h=2n'):
-            return df.loc[(is2n(df['h'])) & (is2n(df['k'])) &
-                          (is4n(df['h'] + df['k']))]
-        if equation in ('h,l=2n,h+l=4n', 'h+l=4n,h,l=2n',
-                        'l,h=2n,h+l=4n', 'h+l=4n,l,h=2n',
-                        'h,l=2n,l+h=4n', 'l+h=4n,h,l=2n',
-                        'l,h=2n,l+h=4n', 'l+h=4n,l,h=2n'):
-            return df.loc[(is2n(df['h'])) & (is2n(df['l'])) &
-                          (is4n(df['h'] + df['l']))]
-        if equation in ('k,l=2n,k+l=4n', 'k+l=4n,k,l=2n',
-                        'l,k=2n,k+l=4n', 'k+l=4n,l,k=2n',
-                        'k,l=2n,l+k=4n', 'l+k=4n,k,l=2n',
-                        'l,k=2n,l+k=4n', 'l+k=4n,l,k=2n'):
-            return df.loc[(is2n(df['k'])) & (is2n(df['l'])) &
-                          (is4n(df['k'] + df['l']))]
-        # multiple variables
-        if equation in ('h,k=2n', 'k,h=2n'):
-            return df.loc[(is2n(df['h'])) & (is2n(df['k']))]
-        if equation in ('h,l=2n', 'l,h=2n'):
-            return df.loc[(is2n(df['h'])) & (is2n(df['l']))]
-        if equation in ('k,l=2n', 'l,k=2n'):
-            return df.loc[(is2n(df['k'])) & (is2n(df['l']))]
-        if equation in ('h,k,l=2n', 'h,l,k=2n', 'k,h,l=2n',
-                        'k,l,h=2n', 'l,h,k=2n', 'l,k,h=2n', ):
-            return df.loc[(is2n(df['h'])) & (is2n(df['k'])) & (is2n(df['l']))]
-        # multiple sums of variables
-        if equation in ('h+k,h+l,k+l=2n', 'k+h,h+l,k+l=2n', 'h+k,l+h,k+l=2n',
-                        'h+k,h+l,l+k=2n', 'k+h,l+h,k+l=2n', 'k+h,l+h,l+k=2n'):
-            return df.loc[(is2n(df['h'] + df['k'])) &
-                          (is2n(df['h'] + df['l'])) &
-                          (is2n(df['k'] + df['l']))]
-        # raise exception if the equation is unknown
-        raise ValueError('Unknown condition equation have been supplied')
 
     def dac(self, opening_angle=35.0, vector=None):
         """
@@ -602,58 +497,6 @@ class HklFrame(BaseFrame):
         self.table = self.table[in_torus1 * in_torus2]
         self.table.reset_index(drop=True, inplace=True)
 
-    def _domain(self, address='hkl'):
-        """
-        This method limits the reflection data to the ones "living" in address.
-
-        :param address: Address which the reflections must have to be preserved
-        :type address: str
-        :return: Dataframe containing only reflections with given address
-        :rtype: pd.DataFrame
-        """
-
-        address = address.lower().replace(' ', '').replace('_', '')
-        df = self.table
-
-        # no zeroes in address
-        if address == 'hkl':
-            return df
-        if address in ('hhl', 'kkl'):
-            return df.loc[df['h'] == df['k']]
-        if address in ('hkh', 'lkl'):
-            return df.loc[df['h'] == df['l']]
-        if address in ('hkk', 'hll'):
-            return df.loc[df['k'] == df['l']]
-
-        # one zero in address
-        if address == 'hk0':
-            return df.loc[df['l'] == 0]
-        if address == 'h0l':
-            return df.loc[df['k'] == 0]
-        if address == '0kl':
-            return df.loc[df['h'] == 0]
-        if address in ('hh0', 'kk0'):
-            return df.loc[(df['h'] == df['k']) & (df['l'] == 0)]
-        if address in ('h0h', 'l0l'):
-            return df.loc[(df['h'] == df['l']) & (df['k'] == 0)]
-        if address in ('0kk', '0ll'):
-            return df.loc[(df['k'] == df['l']) & (df['h'] == 0)]
-
-        # two zeroes in address
-        if address == 'h00':
-            return df.loc[(df['k'] == 0) & (df['l'] == 0)]
-        if address == '0k0':
-            return df.loc[(df['h'] == 0) & (df['l'] == 0)]
-        if address == '00l':
-            return df.loc[(df['h'] == 0) & (df['k'] == 0)]
-
-        # three zeroes in address
-        if address == '000':
-
-            return df.loc[(df['h'] == 0) & (df['k'] == 0) & (df['l'] == 0)]
-        # raise exception if the address is unknown
-        raise ValueError('Unknown domain address have been supplied')
-
     def duplicate(self):
         """
         Make and return an exact deep copy of this HklFrame.
@@ -663,55 +506,20 @@ class HklFrame(BaseFrame):
         """
         return copy.deepcopy(self)
 
-    def extinct(self, rule='hkl:', point_group=PG['1']):
+    def extinct(self, space_group=SG['P1']):
         """
-        Removes from dataframe all reflections which are in a specified
-        *domain*, but do not meet the *condition*.
-        The *rules* have a format "domain:condition",
-        where the domain specifies a part of reciprocal space which
-        we plan to extinct, while the condition describes all the reflections,
-        which should **not** be extinct despite belonging to domain.
+        Removes from dataframe reflections which should be extinct based on
+        space :class:`kesshou.symmetry.group.Group`. For ref. see ITC-A12.3.5.
 
-        The rule should be written using a format present in
-        International Tables of Crystallography,
-        which is easily accessible using the web page of
-        `Department of Chemistry, University College London
-        <http://img.chem.ucl.ac.uk/sgp/large/sgp.htm>`_
-        In the current release the *domains* are hard-coded and thus not all
-        theoretically possible domains can be specified.
-        However, all domains specified in the International Tables
-        should be accessible.
-
-        :param rule: A string with *domain* and *condition* separated by colon.
-        :type rule: str
-        :param point_group: Point group containing information about present
-            symmetry operations, necessary to correctly apply the extinction.
-        :type point_group: kesshou.symmetry.Group
+        :param space_group: Space group used to extinct the reflections.
+        :type space_group: kesshou.symmetry.group.Group
         """
 
-        def _interpret_rule():
-            try:
-                _split_rule = [*rule.split(':', 1), '']
-            except AttributeError:
-                _split_rule = rule[0:2]
-            _domain_string = _split_rule[0].strip(' ')
-            _condition_string = _split_rule[1].strip(' ')
-            return _domain_string, _condition_string
-        domain_string, condition_string = _interpret_rule()
-        dom = self._domain(domain_string)
-        con = self._condition(condition_string)
-        # obtain a part of domain which does NOT meet the condition
-        dom = dom.loc[~dom.isin(con).all(1)][['h', 'k', 'l']]
-        # make a set with all hkls which should be extinct
-        extinct = set()
-        for op in point_group.operations:
-            extinct = extinct | {tuple(row) for row in op.transform(dom.to_numpy())}
-        # remove all reflections whose hkls are in extinct set
-        for h, k, l in list(extinct):
-            self.table = self.table[~((self.table['h'] == h) &
-                                      (self.table['k'] == k) &
-                                      (self.table['l'] == l))]
-        # reset the indices for other methods to use
+        hkls = self.table.loc[:, ['h', 'k', 'l']].to_numpy()
+        list_of_extinction_flags = [op.extincts(hkls) for op in space_group]
+        [print(o) for o in space_group]
+        total_extinction_flags = np.logical_or.reduce(list_of_extinction_flags)
+        self.table = self.table[~total_extinction_flags]
         self.table.reset_index(drop=True, inplace=True)
 
     def find_equivalents(self, point_group=PG['1']):
@@ -746,13 +554,12 @@ class HklFrame(BaseFrame):
         :param dictionary: Dictionary with "key - iterable of values" pairs.
         :type dictionary: Dict[str, numpy.ndarray]
         """
-        new_data = pd.DataFrame()
+        tab = pd.DataFrame()
         self.keys.add(dictionary.keys())
         for key, value in dictionary.items():
             typ = self.keys.get_property(key, 'dtype')
-            new_data[key] = pd.Series(value, dtype=typ, name=key)
-        self.table = new_data
-        self.extinct('000')
+            tab[key] = pd.Series(value, dtype=typ, name=key)
+        self.table = tab[(tab['h'] != 0) | (tab['k'] != 0) | (tab['l'] != 0)]
         if not('x' in self.table.columns):
             self.place()
         self._recalculate_structure_factors_and_intensities()
@@ -794,7 +601,7 @@ class HklFrame(BaseFrame):
         self.from_dict({'h': np.array(_h)[0], 'k': np.array(_k)[0],
                         'l': np.array(_l)[0], 'I': ones, 'si': ones, 'm': ones})
 
-    def stats(self, bins=10, point_group=PG['1'], extinctions=('000',)):
+    def stats(self, bins=10, space_group=PG['1']):
         """
         Analyses dataframe in terms of number of individual, unique and
         theoretically possible reflections, as well as completeness and
@@ -807,40 +614,33 @@ class HklFrame(BaseFrame):
 
         :param bins: Number of individual bins to divide the data into.
         :type bins: int
-        :param point_group: Point group used to calculate the statistics.
-        :type point_group: kesshou.symmetry.Group
-        :param extinctions: Iterable of extinction rules to be applied
-        :type extinctions: tuple
+        :param space_group: Space group used to calculate the statistics.
+        :type space_group: kesshou.symmetry.Group
         """
-        def prepare_base_copy_of_hkl():
-            _hkl_base = self.duplicate()
-            for _extinction in extinctions:
-                _hkl_base.extinct(_extinction)
-            return _hkl_base
 
-        hkl_base = prepare_base_copy_of_hkl()
+        hkl_base = self.duplicate()
+        hkl_base.extinct(space_group)
 
         def prepare_ball_of_hkl(_point_group=PG['1']):
             _hkl_full = hkl_base.duplicate()
             _hkl_full.fill(radius=max(self.table['r']))
             _hkl_full.merge(point_group=_point_group)
-            for _extinction in extinctions:
-                _hkl_full.extinct(_extinction)
+            _hkl_full.extinct(space_group)
             return _hkl_full
 
-        hkl_full = prepare_ball_of_hkl(_point_group=point_group)
+        hkl_full = prepare_ball_of_hkl(_point_group=space_group)
 
         def prepare_merged_hkl(_point_group=PG['1']):
             _hkl_merged_pg1 = hkl_base.duplicate()
             _hkl_merged_pg1.merge(point_group=_point_group)
             return _hkl_merged_pg1
 
-        hkl_merged = prepare_merged_hkl(_point_group=point_group)
+        hkl_merged = prepare_merged_hkl(_point_group=space_group)
 
         def group_by_resolution(ungrouped_hkl, _bins=bins):
             cube_bins = cubespace(0.0, max(self.table['r']), num=_bins + 1)
-            grouped_hkl = ungrouped_hkl.data.groupby(
-                pd.cut(ungrouped_hkl.data['r'], cube_bins))
+            grouped_hkl = ungrouped_hkl.table.groupby(
+                pd.cut(ungrouped_hkl.table['r'], cube_bins))
             return grouped_hkl
 
         grouped_base = group_by_resolution(hkl_base)
@@ -948,10 +748,10 @@ class HklFrame(BaseFrame):
         hkl = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
         abc = np.matrix((self.a_w, self.b_w, self.c_w))
         xyz = hkl @ abc
-        self.table['x'] = xyz[:, 0]
-        self.table['y'] = xyz[:, 1]
-        self.table['z'] = xyz[:, 2]
-        self.table['r'] = lin.norm(xyz, axis=1)
+        self.table.loc[:, 'x'] = xyz[:, 0]
+        self.table.loc[:, 'y'] = xyz[:, 1]
+        self.table.loc[:, 'z'] = xyz[:, 2]
+        self.table.loc[:, 'r'] = lin.norm(xyz, axis=1)
         self.keys.add(('x', 'y', 'z', 'r'))
         # TODO SettingWithCopyWarning is triggered-edit external copy,then join
 
@@ -1621,9 +1421,10 @@ if __name__ == '__main__':
     from kesshou.dataframes import HklFrame
     h1 = HklFrame()
     h1.read('/home/dtchon/x/1AP+F4TCNQ/refinement/1AP+F4TCNQ.fcf', 'shelx_fcf')
-    h1.edit_cell(a=9.7708, b=10.6392, c=10.6875, al=62.597, be=64.798, ga=83.561)
-    h1.calculate_fcf_statistics()
-    h1.to_res('/home/dtchon/x/1AP+F4TCNQ/refinement/kesshouIc-fcf.res', colored='ze')
+    h1.extinct(SG['P212121'])
+    # h1.edit_cell(a=9.7708, b=10.6392, c=10.6875, al=62.597, be=64.798, ga=83.561)
+    # h1.calculate_fcf_statistics()
+    # #h1.to_res('/home/dtchon/x/1AP+F4TCNQ/refinement/kesshouIc-fcf.res', colored='ze')
 
     # TODO Fix the documentation using this new object
     # TODO think about space groups...

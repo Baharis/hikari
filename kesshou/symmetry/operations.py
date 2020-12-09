@@ -396,12 +396,16 @@ class SymmOp:
             return self.matrix @ other.T
         raise TypeError('Cannot transform "{}"'.format(other))
 
-    def _extincts_hkl(self, hkl):
-        raise NotImplementedError
-        # hkl = np.array(hkl)
-        # cond1 = np.allclose(hkl, self._transform_hkl(hkl))
-        # cond2 = np.isclose(np.dot(hkl, self.glide) % 1, 0)
-        # return cond1 and cond2
+    def extincts(self, hkl):
+        """
+        :param hkl: An array containing one hkl or multiple hkls in columns
+        :type hkl: np.ndarray
+        :return: array of booleans, where extinct reflections are marked as True
+        :rtype: np.array
+        """
+        cond1 = np.isclose(hkl, self.reciprocal.transform(hkl)).all(axis=1)
+        cond2 = ~np.isclose(np.dot(hkl, self.glide) % 1, 0)
+        return cond1 & cond2
 
 
 if __name__ == '__main__':
@@ -411,5 +415,12 @@ if __name__ == '__main__':
     o4 = SymmOp.from_code('1/4+x, 1/4-y, 1/4+z')
     o5 = SymmOp.from_code('-x, -y, z')
 
-    print(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)]))
-    print(o1.transform(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])))
+    # print(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)]))
+    # print(o1.transform(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])))
+
+    hkl = np.array([[2, 0, 0], [4, 0, 0], [6, 0, 0], [8, 0, 0], [10, 0, 0]])
+    r4 = SymmOp.from_code('x+1/4, -z, y')
+    print(r4, r4.glide)
+    print(hkl)
+    print(r4.extincts(hkl))
+    #print(hkl[~r4.extincts(hkl)])
