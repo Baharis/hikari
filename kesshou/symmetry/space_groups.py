@@ -131,7 +131,7 @@ SG = {
 Dictionary containing all known space groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary
 can be accessed using their short Hermann-Maugin notation, as presented below.
-The origin is always as suggested by http://img.chem.ucl.ac.uk/sgp/large/sgp.htm
+To access origin choice 1 or 2, append key with "#1" or "2", eg.: SG["Fd-3c#2"].
 
 +-------+--------------+----------------+-------------------+-----------------+
 | No.   | CRYSTAL      | Hermann-Maugin | Hermann-Maugin    | Can be accessed |
@@ -310,21 +310,23 @@ def _unpack_space_group_dictionary_from_json():
     with open(json_file_path) as file:
         json_dict = json.load(file)
     space_group_dict = {}
-    for _, json_group in json_dict.items():
+    for json_key, json_group in json_dict.items():
         new_group_name = json_group["H-M_short"]
-        print(json_group["generators"])
+        new_group_number = json_group["number"]
         new_group_gens = [SymmOp.from_code(c) for c in json_group["generators"]]
         new_group_object = Group(*new_group_gens)
+        space_group_dict[json_key] = new_group_object
         space_group_dict[new_group_name] = new_group_object
+        space_group_dict[new_group_number] = new_group_object
     return space_group_dict
 
 
 SG2 = _unpack_space_group_dictionary_from_json()
 
 if __name__ == '__main__':
-    print(SG2)
+    #print(SG2)
     g = SG2['I41']; print(g); [print(op) for op in g]
-    g = SG2['P-4']; print(g); [print(op) for op in g]
-    g = SG2['I-1']; print(g); [print(op) for op in g]
-    g = SG2['P4/m']; print(g); [print(op) for op in g]
+    g = SG2['Fd-3c#2']; print(g); [print(op) for op in g]
+    g = SG2['228']; print(g); [print(op) for op in g]
+    g = SG2['Fd-3c']; print(g); [print(op) for op in g]
 
