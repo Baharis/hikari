@@ -1,132 +1,26 @@
 from kesshou.symmetry import Group, SymmOp
-import numpy as np
 from pathlib import Path
 import json
 
-# short notation to effectively re-use some symmetry elements in group creation
-# r & ri denote rotation and rotoinvertion in monoclinic or orthogonal systems
-# h & hi denote rotation and rotoinvertion in hexagonal system only
-# CENTERING
-A = SymmOp.from_code('x, y+1/2, z+1/2')
-B = SymmOp.from_code('x+1/2, y, z+1/2')
-C = SymmOp.from_code('x+1/2, y+1/2, z')
-I = SymmOp.from_code('x+1/2, y+1/2, z+1/2')
-# ROTATIONS
-r2y = SymmOp.from_code('-x, y, -z')
-r21y = SymmOp.from_code('-x, y+1/2, -z')
-r2z = SymmOp.from_code('-x, -y, z')
-r21z = SymmOp.from_code('-x, -y, z+1/2')
-r4z = SymmOp.from_code('-y, x, z')
-r41z = SymmOp.from_code('-y, x, z+1/4')
-h3z = SymmOp.from_code('-y, x-y, z')
-h31z = SymmOp.from_code('-y, x-y, z+1/3')
-h6z = SymmOp.from_code('x-y, x, z')
-h61z = SymmOp.from_code('x-y, x, z+1/6')
-# REFLECTIONS
-ay = SymmOp.from_code('x+1/2, -y, z')
-az = SymmOp.from_code('x+1/2, y, -z')
-bx = SymmOp.from_code('-x, y+1/2, z')
-cx = SymmOp.from_code('-x, y, z+1/2')
-cy = SymmOp.from_code('x, -y, z+1/2')
-dx = SymmOp.from_code('-x, y+1/4, z+1/4')
-dy = SymmOp.from_code('x+1/4, -y, z+1/4')
-dz = SymmOp.from_code('x+1/4, y+1/4, -z')
-mx = SymmOp.from_code('-x, y, z')
-my = SymmOp.from_code('x, -y, z')
-mz = SymmOp.from_code('x, y, -z')
-nx = SymmOp.from_code('-x, y+1/2, z+1/2')
-ny = SymmOp.from_code('x+1/2, -y, z+1/2')
-nz = SymmOp.from_code('x+1/2, y+1/2, -z')
-# INVERSION
-i = SymmOp.from_code('-x,-y,-z')
-# DIRECTIONS
-x = np.array((1/4, 0, 0))
-y = np.array((0, 1/4, 0))
-z = np.array((0, 0, 1/4))
 
-SG = {
-    # TRICLINIC
-    'P1': Group(SymmOp.from_code('x,y,z')),
-    'P-1': Group(i),
-    # MONOCLINIC
-    'P2': Group(r2y),
-    'P21': Group(r21y),
-    'C2': Group(C, r2y),
-    'Pm': Group(my),
-    'Pc': Group(cy),
-    'Cm': Group(C, my),
-    'Cc': Group(C, cy),
-    'P2/m': Group(r2y, my),
-    'P21/m': Group(r21y, my),
-    'C2/m': Group(C, r2y, my),
-    'P2/c': Group(r2y.at(z), cy),
-    'P21/c': Group(r21y.at(z), cy),
-    'C2/c': Group(C, r2y.at(z), cy),
-    # ORTHORHOMBIC
-    'P222': Group(r2z, r2y),
-    'P2221': Group(r21z, r2y.at(z)),
-    'P21212': Group(r2z, r21y.at(x)),
-    'P212121': Group(r21z.at(x), r21y.at(z)),
-    'C2221': Group(C, r21z, r2y.at(z)),
-    'C222': Group(C, r2z, r2y),
-    'F222': Group(A, B, r2z, r2y),
-    'I222': Group(I, r2z, r2y),
-    'I212121': Group(I, r2z.at(y), r2y.at(x)),
-    'Pmm2': Group(r2z, mx),
-    'Pmc21': Group(r21z, mx),
-    'Pcc2': Group(r2z, cy),
-    'Pma2': Group(r2z, mx.at(x)),
-    'Pca21': Group(r21z, cx.at(x)),
-    'Pnc2': Group(r2z, cy.at(y)), #last
-    'Pmn21': Group(r21z.at(x), mx),
-    'Pba2': Group(r2z, bx.at(x)),
-    'Pna21': Group(r21z, ay.at(y)),
-    'Pnn2': Group(r2z, ny.at(y)),
-    'Cmm2': Group(C, r2z, mx),
-    'Cmc21': Group(C, r21z, mx),
-    'Ccc2': Group(C, r2z, cx),
-    'Amm2': Group(A, r2z, mx),
-    'Aem2': Group(A, r2z, cy),
-    'Ama2': Group(A, r2z, ay),
-    'Aea2': Group(A, r2z, ay.at(y)),
-    'Fmm2': Group(A, B, r2z, mx),
-    'Fdd2': Group(A, B, r2z, dx.at(x/2)),
-    'Imm2': Group(I, r2z, mx),
-    'Iba2': Group(I, r2z, cx),
-    'Ima2': Group(I, r2z, ay),
-    'Pmmm': Group(mx, my, mz),
-    'Pnnn': Group(nx.at(x), ny.at(y), nz.at(z)),
-    'Pccm': Group(cx, cy, mz),
-    'Pban': Group(bx.at(x), ay.at(y), nz),
-    'Pmma': Group(mx.at(x), my, az),
-    'Pnna': Group(nx, ny.at(y), az),
-    'Pmna': Group(mx, ny, az.at(z)),
-    'Pcca': Group(cx.at(x), cy, az),
-    'Pbam': Group(bx.at(x), ay.at(y), mz),
-    'Pccn': Group(cx.at(x), cy.at(y), nz),
-    'Pbcm': Group(bx, cy.at(y), mz.at(z)),
-    'Pnnm': Group(nx.at(x), ny.at(y), mz),
-    'Pmmn': Group(mx, my, nz),
-    'Pbcn': Group(bx.at(x), cy, nz.at(z)),
-    'Pbca': Group(bx.at(x), cy.at(y), az.at(z)),
-    'Pnma': Group(nx.at(x), my.at(y), az.at(z)),
-    'Cmcm': Group(C, mx, cy, mz.at(z)),
-    'Cmca': Group(C, mx, cy.at(y), az.at(z)),
-    'Cmmm': Group(C, mx, my, mz),
-    'Cccm': Group(C, cx, cy, mz),
-    'Cmme': Group(C, mx, my.at(y), az),
-    'Ccce': Group(C, cx.at(x), cy.at(y), az.at(z)),
-    'Fmmm': Group(A, B, mx, my, mz),
-    'Fddd': Group(A, B, dx.at(x/2), dy.at(y/2), dz.at(z/2)),
-    'Immm': Group(I, mx, my, mz),
-    'Ibam': Group(I, bx.at(x), ay.at(x), mz),
-    'Ibca': Group(I, bx.at(x), cy.at(y), az.at(z)),
-    'Imma': Group(I, mx, my.at(y), az.at(z))
-    # TETRAGONAL
-    # TRIGONAL
-    # HEXAGONAL
-    # CUBIC
-}
+def _unpack_space_group_dictionary_from_json():
+    current_file_path = Path(__file__).parent.absolute()
+    json_file_path = current_file_path.joinpath('space_groups.json')
+    with open(json_file_path) as file:
+        json_dict = json.load(file)
+    space_group_dict = {}
+    for json_key, json_group in json_dict.items():
+        new_group_name = json_group["H-M_short"]
+        new_group_number = json_group["number"]
+        new_group_gens = [SymmOp.from_code(c) for c in json_group["generators"]]
+        new_group_object = Group(*new_group_gens)
+        space_group_dict[json_key] = new_group_object
+        space_group_dict[new_group_name] = new_group_object
+        space_group_dict[new_group_number] = new_group_object
+    return space_group_dict
+
+
+SG = _unpack_space_group_dictionary_from_json()
 """
 Dictionary containing all known space groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary
@@ -304,29 +198,10 @@ To access origin choice 1 or 2, append key with "#1" or "2", eg.: SG["Fd-3c#2"].
 """
 
 
-def _unpack_space_group_dictionary_from_json():
-    current_file_path = Path(__file__).parent.absolute()
-    json_file_path = current_file_path.joinpath('space_groups.json')
-    with open(json_file_path) as file:
-        json_dict = json.load(file)
-    space_group_dict = {}
-    for json_key, json_group in json_dict.items():
-        new_group_name = json_group["H-M_short"]
-        new_group_number = json_group["number"]
-        new_group_gens = [SymmOp.from_code(c) for c in json_group["generators"]]
-        new_group_object = Group(*new_group_gens)
-        space_group_dict[json_key] = new_group_object
-        space_group_dict[new_group_name] = new_group_object
-        space_group_dict[new_group_number] = new_group_object
-    return space_group_dict
-
-
-SG2 = _unpack_space_group_dictionary_from_json()
-
 if __name__ == '__main__':
     #print(SG2)
-    g = SG2['I41']; print(g); [print(op) for op in g]
-    g = SG2['Fd-3c#2']; print(g); [print(op) for op in g]
-    g = SG2['228']; print(g); [print(op) for op in g]
-    g = SG2['Fd-3c']; print(g); [print(op) for op in g]
+    g = SG['I41']; print(g); [print(op) for op in g]
+    g = SG['Fd-3c#2']; print(g); [print(op) for op in g]
+    g = SG['228']; print(g); [print(op) for op in g]
+    g = SG['Fd-3c']; print(g); [print(op) for op in g]
 
