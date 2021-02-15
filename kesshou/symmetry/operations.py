@@ -34,7 +34,7 @@ class SymmOp:
 
     def __eq__(self, other):
         return np.array_equal(self.tf, other.tf) and \
-               np.array_equal(self.__tl12, other.__tl12)
+               np.array_equal(self.__tl24, other.__tl24)
 
     def __mul__(self, other):
         assert isinstance(other, SymmOp)
@@ -44,14 +44,15 @@ class SymmOp:
         return SymmOp.from_matrix(np.linalg.matrix_power(self.matrix, power))
 
     def __mod__(self, other):
-        return SymmOp(self.tf, np.mod(self.__tl12, 12 * other) / 12)
+        return SymmOp(self.tf, np.mod(self.__tl24, 24 * other) / 24)
 
     def __str__(self):
-        code = ','.join([self._row_to_str(xyz, r) for xyz, r
-                         in zip(self.tf, self.tl)])
         origin = ','.join([str(Fraction(o).limit_denominator(9))
                            for o in self.origin])
-        return self.name + ': ' + code + ' (' + origin + ')'
+        return self.name + ': ' + self.code + ' (' + origin + ')'
+
+    def __hash__(self):
+        return hash(str(self.tf) + str(self.__tl24 % 24))
 
     @classmethod
     def from_code(cls, code):
@@ -136,6 +137,11 @@ class SymmOp:
         return (np.dot(vector, onto) / np.sqrt(sum(onto ** 2)) ** 2) * onto
 
     @property
+    def code(self):
+        return ','.join([self._row_to_str(xyz, r) for xyz, r
+                         in zip(self.tf, self.tl)])
+
+    @property
     def tf(self):
         return self.__tf
 
@@ -145,11 +151,11 @@ class SymmOp:
 
     @property
     def tl(self):
-        return self.__tl12 / 12
+        return self.__tl24 / 24
 
     @tl.setter
     def tl(self, value):
-        self.__tl12 = np.rint(value * 12).astype(int)
+        self.__tl24 = np.rint(value * 24).astype(int)
 
     @property
     def matrix(self):
@@ -255,7 +261,7 @@ class SymmOp:
         :return: part of the translation vector stemming from operations' glide
         :rtype: np.ndarray
         """
-        return (self ** 12).__tl12 / 144
+        return (self ** 24).__tl24 / 576
 
     @property
     def glide_fold(self):
@@ -265,7 +271,7 @@ class SymmOp:
         :rtype:
         """
 
-        return max([12 // t for t in [*self.__tl12, 12] if t != 0])
+        return max([24 // t for t in [*self.__tl24, 24] if t != 0])
 
     @property
     def origin(self):
@@ -334,7 +340,7 @@ class SymmOp:
         shift = np.array(point) - self.origin
         for invariant in self.invariants:
             shift -= self._project(shift, onto=invariant)
-        return SymmOp(self.tf, self.tl + 2 * shift)
+        return SymmOp(np.eye(3), shift) * self * SymmOp(np.eye(3), -shift)
 
     def into(self, direction, hexagonal=False):
         """
@@ -409,18 +415,32 @@ class SymmOp:
 
 
 if __name__ == '__main__':
-    o1 = SymmOp.from_code('x+1/2, y+1/2, z')
-    o2 = SymmOp.from_code('x+1/2, y, z+1/2')
-    o3 = SymmOp.from_code('1/4-x, 1/4+y, 1/4+z')
-    o4 = SymmOp.from_code('1/4+x, 1/4-y, 1/4+z')
-    o5 = SymmOp.from_code('-x, -y, z')
+    # o1 = SymmOp.from_code('x+1/2, y+1/2, z')
+    # o2 = SymmOp.from_code('x+1/2, y, z+1/2')
+    # o3 = SymmOp.from_code('1/4-x, 1/4+y, 1/4+z')
+    # o4 = SymmOp.from_code('1/4+x, 1/4-y, 1/4+z')
+    # o5 = SymmOp.from_code('-x, -y, z')
+    #
+    # # print(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)]))
+    # # print(o1.transform(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])))
+    #
+    # hkl = np.array([[2, 0, 0], [4, 0, 0], [6, 0, 0], [8, 0, 0], [10, 0, 0]])
+    # r4 = SymmOp.from_code('x+1/4, -z, y')
+    # p = np.array((1/4, 0, 0))
+    # print(o1.at(p))
+    # print(o2.at(p))
+    # print(o3.at(p))
+    # print(o4.at(p))
+    # print(o5.at(p))
+    #
+    # print(o1.at2(p))
+    # print(o2.at2(p))
+    # print(o3.at2(p))
+    # print(o4.at2(p))
+    # print(o5.at2(p))
 
-    # print(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)]))
-    # print(o1.transform(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])))
-
-    hkl = np.array([[2, 0, 0], [4, 0, 0], [6, 0, 0], [8, 0, 0], [10, 0, 0]])
-    r4 = SymmOp.from_code('x+1/4, -z, y')
-    print(r4, r4.glide)
-    print(hkl)
-    print(r4.extincts(hkl))
-    #print(hkl[~r4.extincts(hkl)])
+    n = np.array([1/4, 0, 0])
+    p = np.array([[0.01, 0.02, 0.03]])
+    o = SymmOp.from_code('-x,-y,z+1/2').at(n)
+    print(o)
+    print(o.transform(p))

@@ -71,8 +71,9 @@ def rescale_list_to_range(original, limits):
     """
     new_min, new_max = limits[0:2]
     old_min, old_max = min(original), max(original)
-    return [new_max * (v - old_min) / (old_max - old_min) +
-            new_min * (old_max - v) / (old_max - old_min) for v in original]
+    return (new_max + new_min) / 2 * original / old_min if old_min == old_max \
+        else [new_max * (v - old_min) / (old_max - old_min) +
+              new_min * (old_max - v) / (old_max - old_min) for v in original]
 
 
 def rescale_list_to_other(original, other):

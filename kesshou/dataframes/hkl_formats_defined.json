@@ -255,6 +255,26 @@
             4,
             4,
             4,
+            12,
+            12,
+            13
+        ]
+    },
+    "shelx_fcf14": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "Ic",
+            "I",
+            "si"
+        ],
+        "prefix": "KESSHOU unsupported prefix",
+        "suffix": "",
+        "widths": [
+            4,
+            4,
+            4,
             14,
             14,
             13

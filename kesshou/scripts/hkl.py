@@ -9,7 +9,7 @@ which utilise DAC - diamond anvil cell.
 from kesshou.dataframes import HklFrame
 from kesshou.symmetry import PG, SG, Group
 from kesshou.utility import cubespace, fibonacci_sphere, home_directory, \
-    make_absolute_path
+    make_absolute_path, gnuplot_cplt_map_palette, mpl_cplt_map_palette
 from matplotlib import cm, colors, pyplot
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import art3d
@@ -17,11 +17,13 @@ from math import erf, erfc
 import numpy as np
 import numpy.linalg as lin
 from scipy.special import erfinv
-
+from scipy.stats import norm
+from scipy.optimize import minimize
 
 
 def completeness_map(a, b, c, al, be, ga,
                      space_group=SG['P1'],
+                     axis='',
                      fix_scale=False,
                      legacy_cplt=False,
                      opening_angle=35,
@@ -160,18 +162,25 @@ def completeness_map(a, b, c, al, be, ga,
     png_path = make_absolute_path(output_directory, output_name + '.png')
     png2_path = make_absolute_path(output_directory, output_name + '_gnu.png')
 
-    def _make_reference_ball():
-        """Make ball of hkl which will be cut in further steps"""
-        _hkl_frame = HklFrame()
-        _hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-        _hkl_frame.la = wavelength
-        _hkl_frame.fill(radius=min(_hkl_frame.r_lim, 1 / resolution))
-        _hkl_frame.extinct(space_group)
-        return _hkl_frame
+    def _make_hkl_frame(ax=axis.lower()):
+        """Make ball or axis of hkl which will be cut in further steps"""
+        _f = HklFrame()
+        _f.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+        _f.la = wavelength
+        _f.fill(radius=min(_f.r_lim, 1 / resolution))
+        if ax in {'x', 'a'}:
+            _f.table = _f.table.loc[_f.table['k'].eq(0) & _f.table['l'].eq(0)]
+        elif ax in {'y', 'b'}:
+            _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['l'].eq(0)]
+        elif ax in {'z', 'c'}:
+            _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['k'].eq(0)]
+        _f.extinct(space_group)
+        return _f
 
-    p = _make_reference_ball()
+    p = _make_hkl_frame()
     p.find_equivalents(point_group=space_group.reciprocate())
     total_reflections = len(p) if legacy_cplt else p.table['equiv'].nunique()
+    assert total_reflections > 0, "No non-extinct reflections in this region"
 
     def _determine_theta_and_phi_limits():
         """Define the spherical coordinate system based on given point group.
@@ -288,17 +297,7 @@ def completeness_map(a, b, c, al, be, ga,
         ax.plot_wireframe(x, y, z, colors='k', linewidth=0.25)
 
         # color map
-        my_heatmap_colors = [(0.0, 0.0, 0.0),  # Black
-                             (0.0, 0.0, 0.5),  # Indigo
-                             (0.0, 0.0, 1.0),  # Blue
-                             (0.0, 0.5, 1.0),  # Aqua
-                             (0.0, 1.0, 1.0),  # Turquoise
-                             (0.5, 1.0, 0.5),  # Lime
-                             (1.0, 1.0, 0.0),  # Yellow
-                             (1.0, 0.5, 0.0),  # Orange
-                             (1.0, 0.0, 0.0),  # Red
-                             (1.0, 0.5, 0.5),  # Light red
-                             (1.0, 1.0, 1.0)]  # White
+        my_heatmap_colors = mpl_cplt_map_palette[axis]
         my_colormap = colors.LinearSegmentedColormap.from_list(
             'heatmapEX', my_heatmap_colors, N=256)
         m = cm.ScalarMappable(cmap=my_colormap)
@@ -396,8 +395,7 @@ def completeness_map(a, b, c, al, be, ga,
             set yrange[-1.1:1.1]
             set zrange[-1.1:1.1]
             set palette maxcolors 50
-            set palette model HSV defined (0 0.66 1 0, 5 0.66 1 1, 15 0.0 1 1, 20 0.0 0 1) 
-            # , 25 0.0 0 0.5) to add gray on the end
+            {gnu_palette}
 
             # define axes and their labels 
             #set label "x*" at 1.5,0.1,0 center front textcolor rgb "#ff0000"
@@ -447,6 +445,7 @@ def completeness_map(a, b, c, al, be, ga,
             gnu_max_ph_plus25=max(ph_limits) + 25,
             gnu_min_th_minus25=min(th_limits) - 25,
             gnu_max_th_plus25=max(th_limits) + 25,
+            gnu_palette=gnuplot_cplt_map_palette[axis.lower()],
             gnu_output_name=png2_path))
 
     _prepare_gnuplot_input()
@@ -788,7 +787,6 @@ def observed_vs_calculated_plot(input_path='shelx.fcf',
     ax.set_yscale('log')
     ax.set_xlim([i_min, i_max])
     ax.set_ylim([i_min, i_max])
-    print(i_min)
     ax.plot(np.linspace(0, i_max), np.linspace(0, i_max), '-k', lw=1, zorder=0)
     ax.scatter(x=icalc, y=iobs, s=5.0, c='r', marker='.', alpha=0.75, zorder=10)
     pyplot.title('Calculated vs observed intensities plot')
@@ -801,57 +799,232 @@ def observed_vs_calculated_plot(input_path='shelx.fcf',
 def normal_probability_plot(input_path='shelx.fcf',
                             input_format='shelx_fcf',
                             output_path='Io_vs_Ic.png'):
+
+    # rigid-coded bg pars for 2bisAP-delta_0.88GPa.fcf
+    a = 0.1000
+    b = 0.0
+
     p = HklFrame()
     p.read(input_path, input_format)
-    icalc = p.table.loc[:, 'Ic'].to_numpy()
-    iobs = p.table.loc[:, 'I'].to_numpy()
+    i_obs = p.table.loc[:, 'I'].to_numpy()
+    i_calc = p.table.loc[:, 'Ic'].to_numpy()
     si = p.table.loc[:, 'si'].to_numpy()
-    fcalc = np.sign(icalc) * np.sqrt(np.abs(icalc))
-    fobs =  np.sign(iobs)  * np.sqrt(np.abs(iobs))
+    p = 1/3 * i_obs + 2/3 * i_calc
+    si = np.sqrt(si ** 2 + (a * p) ** 2 + b * p)
 
-    def p(x):
-        return abs(erf(x / np.sqrt(2)) - erf(-x / np.sqrt(2))) / 2
+    # expected delta m
+    def delta_m(f1, f2, k, si1, si2):
+        return np.sort((f1 - k * f2) / np.sqrt(si1 ** 2 + k **2 * si2 ** 2))
 
-    experimental_delta_m = np.sort((fobs - fcalc) / np.sqrt(2 * si))
-    expected_delta_m = np.array([p(i) * np.sign(i) for i in experimental_delta_m])
-    quantiles = np.linspace(0, 1, len(experimental_delta_m) + 2)[1:-1]
-    #print(len(experimental_delta_m))
-    #print(len(quantiles))
-    # #TODO clearly a lot is wrong here, waiting for lecture to fix this
-    expected_delta_m = [np.sqrt(2) * erfinv(2 * q - 1) for q in quantiles]
-    #delta_m_rank = delta_m.rank()
+    def sum_of_delta_m_squared(k):
+        return np.sum(delta_m(i_obs, i_calc, k, si, np.zeros_like(si)) ** 2)
+
+    def scale_factor():
+        return minimize(sum_of_delta_m_squared, x0=np.array([1.0])).x[0]
+
+    expected_delta_m = delta_m(f1=i_obs, f2=i_calc, k=scale_factor(),
+                               si1=si, si2=np.zeros_like(si))
+    expected_delta_m = expected_delta_m / np.std(expected_delta_m)
+
+    # simulated delta m
+    uniform = (np.arange(len(expected_delta_m)) + 0.5) / len(expected_delta_m)
+    simulated_delta_m = [erfinv(-1 + 2 * q) for q in uniform]
+
+    # drawing the plot
     fig = pyplot.figure()
     ax = fig.add_subplot(111, aspect='equal')
     ax.set_xlim([-3, 3])
     ax.set_ylim([-3, 3])
+    pyplot.hist(expected_delta_m, bins=100, density=True)
+    ax.scatter(expected_delta_m, simulated_delta_m, s=5.0, c='r', marker='.', alpha=0.75, zorder=10)
     ax.plot(np.linspace(-3, 3), np.linspace(-3, 3), '-k', lw=1, zorder=0)
-    ax.scatter(expected_delta_m, experimental_delta_m, s=5.0, c='r', marker='.', alpha=0.75, zorder=10)
+    pyplot.plot(6 * uniform - 3, norm.pdf(6 * uniform - 3))
     pyplot.title('npp')
     pyplot.xlabel('delta_m expected')
-    pyplot.ylabel('delta_m experimental')
+    pyplot.ylabel('delta_m simulated')
     pyplot.tight_layout()
     pyplot.savefig(fname=output_path, dpi=300)
 
 
+def simple_fcf_descriptors(input_path='shelx.fcf',
+                            input_format='shelx_fcf'):
+
+
+    # rigid-coded bg pars for 2bisAP-delta_0.88GPa.fcf
+    a = 0.1000
+    b = 0.0
+
+    p = HklFrame()
+    p.read(input_path, input_format)
+    i_obs = p.table.loc[:, 'I'].to_numpy()
+    i_calc = p.table.loc[:, 'Ic'].to_numpy()
+    si = p.table.loc[:, 'si'].to_numpy()
+    p = 1/3 * i_obs + 2/3 * i_calc
+    si_weighted = np.sqrt(si ** 2 + (a * p) ** 2 + b * p)
+    ze = (i_obs - i_calc) / si_weighted
+    f_calc = np.sqrt(np.abs(i_calc)) * np.sign(i_calc)
+    f_obs = np.sqrt(np.abs(i_obs)) * np.sign(i_obs)
+    one_over_sf = (2 * abs(i_obs) ** 0.5) / si
+
+    r1 = np.sum(np.abs(f_obs - f_calc)) / np.sum(np.abs(f_obs))
+    wr2 = np.sqrt(
+        np.sum(np.abs(si_weighted * np.abs(i_obs - i_calc) ** 2)) /
+        np.sum(np.abs(si_weighted * i_obs ** 2)))
+    awr2 = np.sqrt(
+        (np.mean((i_obs - i_calc) ** 2) / np.mean(si_weighted ** 2)) /
+        np.mean((i_obs / si_weighted) ** 2))
+    gof_if_alpha_equal_one = np.sqrt(np.mean(ze ** 2))
+    agof_if_alpha_equal_one = np.sqrt(
+        np.mean((i_obs - i_calc) ** 2) / \
+        np.mean(si_weighted ** 2))
+
+    print('R1    = {:f}'.format(r1))
+    print('wR2   = {:f}'.format(wr2))
+    print('awR2  = {:f}'.format(awr2))
+    print('GoF*  = {:f}'.format(gof_if_alpha_equal_one))
+    print('aGoF* = {:f}'.format(agof_if_alpha_equal_one))
+
+
 if __name__ == '__main__':
-    #completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=120.0,
-    #                 extinctions=('hkl: h+k+l=2n',), laue_group=PG['2/m'],
-    #                 output_quality=3, output_directory='/home/dtchon/_')
-    # completeness_map(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0,
-    #                 extinctions=('hkl: h+k+l=2n',), laue_group=PG['m-3m'])
-    # completeness_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
-    #dac_point_group_statistics(a=10.0, b=10.0, c=10.0, al=90.0,
-    #                           be=90.0, ga=90.0, point_group=PG['-3'])
-    # dac_statistics(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
-    # simulate_dac(a=10.0, b=10.0, c=10.0, al=90.0, be=90.0, ga=90.0)
-    # baycon_plot(x_key='ze2', y_key='si',
-    #             a=7.1553, b=10.9193, c=17.7858, al=90.0, be=102.540, ga=90.0,
-    #             input_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4.fcf',
-    #             output_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4_baycon_ze2_vs_si.png')
+
+    # print('DATA DESCRIPTORS')
+    # simple_fcf_descriptors(
+    #     input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #     input_format='shelx_fcf14')
+    #
+    # print('OBSERVED VS CALCULATED PLOT')
     # observed_vs_calculated_plot(
-    #     input_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4.fcf',
-    #     output_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4_Io_vs_Ic.png')
-    normal_probability_plot(
-        input_path='/home/dtchon/x/HP/2oAP/beta-multicrystal-baycons/500F82C_twin1_hklf4.fcf',
-        output_path='/home/dtchon/x/_/npp.png')
+    #     input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #     output_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.png',
+    #     input_format='shelx_fcf14')
+    #
+    # print('NORMAL PROBABILITY PLOT')
+    # normal_probability_plot(
+    #     input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #     output_path='/home/dtchon/x/_/2bisAPde_npp.png',
+    #     input_format='shelx_fcf14')
+    #
+    # print('BAYCON PLOTS')
+    # baycon_plot(x_key='ze', y_key='si',
+    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
+    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze_vs_si.png',
+    #             input_format='shelx_fcf14')
+    # baycon_plot(x_key='ze', y_key='r',
+    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
+    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze_vs_r.png',
+    #             input_format='shelx_fcf14')
+    # baycon_plot(x_key='ze', y_key='Ic',
+    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
+    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze_vs_Ic.png',
+    #             input_format='shelx_fcf14')
+    # baycon_plot(x_key='ze2', y_key='si',
+    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
+    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze2_vs_si.png',
+    #             input_format='shelx_fcf14')
+    # baycon_plot(x_key='ze2', y_key='r',
+    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
+    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze2_vs_r.png',
+    #             input_format='shelx_fcf14')
+    # baycon_plot(x_key='ze2', y_key='Ic',
+    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
+    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze2_vs_Ic.png',
+    #             input_format='shelx_fcf14')
+    #
+    # print('VISUALISING HKL FILE')
+    # p = HklFrame()
+    # p.read(hkl_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
+    #        hkl_format='shelx_fcf14')
+    # p.edit_cell(a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0)
+    # p.to_res(path='/home/dtchon/x/_/2bisAPde_experimental_hkl.res', colored='Ic')
+    #
+    # print('SIMULATING HKL FILE')
+    # p = HklFrame()
+    # p.edit_cell(a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0)
+    # p.fill(radius=2.0)
+    # p.dac(opening_angle=35, vector=np.array([0, 1, 0]))
+    # p.place()
+    # p.to_res(path='/home/dtchon/x/_/2bisAPde_simulated_hkl.res', colored='r')
+    #
+    # print('COMPLETENESS STATISTICS')
+    # completeness_statistics(a=8.288, b=21.531, c=7.213,
+    #                         al=90.0, be=98.93, ga=90.0,
+    #                         point_group=PG['2/m'],
+    #                         input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.hkl',
+    #                         input_format='shelx_40',
+    #                         input_wavelength='MoKa')
+
+    print('GENERATING COMPLETENESS MAPS')
+    completeness_map(a=8.288, b=21.531, c=7.213,
+                     al=90.0, be=98.93, ga=90.0,
+                     space_group=SG['P21/c'],
+                     fix_scale=True,
+                     opening_angle=35,
+                     output_directory='/home/dtchon/x/_',
+                     output_name='2bisAPde_cplt_map_oa35_MoKa',
+                     output_quality=3,
+                     resolution=0.8,
+                     wavelength='MoKa')
+    completeness_map(a=8.288, b=21.531, c=7.213,
+                     al=90.0, be=98.93, ga=90.0,
+                     space_group=SG['P21/c'],
+                     fix_scale=True,
+                     opening_angle=55,
+                     output_directory='/home/dtchon/x/_',
+                     output_name='2bisAPde_cplt_map_oa55_MoKa',
+                     output_quality=3,
+                     resolution=0.8,
+                     wavelength='MoKa')
+    completeness_map(a=8.288, b=21.531, c=7.213,
+                     al=90.0, be=98.93, ga=90.0,
+                     space_group=SG['P21/c'],
+                     fix_scale=True,
+                     opening_angle=35,
+                     output_directory='/home/dtchon/x/_',
+                     output_name='2bisAPde_cplt_map_oa35_AgKa',
+                     output_quality=3,
+                     resolution=0.8,
+                     wavelength='AgKa')
+
+    print('GENERATING AXIS COMPLETENESS MAPS')
+    completeness_map(a=8.288, b=21.531, c=7.213,
+                     al=90.0, be=98.93, ga=90.0,
+                     space_group=SG['P21/c'],
+                     axis='x',
+                     fix_scale=True,
+                     opening_angle=35,
+                     output_directory='/home/dtchon/x/_',
+                     output_name='2bisAPde_cplt_map_oa35_AgKa_x',
+                     output_quality=3,
+                     resolution=0.8,
+                     wavelength='AgKa')
+    completeness_map(a=8.288, b=21.531, c=7.213,
+                     al=90.0, be=98.93, ga=90.0,
+                     space_group=SG['P21/c'],
+                     axis='y',
+                     fix_scale=True,
+                     opening_angle=35,
+                     output_directory='/home/dtchon/x/_',
+                     output_name='2bisAPde_cplt_map_oa35_AgKa_y',
+                     output_quality=3,
+                     resolution=0.8,
+                     wavelength='AgKa')
+    completeness_map(a=8.288, b=21.531, c=7.213,
+                     al=90.0, be=98.93, ga=90.0,
+                     space_group=SG['P21/c'],
+                     axis='z',
+                     fix_scale=True,
+                     opening_angle=35,
+                     output_directory='/home/dtchon/x/_',
+                     output_name='2bisAPde_cplt_map_oa35_AgKa_z',
+                     output_quality=3,
+                     resolution=0.8,
+                     wavelength='AgKa')
     pass
+
+

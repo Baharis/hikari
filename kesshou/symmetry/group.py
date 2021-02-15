@@ -7,10 +7,13 @@ from itertools import product as itertools_product
 from enum import Enum
 from kesshou.symmetry.operations import SymmOp
 
+# TODO add class method or creation method "from operators", without generating
+# TODO and hard-code all space groups in separate json file. (pickle?)
+
 
 class Group:
     """
-    Base class containing information about symmetry groups.
+    Base immutable class containing information about symmetry groups.
     It stores information for point and space groups and, among others,
     allows for iteration over its elements from `kesshou.symmetry.SymmOp`.
     """
@@ -29,7 +32,27 @@ class Group:
         :param generators: List of operations necessary to construct whole group
         :type generators: List[SymmOp]
         """
-        self.generators = generators
+
+        generator_list = []
+        for gen in generators:
+            if gen % 1 not in generator_list:
+                generator_list.append(gen % 1)
+
+        def _find_new_product(ops):
+            if len(ops) > 200:
+                raise ValueError('Generated group order exceeds size of 200')
+            new_ops = list({o1 * o2 % 1 for o1, o2 in itertools_product(ops, ops)})
+            return _find_new_product(new_ops) if len(new_ops) > len(ops) else ops
+
+        self.__generators = tuple(generator_list)
+        self.__operations = tuple(_find_new_product(generator_list))
+
+    @classmethod
+    def create_manually(cls, generators, operators):
+        new_group = cls()
+        new_group.__generators = generators
+        new_group.__operations = operators
+        return new_group
 
     def __iter__(self):
         return iter(self.operations)
@@ -40,31 +63,12 @@ class Group:
         s += 'polar ' if self.is_polar else ''
         return s + 'group of order {}.'.format(self.order)
 
+    def __hash__(self):
+        return sum(hash(o) for o in self.operations)
+
     @property
     def generators(self):
         return self.__generators
-
-    @generators.setter
-    def generators(self, new_generators):
-
-        generator_list = []
-        for gen in new_generators:
-            if gen % 1 not in generator_list:
-                generator_list.append(gen % 1)
-
-        def _find_new_product(current_ops):
-            if len(current_ops) > 200:
-                raise ValueError('Generated group order exceeds size of 200')
-            new_ops = []
-            for op1, op2 in itertools_product(current_ops, current_ops):
-                new_op = op1 * op2 % 1
-                if new_op not in [*current_ops, *new_ops]:
-                    new_ops.append(new_op)
-            return _find_new_product([*current_ops, *new_ops]) \
-                if len(new_ops) > 0 else current_ops
-
-        self.__generators = generator_list
-        self.__operations = _find_new_product(generator_list)
 
     @property
     def operations(self):
@@ -124,17 +128,23 @@ class Group:
         """
         folds = [op.fold for op in self.operations]
         orients = [op.orientation for op in self.operations]
+
+        def _many_orients_in(_orients):
+            o0 = _orients.pop()
+            return sum([np.dot(o0, o) for o in _orients]) > 0.01
+
         if 6 in folds:
             return self.CrystalSystem.hexagonal
         elif 3 in folds:
-            orients_of_3 = len({o for f, o in zip(folds, orients) if f == 3})
-            return self.CrystalSystem.cubic if orients_of_3 > 1 \
+            orients_of_3 = [o for f, o in zip(folds, orients) if f == 3]
+            return self.CrystalSystem.cubic if _many_orients_in(orients_of_3) \
                 else self.CrystalSystem.trigonal
         elif 4 in folds:
             return self.CrystalSystem.tetragonal
         elif 2 in folds:
-            orients_of_2 = len({o for f, o in zip(folds, orients) if f == 2})
-            return self.CrystalSystem.orthorhombic if orients_of_2 > 1 \
+            orients_of_2 = [o for f, o in zip(folds, orients) if f == 2]
+            return self.CrystalSystem.orthorhombic if \
+                _many_orients_in(orients_of_2) \
                 else self.CrystalSystem.monoclinic
         else:
             return self.CrystalSystem.triclinic
