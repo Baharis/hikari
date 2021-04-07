@@ -208,6 +208,22 @@
       "-x,y+1/2,-z+1/2"
     ]
   },
+  "P1121/a": {
+    "number": 14,
+    "H-M_short": "P1121/a",
+    "generators": [
+      "x,y,z",
+      "-x+1/2,-y,z+1/2",
+      "-x,-y,-z"
+    ],
+    "origin": 1,
+    "operations": [
+      "x,y,z",
+      "-x+1/2,-y,z+1/2",
+      "-x,-y,-z",
+      "x+1/2,y,-z+1/2"
+    ]
+  },
   "C2/c": {
     "number": 15,
     "H-M_short": "C2/c",
@@ -549,6 +565,22 @@
       "-x,-y,z+1/2",
       "x,y,z",
       "x+1/2,-y+1/2,z"
+    ]
+  },
+  "Pn21a": {
+    "number": 33,
+    "H-M_short": "Pn21a",
+    "generators": [
+      "x,y,z",
+      "-x,y+1/2,-z",
+      "x+1/2,y,-z+1/2"
+    ],
+    "origin": 1,
+    "operations": [
+      "-x+1/2,y+1/2,z+1/2",
+      "-x,y+1/2,-z",
+      "x,y,z",
+      "x+1/2,y,-z+1/2"
     ]
   },
   "Pnn2": {

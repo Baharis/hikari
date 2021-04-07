@@ -136,6 +136,9 @@ def completeness_map(a, b, c, al, be, ga,
     :param space_group: Instance of :class:`kesshou.symmetry.Group`
         describing symmetry of the crystal
     :type space_group: kesshou.symmetry.Group
+    :param axis: area to calculate completeness of. Accepts 'x', 'y', 'z', 'xy',
+        'xz', 'yz', analogues with 'a', 'b' and 'c', or '' for whole sphere.
+    :type axis: string
     :param fix_scale: If true, the colour scheme will not adapt to
         be fixed to the range from 0 to 100%
     :type fix_scale:
@@ -161,8 +164,10 @@ def completeness_map(a, b, c, al, be, ga,
     lst_path = make_absolute_path(output_directory, output_name + '.lst')
     png_path = make_absolute_path(output_directory, output_name + '.png')
     png2_path = make_absolute_path(output_directory, output_name + '_gnu.png')
+    axis = axis.lower()
+    laue_group = space_group.reciprocate()
 
-    def _make_hkl_frame(ax=axis.lower()):
+    def _make_hkl_frame(ax=axis):
         """Make ball or axis of hkl which will be cut in further steps"""
         _f = HklFrame()
         _f.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
@@ -174,11 +179,21 @@ def completeness_map(a, b, c, al, be, ga,
             _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['l'].eq(0)]
         elif ax in {'z', 'c'}:
             _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['k'].eq(0)]
+        elif ax in {'xy', 'ab'}:
+            _f.table = _f.table.loc[_f.table['l'].eq(0)]
+        elif ax in {'xz', 'ac'}:
+            _f.table = _f.table.loc[_f.table['k'].eq(0)]
+        elif ax in {'yz', 'bc'}:
+            _f.table = _f.table.loc[_f.table['h'].eq(0)]
+        if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz',
+                  'a', 'b', 'c', 'ab', 'bc', 'ac'}:
+            print(space_group.reciprocate().operations)
+            _f.transform([o.tf for o in laue_group.operations])
         _f.extinct(space_group)
         return _f
 
     p = _make_hkl_frame()
-    p.find_equivalents(point_group=space_group.reciprocate())
+    p.find_equivalents(point_group=laue_group)
     total_reflections = len(p) if legacy_cplt else p.table['equiv'].nunique()
     assert total_reflections > 0, "No non-extinct reflections in this region"
 
@@ -564,12 +579,13 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
 
 
 def dac_statistics(a, b, c, al, be, ga,
-                   point_group=PG['-1'],
+                   space_group=SG['P1'],
                    opening_angle=35.0,
                    orientation=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
                    input_path='shelx.hkl',
                    input_format=4,
-                   input_wavelength='CuKa'):
+                   input_wavelength='CuKa',
+                   resolution=None):
     """
     For a given experimental .hkl file calculate number of experimentally found
     and theoretically possible reflections up to a given resolution.
@@ -605,35 +621,43 @@ def dac_statistics(a, b, c, al, be, ga,
     :return: None
     """
 
+    point_group = space_group.reciprocate()#.lauefy()
+
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
     p.read(input_path, input_format)
     p.orientation = np.array(orientation)
-    p.merge()
-    p.dac(opening_angle=opening_angle)
-    p.find_equivalents(point_group=point_group)
-    p.stats(space_group=point_group)
+    #p.extinct(space_group=space_group)
+
+    resolution = p.r_lim if resolution is None else resolution
+    p.trim(limit=resolution)
+    p.merge(point_group=point_group)
 
     q = p.duplicate()
-    q.fill(radius=q.r_lim)
+    q.fill(radius=resolution)
     q.dac(opening_angle=opening_angle)
-    q.find_equivalents(point_group=point_group)
+    q.extinct(space_group=space_group)
+    q.merge(point_group=point_group)
 
-    r_max = max(q.table['r'])
-    print('radius    exp.      theory    exp.      theory    uniqueCplt')
-    print('range     all       all       unique    unique    exp/theory')
+    b = p.duplicate()
+    b.fill(radius=resolution)
+    b.extinct(space_group=space_group)
+    b.merge(point_group=point_group)
+
+    r_max = resolution #max(b.table['r'])
+    print('radius    experimnt theoryDAC theorBall DAC-Cplt  Ball-Cplt ')
+    print('range     unique    unique    unique    exp/DAC   exp/Ball  ')
     for rad in reversed(cubespace(0, r_max, 10, include_start=False)):
         p.trim(rad)
         q.trim(rad)
-        print(' {max_rad:9f} {exp_all:9d} {the_all:9d}' +
-              ' {exp_uni:9d} {the_uni:9d} {cplt:9f}'.format(
-                  max_rad=rad,
-                  exp_all=len(p),
-                  the_all=len(q),
-                  exp_uni=p.table['equiv'].nunique(),
-                  the_uni=q.table['equiv'].nunique(),
-                  cplt=p.table['equiv'].nunique() / q.table['equiv'].nunique()))
+        b.trim(rad)
+        p_eq = p.table['equiv'].nunique()
+        q_eq = q.table['equiv'].nunique()
+        b_eq = b.table['equiv'].nunique()
+        print(' {:9f}'.format(rad) + ' {:9d}'.format(p_eq) +
+              ' {:9d}'.format(q_eq) + ' {:9d}'.format(b_eq) +
+              ' {:9f}'.format(p_eq / q_eq) + ' {:9f}'.format(p_eq / b_eq))
 
 
 def simulate_dac(a, b, c, al, be, ga,
@@ -822,25 +846,25 @@ def normal_probability_plot(input_path='shelx.fcf',
     def scale_factor():
         return minimize(sum_of_delta_m_squared, x0=np.array([1.0])).x[0]
 
-    expected_delta_m = delta_m(f1=i_obs, f2=i_calc, k=scale_factor(),
+    experiment_delta_m = delta_m(f1=i_obs, f2=i_calc, k=scale_factor(),
                                si1=si, si2=np.zeros_like(si))
-    expected_delta_m = expected_delta_m / np.std(expected_delta_m)
+    experiment_delta_m = experiment_delta_m / np.std(experiment_delta_m)
 
     # simulated delta m
-    uniform = (np.arange(len(expected_delta_m)) + 0.5) / len(expected_delta_m)
+    uniform = (np.arange(len(experiment_delta_m)) + 0.5) / len(experiment_delta_m)
     simulated_delta_m = [erfinv(-1 + 2 * q) for q in uniform]
 
     # drawing the plot
     fig = pyplot.figure()
     ax = fig.add_subplot(111, aspect='equal')
-    ax.set_xlim([-3, 3])
-    ax.set_ylim([-3, 3])
-    pyplot.hist(expected_delta_m, bins=100, density=True)
-    ax.scatter(expected_delta_m, simulated_delta_m, s=5.0, c='r', marker='.', alpha=0.75, zorder=10)
+    ax.set_xlim([-5, 5])
+    ax.set_ylim([-5, 5])
+    pyplot.hist(experiment_delta_m, bins=100, density=True)
+    ax.scatter(experiment_delta_m, simulated_delta_m, s=5.0, c='r', marker='.', alpha=0.75, zorder=10)
     ax.plot(np.linspace(-3, 3), np.linspace(-3, 3), '-k', lw=1, zorder=0)
     pyplot.plot(6 * uniform - 3, norm.pdf(6 * uniform - 3))
     pyplot.title('npp')
-    pyplot.xlabel('delta_m expected')
+    pyplot.xlabel('delta_m experiment')
     pyplot.ylabel('delta_m simulated')
     pyplot.tight_layout()
     pyplot.savefig(fname=output_path, dpi=300)
@@ -958,73 +982,86 @@ if __name__ == '__main__':
     #                         input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.hkl',
     #                         input_format='shelx_40',
     #                         input_wavelength='MoKa')
-
-    print('GENERATING COMPLETENESS MAPS')
-    completeness_map(a=8.288, b=21.531, c=7.213,
-                     al=90.0, be=98.93, ga=90.0,
-                     space_group=SG['P21/c'],
-                     fix_scale=True,
-                     opening_angle=35,
-                     output_directory='/home/dtchon/x/_',
-                     output_name='2bisAPde_cplt_map_oa35_MoKa',
-                     output_quality=3,
-                     resolution=0.8,
-                     wavelength='MoKa')
-    completeness_map(a=8.288, b=21.531, c=7.213,
-                     al=90.0, be=98.93, ga=90.0,
-                     space_group=SG['P21/c'],
-                     fix_scale=True,
-                     opening_angle=55,
-                     output_directory='/home/dtchon/x/_',
-                     output_name='2bisAPde_cplt_map_oa55_MoKa',
-                     output_quality=3,
-                     resolution=0.8,
-                     wavelength='MoKa')
-    completeness_map(a=8.288, b=21.531, c=7.213,
-                     al=90.0, be=98.93, ga=90.0,
-                     space_group=SG['P21/c'],
-                     fix_scale=True,
-                     opening_angle=35,
-                     output_directory='/home/dtchon/x/_',
-                     output_name='2bisAPde_cplt_map_oa35_AgKa',
-                     output_quality=3,
-                     resolution=0.8,
-                     wavelength='AgKa')
-
-    print('GENERATING AXIS COMPLETENESS MAPS')
-    completeness_map(a=8.288, b=21.531, c=7.213,
-                     al=90.0, be=98.93, ga=90.0,
-                     space_group=SG['P21/c'],
-                     axis='x',
-                     fix_scale=True,
-                     opening_angle=35,
-                     output_directory='/home/dtchon/x/_',
-                     output_name='2bisAPde_cplt_map_oa35_AgKa_x',
-                     output_quality=3,
-                     resolution=0.8,
-                     wavelength='AgKa')
-    completeness_map(a=8.288, b=21.531, c=7.213,
-                     al=90.0, be=98.93, ga=90.0,
-                     space_group=SG['P21/c'],
-                     axis='y',
-                     fix_scale=True,
-                     opening_angle=35,
-                     output_directory='/home/dtchon/x/_',
-                     output_name='2bisAPde_cplt_map_oa35_AgKa_y',
-                     output_quality=3,
-                     resolution=0.8,
-                     wavelength='AgKa')
-    completeness_map(a=8.288, b=21.531, c=7.213,
-                     al=90.0, be=98.93, ga=90.0,
-                     space_group=SG['P21/c'],
-                     axis='z',
-                     fix_scale=True,
-                     opening_angle=35,
-                     output_directory='/home/dtchon/x/_',
-                     output_name='2bisAPde_cplt_map_oa35_AgKa_z',
-                     output_quality=3,
-                     resolution=0.8,
-                     wavelength='AgKa')
+    #
+    # print('GENERATING COMPLETENESS MAPS')
+    # completeness_map(a=8.288, b=21.531, c=7.213,
+    #                  al=90.0, be=98.93, ga=90.0,
+    #                  space_group=SG['P21/c'],
+    #                  fix_scale=True,
+    #                  opening_angle=35,
+    #                  output_directory='/home/dtchon/x/_',
+    #                  output_name='2bisAPde_cplt_map_oa35_MoKa',
+    #                  output_quality=3,
+    #                  resolution=0.8,
+    #                  wavelength='MoKa')
+    # completeness_map(a=8.288, b=21.531, c=7.213,
+    #                  al=90.0, be=98.93, ga=90.0,
+    #                  space_group=SG['P21/c'],
+    #                  fix_scale=True,
+    #                  opening_angle=55,
+    #                  output_directory='/home/dtchon/x/_',
+    #                  output_name='2bisAPde_cplt_map_oa55_MoKa',
+    #                  output_quality=3,
+    #                  resolution=0.8,
+    #                  wavelength='MoKa')
+    # completeness_map(a=8.288, b=21.531, c=7.213,
+    #                  al=90.0, be=98.93, ga=90.0,
+    #                  space_group=SG['P21/c'],
+    #                  fix_scale=True,
+    #                  opening_angle=35,
+    #                  output_directory='/home/dtchon/x/_',
+    #                  output_name='2bisAPde_cplt_map_oa35_AgKa',
+    #                  output_quality=3,
+    #                  resolution=0.8,
+    #                  wavelength='AgKa')
+    #
+    # print('GENERATING AXIS COMPLETENESS MAPS')
+    # completeness_map(a=8.288, b=21.531, c=7.213,
+    #                  al=90.0, be=98.93, ga=90.0,
+    #                  space_group=SG['P21/c'],
+    #                  axis='x',
+    #                  fix_scale=True,
+    #                  opening_angle=35,
+    #                  output_directory='/home/dtchon/x/_',
+    #                  output_name='2bisAPde_cplt_map_oa35_AgKa_x',
+    #                  output_quality=3,
+    #                  resolution=0.8,
+    #                  wavelength='AgKa')
+    # completeness_map(a=8.288, b=21.531, c=7.213,
+    #                  al=90.0, be=98.93, ga=90.0,
+    #                  space_group=SG['P21/c'],
+    #                  axis='y',
+    #                  fix_scale=True,
+    #                  opening_angle=35,
+    #                  output_directory='/home/dtchon/x/_',
+    #                  output_name='2bisAPde_cplt_map_oa35_AgKa_y',
+    #                  output_quality=3,
+    #                  resolution=0.8,
+    #                  wavelength='AgKa')
+    # completeness_map(a=10, b=10, c=10,
+    #                  al=90.0, be=90, ga=90.0,
+    #                  space_group=SG['P4mm'],
+    #                  axis='z',
+    #                  fix_scale=True,
+    #                  opening_angle=35,
+    #                  output_directory='/home/dtchon/x/_',
+    #                  output_name='cplt_map_tests_z',
+    #                  output_quality=3,
+    #                  resolution=0.8,
+    #                  wavelength='AgKa')
+    dac_statistics(a=6.8697,
+                   b=15.9598,
+                   c=11.1099,
+                   al=90,
+                   be=90,
+                   ga=95.074,
+                   space_group=SG['P1121/a'],
+                   opening_angle=55.0,
+                   orientation=((-0.08263, 0.00536, -0.03667), (-0.01671, 0.03679, -0.03238), (0.06030, 0.02438, -0.04088)),
+                   input_path='/home/dtchon/x/HP/2oAP/completeness_prediction/experiment_predictions/1263f/P1121pa.hkl',
+                   input_format='shelx_5',
+                   input_wavelength='MoKa',
+                   resolution=1.2)
     pass
 
 

@@ -131,7 +131,7 @@ class Group:
 
         def _many_orients_in(_orients):
             o0 = _orients.pop()
-            return sum([np.dot(o0, o) for o in _orients]) > 0.01
+            return sum([np.dot(o0, o) for o in _orients]) < 0.01
 
         if 6 in folds:
             return self.CrystalSystem.hexagonal

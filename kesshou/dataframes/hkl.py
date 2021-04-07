@@ -517,7 +517,6 @@ class HklFrame(BaseFrame):
 
         hkls = self.table.loc[:, ['h', 'k', 'l']].to_numpy()
         list_of_extinction_flags = [op.extincts(hkls) for op in space_group]
-        [print(o) for o in space_group]
         total_extinction_flags = np.logical_or.reduce(list_of_extinction_flags)
         self.table = self.table[~total_extinction_flags]
         self.table.reset_index(drop=True, inplace=True)
