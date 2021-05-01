@@ -204,11 +204,13 @@ def completeness_map(a, b, c, al, be, ga,
         _v1 = p.z_w
         _v2 = p.x_v
         _v3 = np.cross(_v1, _v2)
+
         if space_group.system is Group.CrystalSystem.triclinic:
             _th_limits = [0, 180]
             _ph_limits = [0, 180]
         elif space_group.system is Group.CrystalSystem.monoclinic:
-            _th_limits = [0, 180]
+            _th_limits = [0, 90]  #changed temporarly - "z" axis is special here anyway
+            #_th_limits = [0, 180]
             _ph_limits = [0, 90]
         elif space_group.system in {Group.CrystalSystem.orthorhombic,
                                     Group.CrystalSystem.tetragonal,
@@ -508,7 +510,7 @@ def completeness_statistics(a, b, c, al, be, ga,
 
 
 def dac_point_group_statistics(a, b, c, al, be, ga,
-                               point_group=PG['-1'],
+                               space_group=SG['P1'],
                                output_path='output.txt',
                                opening_angle=35,
                                precision=1000,
@@ -531,9 +533,9 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
     :type be: float
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
-    :param point_group: Point group of the crystal,
+    :param space_group: Space group of the crystal,
         defined as an instance of :class:`kesshou.symmetry.Group`
-    :type point_group: kesshou.symmetry.Group
+    :type space_group: kesshou.symmetry.Group
     :param output_path: Path of created file containing calculated data.
     :type output_path: str
     :param opening_angle:
@@ -559,7 +561,80 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
             hkl_frame.trim(resolution)
         return hkl_frame
     p = _make_reference_ball()
-    p.find_equivalents(point_group=point_group)
+    p.find_equivalents(point_group=space_group.reciprocate())
+    p.extinct(space_group=space_group)
+    total_reflections = p.table['equiv'].nunique()
+    max_resolution = max(p.table['r'])
+    out = open(output_path, 'w', buffering=1)
+    out.write('total_reflections: ' + str(total_reflections) + '\n')
+    out.write('maximum_r_in_reciprocal_coordinates: ' + str(max_resolution))
+    vectors = fibonacci_sphere(samples=precision, seed=1337)
+    reflections = list()
+    for vector in vectors:
+        q = p.duplicate()
+        q.dac(opening_angle=opening_angle, vector=vector)
+        reflections.append(q.table['equiv'].nunique())
+        out.write('\n' + str(vector) + ': ' + str(q.table['equiv'].nunique()))
+    out.write('\nmax_reflections: ' + str(max(reflections)))
+    out.write('\nmin_reflections: ' + str(min(reflections)))
+    out.write('\navg_reflections: ' + str(sum(reflections) / len(reflections)))
+    out.close()
+
+
+def dac_point_group_statistics(a, b, c, al, be, ga,
+                               space_group=SG['P1'],
+                               output_path='output.txt',
+                               opening_angle=35,
+                               precision=1000,
+                               resolution=None,
+                               wavelength='MoKa'):
+    """
+    Calculate max, min, avg completeness for multiple crystal orientations
+    for a diamond anvil cell.future it is planned to merge it with the
+    :func:`dac_completeness_map` script.
+
+    :param a: Unit cell parameter *a* in Angstrom.
+    :type a: float
+    :param b: Unit cell parameter *b* in Angstrom.
+    :type b: float
+    :param c: Unit cell parameter *c* in Angstrom.
+    :type c: float
+    :param al: Unit cell parameter *alpha* in degrees.
+    :type al: float
+    :param be: Unit cell parameter *alpha* in degrees.
+    :type be: float
+    :param ga: Unit cell parameter *alpha* in degrees.
+    :type ga: float
+    :param space_group: Space group of the crystal,
+        defined as an instance of :class:`kesshou.symmetry.Group`
+    :type space_group: kesshou.symmetry.Group
+    :param output_path: Path of created file containing calculated data.
+    :type output_path: str
+    :param opening_angle:
+    :type opening_angle:
+    :param precision: Number of vectors for which
+        completeness in the dac will be calculated.
+    :type precision: int
+    :param resolution: If given, additionally limit data resolution to given
+        value. Please provide the resolution as a distance from the origin
+        in reciprocal space (twice the resolution in reciprocal angstrom).
+    :type resolution: float
+    :param wavelength: Wavelength of radiation to be simulated.
+    :type wavelength: float or str
+    :return: None
+    """
+    def _make_reference_ball():
+        hkl_frame = HklFrame()
+        hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+        hkl_frame.la = wavelength
+        hkl_frame.fill(radius=hkl_frame.r_lim)
+        hkl_frame.merge()
+        if not(resolution is None):
+            hkl_frame.trim(resolution)
+        return hkl_frame
+    p = _make_reference_ball()
+    p.find_equivalents(point_group=space_group.reciprocate())
+    p.extinct(space_group=space_group)
     total_reflections = p.table['equiv'].nunique()
     max_resolution = max(p.table['r'])
     out = open(output_path, 'w', buffering=1)
@@ -637,6 +712,14 @@ def dac_statistics(a, b, c, al, be, ga,
     q = p.duplicate()
     q.fill(radius=resolution)
     q.dac(opening_angle=opening_angle)
+
+    # uncomment this part for 2nd crystal in different orientation
+    # q2 = p.duplicate()
+    # q2.fill(radius=resolution)
+    # q2.orientation = np.array(((0.08251, 0.01162, 0.03675), (0.01682, 0.03807, -0.03236), (-0.06016, 0.01982, 0.04088)))
+    # q2.dac(opening_angle=opening_angle)
+    # q = q + q2
+
     q.extinct(space_group=space_group)
     q.merge(point_group=point_group)
 
@@ -658,6 +741,101 @@ def dac_statistics(a, b, c, al, be, ga,
         print(' {:9f}'.format(rad) + ' {:9d}'.format(p_eq) +
               ' {:9d}'.format(q_eq) + ' {:9d}'.format(b_eq) +
               ' {:9f}'.format(p_eq / q_eq) + ' {:9f}'.format(p_eq / b_eq))
+
+
+def completeness_statistics_around_axis(a, b, c, al, be, ga,
+                                        space_group=SG['P1'],
+                                        opening_angle=35.0,
+                                        wavelength='MoKa',
+                                        vector=(1, 0, 0),
+                                        topple=5):
+    """
+    For a given simulated .hkl file calculate average completeness of data
+    obtained by toppling the crystal by "topple" degrees from the axis.
+
+    :param a: Unit cell parameter *a* in Angstrom.
+    :type a: float
+    :param b: Unit cell parameter *b* in Angstrom.
+    :type b: float
+    :param c: Unit cell parameter *c* in Angstrom.
+    :type c: float
+    :param al: Unit cell parameter *alpha* in degrees.
+    :type al: float
+    :param be: Unit cell parameter *alpha* in degrees.
+    :type be: float
+    :param ga: Unit cell parameter *alpha* in degrees.
+    :type ga: float
+    :param space_group: Space group of the crystal,
+        defined as an instance of :class:`kesshou.symmetry.Group`
+    :type space_group: kesshou.symmetry.Group
+    :param wavelength: Wavelength of radiation utilised in experiment.
+    :type wavelength: float or str
+    :param opening_angle: Value of single opening angle as defined in
+        :meth:`kesshou.dataframes.HklFrame.dac`.
+    :type opening_angle: float
+    :param vector: Direction around which completeness will be calculated.
+    :type vector: tuple
+    :param topple: Angle by which vector will be toppled in varous directions.
+    :type topple: float
+    :return: None
+    """
+
+    point_group = space_group.reciprocate()#.lauefy()
+
+    p = HklFrame()
+    p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+    p.la = 'MoKa'
+    p.fill(radius=p.r_lim)
+    p.place()
+    p.extinct(space_group=space_group)
+    p.find_equivalents(point_group=point_group)
+
+    # generate perpendicular vector for rotation
+    v = np.array(vector) / lin.norm(np.array(vector))
+    x = np.array((1, 0, 0))
+
+    def are_parallel(v1, v2):
+        return np.allclose(v1 / lin.norm(v1), v2 / lin.norm(v2))
+    temp = x if not(are_parallel(v, x)) else np.array((0, 1, 0))
+    perp = np.cross(v, temp)
+
+    def rotate(v, k, angle):
+        c = np.cos(np.deg2rad(angle))
+        s = np.sin(np.deg2rad(angle))
+        return v * c + np.cross(k, v) * s + k * np.dot(k, v) * (1 - c)
+
+    # generate 360 toppled vectors
+    toppled = rotate(v, perp, topple)
+    toppleds = [rotate(toppled, v, i) for i in range(360)]
+
+    # calculate the completeness for toppleds
+    #rads = list(reversed(cubespace(0, 1.2, 10, include_start=False)))
+    rads = [2.00, 1/0.7, 1.20, 1.00, 1/1.5]
+    cplt = [0] * len(rads)
+    p.trim(max(rads))
+    for t in toppleds:
+        q = p.duplicate()
+        q.dac(opening_angle=opening_angle, vector=t)
+        for cplt_bin, rad in enumerate(rads, start=1):
+            q.trim(rad)
+            cplt[-cplt_bin] += q.table['equiv'].nunique()
+
+    # divide lists of completeness by total and return from sums to individuals
+
+    full = [0] * len(rads)
+    for cplt_bin, rad in enumerate(rads, start=1):
+        p.trim(rad)
+        full[-cplt_bin] = p.table['equiv'].nunique()
+    print(cplt)
+    print(full)
+    cplt = [c2 - c1 for c1, c2 in zip([0] + cplt[:-1], cplt)]
+    full = [f2 - f1 for f1, f2 in zip([0] + full[:-1], full)]
+    cplt = [c / (360 * f) for c, f in zip(cplt, full)]
+
+    print('Resolution limits (in distance to reflection, twice reciprocal:')
+    print(np.array(list(reversed(rads))))
+    print('Average shell completeness with {}degree topple'.format(topple))
+    print(np.array(cplt))
 
 
 def simulate_dac(a, b, c, al, be, ga,
@@ -934,31 +1112,6 @@ if __name__ == '__main__':
     #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
     #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze_vs_si.png',
     #             input_format='shelx_fcf14')
-    # baycon_plot(x_key='ze', y_key='r',
-    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
-    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
-    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze_vs_r.png',
-    #             input_format='shelx_fcf14')
-    # baycon_plot(x_key='ze', y_key='Ic',
-    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
-    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
-    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze_vs_Ic.png',
-    #             input_format='shelx_fcf14')
-    # baycon_plot(x_key='ze2', y_key='si',
-    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
-    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
-    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze2_vs_si.png',
-    #             input_format='shelx_fcf14')
-    # baycon_plot(x_key='ze2', y_key='r',
-    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
-    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
-    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze2_vs_r.png',
-    #             input_format='shelx_fcf14')
-    # baycon_plot(x_key='ze2', y_key='Ic',
-    #             a=8.288, b=21.531, c=7.213, al=90.0, be=98.93, ga=90.0,
-    #             input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
-    #             output_path='/home/dtchon/x/_/2bisAPde_BayCoN_ze2_vs_Ic.png',
-    #             input_format='shelx_fcf14')
     #
     # print('VISUALISING HKL FILE')
     # p = HklFrame()
@@ -974,94 +1127,133 @@ if __name__ == '__main__':
     # p.dac(opening_angle=35, vector=np.array([0, 1, 0]))
     # p.place()
     # p.to_res(path='/home/dtchon/x/_/2bisAPde_simulated_hkl.res', colored='r')
-    #
-    # print('COMPLETENESS STATISTICS')
-    # completeness_statistics(a=8.288, b=21.531, c=7.213,
-    #                         al=90.0, be=98.93, ga=90.0,
-    #                         point_group=PG['2/m'],
-    #                         input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.hkl',
-    #                         input_format='shelx_40',
-    #                         input_wavelength='MoKa')
-    #
-    # print('GENERATING COMPLETENESS MAPS')
-    # completeness_map(a=8.288, b=21.531, c=7.213,
-    #                  al=90.0, be=98.93, ga=90.0,
-    #                  space_group=SG['P21/c'],
-    #                  fix_scale=True,
-    #                  opening_angle=35,
-    #                  output_directory='/home/dtchon/x/_',
-    #                  output_name='2bisAPde_cplt_map_oa35_MoKa',
-    #                  output_quality=3,
-    #                  resolution=0.8,
-    #                  wavelength='MoKa')
-    # completeness_map(a=8.288, b=21.531, c=7.213,
-    #                  al=90.0, be=98.93, ga=90.0,
-    #                  space_group=SG['P21/c'],
+
+    # TETRAGONAL EXAMPLE
+    # a, b, c = 15.0, 15.0, 20.0
+    # sg = SG['P41212']
+
+    # ALPHA 0kbar
+    a, b, c = 7.210241, 16.487567, 11.279203
+    al, be, ga = 90, 90, 90
+    sg = SG['Pnma']
+    oa = 35
+
+    completeness_statistics_around_axis(a,b,c,al,be,ga,space_group=sg,
+                                        opening_angle=oa, vector=(0,0,1), topple=45.0)
+
+    # p = HklFrame()
+    # p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
+    # p.fill(radius=2.0)
+    # p.place()
+    # p.extinct(space_group=sg)
+    # p.write(path+'ball.hkl', hkl_format='shelx_40')
+
+
+    # ALPHA 2kbar
+    # a, b, c = 7.2462, 16.536, 11.255
+    # al, be, ga = 90, 90, 90
+    # sg = SG['Pnma']
+    # path = '/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/al2/'
+    # hkl = '/home/dtchon/x/HP/2oAP/CIF/march_refinement/1272f/exp_1272__RunsAll_wobble_3D_oa55_HP_smart3__Rint40_Pnma.hkl'
+    # form = 'shelx_40'
+    # oa = 55
+    # ori = ((-0.0405230000, -0.0181519000, 0.0505694000), (0.0838933000, 0.0052082000, 0.0317001000), (-0.0304160000, 0.0385898000, 0.0196431000))
+
+    # ALPHA 5kbar
+    # a, b, c = 7.150, 16.17, 11.288
+    # al, be, ga = 90, 90, 90
+    # sg = SG['Pnma']
+    # path = '/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/al5/'
+    # hkl = '/home/dtchon/x/HP/2oAP/CIF/march_refinement/1259f/exp_1259__RunsAll_3D_oa55_res83_HP_smart3__Rint40.hkl'
+    # form = 'shelx_40'
+    # oa = 55
+    # ori = ((-0.0763491000, -0.0083505000, 0.0385930000), (-0.0182458000, -0.0367852000, -0.0315399000), (0.0609273000, -0.0215065000, 0.0389391000))
+
+    # ALPHA 8kbar
+    # a, b, c = 7.0642, 16.220, 11.166
+    # al, be, ga = 90, 90, 90
+    # sg = SG['Pnma']
+    # path = '/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/al8/'
+    # hkl = '/home/dtchon/x/HP/2oAP/CIF/march_refinement/1264f/sortav.hkl'
+    # form = 'shelx_40'
+    # oa = 55
+    # ori = ((-0.0466907334, -0.0134136930, -0.0527778007), (-0.0677451575, 0.0318170008, 0.0069266921), (0.0576962166, 0.0268288727, -0.0345824833))
+
+    # GAMMA 10kbar
+    # a, b, c = 7.0300, 16.147, 11.1214
+    # al, be, ga = 90, 90, 90
+    # sg = SG['Pn21a']
+    # path = '/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/ga10/'
+    # hkl = '/home/dtchon/x/HP/2oAP/CIF/march_refinement/1273f/sortav.hkl'
+    # form = 'shelx_4'
+    # oa = 55
+    # ori = ((0.0423456781, 0.0186920104, 0.0511754140), (-0.0864033498, -0.0053801576, 0.0321159223), (0.0306713770, -0.0394904790, 0.0198209138))
+
+    # GAMMA 12kbar
+    # a, b, c = 7.0202, 16.0775, 11.1610
+    # al, be, ga = 90, 90, 90
+    # sg = SG['Pn21a']
+    # path = '/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/ga12/'
+    # hkl = '/home/dtchon/x/HP/2oAP/CIF/march_refinement/1261f/exp_1261__Pn21a_RAll_wobble_3D_oa55_HP_smart3__Rint40.hkl'
+    # form = 'shelx_40'
+    # oa = 55
+    # ori = ((-0.0782258664, 0.0080029493, -0.0385821295), (-0.0189170399, 0.0374155992, 0.0314239729), (0.0611427897, 0.0219236480, -0.0395420814))
+
+    # # GAMMA 13kbar
+    # a, b, c = 6.9714, 16.139, 11.072
+    # al, be, ga = 90, 90, 90
+    # sg = SG['Pn21a']
+    # path = '/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/ga13/'
+    # hkl = '/home/dtchon/x/HP/2oAP/CIF/march_refinement/1274f/exp_1274__oP_RAll_wobble_3D_oa55_HP_smart3__Rint40_Pn21a.hkl'
+    # form = 'shelx_40'
+    # oa = 55
+    # ori = ((0.0427562, 0.0188272, 0.0514551), (-0.0871099, -0.0058092, 0.0321662), (0.0306183, -0.0395643, 0.0194262))
+
+    # DELTA 20kbar
+    # a, b, c = 6.8697, 15.960, 11.1099
+    # al, be, ga = 90, 90, 95.074
+    # sg = SG['P1121/a']
+    # path = '/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/de20/'
+    # hkl = '/home/dtchon/x/HP/2oAP/CIF/march_refinement/1263f/P1121pa.hkl'
+    # form = 'shelx_5'
+    # oa = 55
+    # ori = ((-0.08263, 0.00536, -0.03667), (-0.01671, 0.03679, 0.03238), (0.06030, 0.02438, -0.04088)) #xtal1
+    # ori = ((0.08251, 0.01162, 0.03675), (0.01682, 0.03807, -0.03236), (-0.06016, 0.01982, 0.04088)) #xtal2
+
+    # dac_point_group_statistics(a=a, b=b, c=c, al=al, be=be, ga=ga, space_group=sg,
+    #                            output_path=path+'CpltDistribution_oa55_S1.2.txt',
+    #                            opening_angle=55, precision=10000,
+    #                            resolution=1.2, wavelength='MoKa')
+    # completeness_map(a=a, b=b, c=c, al=al, be=be, ga=ga, space_group=sg,
+    #                  #axis='z',
     #                  fix_scale=True,
     #                  opening_angle=55,
-    #                  output_directory='/home/dtchon/x/_',
-    #                  output_name='2bisAPde_cplt_map_oa55_MoKa',
-    #                  output_quality=3,
-    #                  resolution=0.8,
+    #                  output_directory=path,
+    #                  output_name='CpltMap_res833_total',
+    #                  output_quality=5,
+    #                  resolution=0.833333333333,
     #                  wavelength='MoKa')
-    # completeness_map(a=8.288, b=21.531, c=7.213,
-    #                  al=90.0, be=98.93, ga=90.0,
-    #                  space_group=SG['P21/c'],
+    # dac_statistics(a=a, b=b, c=c, al=al, be=be, ga=ga, space_group=sg,
+    #                orientation=ori,
+    #                opening_angle=55, input_path=hkl, input_format=form,
+    #                input_wavelength='MoKa', resolution=2.0)
+    # completeness_map(a=15.0, b=15.0, c=20.0, al=90, be=90, ga=90, space_group=SG['P41212'],
+    #                  #axis='z',
     #                  fix_scale=True,
     #                  opening_angle=35,
-    #                  output_directory='/home/dtchon/x/_',
-    #                  output_name='2bisAPde_cplt_map_oa35_AgKa',
-    #                  output_quality=3,
-    #                  resolution=0.8,
-    #                  wavelength='AgKa')
-    #
-    # print('GENERATING AXIS COMPLETENESS MAPS')
-    # completeness_map(a=8.288, b=21.531, c=7.213,
-    #                  al=90.0, be=98.93, ga=90.0,
-    #                  space_group=SG['P21/c'],
-    #                  axis='x',
-    #                  fix_scale=True,
-    #                  opening_angle=35,
-    #                  output_directory='/home/dtchon/x/_',
-    #                  output_name='2bisAPde_cplt_map_oa35_AgKa_x',
-    #                  output_quality=3,
-    #                  resolution=0.8,
-    #                  wavelength='AgKa')
-    # completeness_map(a=8.288, b=21.531, c=7.213,
-    #                  al=90.0, be=98.93, ga=90.0,
-    #                  space_group=SG['P21/c'],
-    #                  axis='y',
-    #                  fix_scale=True,
-    #                  opening_angle=35,
-    #                  output_directory='/home/dtchon/x/_',
-    #                  output_name='2bisAPde_cplt_map_oa35_AgKa_y',
-    #                  output_quality=3,
-    #                  resolution=0.8,
-    #                  wavelength='AgKa')
-    # completeness_map(a=10, b=10, c=10,
-    #                  al=90.0, be=90, ga=90.0,
-    #                  space_group=SG['P4mm'],
-    #                  axis='z',
-    #                  fix_scale=True,
-    #                  opening_angle=35,
-    #                  output_directory='/home/dtchon/x/_',
-    #                  output_name='cplt_map_tests_z',
-    #                  output_quality=3,
-    #                  resolution=0.8,
-    #                  wavelength='AgKa')
-    dac_statistics(a=6.8697,
-                   b=15.9598,
-                   c=11.1099,
-                   al=90,
-                   be=90,
-                   ga=95.074,
-                   space_group=SG['P1121/a'],
-                   opening_angle=55.0,
-                   orientation=((-0.08263, 0.00536, -0.03667), (-0.01671, 0.03679, -0.03238), (0.06030, 0.02438, -0.04088)),
-                   input_path='/home/dtchon/x/HP/2oAP/completeness_prediction/experiment_predictions/1263f/P1121pa.hkl',
-                   input_format='shelx_5',
-                   input_wavelength='MoKa',
-                   resolution=1.2)
+    #                  output_directory='/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/tetragonal_example',
+    #                  output_name='CpltMap_res833_total',
+    #                  output_quality=5,
+    #                  resolution=0.833333333333,
+    #                  wavelength='MoKa')
+    # simulate_dac(a=a, b=b, c=c, al=al, be=be, ga=ga, opening_angle=35,
+    #              vector=(1,0,0), resolution=1.2,
+    #              input_path='/home/dtchon/x/HP/2oAP/completeness_prediction/alpha_or_gamma/1273f/alpha/sortav.hkl',
+    #              input_format='shelx_4',
+    #              input_wavelength='MoKa',
+    #              output_path='/home/dtchon/x/HP/2oAP/completeness_prediction/alpha_or_gamma/1273f/alpha/sortav__DACoa35.hkl',
+    #              output_format='shelx_4')
+
     pass
 
 
