@@ -11,6 +11,8 @@ import numpy.linalg as lin
 import pandas as pd
 import matplotlib.cm
 
+pd.options.mode.chained_assignment = 'raise'
+
 
 class HklKeys:
     """
@@ -553,12 +555,12 @@ class HklFrame(BaseFrame):
         :param dictionary: Dictionary with "key - iterable of values" pairs.
         :type dictionary: Dict[str, numpy.ndarray]
         """
-        tab = pd.DataFrame()
+        df = pd.DataFrame()
         self.keys.add(dictionary.keys())
         for key, value in dictionary.items():
             typ = self.keys.get_property(key, 'dtype')
-            tab[key] = pd.Series(value, dtype=typ, name=key)
-        self.table = tab[(tab['h'] != 0) | (tab['k'] != 0) | (tab['l'] != 0)]
+            df[key] = pd.Series(value, dtype=typ, name=key)
+        self.table = df[(df['h'] != 0) | (df['k'] != 0) | (df['l'] != 0)].copy()
         if not('x' in self.table.columns):
             self.place()
         self._recalculate_structure_factors_and_intensities()
@@ -745,14 +747,13 @@ class HklFrame(BaseFrame):
         Save four new keys and their values into the dataframe.
         """
         hkl = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
-        abc = np.matrix((self.a_w, self.b_w, self.c_w))
+        abc = np.array((self.a_w, self.b_w, self.c_w))
         xyz = hkl @ abc
         self.table.loc[:, 'x'] = xyz[:, 0]
         self.table.loc[:, 'y'] = xyz[:, 1]
         self.table.loc[:, 'z'] = xyz[:, 2]
         self.table.loc[:, 'r'] = lin.norm(xyz, axis=1)
         self.keys.add(('x', 'y', 'z', 'r'))
-        # TODO SettingWithCopyWarning is triggered-edit external copy,then join
 
     def calculate_fcf_statistics(self):
         """
