@@ -539,9 +539,11 @@ class HklFrame(BaseFrame):
         self.keys.add(('equiv',))
         self.table.reset_index(drop=True, inplace=True)
         self.table['equiv'] = [(-hkl_lim, -hkl_lim, -hkl_lim)] * len(self.table)
+
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
         for op in point_group.operations:
-            new_hkl = pd.Series(map(tuple, op.transform(_hkl_matrix)))
+            new_hkl = pd.Series(map(tuple, op.transform(_hkl_matrix)))\
+                .map(lambda x: tuple(round(y, 0) for y in x))
             _to_update = self.table['equiv'] < new_hkl
             self.table.loc[_to_update, 'equiv'] = new_hkl.loc[_to_update]
 
@@ -892,7 +894,7 @@ class HklFrame(BaseFrame):
             for op in ops:
                 df = copy.deepcopy(self.table)
                 mat = op[0:3, 0:3]
-                hkl = self.table.loc[:, ['h', 'k', 'l']].to_numpy() @ mat
+                hkl = (mat @ self.table.loc[:, ['h', 'k', 'l']].to_numpy().T).T
                 df['h'] = hkl[:, 0]
                 df['k'] = hkl[:, 1]
                 df['l'] = hkl[:, 2]
@@ -1426,10 +1428,5 @@ if __name__ == '__main__':
     # h1.calculate_fcf_statistics()
     # #h1.to_res('/home/dtchon/x/1AP+F4TCNQ/refinement/kesshouIc-fcf.res', colored='ze')
 
-    # TODO Fix the documentation using this new object
-    # TODO think about space groups...
-
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
-
-    # TODO add point group and extinctions to object, update other methods.

@@ -42,6 +42,9 @@ class Group:
             if len(ops) > 200:
                 raise ValueError('Generated group order exceeds size of 200')
             new_ops = list({o1 * o2 % 1 for o1, o2 in itertools_product(ops, ops)})
+            new_ops = set(ops).union(new_ops)
+            # TODO this part gets slow for large groups; require "1" instead?
+            # print([str(o) for o in new_ops])
             return _find_new_product(new_ops) if len(new_ops) > len(ops) else ops
 
         self.__generators = tuple(generator_list)

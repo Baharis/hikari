@@ -6,10 +6,13 @@ or model data from high-pressure experiments,
 which utilise DAC - diamond anvil cell.
 """
 
+import pandas as pd
+import seaborn as sns
 from kesshou.dataframes import HklFrame
 from kesshou.symmetry import PG, SG, Group
 from kesshou.utility import cubespace, fibonacci_sphere, home_directory, \
-    make_absolute_path, gnuplot_cplt_map_palette, mpl_cplt_map_palette
+    make_absolute_path, gnuplot_cplt_map_palette, mpl_cplt_map_palette, \
+    deep_palette, pastel_palette
 from matplotlib import cm, colors, pyplot
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import art3d
@@ -30,7 +33,7 @@ def completeness_map(a, b, c, al, be, ga,
                      output_directory=home_directory,
                      output_name='cplt_map',
                      output_quality=3,
-                     resolution=0.83,
+                     resolution=0.8333,
                      wavelength='MoKa'):
     """
     Calculate and draw a map of predicted completeness for a given crystal
@@ -187,7 +190,6 @@ def completeness_map(a, b, c, al, be, ga,
             _f.table = _f.table.loc[_f.table['h'].eq(0)]
         if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz',
                   'a', 'b', 'c', 'ab', 'bc', 'ac'}:
-            print(space_group.reciprocate().operations)
             _f.transform([o.tf for o in laue_group.operations])
         _f.extinct(space_group)
         return _f
@@ -281,6 +283,11 @@ def completeness_map(a, b, c, al, be, ga,
                 lst.write('{:8d}'.format(hkl_len))
                 lst.write('\n')
                 _cplt_mesh[j][i] = hkl_len / total_reflections
+                ## tdo del
+                #print(p.table)
+                #print('#'*40)
+                #print(q.table)
+                #assert False
             lst.write('\n')
         index_max = np.unravel_index(np.argmax(_cplt_mesh), _cplt_mesh.shape)
         best_th, best_ph = th_range[index_max[1]], ph_range[index_max[0]]
@@ -411,7 +418,7 @@ def completeness_map(a, b, c, al, be, ga,
             set xrange[-1.1:1.1]
             set yrange[-1.1:1.1]
             set zrange[-1.1:1.1]
-            set palette maxcolors 50
+            set palette maxcolors 40
             {gnu_palette}
 
             # define axes and their labels 
@@ -509,7 +516,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     p.stats(space_group=point_group)
 
 
-def dac_point_group_statistics(a, b, c, al, be, ga,
+def dac_point_group_statistics(a, b, c, al=90, be=90, ga=90,
                                space_group=SG['P1'],
                                output_path='output.txt',
                                opening_angle=35,
@@ -568,52 +575,34 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
     out = open(output_path, 'w', buffering=1)
     out.write('total_reflections: ' + str(total_reflections) + '\n')
     out.write('maximum_r_in_reciprocal_coordinates: ' + str(max_resolution))
-    vectors = fibonacci_sphere(samples=precision, seed=1337)
+    assert precision >= 100, 'Precision should be at least 100'
+    vectors = [(1, 0, 0), (1, 0, 0), (0, 0, 1), (0.57735, 0.57735, 0.57735)]\
+              + fibonacci_sphere(samples=precision-4, seed=1337)
     reflections = list()
     for vector in vectors:
         q = p.duplicate()
         q.dac(opening_angle=opening_angle, vector=vector)
         reflections.append(q.table['equiv'].nunique())
         out.write('\n' + str(vector) + ': ' + str(q.table['equiv'].nunique()))
+        # q.to_res(output_path + '.res', colored='h')  # temp #
     out.write('\nmax_reflections: ' + str(max(reflections)))
     out.write('\nmin_reflections: ' + str(min(reflections)))
     out.write('\navg_reflections: ' + str(sum(reflections) / len(reflections)))
     out.close()
+    return [r / total_reflections for r in reflections]
 
 
-def dac_point_group_statistics(a, b, c, al, be, ga,
-                               space_group=SG['P1'],
-                               output_path='output.txt',
-                               opening_angle=35,
-                               precision=1000,
-                               resolution=None,
-                               wavelength='MoKa'):
+def dac_completeness_vs_opening_angle(output_path='output.txt',
+                                      precision=91,
+                                      resolution=None,
+                                      wavelength='MoKa',
+                                      theta=None):
     """
-    Calculate max, min, avg completeness for multiple crystal orientations
-    for a diamond anvil cell.future it is planned to merge it with the
-    :func:`dac_completeness_map` script.
-
-    :param a: Unit cell parameter *a* in Angstrom.
-    :type a: float
-    :param b: Unit cell parameter *b* in Angstrom.
-    :type b: float
-    :param c: Unit cell parameter *c* in Angstrom.
-    :type c: float
-    :param al: Unit cell parameter *alpha* in degrees.
-    :type al: float
-    :param be: Unit cell parameter *alpha* in degrees.
-    :type be: float
-    :param ga: Unit cell parameter *alpha* in degrees.
-    :type ga: float
-    :param space_group: Space group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.Group`
-    :type space_group: kesshou.symmetry.Group
+    Calculate completeness in P-1 as a function of DAC opening angle,
+    assuming certain resolution and wavelength used.
     :param output_path: Path of created file containing calculated data.
     :type output_path: str
-    :param opening_angle:
-    :type opening_angle:
-    :param precision: Number of vectors for which
-        completeness in the dac will be calculated.
+    :param precision: Number of probed opening angles between 0 and 90 degrees.
     :type precision: int
     :param resolution: If given, additionally limit data resolution to given
         value. Please provide the resolution as a distance from the origin
@@ -621,36 +610,100 @@ def dac_point_group_statistics(a, b, c, al, be, ga,
     :type resolution: float
     :param wavelength: Wavelength of radiation to be simulated.
     :type wavelength: float or str
+    :param theta: Resolution in theta angle in degrees instead radius in A-1
+    :type theta: float
     :return: None
     """
+
     def _make_reference_ball():
         hkl_frame = HklFrame()
-        hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         hkl_frame.la = wavelength
-        hkl_frame.fill(radius=hkl_frame.r_lim)
-        hkl_frame.merge()
-        if not(resolution is None):
-            hkl_frame.trim(resolution)
+        res = hkl_frame.r_lim * np.sin(np.deg2rad(theta)) \
+            if theta is not None else resolution
+        side = 10 * precision**(1/3) / res  # adapt to prec&la
+        hkl_frame.edit_cell(a=side, b=side, c=side, al=90, be=90, ga=90)
+        if res is not None:
+            hkl_frame.fill(radius=res)
+        else:
+            hkl_frame.fill(radius=hkl_frame.r_lim)
         return hkl_frame
     p = _make_reference_ball()
-    p.find_equivalents(point_group=space_group.reciprocate())
-    p.extinct(space_group=space_group)
-    total_reflections = p.table['equiv'].nunique()
-    max_resolution = max(p.table['r'])
+    total_reflns = len(p.table)
+    angles = np.linspace(start=90, stop=0, num=precision)
     out = open(output_path, 'w', buffering=1)
-    out.write('total_reflections: ' + str(total_reflections) + '\n')
-    out.write('maximum_r_in_reciprocal_coordinates: ' + str(max_resolution))
-    vectors = fibonacci_sphere(samples=precision, seed=1337)
-    reflections = list()
-    for vector in vectors:
-        q = p.duplicate()
-        q.dac(opening_angle=opening_angle, vector=vector)
-        reflections.append(q.table['equiv'].nunique())
-        out.write('\n' + str(vector) + ': ' + str(q.table['equiv'].nunique()))
-    out.write('\nmax_reflections: ' + str(max(reflections)))
-    out.write('\nmin_reflections: ' + str(min(reflections)))
-    out.write('\navg_reflections: ' + str(sum(reflections) / len(reflections)))
+    out.write('#oa      cplt\n')
+    for a in angles:
+        p.dac(opening_angle=a, vector=np.array((1, np.pi/4, np.e/5)))  # rand. v
+        out.write(' {a:7.4f} {c:7.5f}\n'.format(a=a, c=len(p.table)/total_reflns))
     out.close()
+
+
+def completeness_violin_plot(input_path='',
+                             output_path='output.txt',
+                             opening_angle=35,
+                             precision=1000,
+                             resolution=None,
+                             wavelength='MoKa'):
+    if input_path is '':
+        dpgs = dac_point_group_statistics
+        kwargs = {'a': 20, 'b': 20, 'c': 20, 'al': 90, 'be': 90,
+                  'opening_angle': opening_angle, 'precision': precision,
+                  'output_path': output_path, 'resolution': resolution,
+                  'wavelength': wavelength}
+        cplt_dict = dict()
+        cplt_dict['-1'] = dpgs(space_group=SG['P-1'], **kwargs)
+        cplt_dict['2/m'] = dpgs(space_group=SG['P2/m'], **kwargs)
+        cplt_dict['mmm'] = dpgs(space_group=SG['Pmmm'], **kwargs)
+        cplt_dict['4/m'] = dpgs(space_group=SG['P4/m'], **kwargs)
+        cplt_dict['4/mmm'] = dpgs(space_group=SG['P4/mmm'], **kwargs)
+        cplt_dict['-3'] = dpgs(ga=120, space_group=SG['P-3'], **kwargs)
+        cplt_dict['-3m'] = dpgs(ga=120, space_group=SG['P-3m1'], **kwargs)
+        cplt_dict['6/m'] = dpgs(ga=120, space_group=SG['P6/m'], **kwargs)
+        cplt_dict['6/mmm'] = dpgs(ga=120, space_group=SG['P6/mmm'], **kwargs)
+        cplt_dict['m-3'] = dpgs(space_group=SG['Pm-3'], **kwargs)
+        cplt_dict['m-3m'] = dpgs(space_group=SG['Pm-3m'], **kwargs)
+        cplt_frame = pd.DataFrame.from_dict(cplt_dict)
+        cplt_frame = cplt_frame.mul(100)
+        cplt_frame.to_csv(output_path)
+    else:
+        cplt_frame = pd.read_csv(input_path, index_col=0)
+
+    # GENERAL
+    # cplt_frame.drop(labels='-1', axis=1, inplace=True)
+    melt_frame = cplt_frame.melt(var_name='LG', value_name='Completeness')
+    sns.set_style("whitegrid")
+    # WIDE PLOT
+    #pyplot.figure(figsize=(15, 6))
+    #sns.set(font_scale=1.75)
+    #ax = sns.violinplot(data=cplt_frame, scale='width', cut=0,
+    #                    palette=deep_palette, inner='quartile')
+    #ax.axhline(27.9458181944, linewidth=5, alpha=0.5)
+    # pyplot.ylim(25, 101)
+    # SMALL PLOT
+    pyplot.figure(figsize=(8, 6))
+    sns.set(font_scale=1.5)
+    ax = sns.violinplot(x=melt_frame['Completeness'],
+                        y=melt_frame['LG'], scale='width', cut=0,
+                        palette=deep_palette, inner='quartile')
+    for l in ax.lines[1::3]:
+        l.set_linestyle('--')
+        l.set_linewidth(1.25)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    for y, key in enumerate(cplt_frame.keys()):
+        ax.axvline(x=cplt_frame[key].median(), color=deep_palette[key],
+                   ymin=0, ymax=21/22-y/11, linewidth=5, alpha=0, zorder=0.99)
+    ax.set_yticklabels([r"$\overline{1}$", r"$2/m$", r"$mmm$", r"$4/m$",
+                        r"$4/mmm$", r"$\overline{3}$", r"$\overline{3}m$",
+                        r"$6/m$", r"$6/mmm$",
+                        r"$m\overline{3}$", r"$m\overline{3}m$"])
+    ax.set_xticklabels(['10', r'$\mathcal{P}$ = 20       ', '30', '40',
+                        '50', '60', '70', '80', '90', '100%'])
+    pyplot.xlim(19, 101) #19
+    # GENERAL
+    sns.despine(left=True, top=False)
+    pyplot.show()
+    # use figsize=(5.3, 6),xlim(54, 101) and appropriate labels for thin version
 
 
 def dac_statistics(a, b, c, al, be, ga,
@@ -1088,7 +1141,7 @@ def simple_fcf_descriptors(input_path='shelx.fcf',
 
 
 if __name__ == '__main__':
-
+    # TODO make sure unique is defined correctly (no cutoff errors in currently used float)
     # print('DATA DESCRIPTORS')
     # simple_fcf_descriptors(
     #     input_path='/home/dtchon/x/_/2bisAP-delta_0.88GPa.fcf',
@@ -1133,13 +1186,13 @@ if __name__ == '__main__':
     # sg = SG['P41212']
 
     # ALPHA 0kbar
-    a, b, c = 7.210241, 16.487567, 11.279203
-    al, be, ga = 90, 90, 90
-    sg = SG['Pnma']
-    oa = 35
-
-    completeness_statistics_around_axis(a,b,c,al,be,ga,space_group=sg,
-                                        opening_angle=oa, vector=(0,0,1), topple=45.0)
+    # a, b, c = 7.210241, 16.487567, 11.279203
+    # al, be, ga = 90, 90, 90
+    # sg = SG['Pnma']
+    # oa = 35
+    #
+    # completeness_statistics_around_axis(a,b,c,al,be,ga,space_group=sg,
+    #                                     opening_angle=oa, vector=(0,0,1), topple=45.0)
 
     # p = HklFrame()
     # p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
@@ -1199,7 +1252,7 @@ if __name__ == '__main__':
     # oa = 55
     # ori = ((-0.0782258664, 0.0080029493, -0.0385821295), (-0.0189170399, 0.0374155992, 0.0314239729), (0.0611427897, 0.0219236480, -0.0395420814))
 
-    # # GAMMA 13kbar
+    # GAMMA 13kbar
     # a, b, c = 6.9714, 16.139, 11.072
     # al, be, ga = 90, 90, 90
     # sg = SG['Pn21a']
@@ -1217,7 +1270,7 @@ if __name__ == '__main__':
     # hkl = '/home/dtchon/x/HP/2oAP/CIF/march_refinement/1263f/P1121pa.hkl'
     # form = 'shelx_5'
     # oa = 55
-    # ori = ((-0.08263, 0.00536, -0.03667), (-0.01671, 0.03679, 0.03238), (0.06030, 0.02438, -0.04088)) #xtal1
+    # # ori = ((-0.08263, 0.00536, -0.03667), (-0.01671, 0.03679, 0.03238), (0.06030, 0.02438, -0.04088)) #xtal1
     # ori = ((0.08251, 0.01162, 0.03675), (0.01682, 0.03807, -0.03236), (-0.06016, 0.01982, 0.04088)) #xtal2
 
     # dac_point_group_statistics(a=a, b=b, c=c, al=al, be=be, ga=ga, space_group=sg,
@@ -1233,27 +1286,65 @@ if __name__ == '__main__':
     #                  output_quality=5,
     #                  resolution=0.833333333333,
     #                  wavelength='MoKa')
-    # dac_statistics(a=a, b=b, c=c, al=al, be=be, ga=ga, space_group=sg,
-    #                orientation=ori,
-    #                opening_angle=55, input_path=hkl, input_format=form,
-    #                input_wavelength='MoKa', resolution=2.0)
-    # completeness_map(a=15.0, b=15.0, c=20.0, al=90, be=90, ga=90, space_group=SG['P41212'],
-    #                  #axis='z',
-    #                  fix_scale=True,
-    #                  opening_angle=35,
-    #                  output_directory='/home/dtchon/x/HP/2oAP/completeness_prediction/cplt_maps/tetragonal_example',
-    #                  output_name='CpltMap_res833_total',
-    #                  output_quality=5,
-    #                  resolution=0.833333333333,
-    #                  wavelength='MoKa')
-    # simulate_dac(a=a, b=b, c=c, al=al, be=be, ga=ga, opening_angle=35,
-    #              vector=(1,0,0), resolution=1.2,
-    #              input_path='/home/dtchon/x/HP/2oAP/completeness_prediction/alpha_or_gamma/1273f/alpha/sortav.hkl',
-    #              input_format='shelx_4',
-    #              input_wavelength='MoKa',
-    #              output_path='/home/dtchon/x/HP/2oAP/completeness_prediction/alpha_or_gamma/1273f/alpha/sortav__DACoa35.hkl',
-    #              output_format='shelx_4')
+    #dac_completeness_vs_opening_angle(output_path='/home/dtchon/x/HP/DAC_completeness/cplt_vs_oa/MoKa_Res0500.dat',
+    #                                  resolution=2.0, wavelength='MoKa')
 
+    # completeness_violin_plot(input_path='',
+    #                          output_path='/home/dtchon/x/HP/DAC_completeness/avg_cplt_violin_plots/violin_plot_2021/Ag55-50000.csv',
+    #                          opening_angle=55,
+    #                          precision=50000,
+    #                          resolution=1.20,
+    #                          wavelength='AgKa')
+
+    from kesshou.scripts.png import merge_axis_completeness_maps
+    from os import system
+    sg = {'P-1': 'P-1',
+          'P2/m': 'P2om',
+          'Pmmm': 'Pmmm',
+          'P4/m': 'P4om',
+          'P4/mmm': 'P4ommm',
+          'Pm-3': 'Pm-3',
+          'Pm-3m': 'Pm-3m',
+          'P-3': 'P-3',
+          'P-3m1': 'P-3m1',
+          'P6/m': 'P6om',
+          'P6/mmm': 'P6ommm'}
+    sg = {'P-3': 'P-3',
+          'P-3m1': 'P-3m1',
+          'P6/m': 'P6om',
+          'P6/mmm': 'P6ommm'}
+    kwargs = {'a': 20, 'b': 20, 'c': 20, 'al': 90, 'be': 90,
+              'fix_scale': True, 'opening_angle': 35,
+              'output_directory': '/home/dtchon/x/HP/DAC_completeness/cplt_vs_orientation/spherical_Mo35p/',
+              'output_quality': 5, 'wavelength': 'MoKa'}
+    for k, v in sg.items():
+        rname = 'CpltMap_Mo35pYZ_{}'.format(v)
+        gname = 'CpltMap_Mo35pXZ_{}'.format(v)
+        bname = 'CpltMap_Mo35pXY_{}'.format(v)
+        ga = 120 if v in {'P-3', 'P-3m1', 'P6om', 'P6ommm'} else 90
+        completeness_map(axis='YZ', space_group=SG[k], ga=ga,
+                         output_name=rname, **kwargs)
+        system('gnuplot ' + kwargs['output_directory'] + rname + '.gnu')
+        completeness_map(axis='XZ', space_group=SG[k], ga=ga,
+                         output_name=gname, **kwargs)
+        system('gnuplot ' + kwargs['output_directory'] + gname + '.gnu')
+        completeness_map(axis='XY', space_group=SG[k], ga=ga,
+                         output_name=bname, **kwargs)
+        system('gnuplot ' + kwargs['output_directory'] + bname + '.gnu')
+        merge_axis_completeness_maps(
+            directory=kwargs['output_directory'],
+            r=rname+'.png',
+            g=gname+'.png',
+            b=bname+'.png',
+            out='CpltMap_Mo35p_{}.png'.format(v)
+        )
+        merge_axis_completeness_maps(
+            directory=kwargs['output_directory'],
+            r=rname+'_gnu.png',
+            g=gname+'_gnu.png',
+            b=bname+'_gnu.png',
+            out='CpltMap_Mo35p_{}_gnu.png'.format(v)
+        )
     pass
 
 

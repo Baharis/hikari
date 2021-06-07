@@ -1,5 +1,8 @@
+import seaborn as sns
+
+
 gnuplot_cplt_map_palette = dict()
-gnuplot_cplt_map_palette[''] = 'set palette model HSV defined (0 0.667 1 0, 5 0.667 1 1, 15 0.0 1 1, 20 0.0 0 1)' # , 25 0.0 0 0.5) to add gray on the end
+gnuplot_cplt_map_palette[''] = 'set palette model HSV defined (0 0.667 1 0, 20 0.667 1 1, 80 0.0 1 1, 100 0.0 0 1)' # , 25 0.0 0 0.5) to add gray on the end
 gnuplot_cplt_map_palette['h'] = 'set palette model RGB defined (0 1 1 1, 1 1 0 0)'
 gnuplot_cplt_map_palette['x'] = 'set palette model RGB defined (0 0 0 0, 1 1 0 0)'
 gnuplot_cplt_map_palette['k'] = 'set palette model RGB defined (0 1 1 1, 1 0 1 0)'
@@ -37,3 +40,28 @@ mpl_cplt_map_palette['kl'] = mpl_cplt_map_palette['h']
 mpl_cplt_map_palette['yz'] = mpl_cplt_map_palette['x']
 mpl_cplt_map_palette['hl'] = mpl_cplt_map_palette['k']
 mpl_cplt_map_palette['xz'] = mpl_cplt_map_palette['y']
+
+deep_palette = {'-1': sns.color_palette("deep")[0],
+              '2/m': sns.color_palette("deep")[1],
+              'mmm': sns.color_palette("deep")[2],
+              '4/m': sns.color_palette("deep")[3],
+              '4/mmm': sns.color_palette("deep")[3],
+              '-3': sns.color_palette("deep")[4],
+              '-3m': sns.color_palette("deep")[4],
+              '6/m': sns.color_palette("deep")[5],
+              '6/mmm': sns.color_palette("deep")[5],
+              'm-3': sns.color_palette("deep")[6],
+              'm-3m': sns.color_palette("deep")[6]}
+
+pastel_palette = {'-1': sns.color_palette("pastel")[0],
+                  '2/m': sns.color_palette("pastel")[1],
+                  'mmm': sns.color_palette("pastel")[2],
+                  '4/m': sns.color_palette("pastel")[3],
+                  '4/mmm': sns.color_palette("pastel")[3],
+                  '-3': sns.color_palette("pastel")[4],
+                  '-3m': sns.color_palette("pastel")[4],
+                  '6/m': sns.color_palette("pastel")[5],
+                  '6/mmm': sns.color_palette("pastel")[5],
+                  'm-3': sns.color_palette("pastel")[6],
+                  'm-3m': sns.color_palette("pastel")[6]}
+
