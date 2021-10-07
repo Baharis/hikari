@@ -20,10 +20,13 @@ def merge_axis_completeness_maps(directory, r, g, b, out):
 
 
 if __name__ == '__main__':
+    start = 'CpltMap_Mo35a'
+    group = '_Pm-3'
+    end = '_gnu.png'
     merge_axis_completeness_maps(
-        directory='/home/dtchon/x/_/',
-        r='cplt_map_tests_x.png',
-        g='cplt_map_tests_y.png',
-        b='cplt_map_tests_z.png',
-        out='cplt_map_tests_axes.png'
+        directory='/home/dtchon/x/HP/DAC_completeness/cplt_vs_orientation/spherical_Mo35a/',
+        r=start+'X'+group+end,
+        g=start+'Y'+group+end,
+        b=start+'Z'+group+end,
+        out=start+group+end
     )
