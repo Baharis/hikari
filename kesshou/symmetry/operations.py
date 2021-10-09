@@ -346,7 +346,7 @@ class SymmOp:
         """
         Rotate operation so that its orientation changes to "direction", while
         preserving fractional glide. To be used before respective "at" method.
-        Probably will not work correctly for rhombohedral unit cell #TODO
+        Might not work correctly for rhombohedral unit cell #TODO
         :param direction: Target orientation for element of symmetry operation
         :type direction: np.ndarray
         :param hexagonal: True if operation is defined in hexagonal coordinates
@@ -412,35 +412,3 @@ class SymmOp:
         cond1 = np.isclose(hkl, self.reciprocal.transform(hkl)).all(axis=1)
         cond2 = ~np.isclose(np.dot(hkl, self.glide) % 1, 0)
         return cond1 & cond2
-
-
-if __name__ == '__main__':
-    # o1 = SymmOp.from_code('x+1/2, y+1/2, z')
-    # o2 = SymmOp.from_code('x+1/2, y, z+1/2')
-    # o3 = SymmOp.from_code('1/4-x, 1/4+y, 1/4+z')
-    # o4 = SymmOp.from_code('1/4+x, 1/4-y, 1/4+z')
-    # o5 = SymmOp.from_code('-x, -y, z')
-    #
-    # # print(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)]))
-    # # print(o1.transform(np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])))
-    #
-    # hkl = np.array([[2, 0, 0], [4, 0, 0], [6, 0, 0], [8, 0, 0], [10, 0, 0]])
-    # r4 = SymmOp.from_code('x+1/4, -z, y')
-    # p = np.array((1/4, 0, 0))
-    # print(o1.at(p))
-    # print(o2.at(p))
-    # print(o3.at(p))
-    # print(o4.at(p))
-    # print(o5.at(p))
-    #
-    # print(o1.at2(p))
-    # print(o2.at2(p))
-    # print(o3.at2(p))
-    # print(o4.at2(p))
-    # print(o5.at2(p))
-
-    n = np.array([1/4, 0, 0])
-    p = np.array([[0.01, 0.02, 0.03]])
-    o = SymmOp.from_code('-x,-y,z+1/2').at(n)
-    print(o)
-    print(o.transform(p))

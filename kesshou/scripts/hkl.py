@@ -139,7 +139,7 @@ def completeness_map(a, b, c, al, be, ga,
         describing symmetry of the crystal
     :type space_group: kesshou.symmetry.Group
     :param axis: area to calculate completeness of. Accepts 'x', 'y', 'z', 'xy',
-        'xz', 'yz', analogues with 'a', 'b' and 'c', or '' for whole sphere.
+        'xz', 'yz' or '' for whole sphere.
     :type axis: string
     :param fix_scale: If true, the colour scheme will not adapt to
         be fixed to the range from 0 to 100%
@@ -163,7 +163,6 @@ def completeness_map(a, b, c, al, be, ga,
     gnu_path = make_absolute_path(output_directory, output_name + '.gnu')
     lst_path = make_absolute_path(output_directory, output_name + '.lst')
     png_path = make_absolute_path(output_directory, output_name + '.png')
-    png2_path = make_absolute_path(output_directory, output_name + '_gnu.png')
     axis = axis.lower()
     laue_group = space_group.reciprocate()
 
@@ -173,20 +172,19 @@ def completeness_map(a, b, c, al, be, ga,
         _f.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         _f.la = wavelength
         _f.fill(radius=min(_f.r_lim, 1 / resolution))
-        if ax in {'x', 'a'}:
+        if ax in {'x'}:
             _f.table = _f.table.loc[_f.table['k'].eq(0) & _f.table['l'].eq(0)]
-        elif ax in {'y', 'b'}:
+        elif ax in {'y'}:
             _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['l'].eq(0)]
-        elif ax in {'z', 'c'}:
+        elif ax in {'z'}:
             _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['k'].eq(0)]
-        elif ax in {'xy', 'ab'}:
+        elif ax in {'xy'}:
             _f.table = _f.table.loc[_f.table['l'].eq(0)]
-        elif ax in {'xz', 'ac'}:
+        elif ax in {'xz'}:
             _f.table = _f.table.loc[_f.table['k'].eq(0)]
-        elif ax in {'yz', 'bc'}:
+        elif ax in {'yz'}:
             _f.table = _f.table.loc[_f.table['h'].eq(0)]
-        if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz',
-                  'a', 'b', 'c', 'ab', 'bc', 'ac'}:
+        if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz'}:
             _f.transform([o.tf for o in laue_group.operations])
         _f.extinct(space_group)
         return _f
@@ -207,10 +205,8 @@ def completeness_map(a, b, c, al, be, ga,
         if space_group.system is Group.CrystalSystem.triclinic:
             _th_limits = [0, 180]
             _ph_limits = [0, 180]
-        elif space_group.system is Group.CrystalSystem.monoclinic:
-            _th_limits = [0, 90]  # should be 180, but "z" axis is special here
-            _ph_limits = [0, 90]
-        elif space_group.system in {Group.CrystalSystem.orthorhombic,
+        elif space_group.system in {Group.CrystalSystem.monoclinic,
+                                    Group.CrystalSystem.orthorhombic,
                                     Group.CrystalSystem.tetragonal,
                                     Group.CrystalSystem.cubic}:
             _th_limits = [0, 90]
@@ -1028,7 +1024,7 @@ def fcf_descriptors(input_path='shelx.fcf', input_format='shelx_fcf'):
         np.mean((i_obs / si_weighted) ** 2))
     gof_if_alpha_equal_one = np.sqrt(np.mean(ze ** 2))
     agof_if_alpha_equal_one = np.sqrt(
-        np.mean((i_obs - i_calc) ** 2) / \
+        np.mean((i_obs - i_calc) ** 2) /
         np.mean(si_weighted ** 2))
 
     print('R1    = {:f}'.format(r1))
