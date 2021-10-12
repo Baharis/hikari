@@ -32,7 +32,7 @@ def completeness_map(a, b, c, al, be, ga,
                      output_directory=home_directory,
                      output_name='cplt_map',
                      output_quality=3,
-                     resolution=0.8333,
+                     resolution=1.2,
                      wavelength='MoKa'):
     """
     Calculate and draw a map of predicted completeness for a given crystal
@@ -85,10 +85,8 @@ def completeness_map(a, b, c, al, be, ga,
 
     The completeness is calculated as a ratio between the number of unique
     reflections inside the dac-accessible space and the number of unique
-    reflections inside a reference sphere of a given `resolution`.
-    This `resolution` should be given as a distance between reciprocal space
-    origin and a limiting sphere, and should be equal to twice the conventional
-    resolution (sin(*theta*) / *lambda*) expressed in reciprocal Angstrom.
+    reflections inside a reference sphere of a radius equal to `resolution`.
+
 
     Completeness is visualised using an extended rainbow heatmap,
     which utilises a wide color range to emphasize even small differences.
@@ -152,12 +150,14 @@ def completeness_map(a, b, c, al, be, ga,
     :type output_name:
     :param output_quality:
     :type output_quality:
-    :param resolution:
-    :type resolution:
-    :param wavelength:
-    :type wavelength:
-    :return:
-    :rtype:
+    :param resolution: If given, additionally limit data resolution to given
+        value. Please provide the resolution as a distance from the origin
+        in reciprocal space (twice the resolution in reciprocal angstrom).
+    :type resolution: float
+    :param wavelength: Wavelength of radiation to be simulated.
+    :type wavelength: float or str
+    :return: None
+    :rtype: None
     """
     dat_path = make_absolute_path(output_directory, output_name + '.dat')
     gnu_path = make_absolute_path(output_directory, output_name + '.gnu')
@@ -171,7 +171,7 @@ def completeness_map(a, b, c, al, be, ga,
         _f = HklFrame()
         _f.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         _f.la = wavelength
-        _f.fill(radius=min(_f.r_lim, 1 / resolution))
+        _f.fill(radius=min(_f.r_lim, resolution))
         if ax in {'x'}:
             _f.table = _f.table.loc[_f.table['k'].eq(0) & _f.table['l'].eq(0)]
         elif ax in {'y'}:
@@ -1050,7 +1050,7 @@ if __name__ == '__main__':
     #       'P6/mmm': 'P6ommm'}
     # kwargs = {'a': 20, 'b': 20, 'c': 20, 'al': 90, 'be': 90,
     #           'fix_scale': True, 'opening_angle': 45,
-    #           'output_quality': 5, 'wavelength': 0.42, 'resolution': 0.5}
+    #           'output_quality': 5, 'wavelength': 0.42, 'resolution': 2.0}
     # for k, v in sg.items():
     #     name = 'CpltMap_la42oa45res50_{}'.format(v)
     #     ga = 120 if v in {'P-3', 'P-3m1', 'P6om', 'P6ommm'} else 90

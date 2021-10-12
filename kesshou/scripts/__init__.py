@@ -17,4 +17,3 @@ from .hkl import completeness_statistics
 from .hkl import dac_point_group_statistics
 from .hkl import dac_statistics
 from .hkl import simulate_dac
-from .crysalis import crysalis_edge_mask
