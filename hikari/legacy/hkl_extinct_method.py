@@ -21,7 +21,7 @@ def extinct(self, rule='hkl:', point_group=PG['1']):
     :type rule: str
     :param point_group: Point group containing information about present
         symmetry operations, necessary to correctly apply the extinction.
-    :type point_group: kesshou.symmetry.Group
+    :type point_group: hikari.symmetry.Group
     """
 
     def _interpret_rule():

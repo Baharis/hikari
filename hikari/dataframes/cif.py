@@ -100,7 +100,7 @@ class CifFrame:
 
 
 if __name__ == '__main__':
-    cif = CifFrame(file_path='/home/dtchon/git/kesshou/test_data/exp_353.cif',
+    cif = CifFrame(file_path='//test_data/exp_353.cif',
                    file_data_block='exp_353')
     print(len(cif.data.items()))
     for key, value in cif.data.items():

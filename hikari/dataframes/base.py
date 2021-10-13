@@ -123,7 +123,7 @@ class BaseFrame:
 
         :param frame: CifFrame containing cell parameters and,
             optionally, crystal orientation matrix.
-        :type frame: kesshou.dataframes.CifFrame
+        :type frame: hikari.dataframes.CifFrame
         """
 
         # IMPORT AND CHANGE LATTICE PARAMETERS

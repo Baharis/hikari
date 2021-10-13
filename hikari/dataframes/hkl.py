@@ -514,7 +514,7 @@ class HklFrame(BaseFrame):
         space :class:`hikari.symmetry.group.Group`. For ref. see ITC-A12.3.5.
 
         :param space_group: Space group used to extinct the reflections.
-        :type space_group: kesshou.symmetry.group.Group
+        :type space_group: hikari.symmetry.group.Group
         """
 
         hkls = self.table.loc[:, ['h', 'k', 'l']].to_numpy()
@@ -533,7 +533,7 @@ class HklFrame(BaseFrame):
         be found within :mod:`hikari.symmetry` sub-package.
 
         :param point_group: Point Group used to determine symmetry equivalence
-        :type point_group: kesshou.symmetry.Group
+        :type point_group: hikari.symmetry.Group
         """
         hkl_lim = self.HKL_LIMIT
         self.keys.add(('equiv',))
@@ -618,7 +618,7 @@ class HklFrame(BaseFrame):
         :param bins: Number of individual bins to divide the data into.
         :type bins: int
         :param space_group: Space group used to calculate the statistics.
-        :type space_group: kesshou.symmetry.Group
+        :type space_group: hikari.symmetry.Group
         """
 
         hkl_base = self.duplicate()
@@ -723,7 +723,7 @@ class HklFrame(BaseFrame):
         previously defined values in "equiv" will be overwritten by this method.
 
         :param point_group: Point Group used to determine symmetry equivalence
-        :type point_group: kesshou.symmetry.Group
+        :type point_group: hikari.symmetry.Group
         """
         self.find_equivalents(point_group=point_group)
         # group the dataframe and obtain all existing keys

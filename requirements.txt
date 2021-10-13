@@ -1,4 +1,4 @@
-matplotlib==3.0.0
-numpy==1.18.1
-uncertainties==3.0.1
-pandas==1.0.1
+matplotlib>=3.0.0
+numpy>=1.18.1
+uncertainties>=3.0.1
+pandas>=1.0.1

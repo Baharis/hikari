@@ -134,7 +134,7 @@ def completeness_map(a, b, c, al, be, ga,
     :type ga: float
     :param space_group: Instance of :class:`hikari.symmetry.Group`
         describing symmetry of the crystal
-    :type space_group: kesshou.symmetry.Group
+    :type space_group: hikari.symmetry.Group
     :param axis: area to calculate completeness of. Accepts 'x', 'y', 'z', 'xy',
         'xz', 'yz' or '' for whole sphere.
     :type axis: string
@@ -398,7 +398,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     :type ga: float
     :param point_group: Point group of the crystal,
         defined as an instance of :class:`hikari.symmetry.Group`
-    :type point_group: kesshou.symmetry.Group
+    :type point_group: hikari.symmetry.Group
     :param input_path: Path to the input .hkl file.
     :type input_path: str
     :param input_format: Format of the .hkl file. For reference see
@@ -441,7 +441,7 @@ def dac_point_group_statistics(a, b, c, al=90, be=90, ga=90,
     :type ga: float
     :param space_group: Space group of the crystal,
         defined as an instance of :class:`hikari.symmetry.Group`
-    :type space_group: kesshou.symmetry.Group
+    :type space_group: hikari.symmetry.Group
     :param output_path: Path of created file containing calculated data.
     :type output_path: str
     :param opening_angle:
@@ -619,7 +619,7 @@ def dac_statistics(a, b, c, al, be, ga,
     :type ga: float
     :param point_group: Point group of the crystal,
         defined as an instance of :class:`hikari.symmetry.Group`
-    :type point_group: kesshou.symmetry.Group
+    :type point_group: hikari.symmetry.Group
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
@@ -707,7 +707,7 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
     :type ga: float
     :param space_group: Space group of the crystal,
         defined as an instance of :class:`hikari.symmetry.Group`
-    :type space_group: kesshou.symmetry.Group
+    :type space_group: hikari.symmetry.Group
     :param wavelength: Wavelength of radiation utilised in experiment.
     :type wavelength: float or str
     :param opening_angle: Value of single opening angle as defined in
@@ -1044,6 +1044,7 @@ if __name__ == '__main__':
     #     ga = 120 if v in {'P-3', 'P-3m1', 'P6om', 'P6ommm'} else 90
     #     completeness_map(space_group=SG[k], ga=ga,
     #                      output_name=name, **kwargs)
+    completeness_violin_plot(output_path='~/_/violins.txt', precision=100)
     pass
 
 
