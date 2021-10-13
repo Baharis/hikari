@@ -249,7 +249,7 @@
             "I",
             "si"
         ],
-        "prefix": "KESSHOU unsupported prefix",
+        "prefix": "hikari unsupported prefix",
         "suffix": "",
         "widths": [
             4,
@@ -269,7 +269,7 @@
             "I",
             "si"
         ],
-        "prefix": "KESSHOU unsupported prefix",
+        "prefix": "hikari unsupported prefix",
         "suffix": "",
         "widths": [
             4,
@@ -326,7 +326,7 @@
             "sf",
             "ph"
         ],
-        "prefix": "KESSHOU      F          NDAT   -7\n",
+        "prefix": "hikari       F          NDAT   -7\n",
         "suffix": "",
         "widths": [
             -4,
@@ -354,7 +354,7 @@
             "v2",
             "v3"
         ],
-        "prefix": "KESSHOU      F          NDAT   13\n",
+        "prefix": "hikari       F          NDAT   13\n",
         "suffix": "",
         "widths": [
             -4,
@@ -381,7 +381,7 @@
             "F",
             "sf"
         ],
-        "prefix": "KESSHOU      F          NDAT    6\n",
+        "prefix": "hikari       F          NDAT    6\n",
         "suffix": "",
         "widths": [
             -4,
@@ -402,7 +402,7 @@
             "sf",
             "t"
         ],
-        "prefix": "KESSHOU      F          NDAT    7\n",
+        "prefix": "hikari       F          NDAT    7\n",
         "suffix": "",
         "widths": [
             -4,
@@ -424,7 +424,7 @@
             "si",
             "ph"
         ],
-        "prefix": "KESSHOU      F^2        NDAT   -7\n",
+        "prefix": "hikari       F^2        NDAT   -7\n",
         "suffix": "",
         "widths": [
             -4,
@@ -452,7 +452,7 @@
             "v2",
             "v3"
         ],
-        "prefix": "KESSHOU      F^2        NDAT   13\n",
+        "prefix": "hikari       F^2        NDAT   13\n",
         "suffix": "",
         "widths": [
             -4,
@@ -479,7 +479,7 @@
             "I",
             "si"
         ],
-        "prefix": "KESSHOU      F^2        NDAT    6\n",
+        "prefix": "hikari       F^2        NDAT    6\n",
         "suffix": "",
         "widths": [
             -4,
@@ -500,7 +500,7 @@
             "si",
             "t"
         ],
-        "prefix": "KESSHOU      F^2        NDAT    7\n",
+        "prefix": "hikari       F^2        NDAT    7\n",
         "suffix": "",
         "widths": [
             -4,

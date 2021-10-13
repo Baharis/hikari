@@ -1420,13 +1420,7 @@ class HklArtist:
 
 
 if __name__ == '__main__':
-    from hikari.dataframes import HklFrame
-    h1 = HklFrame()
-    h1.read('/home/dtchon/x/1AP+F4TCNQ/refinement/1AP+F4TCNQ.fcf', 'shelx_fcf')
-    h1.extinct(SG['P212121'])
-    # h1.edit_cell(a=9.7708, b=10.6392, c=10.6875, al=62.597, be=64.798, ga=83.561)
-    # h1.calculate_fcf_statistics()
-    # #h1.to_res('/home/dtchon/x/1AP+F4TCNQ/refinement/kesshouIc-fcf.res', colored='ze')
+    pass
 
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.

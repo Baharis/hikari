@@ -1044,7 +1044,6 @@ if __name__ == '__main__':
     #     ga = 120 if v in {'P-3', 'P-3m1', 'P6om', 'P6ommm'} else 90
     #     completeness_map(space_group=SG[k], ga=ga,
     #                      output_name=name, **kwargs)
-    completeness_violin_plot(output_path='~/_/violins.txt', precision=100)
     pass
 
 
