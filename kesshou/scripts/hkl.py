@@ -16,7 +16,6 @@ from kesshou.utility import cubespace, fibonacci_sphere, home_directory, \
 from matplotlib import cm, colors, pyplot
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import art3d
-from math import erf, erfc
 import numpy as np
 import numpy.linalg as lin
 from scipy.special import erfinv
@@ -568,18 +567,8 @@ def completeness_violin_plot(input_path='',
     else:
         cplt_frame = pd.read_csv(input_path, index_col=0)
 
-    # GENERAL
-    # cplt_frame.drop(labels='-1', axis=1, inplace=True)
     melt_frame = cplt_frame.melt(var_name='LG', value_name='Completeness')
     sns.set_style("whitegrid")
-    # WIDE PLOT
-    #pyplot.figure(figsize=(15, 6))
-    #sns.set(font_scale=1.75)
-    #ax = sns.violinplot(data=cplt_frame, scale='width', cut=0,
-    #                    palette=deep_palette, inner='quartile')
-    #ax.axhline(27.9458181944, linewidth=5, alpha=0.5)
-    # pyplot.ylim(25, 101)
-    # SMALL PLOT
     pyplot.figure(figsize=(8, 6))
     sns.set(font_scale=1.5)
     ax = sns.violinplot(x=melt_frame['Completeness'],
@@ -599,11 +588,9 @@ def completeness_violin_plot(input_path='',
                         r"$m\overline{3}$", r"$m\overline{3}m$"])
     ax.set_xticklabels(['10', r'$\mathcal{P}$ = 20       ', '30', '40',
                         '50', '60', '70', '80', '90', '100%'])
-    pyplot.xlim(19, 101) #19
-    # GENERAL
+    pyplot.xlim(19, 101)
     sns.despine(left=True, top=False)
     pyplot.show()
-    # use figsize=(5.3, 6),xlim(54, 101) and appropriate labels for thin version
 
 
 def dac_statistics(a, b, c, al, be, ga,
@@ -918,8 +905,8 @@ def baycon_plot(x_key='ze', y_key='si',
     cb.set_label('Number of observations')
     ax.scatter(x=x, y=y, s=5.0, c='#000080', marker='.', alpha=0.75)
     pyplot.title('Bayesian CoNditional probability, chi2 = {:.2f}'.format(chi2))
-    pyplot.xlabel('"' +  x_key + '" rank')
-    pyplot.ylabel('"' +  y_key + '" rank')
+    pyplot.xlabel('"' + x_key + '" rank')
+    pyplot.ylabel('"' + y_key + '" rank')
     pyplot.tight_layout()
     pyplot.savefig(fname=output_path, dpi=300)
 
@@ -979,7 +966,7 @@ def normal_probability_plot(input_path='shelx.fcf',
     experiment_delta_m = experiment_delta_m / np.std(experiment_delta_m)
 
     # simulated delta m
-    uniform = (np.arange(len(experiment_delta_m)) + 0.5) / len(experiment_delta_m)
+    uniform = (np.arange(len(experiment_delta_m))+0.5) / len(experiment_delta_m)
     simulated_delta_m = [erfinv(-1 + 2 * q) for q in uniform]
 
     # drawing the plot
@@ -988,7 +975,8 @@ def normal_probability_plot(input_path='shelx.fcf',
     ax.set_xlim([-5, 5])
     ax.set_ylim([-5, 5])
     pyplot.hist(experiment_delta_m, bins=100, density=True)
-    ax.scatter(experiment_delta_m, simulated_delta_m, s=5.0, c='r', marker='.', alpha=0.75, zorder=10)
+    ax.scatter(experiment_delta_m, simulated_delta_m, s=5.0, c='r', marker='.',
+               alpha=0.75, zorder=10)
     ax.plot(np.linspace(-3, 3), np.linspace(-3, 3), '-k', lw=1, zorder=0)
     pyplot.plot(6 * uniform - 3, norm.pdf(6 * uniform - 3))
     pyplot.title('npp')
