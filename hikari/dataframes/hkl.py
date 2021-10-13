@@ -1,7 +1,7 @@
-from kesshou.dataframes import BaseFrame
-from kesshou.utility import cubespace, chemical_elements, is2n, is3n, is4n, is6n
-from kesshou.utility import rescale_list_to_range, rescale_list_to_other
-from kesshou.symmetry import PG, SG
+from hikari.dataframes import BaseFrame
+from hikari.utility import cubespace, chemical_elements, is2n, is3n, is4n, is6n
+from hikari.utility import rescale_list_to_range, rescale_list_to_other
+from hikari.symmetry import PG, SG
 from pathlib import Path
 import copy
 import json
@@ -337,7 +337,7 @@ class HklFrame(BaseFrame):
 
     HklFrame acts as an container which stores
     the diffraction data (Pandas dataframe, :attr:`table`)
-    and elementary crystal cell data (:class:`kesshou.dataframes.Base`).
+    and elementary crystal cell data (:class:`hikari.dataframes.Base`).
     Demanding methods belonging to this class are vectorized,
     providing relatively satisfactory performance and high memory capacity.
     HklFrame methods are designed to work in-place, so the work strategy
@@ -453,7 +453,7 @@ class HklFrame(BaseFrame):
         double opening angle which takes values from 0 to 180 degrees)
         and crystal orientation. The orientation information can be supplied
         either via specifying crystal orientation in
-        :class:`kesshou.dataframes.BaseFrame`, in :attr:`orientation`
+        :class:`hikari.dataframes.BaseFrame`, in :attr:`orientation`
         or by providing a *vector*. The *vector* is perpendicular to
         the dac-accessible space traced by the tori.
 
@@ -511,7 +511,7 @@ class HklFrame(BaseFrame):
     def extinct(self, space_group=SG['P1']):
         """
         Removes from dataframe reflections which should be extinct based on
-        space :class:`kesshou.symmetry.group.Group`. For ref. see ITC-A12.3.5.
+        space :class:`hikari.symmetry.group.Group`. For ref. see ITC-A12.3.5.
 
         :param space_group: Space group used to extinct the reflections.
         :type space_group: kesshou.symmetry.group.Group
@@ -530,7 +530,7 @@ class HklFrame(BaseFrame):
 
         In order to provide an information about equivalence, a *point_group*
         must be provided (default PG1). Point groups and their notation can
-        be found within :mod:`kesshou.symmetry` sub-package.
+        be found within :mod:`hikari.symmetry` sub-package.
 
         :param point_group: Point Group used to determine symmetry equivalence
         :type point_group: kesshou.symmetry.Group
@@ -717,7 +717,7 @@ class HklFrame(BaseFrame):
         In order to provide an information about equivalence
         for the sake of merging, a *point_group* must be provided (default PG1).
         Point groups and their notation can
-        be found within :mod:`kesshou.symmetry` sub-package.
+        be found within :mod:`hikari.symmetry` sub-package.
         Please mind that because the symmetry equivalence information is used
         during the merging procedure to determine which points should be merged,
         previously defined values in "equiv" will be overwritten by this method.
@@ -774,7 +774,7 @@ class HklFrame(BaseFrame):
         Read the contents of .hkl file as specified by path and format,
         and store them in the pandas dataframe in `self.data`.
         For a list of all available .hkl formats,
-        please refer to :attr:`kesshou.dataframes.HklIo.format`.
+        please refer to :attr:`hikari.dataframes.HklIo.format`.
 
         :param hkl_path: Absolute or relative path to the .hkl file.
         :type hkl_path: str
@@ -871,7 +871,7 @@ class HklFrame(BaseFrame):
         it is important to use all symmetry operations, not only generators.
 
         Single symmetry operations or their lists belonging to certain
-        point groups can be imported from :py:mod:`kesshou.symmetry` module.
+        point groups can be imported from :py:mod:`hikari.symmetry` module.
 
         :param operations: Iterable of operation matrices to be applied
         :type operations: Union[Tuple[np.ndarray, np.ndarray], np.ndarray]
@@ -945,7 +945,7 @@ class HklFrame(BaseFrame):
         Write the contents of dataframe to a .hkl file using specified
         *path* and *format*.
         For a list of all available .hkl formats,
-        please refer to :attr:`kesshou.dataframes.HklIo.format`.
+        please refer to :attr:`hikari.dataframes.HklIo.format`.
 
         :param hkl_path: Absolute or relative path to the .hkl file.
         :type hkl_path: str
@@ -1420,7 +1420,7 @@ class HklArtist:
 
 
 if __name__ == '__main__':
-    from kesshou.dataframes import HklFrame
+    from hikari.dataframes import HklFrame
     h1 = HklFrame()
     h1.read('/home/dtchon/x/1AP+F4TCNQ/refinement/1AP+F4TCNQ.fcf', 'shelx_fcf')
     h1.extinct(SG['P212121'])

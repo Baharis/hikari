@@ -8,9 +8,9 @@ which utilise DAC - diamond anvil cell.
 
 import pandas as pd
 import seaborn as sns
-from kesshou.dataframes import HklFrame
-from kesshou.symmetry import PG, SG, Group
-from kesshou.utility import cubespace, fibonacci_sphere, home_directory, \
+from hikari.dataframes import HklFrame
+from hikari.symmetry import PG, SG, Group
+from hikari.utility import cubespace, fibonacci_sphere, home_directory, \
     make_absolute_path, gnuplot_cplt_map_palette, mpl_cplt_map_palette, \
     deep_palette, pastel_palette, cplt_map_template
 from matplotlib import cm, colors, pyplot
@@ -132,7 +132,7 @@ def completeness_map(a, b, c, al, be, ga,
     :type be: float
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
-    :param space_group: Instance of :class:`kesshou.symmetry.Group`
+    :param space_group: Instance of :class:`hikari.symmetry.Group`
         describing symmetry of the crystal
     :type space_group: kesshou.symmetry.Group
     :param axis: area to calculate completeness of. Accepts 'x', 'y', 'z', 'xy',
@@ -382,7 +382,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     """
     For a given experimental .hkl file
     calculate basic completeness statistics in equal-volume resolution shells.
-    This script directly calls method :meth:`kesshou.dataframes.make_stats`.
+    This script directly calls method :meth:`hikari.dataframes.make_stats`.
 
     :param a: Unit cell parameter *a* in Angstrom.
     :type a: float
@@ -397,12 +397,12 @@ def completeness_statistics(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param point_group: Point group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.Group`
+        defined as an instance of :class:`hikari.symmetry.Group`
     :type point_group: kesshou.symmetry.Group
     :param input_path: Path to the input .hkl file.
     :type input_path: str
     :param input_format: Format of the .hkl file. For reference see
-        :meth:`kesshou.dataframes.HklFrame.interpret_hkl_format`.
+        :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
     :type input_format: int or str or dict
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str
@@ -440,7 +440,7 @@ def dac_point_group_statistics(a, b, c, al=90, be=90, ga=90,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param space_group: Space group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.Group`
+        defined as an instance of :class:`hikari.symmetry.Group`
     :type space_group: kesshou.symmetry.Group
     :param output_path: Path of created file containing calculated data.
     :type output_path: str
@@ -618,18 +618,18 @@ def dac_statistics(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param point_group: Point group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.Group`
+        defined as an instance of :class:`hikari.symmetry.Group`
     :type point_group: kesshou.symmetry.Group
     :param opening_angle: Value of single opening angle as defined in
-        :meth:`kesshou.dataframes.HklFrame.dac`.
+        :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
     :param orientation: Crystal orientation as defined in
-        :class:`kesshou.dataframes.BaseFrame`
+        :class:`hikari.dataframes.BaseFrame`
     :type orientation: tuple or numpy.array
     :param input_path: Path to the input .hkl file.
     :type input_path: str
     :param input_format: Format of the .hkl file. For reference see
-        :meth:`kesshou.dataframes.HklFrame.interpret_hkl_format`.
+        :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
     :type input_format: int or str or dict
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str
@@ -706,12 +706,12 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param space_group: Space group of the crystal,
-        defined as an instance of :class:`kesshou.symmetry.Group`
+        defined as an instance of :class:`hikari.symmetry.Group`
     :type space_group: kesshou.symmetry.Group
     :param wavelength: Wavelength of radiation utilised in experiment.
     :type wavelength: float or str
     :param opening_angle: Value of single opening angle as defined in
-        :meth:`kesshou.dataframes.HklFrame.dac`.
+        :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
     :param vector: Direction around which completeness will be calculated.
     :type vector: tuple
@@ -805,14 +805,14 @@ def simulate_dac(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param opening_angle: Value of single opening angle as defined in
-        :meth:`kesshou.dataframes.HklFrame.dac`.
+        :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
     :param orientation: Crystal orientation as defined in
-        :class:`kesshou.dataframes.BaseFrame`
+        :class:`hikari.dataframes.BaseFrame`
     :type orientation: tuple or numpy.array
     :param vector: If given, overwrite orientation to provide information
         about crystal placement in dac,
-        as defined in :meth:`kesshou.dataframes.HklFrame.dac`.
+        as defined in :meth:`hikari.dataframes.HklFrame.dac`.
     :type vector: tuple
     :param resolution: If given, additionally limit data resolution to given
         value. Please provide the resolution as a distance from the origin
@@ -821,14 +821,14 @@ def simulate_dac(a, b, c, al, be, ga,
     :param input_path: Path to the input .hkl file.
     :type input_path: str
     :param input_format: Format of the input .hkl file. For reference see
-        :meth:`kesshou.dataframes.HklFrame.interpret_hkl_format`.
+        :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
     :type input_format: int or str or dict
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str
     :param output_path: Path to the output .hkl file.
     :type output_path: str
     :param output_format: Format of the input .hkl file. For reference see
-        :meth:`kesshou.dataframes.HklFrame.interpret_hkl_format`.
+        :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
     :type output_format: int or str or dict
     :return: None
     """
@@ -872,7 +872,7 @@ def baycon_plot(x_key='ze', y_key='si',
     :param input_path: Path to the input .fcf file.
     :type input_path: str
     :param input_format: Format of the input .fcf file. For reference see
-        :meth:`kesshou.dataframes.HklFrame.interpret_hkl_format`.
+        :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
     :type input_format: int or str or dict
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str

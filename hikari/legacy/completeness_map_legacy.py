@@ -1,9 +1,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~ IMPORT STATEMENTS - DO NOT CHANGE ~~~~~~~~~~~~~~~~~~~~ #
-from kesshou.dataframes.hkl import HklFrame
+from hikari.dataframes.hkl import HklFrame
 import numpy as np
 import copy
 from datetime import datetime as dt
-#from kesshou.symmetry.pointgroup_old import PG4pmmm
+#from hikari.symmetry.pointgroup_old import PG4pmmm
 
 # ~~~~~~~~~~~~~~~~~~~~ VARIABLES - CHANGE ONLY VALUES HERE ~~~~~~~~~~~~~~~~~~~ #
 # Unit Cell (in Angstrom in degrees)
@@ -42,7 +42,7 @@ point_group = PG4pmmm
 
 # Output directory
 output_name = 'laue4pmmm_oa35_laMoKa_sparse'
-output_directory = '/home/dtchon/git/kesshou/test_data/'
+output_directory = '/home/dtchon/git/hikari/test_data/'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ SCRIPT CODE - DO NOT CHANGE ~~~~~~~~~~~~~~~~~~~~~~~ #
 

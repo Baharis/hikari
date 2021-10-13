@@ -1,4 +1,4 @@
-from kesshou.symmetry import Group, SymmOp
+from hikari.symmetry import Group, SymmOp
 
 PG = {
     # TRICLINIC

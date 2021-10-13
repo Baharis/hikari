@@ -4,7 +4,7 @@ import numpy.linalg as lin
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from kesshou.readers import read_hkl
+from hikari.readers import read_hkl
 
 
 class Crystal:

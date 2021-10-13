@@ -5,7 +5,7 @@ and evaluating all symmetry groups.
 import numpy as np
 from itertools import product as itertools_product
 from enum import Enum
-from kesshou.symmetry.operations import SymmOp
+from hikari.symmetry.operations import SymmOp
 
 # TODO add class method or creation method "from operators", without generating
 # TODO and hard-code all space groups in separate json file. (pickle?)
@@ -15,7 +15,7 @@ class Group:
     """
     Base immutable class containing information about symmetry groups.
     It stores information for point and space groups and, among others,
-    allows for iteration over its elements from `kesshou.symmetry.SymmOp`.
+    allows for iteration over its elements from `hikari.symmetry.SymmOp`.
     """
 
     class CrystalSystem(Enum):

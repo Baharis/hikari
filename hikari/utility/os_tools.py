@@ -17,11 +17,11 @@ def make_absolute_path(*path_elements):
     :Example:
 
     >>> make_absolute_path('')
-    '/home/user/kesshou'
+    '/home/user/hikari'
     >>> make_absolute_path('..', 'flying_circus', 'loc.txt')
     '/home/user/flying_circus/loc.txt'
     >>> make_absolute_path('~')
-    '/home/user/kesshou/~'
+    '/home/user/hikari/~'
 
     :param path_elements: path element (string or path-like) or multiple
         path elements to be joined together

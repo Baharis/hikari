@@ -1,4 +1,4 @@
-from kesshou.utility import angle2rad
+from hikari.utility import angle2rad
 import numpy as np
 import numpy.linalg as lin
 
@@ -96,7 +96,7 @@ class BaseFrame:
         Please mind that the while the "a", "b" and "c" are always given in
         Angstrom, the angles might be given either in degrees or in radians.
         For further details, please consult
-        :func:`kesshou.utility.math_tools.both2rad` function.
+        :func:`hikari.utility.math_tools.both2rad` function.
 
         It is not required for all previously stated keys to be present
         at each method call. If a key has not been given, previously provided
@@ -115,7 +115,7 @@ class BaseFrame:
     def from_cif_frame(self, frame):
         """
         Attempt importing unit cell parameters and orientation matrix
-        from provided :class:`kesshou.dataframes.cif.CifFrame` object.
+        from provided :class:`hikari.dataframes.cif.CifFrame` object.
 
         This method requires at least cell parameters to be defined
         in CifFrame object. It also attempts to import the orientation matrix,
@@ -244,7 +244,7 @@ class BaseFrame:
         """
         Scalar angle between unit cell vectors **b** and **c** in direct space.
         Setting this value will perform degrees / radian check according to
-        documentation of :func:`kesshou.utility.math_tools.both2rad`.
+        documentation of :func:`hikari.utility.math_tools.both2rad`.
 
         :return: Angle between **b** and **c**.
         :rtype: float
@@ -260,7 +260,7 @@ class BaseFrame:
         """
         Scalar angle between unit cell vectors **c** and **a** in direct space.
         Setting this value will perform degrees / radian check according to
-        documentation of :func:`kesshou.utility.math_tools.both2rad`.
+        documentation of :func:`hikari.utility.math_tools.both2rad`.
 
         :return: Angle between **c** and **a**.
         :rtype: float
@@ -276,7 +276,7 @@ class BaseFrame:
         """
         Scalar angle between unit cell vectors **c** and **a** in direct space.
         Setting this value will perform degrees / radian check according to
-        documentation of :func:`kesshou.utility.math_tools.both2rad`.
+        documentation of :func:`hikari.utility.math_tools.both2rad`.
 
         :return: Angle between **c** and **a**.
         :rtype: float
