@@ -18,7 +18,7 @@ class Group:
     allows for iteration over its elements from `hikari.symmetry.SymmOp`.
     """
 
-    class CrystalSystem(Enum):
+    class System(Enum):
         triclinic = 0
         monoclinic = 1
         orthorhombic = 2
@@ -133,24 +133,22 @@ class Group:
         orients = [op.orientation for op in self.operations]
 
         def _many_orients_in(_orients):
-            o0 = _orients.pop()
-            return sum([np.dot(o0, o) for o in _orients]) < 0.01
+            return any([np.dot(_orients[0], o) < 0.99 for o in _orients[1:]])
 
         if 6 in folds:
-            return self.CrystalSystem.hexagonal
+            return self.System.hexagonal
         elif 3 in folds:
             orients_of_3 = [o for f, o in zip(folds, orients) if f == 3]
-            return self.CrystalSystem.cubic if _many_orients_in(orients_of_3) \
-                else self.CrystalSystem.trigonal
+            return self.System.cubic if _many_orients_in(orients_of_3) \
+                else self.System.trigonal
         elif 4 in folds:
-            return self.CrystalSystem.tetragonal
+            return self.System.tetragonal
         elif 2 in folds:
             orients_of_2 = [o for f, o in zip(folds, orients) if f == 2]
-            return self.CrystalSystem.orthorhombic if \
-                _many_orients_in(orients_of_2) \
-                else self.CrystalSystem.monoclinic
+            return self.System.orthorhombic if _many_orients_in(orients_of_2) \
+                else self.System.monoclinic
         else:
-            return self.CrystalSystem.triclinic
+            return self.System.triclinic
 
     def lauefy(self):
         """
