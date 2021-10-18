@@ -1,8 +1,6 @@
-from hikari.symmetry.group import _unpack_group_dict_from_pickle
+from hikari.symmetry.group import unpack_group_dict_from_pickle
 
-SG = _unpack_group_dict_from_pickle('space_groups.pickle')
-
-
+SG = unpack_group_dict_from_pickle('space_groups.pickle')
 """
 Dictionary containing all known space groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary
@@ -527,5 +525,3 @@ To access origin choice 1 or 2, append key with "#1" or "2", eg.: SG["Fd-3c#2"].
 +-----+--------------+----------------+--------------------+-------------------+
 """
 
-if __name__ == '__main__':
-    pass

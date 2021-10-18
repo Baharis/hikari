@@ -1,54 +1,6 @@
-from hikari.symmetry import Group, SymmOp
+from hikari.symmetry.group import unpack_group_dict_from_pickle
 
-PG = {
-    # TRICLINIC
-    '1': Group(SymmOp.from_code('x,y,z')),
-    '-1': Group(SymmOp.from_code('-x,-y,-z')),
-    # MONOCLINIC
-    '2': Group(SymmOp.from_code('-x,y,-z')),
-    'm': Group(SymmOp.from_code('x,-y,z')),
-    '2/m': Group(SymmOp.from_code('-x,-y,-z'), SymmOp.from_code('x,-y,z')),
-    # ORTHORHOMBIC
-    '222': Group(SymmOp.from_code('x,-y,-z'), SymmOp.from_code('-x,y,-z')),
-    'mm2': Group(SymmOp.from_code('-x,y,z'), SymmOp.from_code('-x,-y,z')),
-    'mmm': Group(SymmOp.from_code('-x,y,z'), SymmOp.from_code('x,-y,z'),
-                 SymmOp.from_code('x,y,-z')),
-    # TETRAGONAL
-    '4': Group(SymmOp.from_code('-y,x,z')),
-    '-4': Group(SymmOp.from_code('y,-x,-z')),
-    '4/m': Group(SymmOp.from_code('-y,x,z'), SymmOp.from_code('x,y,-z')),
-    '422': Group(SymmOp.from_code('-y,x,z'), SymmOp.from_code('-x,y,-z')),
-    '4mm': Group(SymmOp.from_code('-y,x,z'), SymmOp.from_code('x,-y,z')),
-    '-42m': Group(SymmOp.from_code('y,-x,-z'), SymmOp.from_code('x,-y,-z')),
-    '-4m2': Group(SymmOp.from_code('y,-x,-z'), SymmOp.from_code('-x,y,z')),
-    '4/mmm': Group(SymmOp.from_code('-y,x,z'), SymmOp.from_code('x,y,-z'),
-                   SymmOp.from_code('-x,y,z')),
-    # TRIGONAL
-    '3': Group(SymmOp.from_code('-y,x-y,z')),
-    '-3': Group(SymmOp.from_code('y,-x+y,-z')),
-    '321': Group(SymmOp.from_code('-y,x-y,z'), SymmOp.from_code('y,x,-z')),
-    '312': Group(SymmOp.from_code('-y,x-y,z'), SymmOp.from_code('-y,-x,-z')),
-    '3m1': Group(SymmOp.from_code('-y,x-y,z'), SymmOp.from_code('-y,-x,z')),
-    '31m': Group(SymmOp.from_code('-y,x-y,z'), SymmOp.from_code('y,x,z')),
-    '-3m1': Group(SymmOp.from_code('y,-x+y,-z'), SymmOp.from_code('-y,-x,z')),
-    '-31m': Group(SymmOp.from_code('y,-x+y,-z'), SymmOp.from_code('y,x,z')),
-    # HEXAGONAL
-    '6': Group(SymmOp.from_code('x-y,x,z')),
-    '-6': Group(SymmOp.from_code('-x+y,-x,-z')),
-    '6/m': Group(SymmOp.from_code('x-y,x,z'), SymmOp.from_code('x,y,-z')),
-    '622': Group(SymmOp.from_code('x-y,x,z'), SymmOp.from_code('x-y,-y,-z')),
-    '6mm': Group(SymmOp.from_code('x-y,x,z'), SymmOp.from_code('-x+y,y,z')),
-    '-6m2': Group(SymmOp.from_code('-x+y,-x,-z'), SymmOp.from_code('-x+y,y,z')),
-    '-62m': Group(SymmOp.from_code('-x+y,-x,-z'), SymmOp.from_code('y,x,-z')),
-    '6/mmm': Group(SymmOp.from_code('x-y,x,z'), SymmOp.from_code('x,y,-z'),
-                   SymmOp.from_code('-x+y,y,z')),
-    # CUBIC
-    '23': Group(SymmOp.from_code('-x,-y,z'), SymmOp.from_code('z,x,y')),
-    'm-3': Group(SymmOp.from_code('x,y,-z'), SymmOp.from_code('-z,-x,-y')),
-    '432': Group(SymmOp.from_code('-y,x,z'), SymmOp.from_code('z,x,y')),
-    '-43m': Group(SymmOp.from_code('y,-x,-z'), SymmOp.from_code('z,x,y')),
-    'm-3m': Group(SymmOp.from_code('x,y,-z'), SymmOp.from_code('-z,-x,-y'),
-                  SymmOp.from_code('-y,-x,z'))}
+PG = unpack_group_dict_from_pickle('point_groups.pickle')
 """
 Dictionary containing all known point groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary

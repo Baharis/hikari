@@ -10,9 +10,6 @@ from hikari.symmetry.operations import SymmOp
 import json
 import pickle
 
-# TODO add class method or creation method "from operators", without generating
-# TODO and hard-code all space groups in separate json file. (pickle?)
-
 
 def unpack_group_dict_from_csv(filename):
     path = Path(__file__).parent.absolute().joinpath(filename)
@@ -31,7 +28,7 @@ def unpack_group_dict_from_csv(filename):
     return group_dict
 
 
-def _unpack_group_dict_from_pickle(filename):
+def unpack_group_dict_from_pickle(filename):
     path = Path(__file__).parent.absolute().joinpath(filename)
     return pickle.load(open(path, 'rb'))
 
