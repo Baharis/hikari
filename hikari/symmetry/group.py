@@ -3,12 +3,37 @@ This file contains class definition and necessary tools for constructing
 and evaluating all symmetry groups.
 """
 import numpy as np
+from pathlib import Path
 from itertools import product as itertools_product
 from enum import Enum
 from hikari.symmetry.operations import SymmOp
+import json
+import pickle
 
 # TODO add class method or creation method "from operators", without generating
 # TODO and hard-code all space groups in separate json file. (pickle?)
+
+
+def unpack_group_dict_from_csv(filename):
+    path = Path(__file__).parent.absolute().joinpath(filename)
+    with open(path) as file:
+        json_dict = json.load(file)
+    group_dict = {}
+    for json_key, json_group in json_dict.items():
+        sg_name = json_group["H-M_short"]
+        sg_number = json_group["number"]
+        sg_gens = [SymmOp.from_code(c) for c in json_group["generators"]]
+        sg_ops = [SymmOp.from_code(o) for o in json_group["operations"]]
+        sg_object = Group.create_manually(generators=sg_gens, operators=sg_ops)
+        group_dict[json_key] = sg_object
+        group_dict[sg_name] = sg_object
+        group_dict[sg_number] = sg_object
+    return group_dict
+
+
+def _unpack_group_dict_from_pickle(filename):
+    path = Path(__file__).parent.absolute().joinpath(filename)
+    return pickle.load(open(path, 'rb'))
 
 
 class Group:

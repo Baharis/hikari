@@ -1,29 +1,8 @@
-from hikari.symmetry import Group, SymmOp
-from pathlib import Path
-import json
+from hikari.symmetry.group import _unpack_group_dict_from_pickle
 
-# TODO 1 check whether this is not performed multiple times
+SG = _unpack_group_dict_from_pickle('space_groups.pickle')
 
 
-def _unpack_space_group_dictionary_from_json():
-    current_file_path = Path(__file__).parent.absolute()
-    json_file_path = current_file_path.joinpath('space_groups.json')
-    with open(json_file_path) as file:
-        json_dict = json.load(file)
-    space_group_dict = {}
-    for json_key, json_group in json_dict.items():
-        sg_name = json_group["H-M_short"]
-        sg_number = json_group["number"]
-        sg_gens = [SymmOp.from_code(c) for c in json_group["generators"]]
-        sg_ops = [SymmOp.from_code(o) for o in json_group["operations"]]
-        sg_object = Group.create_manually(generators=sg_gens, operators=sg_ops)
-        space_group_dict[json_key] = sg_object
-        space_group_dict[sg_name] = sg_object
-        space_group_dict[sg_number] = sg_object
-    return space_group_dict
-
-
-SG = _unpack_space_group_dictionary_from_json()
 """
 Dictionary containing all known space groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary
@@ -549,4 +528,4 @@ To access origin choice 1 or 2, append key with "#1" or "2", eg.: SG["Fd-3c#2"].
 """
 
 if __name__ == '__main__':
-    print(SG['Fd-3c#2'])
+    pass
