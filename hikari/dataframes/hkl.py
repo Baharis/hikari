@@ -478,7 +478,6 @@ class HklFrame(BaseFrame):
             n = np.array(vector)
         n = 1 / lin.norm(n) * n                        # normalise the n vector
 
-        self.trim(limit=self.r_lim * np.sin(opening_angle_in_radians))
         # remove reflections perpendicular to disc's normal vector
         xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
         self.table = self.table.loc[~np.isclose(xyz @ n, self.table['r'])]
