@@ -254,12 +254,12 @@ class HklKeys:
         'type': float
     }
     __equiv = {
-        'default': (0, 0, 0),
-        'description': 'tuple with lexicographically first equivalent hkl',
+        'default': 0,
+        'description': 'integer unique for each set of sym. equiv. reflections',
         'imperative': False,
-        'dtype': None,
+        'dtype': 'int64',
         'reduce_behaviour': 'keep',
-        'type': tuple
+        'type': int
     }
     defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'sf', 'b', 'm', 'la', 'ph',
                     'u', 'r', 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3',
@@ -524,27 +524,26 @@ class HklFrame(BaseFrame):
 
     def find_equivalents(self, point_group=PG['1']):
         """
-        Assign each reflection its symmetry equivalent with highest values
-        of h, k, l indices and store it in "equiv" column in the dataframe.
+        Assign each reflection its symmetry equivalence identifier and store
+        it in the `hikari.dataframes.HklFrame.data['equiv']` column.
+        The ID is an integer unique for each set of equivalent reflections.
 
         In order to provide an information about equivalence, a *point_group*
-        must be provided (default PG1). Point groups and their notation can
-        be found within :mod:`hikari.symmetry` sub-package.
+        of reciprocal space must be provided (default PG['1']). Point groups
+        and their notation can be found in :mod:`hikari.symmetry` sub-package.
 
-        :param point_group: Point Group used to determine symmetry equivalence
+        :param point_group: Point group used to determine symmetry equivalence
         :type point_group: hikari.symmetry.Group
         """
-        hkl_lim = self.HKL_LIMIT
+        inc = 10 ** (int(np.log10(self.HKL_LIMIT)) + 2)
         self.keys.add(('equiv',))
         self.table.reset_index(drop=True, inplace=True)
-        self.table['equiv'] = [(-hkl_lim, -hkl_lim, -hkl_lim)] * len(self.table)
-
+        self.table['equiv'] = -inc**3
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
         for op in point_group.operations:
-            new_hkl = pd.Series(map(tuple, op.transform(_hkl_matrix)))\
-                .map(lambda x: tuple(round(y, 0) for y in x))
-            _to_update = self.table['equiv'] < new_hkl
-            self.table.loc[_to_update, 'equiv'] = new_hkl.loc[_to_update]
+            new_equiv = op.transform(_hkl_matrix) @ np.array([inc ** 2, inc, 1])
+            _to_update = self.table['equiv'] < new_equiv
+            self.table.loc[_to_update, 'equiv'] = new_equiv[_to_update]
 
     def from_dict(self, dictionary):
         """

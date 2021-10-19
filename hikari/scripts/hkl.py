@@ -23,9 +23,8 @@ def completeness_statistics(a, b, c, al, be, ga,
                             input_format=4,
                             input_wavelength='CuKa'):
     """
-    For a given experimental .hkl file
-    calculate basic completeness statistics in equal-volume resolution shells.
-    This script directly calls method :meth:`hikari.dataframes.make_stats`.
+    For a given experimental .hkl file calculate basic completeness statistics
+    in ten resolution shells of equal-volume.
 
     :param a: Unit cell parameter *a* in Angstrom.
     :type a: float
@@ -483,7 +482,6 @@ def simulate_dac(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    # TODO make sure unique is defined correctly (no cutoff errors in currently used float)
     # from os import system
     # sg = {'P-1': 'P-1',
     #       'P2/m': 'P2om',
