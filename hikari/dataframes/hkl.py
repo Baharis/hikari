@@ -1,5 +1,5 @@
 from hikari.dataframes import BaseFrame
-from hikari.utility import cubespace, chemical_elements, is2n, is3n, is4n, is6n
+from hikari.utility import cubespace, chemical_elements
 from hikari.utility import rescale_list_to_range, rescale_list_to_other
 from hikari.symmetry import PG, SG
 from pathlib import Path
