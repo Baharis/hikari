@@ -361,8 +361,8 @@ class SymmOp:
         o = rebase @ self.orientation
         o /= np.linalg.norm(o)
 
-        def are_parallel(v, w):
-            return np.isclose(np.dot(v, w), 1)
+        def are_parallel(_v, _w):
+            return np.isclose(np.dot(_v, _w), 1)
 
         if o is None:
             return self

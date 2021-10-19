@@ -358,3 +358,7 @@ def completeness_map(a, b, c, al, be, ga,
         system('cd ' + _path + '; gnuplot ' + gnu_path)
     except OSError:
         pass
+
+
+if __name__ == '__main__':
+    pass

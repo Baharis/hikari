@@ -266,7 +266,7 @@ class HklKeys:
                     'x', 'y', 'z', 'ze', 'ze2', 'Iosi', 'Icsi', 'equiv'}
     # TODO check if needed and cplt?
 
-    def __init__(self, keys=set()):
+    def __init__(self, keys=()):
         # DEFINE ALL KNOWN KEYS
         self.imperatives = set()
         for key in HklKeys.defined_keys:
@@ -1214,8 +1214,13 @@ class HklReader(HklIo):
         :rtype: dict
         """
         self.keys.set(self._format_dict['labels'])
-        parse_line = self._parse_free_line if self.is_current_format_free \
-            else self._parse_fixed_line
+
+        if self.is_current_format_free:
+            def parse_line(line):
+                return self._parse_free_line(line)
+        else:
+            def parse_line(line):
+                self._parse_fixed_line(line)
 
         def read_file_to_list_of_data():
             list_of_reflections = list()
