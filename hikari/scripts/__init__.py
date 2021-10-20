@@ -12,7 +12,7 @@ but should not be a problem after a short study of code.
 
 Users are cordially invited to propose their own scripts or script ideas.
 """
-from .potency_map import completeness_map
+from .potency_map import potency_map
 from .hkl import completeness_statistics, dac_completeness_vs_opening_angle
 from .hkl import potency_violin_plot, dac_statistics
 from .hkl import completeness_statistics_around_axis, simulate_dac

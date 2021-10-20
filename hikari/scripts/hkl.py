@@ -358,7 +358,7 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
     :return: None
     """
 
-    point_group = space_group.reciprocate()#.lauefy()
+    point_group = space_group.reciprocate()  # .lauefy()
 
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)

@@ -9,20 +9,20 @@ from hikari.utility import home_directory, make_absolute_path, \
     mpl_cplt_map_palette, cplt_map_template, gnuplot_cplt_map_palette
 
 
-def completeness_map(a, b, c, al, be, ga,
-                     space_group=SG['P1'],
-                     axis='',
-                     fix_scale=False,
-                     opening_angle=35,
-                     output_directory=home_directory,
-                     output_name='cplt_map',
-                     output_quality=3,
-                     resolution=1.2,
-                     wavelength='MoKa'):
+def potency_map(a, b, c, al, be, ga,
+                space_group=SG['P1'],
+                axis='',
+                fix_scale=False,
+                opening_angle=35,
+                output_directory=home_directory,
+                output_name='cplt_map',
+                output_quality=3,
+                resolution=1.2,
+                wavelength='MoKa'):
     """
-    Calculate and draw a map of predicted completeness for a given crystal
-    encased in diamond anvil cell (dac) with a given opening angle
-    as a function of crystal orientation in a dac.
+    Calculate and draw a potency map for a given crystal in diamond anvil cell
+    (dac) with a given opening angle, as a function of crystal orientation. For
+    details see `this paper <https://doi.org/10.1107/S2052252521009532>`_.
 
     The script accepts and takes into consideration unit cell dimensions,
     laue group and extinctions, which allows to predict the completeness of
