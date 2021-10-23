@@ -21,7 +21,7 @@ def unpack_group_dict_from_csv(filename):
         sg_number = json_group["number"]
         sg_gens = [SymmOp.from_code(c) for c in json_group["generators"]]
         sg_ops = [SymmOp.from_code(o) for o in json_group["operations"]]
-        sg_object = Group.create_manually(generators=sg_gens, operators=sg_ops)
+        sg_object = Group.create_manually(generators=sg_gens, operations=sg_ops)
         group_dict[json_key] = sg_object
         group_dict[sg_name] = sg_object
         group_dict[sg_number] = sg_object
@@ -41,6 +41,7 @@ class Group:
     """
 
     class System(Enum):
+        """Enumerator class with information about associated crystal system"""
         triclinic = 0
         monoclinic = 1
         orthorhombic = 2
@@ -63,20 +64,27 @@ class Group:
         def _find_new_product(ops):
             if len(ops) > 200:
                 raise ValueError('Generated group order exceeds size of 200')
-            new_ops = list({o1 * o2 % 1 for o1, o2 in itertools_product(ops, ops)})
-            new_ops = set(ops).union(new_ops)
-            # TODO this part gets slow for large groups; require "1" instead?
-            # print([str(o) for o in new_ops])
-            return _find_new_product(new_ops) if len(new_ops) > len(ops) else ops
+            new = list({o1 * o2 % 1 for o1, o2 in itertools_product(ops, ops)})
+            new = set(ops).union(new)
+            return _find_new_product(new) if len(new) > len(ops) else ops
 
         self.__generators = tuple(generator_list)
         self.__operations = tuple(_find_new_product(generator_list))
 
     @classmethod
-    def create_manually(cls, generators, operators):
+    def create_manually(cls, generators, operations):
+        """
+        Generate group using already complete list of generators and operators.
+        :param generators: A complete list of group generators
+        :type generators: List[np.ndarray]
+        :param operations: A complete list of group operations
+        :type operations: List[np.ndarray]
+        :return:
+        :rtype:
+        """
         new_group = cls()
         new_group.__generators = generators
-        new_group.__operations = operators
+        new_group.__operations = operations
         return new_group
 
     def __iter__(self):
@@ -102,14 +110,6 @@ class Group:
     @property
     def order(self):
         return len(self.__operations)
-
-    @property
-    def chiral_operations(self):
-        """
-        :return: A subgroup with only operations whose determinant is positive.
-        :rtype: list
-        """
-        return Group(*[op for op in self.operations if op.det > 0])
 
     @property
     def is_centrosymmetric(self):
@@ -169,20 +169,20 @@ class Group:
         folds = [op.fold for op in self.operations]
         orients = [op.orientation for op in self.operations]
 
-        def _many_orients_in(_orients):
+        def _is_many(_orients):
             return any([np.dot(_orients[0], o) < 0.99 for o in _orients[1:]])
 
         if 6 in folds:
             return self.System.hexagonal
         elif 3 in folds:
             orients_of_3 = [o for f, o in zip(folds, orients) if f == 3]
-            return self.System.cubic if _many_orients_in(orients_of_3) \
+            return self.System.cubic if _is_many(orients_of_3) \
                 else self.System.trigonal
         elif 4 in folds:
             return self.System.tetragonal
         elif 2 in folds:
             orients_of_2 = [o for f, o in zip(folds, orients) if f == 2]
-            return self.System.orthorhombic if _many_orients_in(orients_of_2) \
+            return self.System.orthorhombic if _is_many(orients_of_2) \
                 else self.System.monoclinic
         else:
             return self.System.triclinic

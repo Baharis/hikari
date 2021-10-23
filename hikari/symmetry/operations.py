@@ -180,7 +180,7 @@ class SymmOp:
     def typ(self):
         """
         :return: crystallographic type of this symmetry operation
-        :rtype: SymmOpType
+        :rtype: SymmOp.Type
         """
         _trans = self.translational
         if self.trace == 3:
