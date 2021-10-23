@@ -84,7 +84,7 @@ class Group:
 
     def __str__(self):
         s = 'A centrosymmetric ' if self.is_centrosymmetric else 'A '
-        s += 'enantiomorphic ' if self.is_enantiomorphic else ''
+        s += 'Sohncke ' if self.is_sohncke else ''
         s += 'polar ' if self.is_polar else ''
         return s + 'group of order {}.'.format(self.order)
 
@@ -120,24 +120,39 @@ class Group:
         return any(np.isclose(op.trace, -3) for op in self.operations)
 
     @property
-    def is_enantiomorphic(self):
+    def is_enantiogenic(self):
+        """
+        :return: True if determinant of all operations in group are positive.
+        :rtype: bool
+        """
+        return any(op.det < 0 for op in self.operations)
+
+    @property
+    def is_sohncke(self):
         """
         :return: True if determinant of all operations in group are positive.
         :rtype: bool
         """
         return all(op.det > 0 for op in self.operations)
-        # TODO: differentiate between chiral and centrosymmetric?
+
+    @property
+    def is_achiral(self):      # TODO See dictionary.iucr.org/Chiral_space_group
+        return NotImplemented  # TODO and dx.doi.org/10.1524/zkri.2006.221.1.1
+
+    @property
+    def is_chiral(self):       # TODO See dictionary.iucr.org/Chiral_space_group
+        return NotImplemented  # TODO and dx.doi.org/10.1524/zkri.2006.221.1.1
+
+    @property
+    def is_symmorphic(self):
+        return all(g.typ not in {g.Type.rototranslation, g.Type.transflection}
+                   and sum(g.origin) == 0 for g in self.generators)
 
     @property
     def is_polar(self):
-        """
-        :return: True if group can preserve polar properties.
-        :rtype: bool
-        """
-        # return False if group has any inversion or rotoinversion
-        if any(op.orientation is None for op in self.operations if op.det < 0):
+        if any(op.typ in {op.Type.rotoinversion, op.Type.inversion}
+               for op in self.operations):
             return False
-        # return False if group has rotations around non-parallel axes
         axes_orientation = [op.orientation for op in self.operations
                             if op.det > 0 and op.orientation is not None]
         for or1, or2 in itertools_product(axes_orientation, axes_orientation):
