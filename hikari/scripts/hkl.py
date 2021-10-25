@@ -59,7 +59,7 @@ def completeness_statistics(a, b, c, al, be, ga,
 
 def dac_completeness_vs_opening_angle(output_path='output.txt',
                                       precision=91,
-                                      resolution=None,
+                                      resolution=1.2,
                                       wavelength='MoKa',
                                       theta=None):
     """
@@ -69,13 +69,12 @@ def dac_completeness_vs_opening_angle(output_path='output.txt',
     :type output_path: str
     :param precision: Number of probed opening angles between 0 and 90 degrees.
     :type precision: int
-    :param resolution: If given, additionally limit data resolution to given
-        value. Please provide the resolution as a distance from the origin
-        in reciprocal space (twice the resolution in reciprocal angstrom).
+    :param resolution: Maximum distance from the origin in reciprocal space to
+        reflection (twice the resolution in reciprocal angstrom). Default 1.2.
     :type resolution: float
     :param wavelength: Wavelength of radiation to be simulated.
     :type wavelength: float or str
-    :param theta: Resolution in theta angle in degrees instead radius in A-1
+    :param theta: If given, use max theta in degrees (instead of radius in A-1).
     :type theta: float
     :return: None
     """
@@ -87,19 +86,16 @@ def dac_completeness_vs_opening_angle(output_path='output.txt',
             if theta is not None else resolution
         side = 10 * precision**(1/3) / res  # adapt to prec&la
         hkl_frame.edit_cell(a=side, b=side, c=side, al=90, be=90, ga=90)
-        if res is not None:
-            hkl_frame.fill(radius=res)
-        else:
-            hkl_frame.fill(radius=hkl_frame.r_lim)
+        hkl_frame.fill(radius=res)
         return hkl_frame
     p = _make_reference_ball()
-    total_reflns = len(p.table)
+    total = len(p.table)
     angles = np.linspace(start=90, stop=0, num=precision)
     out = open(output_path, 'w', buffering=1)
     out.write('#oa      cplt\n')
     for a in angles:
         p.dac(opening_angle=a, vector=np.array((1, np.pi/4, np.e/5)))  # rand. v
-        out.write(' {a:7.4f} {c:7.5f}\n'.format(a=a, c=len(p.table)/total_reflns))
+        out.write(' {a:7.4f} {c:7.5f}\n'.format(a=a, c=len(p.table)/total))
     out.close()
 
 
@@ -271,17 +267,19 @@ def dac_statistics(a, b, c, al, be, ga,
     :type input_format: int or str or dict
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str
+    :param resolution: If given, calculate statistics only up to this value.
+    Please provide it as a distance in rec. space (twice the resolution in A-1).
+    :type resolution: float
     :return: None
     """
 
-    point_group = space_group.reciprocate()#.lauefy()
+    point_group = space_group.reciprocate()
 
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
     p.read(input_path, input_format)
     p.orientation = np.array(orientation)
-    #p.extinct(space_group=space_group)
 
     resolution = p.r_lim if resolution is None else resolution
     p.trim(limit=resolution)
@@ -291,22 +289,22 @@ def dac_statistics(a, b, c, al, be, ga,
     q.fill(radius=resolution)
     q.dac(opening_angle=opening_angle)
 
-    # uncomment this part for 2nd crystal in different orientation
+    # uncomment and fill this if you have 2 crystals in different orientations
     # q2 = p.duplicate()
     # q2.fill(radius=resolution)
-    # q2.orientation = np.array(((0.08251, 0.01162, 0.03675), (0.01682, 0.03807, -0.03236), (-0.06016, 0.01982, 0.04088)))
+    # q2.orientation = np.array(())
     # q2.dac(opening_angle=opening_angle)
     # q = q + q2
 
-    q.extinct(space_group=space_group)
     q.merge(point_group=point_group)
+    q.extinct(space_group=space_group)
 
     b = p.duplicate()
     b.fill(radius=resolution)
     b.extinct(space_group=space_group)
     b.merge(point_group=point_group)
 
-    r_max = resolution #max(b.table['r'])
+    r_max = resolution
     print('radius    experimnt theoryDAC theorBall DAC-Cplt  Ball-Cplt ')
     print('range     unique    unique    unique    exp/DAC   exp/Ball  ')
     for rad in reversed(cubespace(0, r_max, 10, include_start=False)):
@@ -362,7 +360,7 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
 
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-    p.la = 'MoKa'
+    p.la = wavelength
     p.fill(radius=p.r_lim)
     p.place()
     p.extinct(space_group=space_group)
@@ -377,17 +375,16 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
     temp = x if not(are_parallel(v, x)) else np.array((0, 1, 0))
     perp = np.cross(v, temp)
 
-    def rotate(v, k, angle):
-        c = np.cos(np.deg2rad(angle))
-        s = np.sin(np.deg2rad(angle))
-        return v * c + np.cross(k, v) * s + k * np.dot(k, v) * (1 - c)
+    def rotate(_v, _k, angle):
+        _c = np.cos(np.deg2rad(angle))
+        _s = np.sin(np.deg2rad(angle))
+        return _v * _c + np.cross(_k, _v) * _s + _k * np.dot(_k, _v) * (1 - _c)
 
     # generate 360 toppled vectors
     toppled = rotate(v, perp, topple)
     toppleds = [rotate(toppled, v, i) for i in range(360)]
 
     # calculate the completeness for toppleds
-    #rads = list(reversed(cubespace(0, 1.2, 10, include_start=False)))
     rads = [2.00, 1/0.7, 1.20, 1.00, 1/1.5]
     cplt = [0] * len(rads)
     p.trim(max(rads))
@@ -399,7 +396,6 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
             cplt[-cplt_bin] += q.table['equiv'].nunique()
 
     # divide lists of completeness by total and return from sums to individuals
-
     full = [0] * len(rads)
     for cplt_bin, rad in enumerate(rads, start=1):
         p.trim(rad)
