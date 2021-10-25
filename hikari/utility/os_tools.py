@@ -8,11 +8,12 @@ import pathlib
 
 def make_abspath(*path_elements):
     """
-    Return an absolute path to a specified file. Accepts one or more strings,
-    which are joined according to system-specific syntax. Relative paths are
-    intepreted as having root at current working directory. Links and symbols
-    such as '~', '..' or '/' are expanded and interpreted. Function calls with
-    nothing and '~' as arguments yield working and home directory, respectively.
+    Return a string with absolute path to a specified file. Accepts zero or more
+    strings, which are joined according to system-specific syntax. Relative
+    paths are intepreted as having root at current working directory (cwd).
+    Links and symbols such as '~', '..' or '/' are expanded and interpreted.
+    As such, function calls with no argument and '~' as argument will yield
+    string-paths to current working directory and home directory, respectively.
 
     :Example:
 
@@ -28,7 +29,7 @@ def make_abspath(*path_elements):
 
     :param path_elements: path element(s) to join and intepret, defaults to cwd.
     :type path_elements: str
-    :return: absolute path to the given location
-    :rtype: pathlib.Path
+    :return: string containing resolved absolute path to the specified location
+    :rtype: str
     """
-    return pathlib.Path().joinpath(*path_elements).expanduser().resolve()
+    return str(pathlib.Path().joinpath(*path_elements).expanduser().resolve())
