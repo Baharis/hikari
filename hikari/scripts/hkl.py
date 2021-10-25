@@ -10,8 +10,7 @@ import pandas as pd
 import seaborn as sns
 from hikari.dataframes import HklFrame
 from hikari.symmetry import Group, PG, SG
-from hikari.utility import cubespace, fibonacci_sphere, make_abspath, \
-    home_directory
+from hikari.utility import cubespace, fibonacci_sphere, make_abspath
 from matplotlib import pyplot
 import numpy as np
 import numpy.linalg as lin
@@ -108,7 +107,7 @@ laue_class_names = r"$\overline{1}$", r"$2/m$", r"$mmm$",\
 
 
 def potency_violin_plot(job_name='violin',
-                        directory=home_directory,
+                        directory='~',
                         opening_angle=35,
                         precision=1000,
                         space_groups=laue_space_groups,

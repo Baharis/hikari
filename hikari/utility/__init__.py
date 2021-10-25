@@ -8,7 +8,7 @@ but do significantly improve clarity of the code present in other modules.
 from .chem_tools import chemical_elements
 from .math_tools import angle2rad, fibonacci_sphere
 from .list_tools import cubespace, rescale_list_to_range, rescale_list_to_other
-from .os_tools import make_abspath, home_directory
+from .os_tools import make_abspath
 from .palettes import gnuplot_cplt_map_palette, mpl_cplt_map_palette
 
 from pathlib import Path

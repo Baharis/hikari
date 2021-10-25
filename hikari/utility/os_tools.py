@@ -3,7 +3,7 @@ This file contains constants and functions containing operating system and path
 information / methods used in the package.
 """
 
-import os, pathlib
+import pathlib
 
 
 def make_abspath(*path_elements):
@@ -32,6 +32,3 @@ def make_abspath(*path_elements):
     :rtype: pathlib.Path
     """
     return pathlib.Path().joinpath(*path_elements).expanduser().resolve()
-
-
-home_directory = os.path.expanduser('~')

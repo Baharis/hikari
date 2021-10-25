@@ -5,7 +5,7 @@ from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import home_directory, make_abspath, \
+from hikari.utility import make_abspath, \
     mpl_cplt_map_palette, cplt_map_template, gnuplot_cplt_map_palette
 
 
@@ -14,7 +14,7 @@ def potency_map(a, b, c, al, be, ga,
                 axis='',
                 fix_scale=False,
                 opening_angle=35,
-                output_directory=home_directory,
+                output_directory='~',
                 output_name='cplt_map',
                 output_quality=3,
                 resolution=1.2,
