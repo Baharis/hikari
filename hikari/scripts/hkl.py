@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 from hikari.dataframes import HklFrame
 from hikari.symmetry import Group, PG, SG
-from hikari.utility import cubespace, fibonacci_sphere, make_absolute_path, \
+from hikari.utility import cubespace, fibonacci_sphere, make_abspath, \
     home_directory
 from matplotlib import pyplot
 import numpy as np
@@ -144,9 +144,9 @@ def potency_violin_plot(job_name='violin',
     :rtype: None
     """
 
-    csv_path = make_absolute_path(directory, job_name + '.csv')
-    png_path = make_absolute_path(directory, job_name + '.png')
-    log_path = make_absolute_path(directory, job_name + '.log')
+    csv_path = make_abspath(directory, job_name + '.csv')
+    png_path = make_abspath(directory, job_name + '.png')
+    log_path = make_abspath(directory, job_name + '.log')
 
     def _is_tri_or_hexagonal(sg):
         return sg.system in {sg.System.hexagonal, sg.System.trigonal}

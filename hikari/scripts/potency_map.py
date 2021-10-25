@@ -5,7 +5,7 @@ from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import home_directory, make_absolute_path, \
+from hikari.utility import home_directory, make_abspath, \
     mpl_cplt_map_palette, cplt_map_template, gnuplot_cplt_map_palette
 
 
@@ -144,10 +144,10 @@ def potency_map(a, b, c, al, be, ga,
     :return: None
     :rtype: None
     """
-    dat_path = make_absolute_path(output_directory, output_name + '.dat')
-    gnu_path = make_absolute_path(output_directory, output_name + '.gnu')
-    lst_path = make_absolute_path(output_directory, output_name + '.lst')
-    png_path = make_absolute_path(output_directory, output_name + '.png')
+    dat_path = make_abspath(output_directory, output_name + '.dat')
+    gnu_path = make_abspath(output_directory, output_name + '.gnu')
+    lst_path = make_abspath(output_directory, output_name + '.lst')
+    png_path = make_abspath(output_directory, output_name + '.png')
     axis = axis.lower()
     laue_group = space_group.reciprocate()
 
@@ -354,7 +354,7 @@ def potency_map(a, b, c, al, be, ga,
     _prepare_gnuplot_input()
     try:
         from os import system, getcwd
-        _path = make_absolute_path(output_directory)
+        _path = make_abspath(output_directory)
         system('cd ' + _path + '; gnuplot ' + gnu_path)
     except OSError:
         pass
