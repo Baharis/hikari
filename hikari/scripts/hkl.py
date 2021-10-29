@@ -193,14 +193,14 @@ def potency_violin_plot(job_name='violin',
         cplt_frame = cplt_frame.mul(100)
         cplt_frame.to_csv(csv_path)
 
-    palette_map = {Group.System.triclinic: 0,
-                   Group.System.monoclinic: 1,
-                   Group.System.orthorhombic: 2,
-                   Group.System.tetragonal: 3,
-                   Group.System.trigonal: 4,
-                   Group.System.hexagonal: 5,
-                   Group.System.cubic: 6}
-    palette = {label: sns.color_palette("deep")[palette_map[sg.system]]
+    palette_number = {Group.System.triclinic: 0,
+                      Group.System.monoclinic: 1,
+                      Group.System.orthorhombic: 2,
+                      Group.System.tetragonal: 3,
+                      Group.System.trigonal: 4,
+                      Group.System.hexagonal: 5,
+                      Group.System.cubic: 6}
+    palette = {label: sns.color_palette("deep")[palette_number[sg.system]]
                for label, sg in zip(labels, space_groups)}
 
     melt_frame = cplt_frame.melt(var_name='SG', value_name='Completeness')

@@ -5,8 +5,8 @@ from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, \
-    mpl_cplt_map_palette, cplt_map_template, gnuplot_cplt_map_palette
+from hikari.utility import make_abspath, cplt_map_template, \
+    mpl_map_palette, gnuplot_map_palette
 
 
 def potency_map(a, b, c, al, be, ga,
@@ -288,7 +288,7 @@ def potency_map(a, b, c, al, be, ga,
         ax.plot_wireframe(x, y, z, colors='k', linewidth=0.25)
 
         # color map
-        my_heatmap_colors = mpl_cplt_map_palette[axis]
+        my_heatmap_colors = mpl_map_palette[axis]
         my_colormap = colors.LinearSegmentedColormap.from_list(
             'heatmapEX', my_heatmap_colors, N=256)
         m = cm.ScalarMappable(cmap=my_colormap)
@@ -349,7 +349,7 @@ def potency_map(a, b, c, al, be, ga,
             max_ph=max(ph_limits),
             min_th=min(th_limits),
             max_th=max(th_limits),
-            palette=gnuplot_cplt_map_palette[axis.lower()]))
+            palette=gnuplot_map_palette[axis.lower()]))
 
     _prepare_gnuplot_input()
     try:
