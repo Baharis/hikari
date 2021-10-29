@@ -33,8 +33,8 @@ or evaluating data completeness in certain experiment.
 
 ## Author
 
-This software is made by Daniel Tchoń, dtchon@chem.uw.edu.pl, under MIT license.
-Dr hab. Anna Makal and prof. dr hab. Krzysztof Woźniak are acknowledged
-for helpful discussion about crystallography behind the subject.
+This software is made by Daniel Tchoń, dtchon@chem.uw.edu.pl, and distributed
+under MIT license. Dr hab. Anna Makal and prof. dr hab. Krzysztof Woźniak are
+acknowledged for helpful discussions about crystallography behind the subject.
 Dr Jarosław Kalinowski and mgr inż. Damian Tchoń are acknowledged
-for helpful discussion about project structure and code optimisation.
+for insightful tips on project structure and code optimisation.
