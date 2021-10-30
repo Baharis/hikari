@@ -1,4 +1,3 @@
-import os
 from collections import OrderedDict
 
 
@@ -63,12 +62,13 @@ class ResFrame:
             elif key.upper() == 'REM':
                 self.data['REM'].append(line)
                 lines_to_delete.append(index)
-            elif all((key.upper() not in key_types.keys(), reading_peaks == True,
-            key[0] == 'Q', key[1] in '0123456789')):
+            elif all((key.upper() not in key_types.keys(),
+                      reading_peaks is True,
+                      key[0] == 'Q', key[1].isdigit())):
                 self.data['PEAK'][key] = values
                 lines_to_delete.append(index)
-            elif all((key.upper() not in key_types.keys(), reading_atoms == True,
-            key[0] in 'abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRESUWXYZ')):
+            elif all((key.upper() not in key_types.keys(),
+                      reading_atoms is True, key[0].isalpha())):
                 self.data['ATOM'][key] = values
                 lines_to_delete.append(index)
             elif key.upper() not in key_types.keys():
@@ -96,5 +96,4 @@ class ResFrame:
         self.data.move_to_end('PEAK')
 
         # UPDATE META INFORMATION
-        self.meta['path'] = os.path.abspath(path)
         self.meta['comment'] = self.data['REM']

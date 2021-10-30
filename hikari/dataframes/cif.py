@@ -1,5 +1,3 @@
-import os
-import numpy as np
 from collections import OrderedDict
 
 
@@ -66,7 +64,7 @@ class CifFrame:
 
             # IF DEALING WITH STANDARD ENTRY
             if key != 'loop_' and len(value) > 0:
-               self.data[key] = ustrip(value)
+                self.data[key] = ustrip(value)
 
             # IF DEALING WITH MULTI-LINE ENTRY
             elif key != 'loop_' and len(key) > 1 and len(value) == 0:
