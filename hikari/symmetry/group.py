@@ -7,6 +7,7 @@ from pathlib import Path
 from itertools import product as itertools_product
 from enum import Enum
 from hikari.symmetry.operations import SymmOp
+from hikari.utility.list_tools import find_best
 import json
 import pickle
 
@@ -49,6 +50,16 @@ class Group:
         tetragonal = 4
         cubic = 5
         hexagonal = 6
+
+        @property
+        def directions(self):
+            _a = np.array((1, 0, 0))
+            _b = np.array((0, 1, 0))
+            _c = np.array((0, 0, 1))
+            _ab = np.array((1 / np.sqrt(2), 1 / np.sqrt(2), 0))
+            _abc = np.array((1 / np.sqrt(3), 1 / np.sqrt(3), 1 / np.sqrt(3)))
+            return [(), (_b, ), (_a, _b, _c), (_c, _a, _ab),
+                    (_c, _a, _ab), (_c, _abc, _ab), (_c, _a, _ab)][self.value]
 
     def __init__(self, *generators):
         """
@@ -98,6 +109,27 @@ class Group:
 
     def __hash__(self):
         return sum(hash(o) for o in self.operations)
+
+    @property
+    def name(self):
+        """Name of the group. Due to convention problems this is only approx."""
+        # TODO: enantiomorphs like P41 / P43 not recognised
+        # TODO: 'e' found always whenever 'a' and 'b' present
+        # TODO: sometimes 21 found inst. of 2 as only 1 direction checked
+        tl = ([o.name for o in self.operations if o.typ is o.Type.translation])
+        tl.append('H' if self.system is self.System.trigonal else 'P')
+        name = find_best(tl, 'A+B+C=F>I>C>B>A>H>P')
+        for d in self.system.directions:
+            ops = [o.name.partition(':')[0] for o in self.operations
+                   if o.orientation is not None and
+                   np.isclose(abs(np.dot(o.orientation, d)), 1)]
+            axis_rules = '6>61>62>63>64>65>-6>4>41>42>43>-4>3>31>32>-3>2>21'
+            plane_rules = 'm>a+b=e>a+c=e>b+c=e>a>b>c>n>d'
+            best_axis = find_best(ops, axis_rules)
+            best_plane = find_best(ops, plane_rules)
+            sep = '/' if len(best_axis) > 0 and len(best_plane) > 0 else ''
+            name += ' ' + best_axis + sep + best_plane
+        return name
 
     @property
     def generators(self):

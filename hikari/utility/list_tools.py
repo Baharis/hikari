@@ -5,6 +5,24 @@ This file contains tools to work with tuples and lists used in the package.
 from numpy import power, linspace, sign, abs
 
 
+def find_best(strings, criteria):
+    """
+    :param strings: List of string where best will be found based on `criteria`.
+    :type strings: List[str]
+    :param criteria: '>'-separated substrings sought in descending order.
+        '+' is a logical 'and', '=' substitutes: `A=B` returns B if A is found.
+    :type criteria: str
+    :return: Best string based on given `criteria` or `` if no best found.
+    :rtype: str
+    """
+    criterion, _, further_criteria = criteria.partition('>')
+    wanted = criterion.partition('=')[0].split('+')
+    if all(w in strings or w is '' for w in wanted):
+        return criterion.rpartition('=')[2]
+    else:
+        return find_best(strings, further_criteria)
+
+
 def cubespace(start, stop=False, num=10, include_start=True):
     """
     Return sequence of *num* floats between *start* and *stop*.

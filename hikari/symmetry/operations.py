@@ -217,13 +217,12 @@ class SymmOp:
         elif self.typ is self.Type.inversion:
             return '-1'
         elif self.typ is self.Type.rototranslation:
-            return str(self.fold) + '_' + str(Fraction(np.linalg.norm(_glide))
-                                              .limit_denominator(9).numerator)
+            return str(self.fold) + str(round(np.linalg.norm(_glide)*self.fold))
         elif self.typ is self.Type.transflection:
             return _glide_dir.replace('A', 'n').replace('B', 'n').\
                 replace('C', 'n') if self.glide_fold == 2 else 'd'
         elif self.typ is self.Type.translation:
-            return 't_' + _glide_dir
+            return _glide_dir
         elif self.typ is self.Type.rotoinversion:
             return str(-self.fold)
         else:
@@ -322,8 +321,7 @@ class SymmOp:
         """
         if self.typ in {self.Type.rotation, self.Type.rototranslation}:
             return self.invariants[0]
-        elif self.typ in {self.Type.reflection, self.Type.transflection,
-                          self.Type.rotoinversion}:
+        elif self.det < 0:
             return SymmOp(-1 * self.tf).orientation
         else:
             return None
