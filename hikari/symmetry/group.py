@@ -127,15 +127,15 @@ class Group:
         """Name of the group generated automatically. Use only as approx."""
         # TODO: enantiomorphs like P41 / P43 not recognised
         # TODO: 'e' found always whenever 'a' and 'b' present
-        # TODO: sometimes 21 found inst. of 2 as only 1 direction checked
+        # TODO: some mistakes occur in trigonal crystal system (see SG149+)
         tl = ([o.name for o in self.operations if o.typ is o.Type.translation])
         tl.append('H' if self.system is self.System.trigonal else 'P')
         name = find_best(tl, 'A+B+C=F>I>C>B>A>H>P')
         for d in self.system.directions:
             ops = [o.name.partition(':')[0] for o in self.operations
                    if o.orientation is not None and
-                   np.isclose(abs(np.dot(o.orientation, d)), 1)]
-            axis_rules = '6>61>62>63>64>65>-6>4>41>42>43>-4>3>31>32>-3>2>21'
+                   np.isclose(abs(np.dot(np.abs(o.orientation), np.abs(d))), 1)]
+            axis_rules = '6>61>62>63>64>65>-6>4>41>42>43>-4>-3>3>31>32>2>21'
             plane_rules = 'm>a+b=e>a+c=e>b+c=e>a>b>c>n>d'
             best_axis = find_best(ops, axis_rules)
             best_plane = find_best(ops, plane_rules)
