@@ -260,7 +260,7 @@ class SymmOp:
         :return: part of the translation vector stemming from operations' glide
         :rtype: np.ndarray
         """
-        return (self ** 24).__tl24 / 576
+        return (self ** 24).__tl24 / 576 % 1
 
     @property
     def glide_fold(self):

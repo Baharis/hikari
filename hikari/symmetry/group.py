@@ -242,3 +242,31 @@ class Group:
     def reciprocate(self):
         new_generators = [op.reciprocal for op in self.generators]
         return Group(*new_generators)
+
+    def transform(self, m):
+        """
+        Transform the group using 4x4 matrix. For reference, see `bilbao
+        resources <https://www.cryst.ehu.es/cryst/trmatrix.html>`_ or `IUCr
+        pamphlet no. 22 <https://www.iucr.org/education/pamphlets/22>`_.
+
+        :example:
+
+        >>> import numpy
+        >>> from hikari.symmetry import SG
+        >>> m = numpy.array([(1,0,1,0),(0,1,0,0),(-1,0,0,0),(0,0,0,1)])
+        >>> SG['P21/c'].transform(m).auto_generated_name
+        P 21/n
+
+        :param m: A 4x4 array containing information about new base and origin.
+        :type m: np.ndarray
+        :return: Group with new, transformed basis and origin.
+        :rtype: Group
+        """
+        transformed_group = Group.create_manually(
+            generators=[SymmOp.from_matrix(np.linalg.inv(m) @ g.matrix @ m)
+                        for g in self.generators],
+            operations=[SymmOp.from_matrix(np.linalg.inv(m) @ o.matrix @ m)
+                    for o in self.operations])
+        transformed_group.name = self.name + ' @ ' + str(m)
+        transformed_group.number = -abs(self.number)
+        return transformed_group
