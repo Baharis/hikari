@@ -12,26 +12,36 @@ import json
 import pickle
 
 
-def unpack_group_dict_from_csv(filename):
+def unpack_group_dictionary_from_csv(filename):
+    """Development function used to get PG and SG from csv to pickle it later"""
     path = Path(__file__).parent.absolute().joinpath(filename)
     with open(path) as file:
         json_dict = json.load(file)
     group_dict = {}
     for json_key, json_group in json_dict.items():
-        sg_name = json_group["H-M_short"]
-        sg_number = json_group["number"]
-        sg_gens = [SymmOp.from_code(c) for c in json_group["generators"]]
-        sg_ops = [SymmOp.from_code(o) for o in json_group["operations"]]
-        sg_object = Group.create_manually(generators=sg_gens, operations=sg_ops)
-        group_dict[json_key] = sg_object
-        group_dict[sg_name] = sg_object
-        group_dict[sg_number] = sg_object
+        g_name = json_group["H-M_short"]
+        g_number = json_group["number"]
+        g_gens = [SymmOp.from_code(g) for g in json_group["generators"]]
+        g_ops = [SymmOp.from_code(o) for o in json_group["operations"]]
+        g = Group.create_manually(generators=g_gens, operations=g_ops)
+        g.name = json_group["H-M_short"]
+        g.number = abs(g_number)
+        group_dict[json_key] = g
+        if g_number > 0:
+            group_dict[g_name] = g
+            group_dict[g_number] = g
     return group_dict
 
 
-def unpack_group_dict_from_pickle(filename):
+def unpack_group_dictionary_from_pickle(filename):
+    """Function used to unpack point and space group pickles into their dicts"""
     path = Path(__file__).parent.absolute().joinpath(filename)
     return pickle.load(open(path, 'rb'))
+
+
+def pack_group_dictionary_to_pickle(group_dict, filename):
+    """Development function used to obtain point and space group pickles"""
+    pickle.dump(group_dict, open(filename, 'wb'), protocol=4)
 
 
 class Group:
@@ -81,6 +91,8 @@ class Group:
 
         self.__generators = tuple(generator_list)
         self.__operations = tuple(_find_new_product(generator_list))
+        self.name = self.auto_generated_name
+        self.number = 0
 
     @classmethod
     def create_manually(cls, generators, operations):
@@ -111,7 +123,7 @@ class Group:
         return sum(hash(o) for o in self.operations)
 
     @property
-    def _generated_name(self):
+    def auto_generated_name(self):
         """Name of the group generated automatically. Use only as approx."""
         # TODO: enantiomorphs like P41 / P43 not recognised
         # TODO: 'e' found always whenever 'a' and 'b' present
