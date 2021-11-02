@@ -111,8 +111,8 @@ class Group:
         return sum(hash(o) for o in self.operations)
 
     @property
-    def name(self):
-        """Name of the group. Due to convention problems this is only approx."""
+    def _generated_name(self):
+        """Name of the group generated automatically. Use only as approx."""
         # TODO: enantiomorphs like P41 / P43 not recognised
         # TODO: 'e' found always whenever 'a' and 'b' present
         # TODO: sometimes 21 found inst. of 2 as only 1 direction checked
