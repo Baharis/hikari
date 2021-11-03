@@ -166,7 +166,7 @@ def potency_violin_plot(job_name='violin',
 
     try:
         cplt_frame = pd.read_csv(csv_path, index_col=0)
-    except OSError:
+    except FileNotFoundError:
         cplt_dict = dict()
         log = open(log_path, 'w', buffering=1)
         for label, sg in zip(labels, space_groups):
@@ -187,11 +187,12 @@ def potency_violin_plot(job_name='violin',
             log.write('min_reflections: ' + str(min(reflections)) + '\n')
             log.write('avg_reflections: ' + str(np.mean(reflections)) + '\n')
             cplt_dict[label] = [r / total_reflections for r in reflections]
-        log.close()
 
         cplt_frame = pd.DataFrame.from_dict(cplt_dict)
         cplt_frame = cplt_frame.mul(100)
         cplt_frame.to_csv(csv_path)
+        log.write('\nSummary:\n' + str(cplt_frame.describe().round(2)) + '\n')
+        log.close()
 
     palette_number = {Group.System.triclinic: 0,
                       Group.System.monoclinic: 1,
