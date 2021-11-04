@@ -191,6 +191,7 @@ def potency_violin_plot(job_name='violin',
         cplt_frame = pd.DataFrame.from_dict(cplt_dict)
         cplt_frame = cplt_frame.mul(100)
         cplt_frame.to_csv(csv_path)
+        pd.set_option('display.expand_frame_repr', False)
         log.write('\nSummary:\n' + str(cplt_frame.describe().round(2)) + '\n')
         log.close()
 
