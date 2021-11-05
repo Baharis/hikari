@@ -3,9 +3,7 @@ from hikari.resources import hkl_formats, hkl_aliases
 from hikari.utility import cubespace, chemical_elements
 from hikari.utility import rescale_list_to_range, rescale_list_to_other
 from hikari.symmetry import PG, SG
-from pathlib import Path
 import copy
-import json
 import random
 import numpy as np
 import numpy.linalg as lin
@@ -933,8 +931,7 @@ class HklFrame(BaseFrame):
 
     def trim(self, limit):
         """
-        Remove from table those reflections, which lie further than *limit*
-        from the reciprocal space origin point.
+        Remove reflections further than *limit* from reciprocal space origin.
         :param limit: Radius of the trimming sphere in reciprocal Angstrom
         :type limit: float
         """
@@ -1295,7 +1292,7 @@ class HklArtist:
     @property
     def color_dict(self):
         """
-        Adictionary containing colours used for current map.
+        A dictionary containing colours used for current map.
         :return: Dictionary of element_name:rgb_colour pairs.
         :rtype: dict
         """

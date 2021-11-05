@@ -5,7 +5,7 @@ and evaluating all symmetry groups.
 import numpy as np
 from itertools import product as itertools_product
 from enum import Enum
-from hikari.symmetry.operations import SymmOp
+from hikari.symmetry import SymmOp
 from hikari.utility.list_tools import find_best
 
 

@@ -5,8 +5,7 @@ from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, \
-    mpl_map_palette, gnuplot_map_palette
+from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette
 from hikari.resources import potency_map_template
 
 
