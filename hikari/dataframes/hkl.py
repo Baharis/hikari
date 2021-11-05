@@ -1,15 +1,15 @@
 from hikari.dataframes import BaseFrame
+from hikari.resources import hkl_formats, hkl_aliases
 from hikari.utility import cubespace, chemical_elements
 from hikari.utility import rescale_list_to_range, rescale_list_to_other
 from hikari.symmetry import PG, SG
-from pathlib import Path
 import copy
-import json
 import random
 import numpy as np
 import numpy.linalg as lin
 import pandas as pd
 import matplotlib.cm
+
 
 pd.options.mode.chained_assignment = 'raise'
 
@@ -659,7 +659,7 @@ class HklFrame(BaseFrame):
                                  completeness, redundancy], axis=1)
             results.columns = ['Obser', 'Indep', 'Theory', 'Cplt', 'Redund.']
             return results
-        make_table_with_stats(grouped_base, grouped_full, grouped_merged)
+        return make_table_with_stats(grouped_base, grouped_full, grouped_merged)
 
     def merge(self, point_group=PG['1']):
         """
@@ -931,8 +931,7 @@ class HklFrame(BaseFrame):
 
     def trim(self, limit):
         """
-        Remove from table those reflections, which lie further than *limit*
-        from the reciprocal space origin point.
+        Remove reflections further than *limit* from reciprocal space origin.
         :param limit: Radius of the trimming sphere in reciprocal Angstrom
         :type limit: float
         """
@@ -965,7 +964,8 @@ class HklIo:
         self.keys = HklKeys()
         self.use_separator = True
         self.file_path = hkl_file_path
-        self._load_format_dictionaries()
+        self.formats_defined = hkl_formats
+        self.formats_aliases = hkl_aliases
         self.__format = 'shelx_4'
         self.format = hkl_file_format
 
@@ -1145,18 +1145,6 @@ class HklIo:
         """
         return all(width < 0 for width in self._format_dict['widths'])
 
-    def _load_format_dictionaries(self):
-        """
-        Load dictionaries of defined formats and their aliases from json files.
-        """
-        current_file_path = Path(__file__).parent.absolute()
-        path_of_defined = current_file_path.joinpath('hkl_formats_defined.json')
-        path_of_aliases = current_file_path.joinpath('hkl_formats_aliases.json')
-        with open(path_of_defined) as file:
-            self.formats_defined = json.load(file)
-        with open(path_of_aliases) as file:
-            self.formats_aliases = json.load(file)
-
 
 class HklReader(HklIo):
     """
@@ -1181,7 +1169,6 @@ class HklReader(HklIo):
         parsed = [line[beg:end] for beg, end in zip(slice_beg, slice_end)]
         parsed = np.array(parsed)
         try:
-            parsed.astype('float64')
             assert len(parsed) == len(self._format_dict['widths'])
         except (ValueError, AssertionError):
             return None
@@ -1219,7 +1206,7 @@ class HklReader(HklIo):
                 return self._parse_free_line(line)
         else:
             def parse_line(line):
-                self._parse_fixed_line(line)
+                return self._parse_fixed_line(line)
 
         def read_file_to_list_of_data():
             list_of_reflections = list()
@@ -1305,7 +1292,7 @@ class HklArtist:
     @property
     def color_dict(self):
         """
-        Adictionary containing colours used for current map.
+        A dictionary containing colours used for current map.
         :return: Dictionary of element_name:rgb_colour pairs.
         :rtype: dict
         """

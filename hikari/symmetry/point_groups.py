@@ -1,6 +1,3 @@
-from hikari.symmetry.group import unpack_group_dictionary_from_pickle
-
-PG = unpack_group_dictionary_from_pickle('point_groups.pickle')
 """
 Dictionary containing all known point groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary
