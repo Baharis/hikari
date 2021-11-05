@@ -5,8 +5,9 @@ from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, cplt_map_template, \
+from hikari.utility import make_abspath, \
     mpl_map_palette, gnuplot_map_palette
+from hikari.resources import potency_map_template
 
 
 def potency_map(a, b, c, al, be, ga,
@@ -332,7 +333,7 @@ def potency_map(a, b, c, al, be, ga,
     def _prepare_gnuplot_input():
         """Prepare input to completeness map in radial coordinates in gnuplot"""
         gnu = open(gnu_path, 'w+', buffering=1)
-        gnu.write(cplt_map_template.format(
+        gnu.write(potency_map_template.format(
             axis_x1=p.x_w[0],
             axis_x2=p.x_w[1],
             axis_x3=p.x_w[2],
