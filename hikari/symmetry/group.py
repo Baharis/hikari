@@ -3,7 +3,6 @@ This file contains class definition and necessary tools for constructing
 and evaluating all symmetry groups.
 """
 import numpy as np
-from pathlib import Path
 from itertools import product as itertools_product
 from enum import Enum
 from hikari.symmetry.operations import SymmOp
@@ -12,7 +11,7 @@ import json
 import pickle
 
 
-def unpack_group_dictionary_from_json(file):
+def _unpack_group_dictionary_from_json(file):
     """Development function used to get PG and SG from csv to pickle it later"""
     json_dict = json.loads(file)
     group_dict = {}
@@ -31,14 +30,8 @@ def unpack_group_dictionary_from_json(file):
     return group_dict
 
 
-def unpack_group_dictionary_from_pickle(filename):
-    """Function used to unpack point and space group pickles into their dicts"""
-    path = Path(__file__).parent.absolute().joinpath(filename)
-    return pickle.load(open(path, 'rb'))
-
-
-def pack_group_dictionary_to_pickle(group_dict, filename):
-    """Development function used to obtain point and space group pickles"""
+def _pack_group_dictionary_to_pickle(group_dict, filename):
+    """Development function used to pack point or space group back to pickles"""
     pickle.dump(group_dict, open(filename, 'wb'), protocol=4)
 
 
@@ -251,8 +244,8 @@ class Group:
 
         >>> import numpy
         >>> from hikari.symmetry import SG
-        >>> m = numpy.array([(1,0,1,0),(0,1,0,0),(-1,0,0,0),(0,0,0,1)])
-        >>> SG['P21/c'].transform(m).auto_generated_name
+        >>> matrix = numpy.array([(1,0,1,0),(0,1,0,0),(-1,0,0,0),(0,0,0,1)])
+        >>> SG['P21/c'].transform(matrix).auto_generated_name
         P 21/n
 
         :param m: A 4x4 array containing information about new base and origin.
