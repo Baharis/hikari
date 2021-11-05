@@ -659,7 +659,7 @@ class HklFrame(BaseFrame):
                                  completeness, redundancy], axis=1)
             results.columns = ['Obser', 'Indep', 'Theory', 'Cplt', 'Redund.']
             return results
-        make_table_with_stats(grouped_base, grouped_full, grouped_merged)
+        return make_table_with_stats(grouped_base, grouped_full, grouped_merged)
 
     def merge(self, point_group=PG['1']):
         """
@@ -1181,7 +1181,6 @@ class HklReader(HklIo):
         parsed = [line[beg:end] for beg, end in zip(slice_beg, slice_end)]
         parsed = np.array(parsed)
         try:
-            parsed.astype('float64')
             assert len(parsed) == len(self._format_dict['widths'])
         except (ValueError, AssertionError):
             return None
@@ -1219,7 +1218,7 @@ class HklReader(HklIo):
                 return self._parse_free_line(line)
         else:
             def parse_line(line):
-                self._parse_fixed_line(line)
+                return self._parse_fixed_line(line)
 
         def read_file_to_list_of_data():
             list_of_reflections = list()
