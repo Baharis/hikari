@@ -12,11 +12,9 @@ import json
 import pickle
 
 
-def unpack_group_dictionary_from_csv(filename):
+def unpack_group_dictionary_from_json(file):
     """Development function used to get PG and SG from csv to pickle it later"""
-    path = Path(__file__).parent.absolute().joinpath(filename)
-    with open(path) as file:
-        json_dict = json.load(file)
+    json_dict = json.loads(file)
     group_dict = {}
     for json_key, json_group in json_dict.items():
         g_name = json_group["H-M_short"]
