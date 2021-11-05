@@ -11,6 +11,10 @@ def _load_pickle(filename):
     return pickle.loads(get(__name__, filename))
 
 
+def _save_pickle(data, filename):
+    pickle.dump(data, open(filename, 'wb'), protocol=4)
+
+
 potency_map_template = get(__name__, 'cplt_map_template.gnu').decode('utf-8')
 point_groups_json = _load_json('point_groups.json')
 space_groups_json = _load_json('space_groups.json')

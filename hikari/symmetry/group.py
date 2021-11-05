@@ -7,7 +7,6 @@ from itertools import product as itertools_product
 from enum import Enum
 from hikari.symmetry.operations import SymmOp
 from hikari.utility.list_tools import find_best
-import pickle
 
 
 def _unpack_group_dictionary_from_json(json_dict):
@@ -26,11 +25,6 @@ def _unpack_group_dictionary_from_json(json_dict):
             group_dict[g_name] = g
             group_dict[g_number] = g
     return group_dict
-
-
-def _pack_group_dictionary_to_pickle(group_dict, filename):
-    """Development function used to pack point or space group back to pickles"""
-    pickle.dump(group_dict, open(filename, 'wb'), protocol=4)
 
 
 class Group:
