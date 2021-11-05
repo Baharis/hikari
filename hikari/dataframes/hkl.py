@@ -1,4 +1,5 @@
 from hikari.dataframes import BaseFrame
+from hikari.resources import hkl_formats, hkl_aliases
 from hikari.utility import cubespace, chemical_elements
 from hikari.utility import rescale_list_to_range, rescale_list_to_other
 from hikari.symmetry import PG, SG
@@ -10,6 +11,7 @@ import numpy as np
 import numpy.linalg as lin
 import pandas as pd
 import matplotlib.cm
+
 
 pd.options.mode.chained_assignment = 'raise'
 
@@ -965,7 +967,8 @@ class HklIo:
         self.keys = HklKeys()
         self.use_separator = True
         self.file_path = hkl_file_path
-        self._load_format_dictionaries()
+        self.formats_defined = hkl_formats
+        self.formats_aliases = hkl_aliases
         self.__format = 'shelx_4'
         self.format = hkl_file_format
 
@@ -1144,18 +1147,6 @@ class HklIo:
         :rtype: bool
         """
         return all(width < 0 for width in self._format_dict['widths'])
-
-    def _load_format_dictionaries(self):
-        """
-        Load dictionaries of defined formats and their aliases from json files.
-        """
-        current_file_path = Path(__file__).parent.absolute()
-        path_of_defined = current_file_path.joinpath('hkl_formats_defined.json')
-        path_of_aliases = current_file_path.joinpath('hkl_formats_aliases.json')
-        with open(path_of_defined) as file:
-            self.formats_defined = json.load(file)
-        with open(path_of_aliases) as file:
-            self.formats_aliases = json.load(file)
 
 
 class HklReader(HklIo):
