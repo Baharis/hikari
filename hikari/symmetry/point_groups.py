@@ -1,7 +1,3 @@
-import pickle
-from hikari.resources import point_groups_pickle
-
-PG = pickle.loads(point_groups_pickle)
 """
 Dictionary containing all known point groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary

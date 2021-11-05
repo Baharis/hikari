@@ -1,7 +1,3 @@
-import pickle
-from hikari.resources import space_groups_pickle
-
-SG = pickle.loads(space_groups_pickle)
 """
 Dictionary containing all known space groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary

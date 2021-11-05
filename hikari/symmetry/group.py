@@ -7,13 +7,11 @@ from itertools import product as itertools_product
 from enum import Enum
 from hikari.symmetry.operations import SymmOp
 from hikari.utility.list_tools import find_best
-import json
 import pickle
 
 
-def _unpack_group_dictionary_from_json(file):
+def _unpack_group_dictionary_from_json(json_dict):
     """Development function used to get PG and SG from csv to pickle it later"""
-    json_dict = json.loads(file)
     group_dict = {}
     for json_key, json_group in json_dict.items():
         g_name = json_group["H-M_short"]
