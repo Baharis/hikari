@@ -93,14 +93,15 @@ class Group:
         new_group.__operations = operations
         return new_group
 
-    def __iter__(self):
-        return iter(self.operations)
+    def __eq__(self, other):
+        return all([o in self.operations for o in other.operations])\
+               and all([o in other.operations for o in self.operations])
+
+    def __repr__(self):
+        return 'Group('+',\n      '.join([repr(g) for g in self.generators])+')'
 
     def __str__(self):
-        s = 'A centrosymmetric ' if self.is_centrosymmetric else 'A '
-        s += 'Sohncke ' if self.is_sohncke else ''
-        s += 'polar ' if self.is_polar else ''
-        return s + 'group of order {}.'.format(self.order)
+        return f'{self.name} (#{abs(self.number)}{"*" if self.number<0 else""})'
 
     def __hash__(self):
         return sum(hash(o) for o in self.operations)
@@ -250,6 +251,6 @@ class Group:
                         for g in self.generators],
             operations=[SymmOp.from_matrix(np.linalg.inv(m) @ o.matrix @ m)
                     for o in self.operations])
-        transformed_group.name = self.name + ' @ ' + str(m)
+        transformed_group.name = self.name + ' @ ' + repr(m)[6:-1].replace(' ','')
         transformed_group.number = -abs(self.number)
         return transformed_group
