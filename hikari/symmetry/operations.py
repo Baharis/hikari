@@ -56,7 +56,7 @@ class SymmOp:
         return self.name + ': ' + self.code + ' (' + origin + ')'
 
     def __hash__(self):
-        return hash(str(self.tf) + str(self.__tl24 % 24))
+        return hash(repr(self))
 
     @classmethod
     def from_code(cls, code):
