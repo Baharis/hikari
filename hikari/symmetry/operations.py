@@ -46,6 +46,10 @@ class SymmOp:
     def __mod__(self, other):
         return SymmOp(self.tf, np.mod(self.__tl24, 24 * other) / 24)
 
+    def __repr__(self):
+        return f'SymmOp(np.{repr(self.tf)}, np.{repr(self.tl)})'.\
+            replace('\n', '').replace(' ', '')
+
     def __str__(self):
         origin = ','.join([str(Fraction(o).limit_denominator(9))
                            for o in self.origin])
