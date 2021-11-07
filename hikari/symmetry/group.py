@@ -97,6 +97,19 @@ class Group:
         return all([o in self.operations for o in other.operations])\
                and all([o in other.operations for o in self.operations])
 
+    def __lt__(self, other):
+        return len(self.operations) < len(other.operations) and \
+            all([o in other.operations for o in self.operations])
+
+    def __gt__(self, other):
+        return other.__lt__(self)
+
+    def __le__(self, other):
+        return self.__eq__(other) or self.__lt__(other)
+
+    def __ge__(self, other):
+        return self.__eq__(other) or other.__lt__(self)
+
     def __repr__(self):
         return 'Group('+',\n      '.join([repr(g) for g in self.generators])+')'
 
@@ -125,7 +138,7 @@ class Group:
             best_plane = find_best(ops, plane_rules)
             sep = '/' if len(best_axis) > 0 and len(best_plane) > 0 else ''
             name += ' ' + best_axis + sep + best_plane
-        return name
+        return name.strip()
 
     @property
     def generators(self):
