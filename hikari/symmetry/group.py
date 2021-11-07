@@ -54,6 +54,10 @@ class Group:
             return [(), (_b, ), (_a, _b, _c), (_c, _a, _ab),
                     (_c, _a, _ab), (_c, _abc, _ab), (_c, _a, _ab)][self.value]
 
+    BRAVAIS_PRIORITY_RULES = 'A+B+C=F>I>C>B>A>H>P'
+    AXIS_PRIORITY_RULES = '6>61>62>63>64>65>-6>4>41>42>43>-4>-3>3>31>32>2>21'
+    PLANE_PRIORITY_RULES = 'm>a+b=e>a+c=e>b+c=e>a>b>c>n>d'
+
     def __init__(self, *generators):
         """
         :param generators: List of operations necessary to construct whole group
@@ -93,14 +97,28 @@ class Group:
         new_group.__operations = operations
         return new_group
 
-    def __iter__(self):
-        return iter(self.operations)
+    def __eq__(self, other):
+        return all([o in self.operations for o in other.operations])\
+               and all([o in other.operations for o in self.operations])
+
+    def __lt__(self, other):
+        return len(self.operations) < len(other.operations) and \
+            all([o in other.operations for o in self.operations])
+
+    def __gt__(self, other):
+        return other.__lt__(self)
+
+    def __le__(self, other):
+        return self.__eq__(other) or self.__lt__(other)
+
+    def __ge__(self, other):
+        return self.__eq__(other) or other.__lt__(self)
+
+    def __repr__(self):
+        return 'Group('+',\n      '.join([repr(g) for g in self.generators])+')'
 
     def __str__(self):
-        s = 'A centrosymmetric ' if self.is_centrosymmetric else 'A '
-        s += 'Sohncke ' if self.is_sohncke else ''
-        s += 'polar ' if self.is_polar else ''
-        return s + 'group of order {}.'.format(self.order)
+        return f'{self.name} (#{abs(self.number)}{"*" if self.number<0 else""})'
 
     def __hash__(self):
         return sum(hash(o) for o in self.operations)
@@ -113,18 +131,16 @@ class Group:
         # TODO: some mistakes occur in trigonal crystal system (see SG149+)
         tl = ([o.name for o in self.operations if o.typ is o.Type.translation])
         tl.append('H' if self.system is self.System.trigonal else 'P')
-        name = find_best(tl, 'A+B+C=F>I>C>B>A>H>P')
+        name = find_best(tl, self.BRAVAIS_PRIORITY_RULES)
         for d in self.system.directions:
             ops = [o.name.partition(':')[0] for o in self.operations
                    if o.orientation is not None and
                    np.isclose(abs(np.dot(np.abs(o.orientation), np.abs(d))), 1)]
-            axis_rules = '6>61>62>63>64>65>-6>4>41>42>43>-4>-3>3>31>32>2>21'
-            plane_rules = 'm>a+b=e>a+c=e>b+c=e>a>b>c>n>d'
-            best_axis = find_best(ops, axis_rules)
-            best_plane = find_best(ops, plane_rules)
+            best_axis = find_best(ops, self.AXIS_PRIORITY_RULES)
+            best_plane = find_best(ops, self.PLANE_PRIORITY_RULES)
             sep = '/' if len(best_axis) > 0 and len(best_plane) > 0 else ''
             name += ' ' + best_axis + sep + best_plane
-        return name
+        return name.strip()
 
     @property
     def generators(self):
@@ -250,6 +266,6 @@ class Group:
                         for g in self.generators],
             operations=[SymmOp.from_matrix(np.linalg.inv(m) @ o.matrix @ m)
                     for o in self.operations])
-        transformed_group.name = self.name + ' @ ' + str(m)
+        transformed_group.name = self.name+' @ '+repr(m)[6:-1].replace(' ', '')
         transformed_group.number = -abs(self.number)
         return transformed_group

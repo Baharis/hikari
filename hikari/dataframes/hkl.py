@@ -515,11 +515,10 @@ class HklFrame(BaseFrame):
         :param space_group: Space group used to extinct the reflections.
         :type space_group: hikari.symmetry.group.Group
         """
-
         hkls = self.table.loc[:, ['h', 'k', 'l']].to_numpy()
-        list_of_extinction_flags = [op.extincts(hkls) for op in space_group]
-        total_extinction_flags = np.logical_or.reduce(list_of_extinction_flags)
-        self.table = self.table[~total_extinction_flags]
+        extinct_flag_list = [o.extincts(hkls) for o in space_group.operations()]
+        extinct_flag_list_union = np.logical_or.reduce(extinct_flag_list)
+        self.table = self.table[~extinct_flag_list_union]
         self.table.reset_index(drop=True, inplace=True)
 
     def find_equivalents(self, point_group=PG['1']):
