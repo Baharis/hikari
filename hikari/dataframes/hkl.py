@@ -1,6 +1,6 @@
 from hikari.dataframes import BaseFrame
 from hikari.resources import hkl_formats, hkl_aliases
-from hikari.utility import cubespace, chemical_elements
+from hikari.utility import cubespace, chemical_elements, make_abspath
 from hikari.utility import rescale_list_to_range, rescale_list_to_other
 from hikari.symmetry import PG, SG
 import copy
@@ -1395,6 +1395,92 @@ class HklArtist:
 
 # TODO method to export the style file using "inspect" module
 # TODO get all fixed files to templates
+
+
+class HklToResConverter:
+    """A class responsible for representing hkl data using using .res format"""
+
+    MIN_DISTANCE = 10.0
+    ELEMENTS = chemical_elements[:100]
+    MIN_U = 0.00001
+    MAX_U = 4.99999
+
+    def __init__(self, hkl_dataframe):
+        self.df = hkl_dataframe
+
+    @property
+    def abc_scale_factor(self):
+        return self.limit_hkl * self.MIN_DISTANCE \
+               / min(self.df.a_r, self.df.b_r, self.df.c_r)
+
+    @property
+    def limit_hkl(self):
+        return self.df.table[['h', 'k', 'l']].abs().max().max()
+
+    @property
+    def x(self):
+        return self.df['x'] / self.limit_hkl
+
+    @property
+    def y(self):
+        return self.df['y'] / self.limit_hkl
+
+    @property
+    def z(self):
+        return self.df['z'] / self.limit_hkl
+
+    @property
+    def u(self):
+        if 'F' in self.df.table.columns:
+            return rescale_list_to_range(self.df.table['F'],
+                                         (self.MIN_U, self.MAX_U))
+        else:
+            return [1.0] * len(self.df.table)
+
+    @property
+    def c(self):
+        if 'm' in self.df.table.columns:
+            return rescale_list_to_other(self.df.table['m'], self.ELEMENTS)
+        else:
+            return [self.ELEMENTS[0]] * len(self.df.table)
+
+    @property
+    def res_header(self):
+        return "TITL Reflection visualisation\n" \
+               "REM Special file to be used in mercury with hkl.msd style.\n" \
+               "REM Reciprocal unit cell inflated by {sc} to prevent bonds\n" \
+               "CELL {la:7f} {a:7f} {b:7f} {c:7f} {al:7f} {be:7f} {ga:7f}\n" \
+               "LATT -1\n\n".format(sc=self.abc_scale_factor,
+                                    la=self.df.la,
+                                    a=self.df.a_r * self.abc_scale_factor,
+                                    b=self.df.a_r * self.abc_scale_factor,
+                                    c=self.df.a_r * self.abc_scale_factor,
+                                    al=np.rad2deg(self.df.al_r),
+                                    be=np.rad2deg(self.df.be_r),
+                                    ga=np.rad2deg(self.df.ga_r))
+
+    @property
+    def atom_list(self):
+        cols = [self.c, self.df.table['h'], self.df.table['k'],
+                self.df.table['l'], self.x, self.y, self.z, self.u]
+        return [list(row) for row in zip(*cols)]
+
+    @staticmethod
+    def res_line(_c, _h, _k, _l, _x, _y, _z, _u):
+        """
+        :return: res line filled based on input element, hkl, xyz and u.
+        :rtype: str
+        """
+        label = f'{_c}({_h},{_k},{_l})'
+        pos = f' {_x: 7.5f} {_y: 7.5f} {_z: 7.5f}'
+        return f'{label:16}   1{pos} 11.0 {_u: 7.5f}\n'
+
+    def write_res(self, path='~'):
+        file = open(make_abspath(path), 'w')
+        file.write(self.res_header)
+        for row in self.atom_list:
+            file.write(self.res_line(*row))
+        file.close()
 
 
 if __name__ == '__main__':
