@@ -1,5 +1,5 @@
 from hikari.dataframes import BaseFrame
-from hikari.resources import hkl_formats, hkl_aliases
+from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style
 from hikari.utility import cubespace, chemical_elements, make_abspath
 from hikari.utility import rescale_list_to_range, rescale_list_to_other
 from hikari.symmetry import PG, SG
@@ -8,7 +8,6 @@ import random
 import numpy as np
 import numpy.linalg as lin
 import pandas as pd
-import matplotlib.cm
 
 
 pd.options.mode.chained_assignment = 'raise'
@@ -1335,11 +1334,12 @@ class HklToResConverter:
         return f'{label:16}   1{pos} 11.0 {_u: 7.5f}\n'
 
     def convert(self, path='~'):
-        file = open(make_abspath(path), 'w')
-        file.write(self.res_header)
-        for row in self.atom_list:
-            file.write(self.res_line(*row))
-        file.close()
+        with open(make_abspath(path), 'w') as res:
+            res.write(self.res_header)
+            for row in self.atom_list:
+                res.write(self.res_line(*row))
+        with open(make_abspath(path, '../hkl.msd'), 'w') as style:
+            style.write(hkl_mercury_style)
 
 
 if __name__ == '__main__':
