@@ -1280,9 +1280,7 @@ class HklArtist:
     @property
     def maximum_index(self):
         """
-        Return largest absolute value of the following: h, k, l, -h, -k, -l.
-
-        :return: Largest absolute hkl index.
+        :return: Largest absolute value of h, k, l, -h, -k or -l index.
         :rtype: int
         """
         maxima = {key: self.df.table[key].max() for key in self.df.table.keys()}
@@ -1293,21 +1291,17 @@ class HklArtist:
     @property
     def color_dict(self):
         """
-        A dictionary containing colours used for current map.
-        :return: Dictionary of element_name:rgb_colour pairs.
+        :return: Dictionary of element_name:rgb_colour pairs for res plotting.
         :rtype: dict
         """
-        linspace = np.linspace([0], [1], len(self.ELEMENT_NAMES))
-        elements = self.ELEMENT_NAMES
-        return {k: self.COLORMAP(float(v)) for k, v in zip(elements, linspace)}
+        tics = np.linspace(0, 1, len(self.ELEMENT_NAMES)).astype(float)
+        return {k: self.COLORMAP(v) for k, v in zip(self.ELEMENT_NAMES, tics)}
 
     @property
     def res_distance_scale(self):
         """
-        Define and return a distance scale so that all reciprocal vectors
-        a, b and c have length of at least :attr:`RES_MIN_ATOM_DISTANCE`.
-
-        :return: A scale factor to multiply call distances by
+        :return: A scale factor a unit cell pars will be multiplied by so that
+        all vectors a, b and c are at least :attr:`RES_MIN_ATOM_DISTANCE` long.
         :rtype: float
         """
         min_cell_length = min(self.df.a_r, self.df.b_r, self.df.c_r)
@@ -1316,10 +1310,7 @@ class HklArtist:
     @property
     def res_reciprocal_cell(self):
         """
-        Return dictionary of seven unit cell parameters from file's header,
-        with distances rescaled to prevent software from showing bonds.
-
-        :return: Dictionary containing la, a, b, c, al, be, ga values.
+        :return: Dictionary with la, al, be, ga and rescaled a, b, c values.
         :rtype: dict
         """
         return {'la': self.df.la,
@@ -1341,20 +1332,18 @@ class HklArtist:
         """
         return "TITL Reflection visualisation\n" \
                "REM Special file to be used in mercury with hkl.msd style.\n" \
-               "REM Reciprocal unit cell scaled by {sc} to prevent bonding\n" \
+               "REM Reciprocal unit cell scaled by {sc} to prevent bonds\n" \
                "CELL {la:7f} {a:7f} {b:7f} {c:7f} {al:7f} {be:7f} {ga:7f}\n" \
                "LATT -1\n\n".format(sc=self.res_distance_scale,
                                     **self.res_reciprocal_cell)
 
     def res_legend(self, colored='m'):
         """
-        Return a legend - a least of meanings of colors used in hklres.
-
-        :return: String of res commands containing details of color meaning.
+        :return: String of res commands explaining meaning of each colour.
         :rtype: str
         """
         value_range = np.arange(min(self.df.table[colored]),
-                                max(self.df.table[colored]))
+                                max(self.df.table[colored])+1)
         elements_range = rescale_list_to_other(list(value_range),
                                                self.ELEMENT_NAMES)
         line_string = 'REM {0} = {{v}}: {{e}}, rgba{{c}}.'.format(colored)
@@ -1394,16 +1383,14 @@ class HklArtist:
         y_pos = (1.0 / self.maximum_index) * self.df.table['k']
         z_pos = (1.0 / self.maximum_index) * self.df.table['l']
         u_iso = rescale_list_to_range(self.df.table['F'], #TODO doesnt work
-                                      (self.MIN_ATOM_SIZE,
-                                      self.MAX_ATOM_SIZE))
+                                      (self.MIN_ATOM_SIZE, self.MAX_ATOM_SIZE))
         zipped = zip(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso)
 
         file = open(path, 'w')
         file.write(self.res_header)
         file.write(self.res_legend(colored=colored))
         for c, h, k, l, x, y, z, u in zipped:
-            file.write(self.res_line(color=c, h_ind=h, k_ind=k, l_ind=l,
-                                     x_pos=x, y_pos=y, z_pos=z, u_iso=u))
+            file.write(self.res_line(c, h, k, l, x, y, z, u))
         file.close()
 
 # TODO method to export the style file using "inspect" module

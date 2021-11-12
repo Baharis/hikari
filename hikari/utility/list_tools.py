@@ -94,10 +94,10 @@ def rescale_list_to_range(original, limits):
               new_min * (old_max - v) / (old_max - old_min) for v in original]
 
 
-def rescale_list_to_other(original, other):
+def rescale_list_to_other(source, target):
     """
-    Linearly rescale *original* list of numeral values to
-    elements of iterable scale in *other*.
+    Linearly rescale *source* list of numeral values to
+    elements of iterable scale in *target*.
     The numeric values in the first list are
     rescaled to the length of *other* using :func:`rescale_list_to_range`,
     changed to integers and used as pointers in *other* to retrieve final value.
@@ -111,16 +111,12 @@ def rescale_list_to_other(original, other):
     >>> rescale_list_to_other([1, 2, 3], 'holy grail')
     ['h', ' ', 'l']
 
-    :param original: Iterable of numerals to be rescaled to *other*.
-    :type original: Iterable
-    :param other: Iterable from which the values in new list will be selected.
-    :type other: Iterable
+    :param source: Iterable of numerals to be rescaled to *other*.
+    :type source: Iterable
+    :param target: Iterable from which the values in new list will be selected.
+    :type target: Iterable
     :return: List with elements from *other* assigned using values in original.
     :rtype: list
     """
-    minimum, maximum = min(original), 0.99999999 * max(original)
-    if maximum <= minimum:
-        return other[:1] * len(original)
-    else:
-        return [other[int(val)] for val in
-                rescale_list_to_range(original, (0, 0.99999 * len(other)))]
+    return [target[int(v)] for v
+            in rescale_list_to_range(source, (0, len(target)-1))]
