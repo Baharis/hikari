@@ -926,11 +926,7 @@ class HklFrame(BaseFrame):
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
-        converter = HklToResConverter(self)
-        converter.convert(path)
-        #artist = HklArtist(self)
-        #artist.write_res(path=path, colored=colored)
-        # TODO doesn't work if there is no F or sometimes randomly?
+        HklToResConverter(self).convert(path)
 
     def trim(self, limit):
         """
@@ -1256,145 +1252,6 @@ class HklWriter(HklIo):
             hkl_file.write(self._format_dict['suffix'])
 
 
-class HklArtist:
-    """
-    A class responsible for representing the HklData using either images
-    or other files, which can be further visualised.
-    """
-    COLORMAP = matplotlib.cm.get_cmap('gist_rainbow')
-    "Colourmap used to signify the 'colored' property in hkl.res"
-
-    ELEMENT_NAMES = chemical_elements[:100]
-    "List of chemical elements used to give reflections in hkl.res a colour"
-
-    MIN_ATOM_DISTANCE = 10.0
-    "Minimum available value of reciprocal unit cell length parameter"
-
-    MIN_ATOM_SIZE = 0.00001
-    "Maximum available value of U_iso while defining atom sizes"
-
-    MAX_ATOM_SIZE = 4.99999
-    "Maximum available value of U_iso while defining atom sizes"
-
-    def __init__(self, hkl_dataframe):
-        self.df = hkl_dataframe
-
-    @property
-    def maximum_index(self):
-        """
-        :return: Largest absolute value of h, k, l, -h, -k or -l index.
-        :rtype: int
-        """
-        maxima = {key: self.df.table[key].max() for key in self.df.table.keys()}
-        minima = {key: self.df.table[key].min() for key in self.df.table.keys()}
-        return max(maxima['h'], maxima['k'], maxima['l'],
-                   -minima['h'], -minima['k'], -minima['l'])
-
-    @property
-    def color_dict(self):
-        """
-        :return: Dictionary of element_name:rgb_colour pairs for res plotting.
-        :rtype: dict
-        """
-        tics = np.linspace(0, 1, len(self.ELEMENT_NAMES)).astype(float)
-        return {k: self.COLORMAP(v) for k, v in zip(self.ELEMENT_NAMES, tics)}
-
-    @property
-    def res_distance_scale(self):
-        """
-        :return: A scale factor a unit cell pars will be multiplied by so that
-        all vectors a, b and c are at least :attr:`RES_MIN_ATOM_DISTANCE` long.
-        :rtype: float
-        """
-        min_cell_length = min(self.df.a_r, self.df.b_r, self.df.c_r)
-        return self.maximum_index * self.MIN_ATOM_DISTANCE / min_cell_length
-
-    @property
-    def res_reciprocal_cell(self):
-        """
-        :return: Dictionary with la, al, be, ga and rescaled a, b, c values.
-        :rtype: dict
-        """
-        return {'la': self.df.la,
-                'a': self.df.a_r * self.res_distance_scale,
-                'b': self.df.b_r * self.res_distance_scale,
-                'c': self.df.c_r * self.res_distance_scale,
-                'al': np.rad2deg(self.df.al_r),
-                'be': np.rad2deg(self.df.be_r),
-                'ga': np.rad2deg(self.df.ga_r)}
-
-    @property
-    def res_header(self):
-        """
-        String containing information which should be find of top of res file -
-        title line, file description and unit cell information.
-
-        :return: String containing res file header.
-        :rtype: str
-        """
-        return "TITL Reflection visualisation\n" \
-               "REM Special file to be used in mercury with hkl.msd style.\n" \
-               "REM Reciprocal unit cell scaled by {sc} to prevent bonds\n" \
-               "CELL {la:7f} {a:7f} {b:7f} {c:7f} {al:7f} {be:7f} {ga:7f}\n" \
-               "LATT -1\n\n".format(sc=self.res_distance_scale,
-                                    **self.res_reciprocal_cell)
-
-    def res_legend(self, colored='m'):
-        """
-        :return: String of res commands explaining meaning of each colour.
-        :rtype: str
-        """
-        value_range = np.arange(min(self.df.table[colored]),
-                                max(self.df.table[colored])+1)
-        elements_range = rescale_list_to_other(list(value_range),
-                                               self.ELEMENT_NAMES)
-        line_string = 'REM {0} = {{v}}: {{e}}, rgba{{c}}.'.format(colored)
-        line_list = [line_string.format(v=v, e=e, c=self.color_dict[e])
-                     for v, e in zip(value_range, elements_range)]
-        return '\n'.join(line_list) + '\n\n'
-
-    @staticmethod
-    def res_line(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso):
-        """
-        Transform given element symbol, h, k, l indices,
-        reflection positions and size into printable line.
-
-        :return: string filled with provided reflection data.
-        :rtype: str
-        """
-        label = '{}({},{},{})'.format(color, h_ind, k_ind, l_ind)
-        pos = ' {: 7.5f} {: 7.5f} {: 7.5f}'.format(x_pos, y_pos, z_pos)
-        size = ' {: 7.5f}\n'.format(u_iso)
-        return '{:16}   1{} 11.0000{}'.format(label, pos, size)
-
-    def write_res(self, path='hkl.res', colored='m'):
-        """
-        Write the reflection information in .res file according to the data
-        passed to the artist object.
-
-        :param colored: Which key of dataframe should be visualised using color.
-        :type colored: str
-        :param path: Absolute or relative path where the file should be saved
-        :type path: str
-        """
-        color = rescale_list_to_other(self.df.table[colored], chemical_elements)
-        h_ind = self.df.table['h']
-        k_ind = self.df.table['k']
-        l_ind = self.df.table['l']
-        x_pos = (1.0 / self.maximum_index) * self.df.table['h']
-        y_pos = (1.0 / self.maximum_index) * self.df.table['k']
-        z_pos = (1.0 / self.maximum_index) * self.df.table['l']
-        u_iso = rescale_list_to_range(self.df.table['F'], #TODO doesnt work
-                                      (self.MIN_ATOM_SIZE, self.MAX_ATOM_SIZE))
-        zipped = zip(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso)
-
-        file = open(path, 'w')
-        file.write(self.res_header)
-        file.write(self.res_legend(colored=colored))
-        for c, h, k, l, x, y, z, u in zipped:
-            file.write(self.res_line(c, h, k, l, x, y, z, u))
-        file.close()
-
 # TODO method to export the style file using "inspect" module
 # TODO get all fixed files to templates
 
@@ -1412,24 +1269,24 @@ class HklToResConverter:
 
     @property
     def abc_scale_factor(self):
-        return self.limit_hkl * self.MIN_DISTANCE \
+        return self.largest_absolute_hkl * self.MIN_DISTANCE \
                / min(self.df.a_r, self.df.b_r, self.df.c_r)
 
     @property
-    def limit_hkl(self):
+    def largest_absolute_hkl(self):
         return self.df.table[['h', 'k', 'l']].abs().max().max()
 
     @property
     def x(self):
-        return self.df.table['h'] / self.limit_hkl
+        return self.df.table['h'] / self.largest_absolute_hkl
 
     @property
     def y(self):
-        return self.df.table['k'] / self.limit_hkl
+        return self.df.table['k'] / self.largest_absolute_hkl
 
     @property
     def z(self):
-        return self.df.table['l'] / self.limit_hkl
+        return self.df.table['l'] / self.largest_absolute_hkl
 
     @property
     def u(self):
