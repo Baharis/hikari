@@ -926,8 +926,10 @@ class HklFrame(BaseFrame):
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
-        artist = HklArtist(self)
-        artist.write_res(path=path, colored=colored)
+        converter = HklToResConverter(self)
+        converter.convert(path)
+        #artist = HklArtist(self)
+        #artist.write_res(path=path, colored=colored)
         # TODO doesn't work if there is no F or sometimes randomly?
 
     def trim(self, limit):
@@ -1419,15 +1421,15 @@ class HklToResConverter:
 
     @property
     def x(self):
-        return self.df['x'] / self.limit_hkl
+        return self.df.table['h'] / self.limit_hkl
 
     @property
     def y(self):
-        return self.df['y'] / self.limit_hkl
+        return self.df.table['k'] / self.limit_hkl
 
     @property
     def z(self):
-        return self.df['z'] / self.limit_hkl
+        return self.df.table['l'] / self.limit_hkl
 
     @property
     def u(self):
@@ -1453,8 +1455,8 @@ class HklToResConverter:
                "LATT -1\n\n".format(sc=self.abc_scale_factor,
                                     la=self.df.la,
                                     a=self.df.a_r * self.abc_scale_factor,
-                                    b=self.df.a_r * self.abc_scale_factor,
-                                    c=self.df.a_r * self.abc_scale_factor,
+                                    b=self.df.b_r * self.abc_scale_factor,
+                                    c=self.df.c_r * self.abc_scale_factor,
                                     al=np.rad2deg(self.df.al_r),
                                     be=np.rad2deg(self.df.be_r),
                                     ga=np.rad2deg(self.df.ga_r))
@@ -1475,7 +1477,7 @@ class HklToResConverter:
         pos = f' {_x: 7.5f} {_y: 7.5f} {_z: 7.5f}'
         return f'{label:16}   1{pos} 11.0 {_u: 7.5f}\n'
 
-    def write_res(self, path='~'):
+    def convert(self, path='~'):
         file = open(make_abspath(path), 'w')
         file.write(self.res_header)
         for row in self.atom_list:
