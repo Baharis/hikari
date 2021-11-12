@@ -516,7 +516,7 @@ class HklFrame(BaseFrame):
         :type space_group: hikari.symmetry.group.Group
         """
         hkls = self.table.loc[:, ['h', 'k', 'l']].to_numpy()
-        extinct_flag_list = [o.extincts(hkls) for o in space_group.operations()]
+        extinct_flag_list = [o.extincts(hkls) for o in space_group.operations]
         extinct_flag_list_union = np.logical_or.reduce(extinct_flag_list)
         self.table = self.table[~extinct_flag_list_union]
         self.table.reset_index(drop=True, inplace=True)
@@ -617,6 +617,7 @@ class HklFrame(BaseFrame):
         :param space_group: Space group used to calculate the statistics.
         :type space_group: hikari.symmetry.Group
         """
+        #TODO this function doesn't make sense for merged data
 
         hkl_base = self.duplicate()
         hkl_base.extinct(space_group)
@@ -927,6 +928,7 @@ class HklFrame(BaseFrame):
         """
         artist = HklArtist(self)
         artist.write_res(path=path, colored=colored)
+        # TODO doesn't work if there is no F or sometimes randomly?
 
     def trim(self, limit):
         """
@@ -1391,9 +1393,9 @@ class HklArtist:
         x_pos = (1.0 / self.maximum_index) * self.df.table['h']
         y_pos = (1.0 / self.maximum_index) * self.df.table['k']
         z_pos = (1.0 / self.maximum_index) * self.df.table['l']
-        u_iso = rescale_list_to_range(self.df.table['F'],
+        u_iso = rescale_list_to_range(self.df.table['F'], #TODO doesnt work
                                       (self.MIN_ATOM_SIZE,
-                                       self.MAX_ATOM_SIZE))
+                                      self.MAX_ATOM_SIZE))
         zipped = zip(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso)
 
         file = open(path, 'w')
@@ -1413,3 +1415,4 @@ if __name__ == '__main__':
 
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
+    # TODO import problems - PG / SG must be imported first???
