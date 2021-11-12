@@ -1,6 +1,6 @@
 from hikari.dataframes import BaseFrame
-from hikari.resources import hkl_formats, hkl_aliases
-from hikari.utility import cubespace, chemical_elements
+from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style
+from hikari.utility import cubespace, chemical_elements, make_abspath
 from hikari.utility import rescale_list_to_range, rescale_list_to_other
 from hikari.symmetry import PG, SG
 import copy
@@ -8,7 +8,6 @@ import random
 import numpy as np
 import numpy.linalg as lin
 import pandas as pd
-import matplotlib.cm
 
 
 pd.options.mode.chained_assignment = 'raise'
@@ -516,7 +515,7 @@ class HklFrame(BaseFrame):
         :type space_group: hikari.symmetry.group.Group
         """
         hkls = self.table.loc[:, ['h', 'k', 'l']].to_numpy()
-        extinct_flag_list = [o.extincts(hkls) for o in space_group.operations()]
+        extinct_flag_list = [o.extincts(hkls) for o in space_group.operations]
         extinct_flag_list_union = np.logical_or.reduce(extinct_flag_list)
         self.table = self.table[~extinct_flag_list_union]
         self.table.reset_index(drop=True, inplace=True)
@@ -617,6 +616,7 @@ class HklFrame(BaseFrame):
         :param space_group: Space group used to calculate the statistics.
         :type space_group: hikari.symmetry.Group
         """
+        #TODO this function doesn't make sense for merged data
 
         hkl_base = self.duplicate()
         hkl_base.extinct(space_group)
@@ -925,8 +925,7 @@ class HklFrame(BaseFrame):
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
-        artist = HklArtist(self)
-        artist.write_res(path=path, colored=colored)
+        HklToResConverter(self).convert(path)
 
     def trim(self, limit):
         """
@@ -1252,160 +1251,95 @@ class HklWriter(HklIo):
             hkl_file.write(self._format_dict['suffix'])
 
 
-class HklArtist:
-    """
-    A class responsible for representing the HklData using either images
-    or other files, which can be further visualised.
-    """
-    COLORMAP = matplotlib.cm.get_cmap('gist_rainbow')
-    "Colourmap used to signify the 'colored' property in hkl.res"
+# TODO method to export the style file using "inspect" module
+# TODO get all fixed files to templates
 
-    ELEMENT_NAMES = chemical_elements[:100]
-    "List of chemical elements used to give reflections in hkl.res a colour"
 
-    MIN_ATOM_DISTANCE = 10.0
-    "Minimum available value of reciprocal unit cell length parameter"
+class HklToResConverter:
+    """A class responsible for representing hkl data using using .res format"""
 
-    MIN_ATOM_SIZE = 0.00001
-    "Maximum available value of U_iso while defining atom sizes"
-
-    MAX_ATOM_SIZE = 4.99999
-    "Maximum available value of U_iso while defining atom sizes"
+    MIN_DISTANCE = 10.0
+    ELEMENTS = chemical_elements[:100]
+    MIN_U = 0.00001
+    MAX_U = 4.99999
 
     def __init__(self, hkl_dataframe):
         self.df = hkl_dataframe
 
     @property
-    def maximum_index(self):
-        """
-        Return largest absolute value of the following: h, k, l, -h, -k, -l.
-
-        :return: Largest absolute hkl index.
-        :rtype: int
-        """
-        maxima = {key: self.df.table[key].max() for key in self.df.table.keys()}
-        minima = {key: self.df.table[key].min() for key in self.df.table.keys()}
-        return max(maxima['h'], maxima['k'], maxima['l'],
-                   -minima['h'], -minima['k'], -minima['l'])
+    def abc_scale_factor(self):
+        return self.largest_absolute_hkl * self.MIN_DISTANCE \
+               / min(self.df.a_r, self.df.b_r, self.df.c_r)
 
     @property
-    def color_dict(self):
-        """
-        A dictionary containing colours used for current map.
-        :return: Dictionary of element_name:rgb_colour pairs.
-        :rtype: dict
-        """
-        linspace = np.linspace([0], [1], len(self.ELEMENT_NAMES))
-        elements = self.ELEMENT_NAMES
-        return {k: self.COLORMAP(float(v)) for k, v in zip(elements, linspace)}
+    def largest_absolute_hkl(self):
+        return self.df.table[['h', 'k', 'l']].abs().max().max()
 
     @property
-    def res_distance_scale(self):
-        """
-        Define and return a distance scale so that all reciprocal vectors
-        a, b and c have length of at least :attr:`RES_MIN_ATOM_DISTANCE`.
-
-        :return: A scale factor to multiply call distances by
-        :rtype: float
-        """
-        min_cell_length = min(self.df.a_r, self.df.b_r, self.df.c_r)
-        return self.maximum_index * self.MIN_ATOM_DISTANCE / min_cell_length
+    def x(self):
+        return self.df.table['h'] / self.largest_absolute_hkl
 
     @property
-    def res_reciprocal_cell(self):
-        """
-        Return dictionary of seven unit cell parameters from file's header,
-        with distances rescaled to prevent software from showing bonds.
+    def y(self):
+        return self.df.table['k'] / self.largest_absolute_hkl
 
-        :return: Dictionary containing la, a, b, c, al, be, ga values.
-        :rtype: dict
-        """
-        return {'la': self.df.la,
-                'a': self.df.a_r * self.res_distance_scale,
-                'b': self.df.b_r * self.res_distance_scale,
-                'c': self.df.c_r * self.res_distance_scale,
-                'al': np.rad2deg(self.df.al_r),
-                'be': np.rad2deg(self.df.be_r),
-                'ga': np.rad2deg(self.df.ga_r)}
+    @property
+    def z(self):
+        return self.df.table['l'] / self.largest_absolute_hkl
+
+    @property
+    def u(self):
+        if 'F' in self.df.table.columns:
+            return rescale_list_to_range(self.df.table['F'],
+                                         (self.MIN_U, self.MAX_U))
+        else:
+            return [1.0] * len(self.df.table)
+
+    @property
+    def c(self):
+        if 'm' in self.df.table.columns:
+            return rescale_list_to_other(self.df.table['m'], self.ELEMENTS)
+        else:
+            return [self.ELEMENTS[0]] * len(self.df.table)
 
     @property
     def res_header(self):
-        """
-        String containing information which should be find of top of res file -
-        title line, file description and unit cell information.
-
-        :return: String containing res file header.
-        :rtype: str
-        """
         return "TITL Reflection visualisation\n" \
                "REM Special file to be used in mercury with hkl.msd style.\n" \
-               "REM Reciprocal unit cell scaled by {sc} to prevent bonding\n" \
+               "REM Reciprocal unit cell inflated by {sc} to prevent bonds\n" \
                "CELL {la:7f} {a:7f} {b:7f} {c:7f} {al:7f} {be:7f} {ga:7f}\n" \
-               "LATT -1\n\n".format(sc=self.res_distance_scale,
-                                    **self.res_reciprocal_cell)
+               "LATT -1\n\n".format(sc=self.abc_scale_factor,
+                                    la=self.df.la,
+                                    a=self.df.a_r * self.abc_scale_factor,
+                                    b=self.df.b_r * self.abc_scale_factor,
+                                    c=self.df.c_r * self.abc_scale_factor,
+                                    al=np.rad2deg(self.df.al_r),
+                                    be=np.rad2deg(self.df.be_r),
+                                    ga=np.rad2deg(self.df.ga_r))
 
-    def res_legend(self, colored='m'):
-        """
-        Return a legend - a least of meanings of colors used in hklres.
-
-        :return: String of res commands containing details of color meaning.
-        :rtype: str
-        """
-        value_range = np.arange(min(self.df.table[colored]),
-                                max(self.df.table[colored]))
-        elements_range = rescale_list_to_other(list(value_range),
-                                               self.ELEMENT_NAMES)
-        line_string = 'REM {0} = {{v}}: {{e}}, rgba{{c}}.'.format(colored)
-        line_list = [line_string.format(v=v, e=e, c=self.color_dict[e])
-                     for v, e in zip(value_range, elements_range)]
-        return '\n'.join(line_list) + '\n\n'
+    @property
+    def atom_list(self):
+        cols = [self.c, self.df.table['h'], self.df.table['k'],
+                self.df.table['l'], self.x, self.y, self.z, self.u]
+        return [list(row) for row in zip(*cols)]
 
     @staticmethod
-    def res_line(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso):
+    def res_line(_c, _h, _k, _l, _x, _y, _z, _u):
         """
-        Transform given element symbol, h, k, l indices,
-        reflection positions and size into printable line.
-
-        :return: string filled with provided reflection data.
+        :return: res line filled based on input element, hkl, xyz and u.
         :rtype: str
         """
-        label = '{}({},{},{})'.format(color, h_ind, k_ind, l_ind)
-        pos = ' {: 7.5f} {: 7.5f} {: 7.5f}'.format(x_pos, y_pos, z_pos)
-        size = ' {: 7.5f}\n'.format(u_iso)
-        return '{:16}   1{} 11.0000{}'.format(label, pos, size)
+        label = f'{_c}({_h},{_k},{_l})'
+        pos = f' {_x: 7.5f} {_y: 7.5f} {_z: 7.5f}'
+        return f'{label:16}   1{pos} 11.0 {_u: 7.5f}\n'
 
-    def write_res(self, path='hkl.res', colored='m'):
-        """
-        Write the reflection information in .res file according to the data
-        passed to the artist object.
-
-        :param colored: Which key of dataframe should be visualised using color.
-        :type colored: str
-        :param path: Absolute or relative path where the file should be saved
-        :type path: str
-        """
-        color = rescale_list_to_other(self.df.table[colored], chemical_elements)
-        h_ind = self.df.table['h']
-        k_ind = self.df.table['k']
-        l_ind = self.df.table['l']
-        x_pos = (1.0 / self.maximum_index) * self.df.table['h']
-        y_pos = (1.0 / self.maximum_index) * self.df.table['k']
-        z_pos = (1.0 / self.maximum_index) * self.df.table['l']
-        u_iso = rescale_list_to_range(self.df.table['F'],
-                                      (self.MIN_ATOM_SIZE,
-                                       self.MAX_ATOM_SIZE))
-        zipped = zip(color, h_ind, k_ind, l_ind, x_pos, y_pos, z_pos, u_iso)
-
-        file = open(path, 'w')
-        file.write(self.res_header)
-        file.write(self.res_legend(colored=colored))
-        for c, h, k, l, x, y, z, u in zipped:
-            file.write(self.res_line(color=c, h_ind=h, k_ind=k, l_ind=l,
-                                     x_pos=x, y_pos=y, z_pos=z, u_iso=u))
-        file.close()
-
-# TODO method to export the style file using "inspect" module
-# TODO get all fixed files to templates
+    def convert(self, path='~'):
+        with open(make_abspath(path), 'w') as res:
+            res.write(self.res_header)
+            for row in self.atom_list:
+                res.write(self.res_line(*row))
+        with open(make_abspath(path, '../hkl.msd'), 'w') as style:
+            style.write(hkl_mercury_style)
 
 
 if __name__ == '__main__':
@@ -1413,3 +1347,4 @@ if __name__ == '__main__':
 
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
+    # TODO import problems - PG / SG must be imported first???
