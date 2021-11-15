@@ -1,15 +1,16 @@
-from hikari.dataframes import BaseFrame
-from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style, \
-                             characteristic_radiation
-from hikari.utility import cubespace, chemical_elements, make_abspath
-from hikari.utility import rescale_list_to_range, rescale_list_to_other
-from hikari.symmetry import PG, SG
 import copy
 import random
+
 import numpy as np
 import numpy.linalg as lin
 import pandas as pd
 
+from hikari.dataframes import BaseFrame
+from hikari.symmetry import PG, SG
+from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style, \
+    characteristic_radiation
+from hikari.utility import cubespace, chemical_elements, make_abspath, \
+    rescale_list_to_range, rescale_list_to_other
 
 pd.options.mode.chained_assignment = 'raise'
 
