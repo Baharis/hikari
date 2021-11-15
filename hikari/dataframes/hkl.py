@@ -1,5 +1,6 @@
 from hikari.dataframes import BaseFrame
-from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style
+from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style, \
+                             characteristic_radiation
 from hikari.utility import cubespace, chemical_elements, make_abspath
 from hikari.utility import rescale_list_to_range, rescale_list_to_other
 from hikari.symmetry import PG, SG
@@ -401,7 +402,7 @@ class HklFrame(BaseFrame):
     def la(self):
         """
         Wavelength of radiation used in the diffraction experiment.
-        Can be set using popular definitions such as "MoKa" or "CuKb",
+        Can be set using popular abbreviations such as "MoKa" or "CuKb",
         where *a* and *b* stand for *alpha* and *beta*.
         Implemented cathode materials include:
         "Ag", "Co", "Cr", "Cu", "Fe", "Mn", "Mo", "Ni", "Pd", "Rh", "Ti", "Zn"
@@ -415,57 +416,35 @@ class HklFrame(BaseFrame):
 
     @la.setter
     def la(self, wavelength):
-        characteristic_radiations = {'agka': 0.5608, 'agkb': 0.4970,
-                                     'coka': 1.7905, 'cokb': 1.6208,
-                                     'crka': 2.2909, 'crkb': 2.0848,
-                                     'cuka': 1.5418, 'cukb': 1.3922,
-                                     'feka': 1.9373, 'fekb': 1.7565,
-                                     'mnka': 2.1031, 'mnkb': 1.9102,
-                                     'moka': 0.7107, 'mokb': 0.6323,
-                                     'nika': 1.6591, 'nikb': 1.5001,
-                                     'pdka': 0.5869, 'pdkb': 0.5205,
-                                     'rhka': 0.6147, 'rhkb': 0.5456,
-                                     'tika': 2.7496, 'tikb': 2.5138,
-                                     'znka': 1.4364, 'znkb': 1.2952}
         try:
-            self.__la = characteristic_radiations[wavelength[:4].lower()]
+            self.__la = characteristic_radiation[wavelength[:4].lower()]
         except TypeError:
             self.__la = float(wavelength)
 
     @property
     def r_lim(self):
         """
-        Calculate limiting sphere radius based on :attr:`la`.
-
-        :return: Value of limiting sphere radius in reciprocal Angstrom
+        :return: Radius of limiting sphere calculated in A-1 based on :attr:`la`
         :rtype: float
         """
         return 2 / self.la
 
     def dac(self, opening_angle=35.0, vector=None):
         """
-        Cut from the dataframe all the reflections,
-        which lie outside the accessible volume of diamond anvil cell.
-
-        The diamond anvil cell (DAC) accessible volume is described
-        using single *opening angle* (0 to 90 degrees, do not mistake with
-        double opening angle which takes values from 0 to 180 degrees)
-        and crystal orientation. The orientation information can be supplied
-        either via specifying crystal orientation in
-        :class:`hikari.dataframes.BaseFrame`, in :attr:`orientation`
-        or by providing a *vector*. The *vector* is perpendicular to
-        the dac-accessible space traced by the tori.
-
-        In order to see further details about the shape of dac-accessible space
-        and orientation matrix / vector please refer to
+        Cut all reflections which lie outside the accessible volume of diamond
+        anvil cell. Sample/DAC orientation can be supplied either via specifying
+        crystal orientation in :class:`hikari.dataframes.BaseFrame`,
+        in :attr:`orientation` or by providing a xyz *vector* perpendicular to
+        the dac-accessible space traced by the tori. For further details about
+        the dac-accessible space and orientation matrix / vector please refer to
         *Merrill & Bassett, Review of Scientific Instruments 45, 290 (1974)*
         and *Paciorek et al., Acta Cryst. A55, 543 (1999)*, respectively.
 
-        :param opening_angle: DAC single opening angle in degrees
+        :param opening_angle: DAC single opening angle in degrees, default 35.0.
         :type opening_angle: float
         :param vector: Provides information about orientation of crystal
           relative to DAC. If None, current :attr:`orientation` is used instead.
-        :type vector: Tuple[float, float, float]
+        :type vector: Tuple[float]
         """
 
         opening_angle_in_radians = np.deg2rad(opening_angle)
@@ -573,11 +552,11 @@ class HklFrame(BaseFrame):
         max_index = 25
 
         # make an initial guess of the hkl ball
-        def _make_hkl_ball(i=max_index, _r=radius):
+        def _make_hkl_ball(i=max_index):
             hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
             hkls = np.stack(hkl_grid, -1).reshape(-1, 3)
             xyz = np.matrix((self.a_w, self.b_w, self.c_w))
-            return hkls[lin.norm(hkls @ xyz, axis=1) <= _r]
+            return hkls[lin.norm(hkls @ xyz, axis=1) <= radius]
         hkl = _make_hkl_ball()
 
         # increase the ball size until all needed points are in
@@ -1226,7 +1205,6 @@ class HklWriter(HklIo):
             hkl_file.write(self._format_dict['suffix'])
 
 
-# TODO method to export the style file using "inspect" module
 # TODO get all fixed files to templates
 
 
