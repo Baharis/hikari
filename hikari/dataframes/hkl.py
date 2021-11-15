@@ -600,7 +600,7 @@ class HklFrame(BaseFrame):
 
     def stats(self, bins=10, space_group=SG['P1']):
         """
-        Prints completeness, redundancy, number of all, unique and theoretically
+        Returns completeness, redundancy, number of all, unique & theoretically
         possible reflections within equal-volume `bins` in given `space group`.
 
         :param bins: Number of equal-volume bins to divide the data into.
@@ -610,49 +610,35 @@ class HklFrame(BaseFrame):
         :returns
         """
 
-        #TODO this function doesn't make sense for merged data
+        point_group = space_group.reciprocate()
 
         hkl_base = self.copy()
         hkl_base.extinct(space_group)
+        hkl_base.find_equivalents(point_group)
+        hkl_base.table['i_to_si'] = hkl_base.table['I'] / hkl_base.table['si']
 
-        def prepare_ball_of_hkl(_point_group=PG['1']):
-            _hkl_full = hkl_base.copy()
-            _hkl_full.fill(radius=max(self.table['r']))
-            _hkl_full.merge(point_group=_point_group)
-            _hkl_full.extinct(space_group)
-            return _hkl_full
+        hkl_full = self.copy()
+        hkl_full.fill(radius=max(self.table['r']))
+        hkl_full.merge(point_group)
+        hkl_full.extinct(space_group)
+        hkl_full.find_equivalents(point_group)
 
-        hkl_full = prepare_ball_of_hkl(_point_group=space_group)
-
-        def prepare_merged_hkl(_point_group=PG['1']):
-            _hkl_merged_pg1 = hkl_base.copy()
-            _hkl_merged_pg1.merge(point_group=_point_group)
-            return _hkl_merged_pg1
-
-        hkl_merged = prepare_merged_hkl(_point_group=space_group)
-
-        def group_by_resolution(ungrouped_hkl, _bins=bins):
-            cube_bins = cubespace(0.0, max(self.table['r']), num=_bins + 1)
-            grouped_hkl = ungrouped_hkl.table.groupby(
-                pd.cut(ungrouped_hkl.table['r'], cube_bins))
-            return grouped_hkl
+        def group_by_resolution(hkl_):
+            bin_limits = cubespace(0.0, max(self.table['r']), num=bins + 1)
+            return hkl_.table.groupby(pd.cut(hkl_.table['r'], bin_limits))
 
         grouped_base = group_by_resolution(hkl_base)
         grouped_full = group_by_resolution(hkl_full)
-        grouped_merged = group_by_resolution(hkl_merged)
 
-        def make_table_with_stats(_grouped_base, _grouped_full,
-                                  _grouped_merged):
-            observed = _grouped_base.size()
-            independent = _grouped_merged.size()
-            theory = _grouped_full.size()
-            completeness = independent.div(theory)
-            redundancy = observed.div(independent)
-            results = pd.concat([observed, independent, theory,
-                                 completeness, redundancy], axis=1)
-            results.columns = ['Obser', 'Indep', 'Theory', 'Cplt', 'Redund.']
-            return results
-        return make_table_with_stats(grouped_base, grouped_full, grouped_merged)
+        observed = grouped_base.size()
+        independent = grouped_base['equiv'].nunique()
+        theory = grouped_full['equiv'].nunique()
+        cpl = independent.div(theory)
+        red = observed.div(independent)
+        i2si = grouped_base['i_to_si'].mean()
+        out = pd.concat([observed, independent, theory, i2si, cpl, red], axis=1)
+        out.columns = ['Obser', 'Indep', 'Theory', 'I/si(I)', 'Cplt', 'Red.']
+        return out  # use .reset_index().to_string(index=False) to flatten
 
     def merge(self, point_group=PG['1']):
         """

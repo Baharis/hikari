@@ -17,7 +17,7 @@ import numpy.linalg as lin
 
 
 def completeness_statistics(a, b, c, al, be, ga,
-                            point_group=PG['-1'],
+                            space_group=SG['P-1'],
                             input_path='shelx.hkl',
                             input_format=4,
                             input_wavelength='CuKa'):
@@ -37,9 +37,8 @@ def completeness_statistics(a, b, c, al, be, ga,
     :type be: float
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
-    :param point_group: Point group of the crystal,
-        defined as an instance of :class:`hikari.symmetry.Group`
-    :type point_group: hikari.symmetry.Group
+    :param space_group: Space group of the crystal.
+    :type space_group: hikari.symmetry.Group
     :param input_path: Path to the input .hkl file.
     :type input_path: str
     :param input_format: Format of the .hkl file. For reference see
@@ -53,7 +52,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
     p.read(input_path, input_format)
-    p.stats(space_group=point_group)
+    p.stats(space_group=space_group)
 
 
 def dac_completeness_vs_opening_angle(output_path='output.txt',
