@@ -242,7 +242,7 @@ def potency_map(a, b, c, al, be, ga,
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
                 v = _translate_angles_to_vector(theta=th, phi=ph)
-                q = p.duplicate()
+                q = p.copy()
                 q.dac(opening_angle=opening_angle, vector=v)
                 hkl_len = q.table['equiv'].nunique()
                 data_dict['th'].append(th)

@@ -342,7 +342,7 @@ class HklFrame(BaseFrame):
     HklFrame methods are designed to work in-place, so the work strategy
     is to create a new instance of HklFrame for each reflection dataset,
     manipulate it using methods, eg. :func:`merge` or :func:`trim`, and
-    :func:`duplicate` to other object or output using :func:`write` if needed.
+    :func:`copy` to other object or output using :func:`write` if needed.
 
     The HklFrame always initiates empty and does not accept any arguments.
     Some of the magic methods, such as :func:`__len__` and :func:`__add__`
@@ -379,7 +379,7 @@ class HklFrame(BaseFrame):
         :return: concatenated :attr:`table` dataframes, with metadata from first
         :rtype: HklFrame
         """
-        _copied = self.duplicate()
+        _copied = self.copy()
         _copied.table = pd.concat([self.table, other.table], ignore_index=True)
         return _copied
 
@@ -497,11 +497,9 @@ class HklFrame(BaseFrame):
         self.table = self.table[in_torus1 * in_torus2]
         self.table.reset_index(drop=True, inplace=True)
 
-    def duplicate(self):
+    def copy(self):
         """
-        Make and return an exact deep copy of this HklFrame.
-
-        :return: A copy of this HklFrame.
+        :return: An exact deep copy of this HklFrame.
         :rtype: HklFrame
         """
         return copy.deepcopy(self)
@@ -600,65 +598,47 @@ class HklFrame(BaseFrame):
         self.from_dict({'h': np.array(_h)[0], 'k': np.array(_k)[0],
                         'l': np.array(_l)[0], 'I': ones, 'si': ones, 'm': ones})
 
-    def stats(self, bins=10, space_group=PG['1']):
+    def stats(self, bins=10, space_group=SG['P1']):
         """
-        Analyses dataframe in terms of number of individual, unique and
-        theoretically possible reflections, as well as completeness and
-        redundancy in given point group.
+        Returns completeness, redundancy, number of all, unique & theoretically
+        possible reflections within equal-volume `bins` in given `space group`.
 
-        Point group is necessary to correctly specify symmetry equivalence
-        and it has been described for method :meth:`merge` in detail.
-        List of extinctions is necessary to correctly extinct the reference data
-        and it has been for method :meth:`extinct` in detail.
-
-        :param bins: Number of individual bins to divide the data into.
+        :param bins: Number of equal-volume bins to divide the data into.
         :type bins: int
-        :param space_group: Space group used to calculate the statistics.
+        :param space_group: Group used to calculate equivalence and extinctions.
         :type space_group: hikari.symmetry.Group
+        :returns
         """
-        #TODO this function doesn't make sense for merged data
 
-        hkl_base = self.duplicate()
+        point_group = space_group.reciprocate()
+
+        hkl_base = self.copy()
         hkl_base.extinct(space_group)
+        hkl_base.find_equivalents(point_group)
+        hkl_base.table['i_to_si'] = hkl_base.table['I'] / hkl_base.table['si']
 
-        def prepare_ball_of_hkl(_point_group=PG['1']):
-            _hkl_full = hkl_base.duplicate()
-            _hkl_full.fill(radius=max(self.table['r']))
-            _hkl_full.merge(point_group=_point_group)
-            _hkl_full.extinct(space_group)
-            return _hkl_full
+        hkl_full = self.copy()
+        hkl_full.fill(radius=max(self.table['r']))
+        hkl_full.merge(point_group)
+        hkl_full.extinct(space_group)
+        hkl_full.find_equivalents(point_group)
 
-        hkl_full = prepare_ball_of_hkl(_point_group=space_group)
-
-        def prepare_merged_hkl(_point_group=PG['1']):
-            _hkl_merged_pg1 = hkl_base.duplicate()
-            _hkl_merged_pg1.merge(point_group=_point_group)
-            return _hkl_merged_pg1
-
-        hkl_merged = prepare_merged_hkl(_point_group=space_group)
-
-        def group_by_resolution(ungrouped_hkl, _bins=bins):
-            cube_bins = cubespace(0.0, max(self.table['r']), num=_bins + 1)
-            grouped_hkl = ungrouped_hkl.table.groupby(
-                pd.cut(ungrouped_hkl.table['r'], cube_bins))
-            return grouped_hkl
+        def group_by_resolution(hkl_):
+            bin_limits = cubespace(0.0, max(self.table['r']), num=bins + 1)
+            return hkl_.table.groupby(pd.cut(hkl_.table['r'], bin_limits))
 
         grouped_base = group_by_resolution(hkl_base)
         grouped_full = group_by_resolution(hkl_full)
-        grouped_merged = group_by_resolution(hkl_merged)
 
-        def make_table_with_stats(_grouped_base, _grouped_full,
-                                  _grouped_merged):
-            observed = _grouped_base.size()
-            independent = _grouped_merged.size()
-            theory = _grouped_full.size()
-            completeness = independent.div(theory)
-            redundancy = observed.div(independent)
-            results = pd.concat([observed, independent, theory,
-                                 completeness, redundancy], axis=1)
-            results.columns = ['Obser', 'Indep', 'Theory', 'Cplt', 'Redund.']
-            return results
-        return make_table_with_stats(grouped_base, grouped_full, grouped_merged)
+        observed = grouped_base.size()
+        independent = grouped_base['equiv'].nunique()
+        theory = grouped_full['equiv'].nunique()
+        cpl = independent.div(theory)
+        red = observed.div(independent)
+        i2si = grouped_base['i_to_si'].mean()
+        out = pd.concat([observed, independent, theory, i2si, cpl, red], axis=1)
+        out.columns = ['Obser', 'Indep', 'Theory', 'I/si(I)', 'Cplt', 'Red.']
+        return out  # use .reset_index().to_string(index=False) to flatten
 
     def merge(self, point_group=PG['1']):
         """
