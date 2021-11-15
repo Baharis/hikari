@@ -563,8 +563,7 @@ class HklFrame(BaseFrame):
 
     def fill(self, radius=2.0):
         """
-        Fill the dataframe with all possible reflections within
-        the distance *radius* from the reciprocal space origin.
+        Fill dataframe with all reflections within *radius* from space origin.
 
         :param radius: Maximum distance from the reciprocal space origin
             to placed reflection (in reciprocal Angstrom).
@@ -575,12 +574,8 @@ class HklFrame(BaseFrame):
 
         # make an initial guess of the hkl ball
         def _make_hkl_ball(i=max_index, _r=radius):
-            hkl_grid = np.mgrid[-i:i:2j * i + 1j, -i:i:2j * i + 1j,
-                       -i:i:2j * i + 1j]
-            h_column = np.concatenate(np.concatenate(hkl_grid[0]))
-            k_column = np.concatenate(np.concatenate(hkl_grid[1]))
-            l_column = np.concatenate(np.concatenate(hkl_grid[2]))
-            hkls = np.matrix((h_column, k_column, l_column)).T
+            hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
+            hkls = np.stack(hkl_grid, -1).reshape(-1, 3)
             xyz = np.matrix((self.a_w, self.b_w, self.c_w))
             return hkls[lin.norm(hkls @ xyz, axis=1) <= _r]
         hkl = _make_hkl_ball()
@@ -615,7 +610,7 @@ class HklFrame(BaseFrame):
         hkl_base = self.copy()
         hkl_base.extinct(space_group)
         hkl_base.find_equivalents(point_group)
-        hkl_base.table['i_to_si'] = hkl_base.table['I'] / hkl_base.table['si']
+        hkl_base.table['_i_to_si'] = hkl_base.table['I'] / hkl_base.table['si']
 
         hkl_full = self.copy()
         hkl_full.fill(radius=max(self.table['r']))
@@ -635,7 +630,7 @@ class HklFrame(BaseFrame):
         theory = grouped_full['equiv'].nunique()
         cpl = independent.div(theory)
         red = observed.div(independent)
-        i2si = grouped_base['i_to_si'].mean()
+        i2si = grouped_base['_i_to_si'].mean()
         out = pd.concat([observed, independent, theory, i2si, cpl, red], axis=1)
         out.columns = ['Obser', 'Indep', 'Theory', 'I/si(I)', 'Cplt', 'Red.']
         return out  # use .reset_index().to_string(index=False) to flatten
