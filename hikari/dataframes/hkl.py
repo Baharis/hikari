@@ -600,22 +600,18 @@ class HklFrame(BaseFrame):
         self.from_dict({'h': np.array(_h)[0], 'k': np.array(_k)[0],
                         'l': np.array(_l)[0], 'I': ones, 'si': ones, 'm': ones})
 
-    def stats(self, bins=10, space_group=PG['1']):
+    def stats(self, bins=10, space_group=SG['P1']):
         """
-        Analyses dataframe in terms of number of individual, unique and
-        theoretically possible reflections, as well as completeness and
-        redundancy in given point group.
+        Prints completeness, redundancy, number of all, unique and theoretically
+        possible reflections within equal-volume `bins` in given `space group`.
 
-        Point group is necessary to correctly specify symmetry equivalence
-        and it has been described for method :meth:`merge` in detail.
-        List of extinctions is necessary to correctly extinct the reference data
-        and it has been for method :meth:`extinct` in detail.
-
-        :param bins: Number of individual bins to divide the data into.
+        :param bins: Number of equal-volume bins to divide the data into.
         :type bins: int
-        :param space_group: Space group used to calculate the statistics.
+        :param space_group: Group used to calculate equivalence and extinctions.
         :type space_group: hikari.symmetry.Group
+        :returns
         """
+
         #TODO this function doesn't make sense for merged data
 
         hkl_base = self.duplicate()
