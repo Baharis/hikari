@@ -1,14 +1,16 @@
-from hikari.dataframes import BaseFrame
-from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style
-from hikari.utility import cubespace, chemical_elements, make_abspath
-from hikari.utility import rescale_list_to_range, rescale_list_to_other
-from hikari.symmetry import PG, SG
 import copy
 import random
+
 import numpy as np
 import numpy.linalg as lin
 import pandas as pd
 
+from hikari.dataframes import BaseFrame
+from hikari.symmetry import PG, SG
+from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style, \
+    characteristic_radiation
+from hikari.utility import cubespace, chemical_elements, make_abspath, \
+    rescale_list_to_range, rescale_list_to_other
 
 pd.options.mode.chained_assignment = 'raise'
 
@@ -401,7 +403,7 @@ class HklFrame(BaseFrame):
     def la(self):
         """
         Wavelength of radiation used in the diffraction experiment.
-        Can be set using popular definitions such as "MoKa" or "CuKb",
+        Can be set using popular abbreviations such as "MoKa" or "CuKb",
         where *a* and *b* stand for *alpha* and *beta*.
         Implemented cathode materials include:
         "Ag", "Co", "Cr", "Cu", "Fe", "Mn", "Mo", "Ni", "Pd", "Rh", "Ti", "Zn"
@@ -415,57 +417,35 @@ class HklFrame(BaseFrame):
 
     @la.setter
     def la(self, wavelength):
-        characteristic_radiations = {'agka': 0.5608, 'agkb': 0.4970,
-                                     'coka': 1.7905, 'cokb': 1.6208,
-                                     'crka': 2.2909, 'crkb': 2.0848,
-                                     'cuka': 1.5418, 'cukb': 1.3922,
-                                     'feka': 1.9373, 'fekb': 1.7565,
-                                     'mnka': 2.1031, 'mnkb': 1.9102,
-                                     'moka': 0.7107, 'mokb': 0.6323,
-                                     'nika': 1.6591, 'nikb': 1.5001,
-                                     'pdka': 0.5869, 'pdkb': 0.5205,
-                                     'rhka': 0.6147, 'rhkb': 0.5456,
-                                     'tika': 2.7496, 'tikb': 2.5138,
-                                     'znka': 1.4364, 'znkb': 1.2952}
         try:
-            self.__la = characteristic_radiations[wavelength[:4].lower()]
+            self.__la = characteristic_radiation[wavelength[:4].lower()]
         except TypeError:
             self.__la = float(wavelength)
 
     @property
     def r_lim(self):
         """
-        Calculate limiting sphere radius based on :attr:`la`.
-
-        :return: Value of limiting sphere radius in reciprocal Angstrom
+        :return: Radius of limiting sphere calculated in A-1 based on :attr:`la`
         :rtype: float
         """
         return 2 / self.la
 
     def dac(self, opening_angle=35.0, vector=None):
         """
-        Cut from the dataframe all the reflections,
-        which lie outside the accessible volume of diamond anvil cell.
-
-        The diamond anvil cell (DAC) accessible volume is described
-        using single *opening angle* (0 to 90 degrees, do not mistake with
-        double opening angle which takes values from 0 to 180 degrees)
-        and crystal orientation. The orientation information can be supplied
-        either via specifying crystal orientation in
-        :class:`hikari.dataframes.BaseFrame`, in :attr:`orientation`
-        or by providing a *vector*. The *vector* is perpendicular to
-        the dac-accessible space traced by the tori.
-
-        In order to see further details about the shape of dac-accessible space
-        and orientation matrix / vector please refer to
+        Cut all reflections which lie outside the accessible volume of diamond
+        anvil cell. Sample/DAC orientation can be supplied either via specifying
+        crystal orientation in :class:`hikari.dataframes.BaseFrame`,
+        in :attr:`orientation` or by providing a xyz *vector* perpendicular to
+        the dac-accessible space traced by the tori. For further details about
+        the dac-accessible space and orientation matrix / vector please refer to
         *Merrill & Bassett, Review of Scientific Instruments 45, 290 (1974)*
         and *Paciorek et al., Acta Cryst. A55, 543 (1999)*, respectively.
 
-        :param opening_angle: DAC single opening angle in degrees
+        :param opening_angle: DAC single opening angle in degrees, default 35.0.
         :type opening_angle: float
         :param vector: Provides information about orientation of crystal
           relative to DAC. If None, current :attr:`orientation` is used instead.
-        :type vector: Tuple[float, float, float]
+        :type vector: Tuple[float]
         """
 
         opening_angle_in_radians = np.deg2rad(opening_angle)
@@ -563,8 +543,7 @@ class HklFrame(BaseFrame):
 
     def fill(self, radius=2.0):
         """
-        Fill the dataframe with all possible reflections within
-        the distance *radius* from the reciprocal space origin.
+        Fill dataframe with all reflections within *radius* from space origin.
 
         :param radius: Maximum distance from the reciprocal space origin
             to placed reflection (in reciprocal Angstrom).
@@ -574,15 +553,11 @@ class HklFrame(BaseFrame):
         max_index = 25
 
         # make an initial guess of the hkl ball
-        def _make_hkl_ball(i=max_index, _r=radius):
-            hkl_grid = np.mgrid[-i:i:2j * i + 1j, -i:i:2j * i + 1j,
-                       -i:i:2j * i + 1j]
-            h_column = np.concatenate(np.concatenate(hkl_grid[0]))
-            k_column = np.concatenate(np.concatenate(hkl_grid[1]))
-            l_column = np.concatenate(np.concatenate(hkl_grid[2]))
-            hkls = np.matrix((h_column, k_column, l_column)).T
+        def _make_hkl_ball(i=max_index):
+            hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
+            hkls = np.stack(hkl_grid, -1).reshape(-1, 3)
             xyz = np.matrix((self.a_w, self.b_w, self.c_w))
-            return hkls[lin.norm(hkls @ xyz, axis=1) <= _r]
+            return hkls[lin.norm(hkls @ xyz, axis=1) <= radius]
         hkl = _make_hkl_ball()
 
         # increase the ball size until all needed points are in
@@ -615,7 +590,7 @@ class HklFrame(BaseFrame):
         hkl_base = self.copy()
         hkl_base.extinct(space_group)
         hkl_base.find_equivalents(point_group)
-        hkl_base.table['i_to_si'] = hkl_base.table['I'] / hkl_base.table['si']
+        hkl_base.table['_i_to_si'] = hkl_base.table['I'] / hkl_base.table['si']
 
         hkl_full = self.copy()
         hkl_full.fill(radius=max(self.table['r']))
@@ -635,7 +610,7 @@ class HklFrame(BaseFrame):
         theory = grouped_full['equiv'].nunique()
         cpl = independent.div(theory)
         red = observed.div(independent)
-        i2si = grouped_base['i_to_si'].mean()
+        i2si = grouped_base['_i_to_si'].mean()
         out = pd.concat([observed, independent, theory, i2si, cpl, red], axis=1)
         out.columns = ['Obser', 'Indep', 'Theory', 'I/si(I)', 'Cplt', 'Red.']
         return out  # use .reset_index().to_string(index=False) to flatten
@@ -643,61 +618,34 @@ class HklFrame(BaseFrame):
     def merge(self, point_group=PG['1']):
         """
         Average down each set of redundant reflections present in the table,
-        to one reflection.
+        to one reflection. The redundancy is determined using the
+        :meth:`find_equivalents` method with appropriate point group. Therefore,
+        the merging can be used in different ways depending on point group:
 
-        The redundancy of reflections is determined using the
-        :meth:`find_equivalents` method with appropriate point group.
-        Therefore, the merging can be used in different ways depending on given
-        point group:
+        - For PG['1'], only reflections with exactly the same h, k and l indices
+          will be merged. Resulting dataframe will not contain any duplicates.
 
-        - For PG['1'], only reflections with exactly the same values
-          of h, k and l indices will be merged. Resulting dataframe will not
-          contain a duplicate of any reflection.
+        - For PG['-1'] reflections with the same h, k and l as well as their
+          Friedel pairs will be merged together to one reflection.
 
-        - For PG['-1'] the reflections with the same values of h, k and l,
-          as well as their Friedel pairs, will be merged. Resulting file will
-          be devoid of duplicate reflections as well as any Friedel pairs.
-
-        - For PG['mmm'] all symmetry-equivalent reflections within the "mmm"
-          point group will be merged. Please mind that "mmm" point group is
-          centrosymmetric, so the Friedel pairs will be merged as well.
+        - For PG['mmm'] all equivalent reflections of "mmm" point group will be
+          merged. Since "mmm" is centrosymmetric, Friedel pairs will be merged.
 
         - For PG['mm2'] symmetry-equivalent reflections within the "mmm"
-          point group will be merged, but the Friedel pairs will be preserved,
-          as the 'mm2' is a inversion-devoid sub-group of the "mmm" point group.
+          point group will be merged, but the Friedel pairs will be preserved.
 
         The procedure will have a different effect on different dataframe keys,
-        depending on their "reduce_behaviour" specified in :class:`HklKeys`:
-
-        - Parameters which should be preserved will be kept intact:
-
-            - index *h, k, l*,
-
-            - position in reciprocal space *x, y, z, r* (see :meth:`place`)
-
-            - symmetry equivalence *equiv* (see :meth:`find_equivalents`)
-
-        - Parameters such as intensity *I*, structure factor *F* and
-            their uncertainty *si* will be averaged using arithmetic mean.
-
-        - Multiplicity of occurrence *m* will be summed
-
-        - Other parameters which lose their meaning during the merging
-            procedure such as batch number *b* will lose their meaning
-            and thus will be discarded.
+        depending on their "reduce_behaviour" specified in :class:`HklKeys`.
+        Fixed parameters *h, k, l, x, y, z, r* and *equiv* will be preserved;
+        Floating points such as intensity *I*, structure factor *F* and their
+        uncertainties *si* and *sf* will be averaged using arithmetic mean;
+        Multiplicity *m* will be summed; Other parameters which would lose their
+        meaning such as batch number *b* will be discarded.
 
         The merging inevitably removes some information from the dataframe,
         but it can be necessary for some operations. For example, the drawing
         procedures work much better and provide clearer image if multiple points
         occupying the same position in space are reduced to one instance.
-
-        In order to provide an information about equivalence
-        for the sake of merging, a *point_group* must be provided (default PG1).
-        Point groups and their notation can
-        be found within :mod:`hikari.symmetry` sub-package.
-        Please mind that because the symmetry equivalence information is used
-        during the merging procedure to determine which points should be merged,
-        previously defined values in "equiv" will be overwritten by this method.
 
         :param point_group: Point Group used to determine symmetry equivalence
         :type point_group: hikari.symmetry.Group
@@ -1231,7 +1179,6 @@ class HklWriter(HklIo):
             hkl_file.write(self._format_dict['suffix'])
 
 
-# TODO method to export the style file using "inspect" module
 # TODO get all fixed files to templates
 
 
