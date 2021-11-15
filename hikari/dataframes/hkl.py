@@ -342,7 +342,7 @@ class HklFrame(BaseFrame):
     HklFrame methods are designed to work in-place, so the work strategy
     is to create a new instance of HklFrame for each reflection dataset,
     manipulate it using methods, eg. :func:`merge` or :func:`trim`, and
-    :func:`duplicate` to other object or output using :func:`write` if needed.
+    :func:`copy` to other object or output using :func:`write` if needed.
 
     The HklFrame always initiates empty and does not accept any arguments.
     Some of the magic methods, such as :func:`__len__` and :func:`__add__`
@@ -379,7 +379,7 @@ class HklFrame(BaseFrame):
         :return: concatenated :attr:`table` dataframes, with metadata from first
         :rtype: HklFrame
         """
-        _copied = self.duplicate()
+        _copied = self.copy()
         _copied.table = pd.concat([self.table, other.table], ignore_index=True)
         return _copied
 
@@ -497,11 +497,9 @@ class HklFrame(BaseFrame):
         self.table = self.table[in_torus1 * in_torus2]
         self.table.reset_index(drop=True, inplace=True)
 
-    def duplicate(self):
+    def copy(self):
         """
-        Make and return an exact deep copy of this HklFrame.
-
-        :return: A copy of this HklFrame.
+        :return: An exact deep copy of this HklFrame.
         :rtype: HklFrame
         """
         return copy.deepcopy(self)
@@ -614,11 +612,11 @@ class HklFrame(BaseFrame):
 
         #TODO this function doesn't make sense for merged data
 
-        hkl_base = self.duplicate()
+        hkl_base = self.copy()
         hkl_base.extinct(space_group)
 
         def prepare_ball_of_hkl(_point_group=PG['1']):
-            _hkl_full = hkl_base.duplicate()
+            _hkl_full = hkl_base.copy()
             _hkl_full.fill(radius=max(self.table['r']))
             _hkl_full.merge(point_group=_point_group)
             _hkl_full.extinct(space_group)
@@ -627,7 +625,7 @@ class HklFrame(BaseFrame):
         hkl_full = prepare_ball_of_hkl(_point_group=space_group)
 
         def prepare_merged_hkl(_point_group=PG['1']):
-            _hkl_merged_pg1 = hkl_base.duplicate()
+            _hkl_merged_pg1 = hkl_base.copy()
             _hkl_merged_pg1.merge(point_group=_point_group)
             return _hkl_merged_pg1
 

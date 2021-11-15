@@ -170,7 +170,7 @@ def potency_violin_plot(job_name='violin',
         cplt_dict = dict()
         log = open(log_path, 'w', buffering=1)
         for label, sg in zip(labels, space_groups):
-            p = h.duplicate() if _is_tri_or_hexagonal(sg) else c.duplicate()
+            p = h.copy() if _is_tri_or_hexagonal(sg) else c.copy()
             p.find_equivalents(point_group=sg.reciprocate())
             p.extinct(space_group=sg)
             reflections = list()
@@ -179,7 +179,7 @@ def potency_violin_plot(job_name='violin',
             log.write('total_reflections: ' + str(total_reflections) + '\n')
             log.write('max_r_in_reciprocal: ' + str(max(p.table['r'])) + '\n')
             for vector in vectors:
-                q = p.duplicate()
+                q = p.copy()
                 q.dac(opening_angle=opening_angle, vector=vector)
                 reflections.append(q.table['equiv'].nunique())
                 log.write(str(vector)+': '+str(q.table['equiv'].nunique())+'\n')
@@ -286,12 +286,12 @@ def dac_statistics(a, b, c, al, be, ga,
     p.trim(limit=resolution)
     p.merge(point_group=point_group)
 
-    q = p.duplicate()
+    q = p.copy()
     q.fill(radius=resolution)
     q.dac(opening_angle=opening_angle)
 
     # uncomment and fill this if you have 2 crystals in different orientations
-    # q2 = p.duplicate()
+    # q2 = p.copy()
     # q2.fill(radius=resolution)
     # q2.orientation = np.array(())
     # q2.dac(opening_angle=opening_angle)
@@ -300,7 +300,7 @@ def dac_statistics(a, b, c, al, be, ga,
     q.merge(point_group=point_group)
     q.extinct(space_group=space_group)
 
-    b = p.duplicate()
+    b = p.copy()
     b.fill(radius=resolution)
     b.extinct(space_group=space_group)
     b.merge(point_group=point_group)
@@ -390,7 +390,7 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
     cplt = [0] * len(rads)
     p.trim(max(rads))
     for t in toppleds:
-        q = p.duplicate()
+        q = p.copy()
         q.dac(opening_angle=opening_angle, vector=t)
         for cplt_bin, rad in enumerate(rads, start=1):
             q.trim(rad)
