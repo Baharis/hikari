@@ -617,61 +617,34 @@ class HklFrame(BaseFrame):
     def merge(self, point_group=PG['1']):
         """
         Average down each set of redundant reflections present in the table,
-        to one reflection.
+        to one reflection. The redundancy is determined using the
+        :meth:`find_equivalents` method with appropriate point group. Therefore,
+        the merging can be used in different ways depending on point group:
 
-        The redundancy of reflections is determined using the
-        :meth:`find_equivalents` method with appropriate point group.
-        Therefore, the merging can be used in different ways depending on given
-        point group:
+        - For PG['1'], only reflections with exactly the same h, k and l indices
+          will be merged. Resulting dataframe will not contain any duplicates.
 
-        - For PG['1'], only reflections with exactly the same values
-          of h, k and l indices will be merged. Resulting dataframe will not
-          contain a duplicate of any reflection.
+        - For PG['-1'] reflections with the same h, k and l as well as their
+          Friedel pairs will be merged together to one reflection.
 
-        - For PG['-1'] the reflections with the same values of h, k and l,
-          as well as their Friedel pairs, will be merged. Resulting file will
-          be devoid of duplicate reflections as well as any Friedel pairs.
-
-        - For PG['mmm'] all symmetry-equivalent reflections within the "mmm"
-          point group will be merged. Please mind that "mmm" point group is
-          centrosymmetric, so the Friedel pairs will be merged as well.
+        - For PG['mmm'] all equivalent reflections of "mmm" point group will be
+          merged. Since "mmm" is centrosymmetric, Friedel pairs will be merged.
 
         - For PG['mm2'] symmetry-equivalent reflections within the "mmm"
-          point group will be merged, but the Friedel pairs will be preserved,
-          as the 'mm2' is a inversion-devoid sub-group of the "mmm" point group.
+          point group will be merged, but the Friedel pairs will be preserved.
 
         The procedure will have a different effect on different dataframe keys,
-        depending on their "reduce_behaviour" specified in :class:`HklKeys`:
-
-        - Parameters which should be preserved will be kept intact:
-
-            - index *h, k, l*,
-
-            - position in reciprocal space *x, y, z, r* (see :meth:`place`)
-
-            - symmetry equivalence *equiv* (see :meth:`find_equivalents`)
-
-        - Parameters such as intensity *I*, structure factor *F* and
-            their uncertainty *si* will be averaged using arithmetic mean.
-
-        - Multiplicity of occurrence *m* will be summed
-
-        - Other parameters which lose their meaning during the merging
-            procedure such as batch number *b* will lose their meaning
-            and thus will be discarded.
+        depending on their "reduce_behaviour" specified in :class:`HklKeys`.
+        Fixed parameters *h, k, l, x, y, z, r* and *equiv* will be preserved;
+        Floating points such as intensity *I*, structure factor *F* and their
+        uncertainties *si* and *sf* will be averaged using arithmetic mean;
+        Multiplicity *m* will be summed; Other parameters which would lose their
+        meaning such as batch number *b* will be discarded.
 
         The merging inevitably removes some information from the dataframe,
         but it can be necessary for some operations. For example, the drawing
         procedures work much better and provide clearer image if multiple points
         occupying the same position in space are reduced to one instance.
-
-        In order to provide an information about equivalence
-        for the sake of merging, a *point_group* must be provided (default PG1).
-        Point groups and their notation can
-        be found within :mod:`hikari.symmetry` sub-package.
-        Please mind that because the symmetry equivalence information is used
-        during the merging procedure to determine which points should be merged,
-        previously defined values in "equiv" will be overwritten by this method.
 
         :param point_group: Point Group used to determine symmetry equivalence
         :type point_group: hikari.symmetry.Group
