@@ -477,6 +477,35 @@ class HklFrame(BaseFrame):
         self.table = self.table[in_torus1 * in_torus2]
         self.table.reset_index(drop=True, inplace=True)
 
+    def dac_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
+        oa = np.deg2rad(opening_angle)
+        v = np.array(vectors)
+        v = (v.T / lin.norm(v, axis=1)).T  # normalise every vector in vectors
+        # transform reflections to m1 height / radial m2 cylindrical coordinates
+        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
+        r = self.table.loc[:, 'r'].to_numpy()
+        # calculate reflection's position in 2D disc reference system "m"
+        # m1 / m2 is a coordinate parallel / perpendicular to vector n
+        # 1st dim. = vectors, 2nd dim. = xyz reflections, 3rd dim. = x/y/z coord
+        m1 = np.matmul(v, xyz.T)
+        m2 = np.linalg.norm(np.cross(v[:, None, :], xyz[None, :, :]), axis=2)
+        phi = np.arcsin(m1 / r)
+        print(np.rad2deg(phi[0]))
+        lim = self.r_lim * np.sin(oa - phi)
+        in_dac = r[None, :] < lim
+        print(r[None, :][0])
+        print(lim[0])
+        print(in_dac[0, :])
+        print(self.table)
+        print(self.table.loc[in_dac[0, :]])
+        print(self.table.loc[in_dac[0, :], 'equiv'].nunique())
+
+        print(np.array([self.table.loc[in_dac[n, :], 'equiv'].nunique()
+                         for n in range(v.shape[0])]))
+        return np.array([self.table.loc[in_dac[n, :], 'equiv'].nunique()
+                         for n in range(v.shape[0])])
+    # TODO: works, but for some reason always accepts too many reflns
+
     def copy(self):
         """
         :return: An exact deep copy of this HklFrame.

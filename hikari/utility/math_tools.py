@@ -147,3 +147,6 @@ def rotation_around(axis, by):
         raise IndexError(f'Size of `axis` should be 3, but is {axis.size}')
     axis = axis / np.linalg.norm(axis)
     return euler_rodrigues_matrix(np.cos(by / 2.0), *(-axis * np.sin(by / 2.0)))
+
+
+# TODO later check scipy.spatial.transform.Rotation.from_rotvec as substitute
