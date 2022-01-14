@@ -91,3 +91,59 @@ def fibonacci_sphere(samples=1, seed=1337):
         z = np.sin(phi) * r
         points.append((x, y, z))
     return points
+
+
+def euler_rodrigues_matrix(a, b, c, d):
+    aa, bb, cc, dd = a * a, b * b, c * c, d * d
+    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+    return np.array([[aa + bb - cc - dd, 2 * (bc + ad),     2 * (bd - ac)],
+                     [2 * (bc - ad),     aa + cc - bb - dd, 2 * (cd + ab)],
+                     [2 * (bd + ac),     2 * (cd - ab),     aa + dd - bb - cc]])
+
+
+def rotation_from(from_, to):
+    """
+    Return matrix associated with rotation of vector `from_` onto `to`.
+    :param from_: A 3D vector which will have been rotated onto `to`.
+    :type from_: np.ndarray
+    :param to: A 3D vector onto which `from` will have been rotated.
+    :type to: np.ndarray
+    :return: Matrix associated with rotation of `from` onto `to.
+    :rtype: np.ndarray
+    """
+    if from_.size != 3:
+        raise IndexError(f'Size of `from_` should be 3, but is {from_.size}')
+    if to.size != 3:
+        raise IndexError(f'Size of `to` should be 3, but is {to.size}')
+    f = from_ / np.linalg.norm(from_)
+    t = to / np.linalg.norm(to)
+    axis = np.cross(f, t)
+    if np.isclose(sum(axis), 0.):
+        if np.allclose(f, t):
+            return np.eye(3)
+        else:
+            e1, e2 = np.array([1, 0, 0]), np.array([0, 1, 0])
+            e = e2 if np.isclose(sum(np.cross(e1, f)), 0.) else e1
+            return rotation_from(f, to=e) @ rotation_from(e, to=t)
+    else:
+        axis = axis / np.linalg.norm(axis)
+        angle = np.arcsin(np.linalg.norm(np.cross(f, t)))
+        return euler_rodrigues_matrix(np.cos(angle / 2.),
+                                      *(-axis * np.sin(angle / 2.)))
+
+
+def rotation_around(axis, by):
+    """
+    Return matrix associated with counterclockwise rotation about `axis` through
+    `by` radians. See Euler-Rodrigues form.,https://stackoverflow.com/q/6802577/
+    :param axis: A 3D vector about which rotation is performed
+    :type axis: np.ndarray
+    :param by: Angle of rotation in radians
+    :type by: float
+    :return: Matrix associated with rotation around `axis` through `by`.
+    :rtype: np.ndarray
+    """
+    if axis.size != 3:
+        raise IndexError(f'Size of `axis` should be 3, but is {axis.size}')
+    axis = axis / np.linalg.norm(axis)
+    return euler_rodrigues_matrix(np.cos(by / 2.0), *(-axis * np.sin(by / 2.0)))
