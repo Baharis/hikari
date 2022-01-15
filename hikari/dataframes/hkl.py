@@ -477,23 +477,20 @@ class HklFrame(BaseFrame):
         self.table = self.table[in_torus1 * in_torus2]
         self.table.reset_index(drop=True, inplace=True)
 
-    def dac_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
+    def dac_count(self, opening_angle=35.0, vector=np.array((1, 0, 0))):
         oa = np.deg2rad(opening_angle)
-        v = np.array(vectors)
-        v = (v.T / lin.norm(v, axis=1)).T  # normalise every vector in vectors
+        v = np.array(vector)
+        v = v / lin.norm(v)
         # transform reflections to m1 height / radial m2 cylindrical coordinates
         xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
-        assert False # TODO: WARNING! This works really fast, but breaks for large systems - decrease use of memory
         r = self.table.loc[:, 'r'].to_numpy()
         # calculate reflection's position in 2D disc reference system "m"
         # m1 / m2 is a coordinate parallel / perpendicular to vector n
         # 1st dim. = vectors, 2nd dim. = xyz reflections, 3rd dim. = x/y/z coord
-        m1 = np.matmul(v, xyz.T)
+        m1 = v @ xyz.T
         phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))
-        lim = self.r_lim * np.sin(oa - phi)
-        in_dac = r[None, :] < lim
-        return np.array([self.table.loc[in_dac[n, :], 'equiv'].nunique()
-                         for n in range(v.shape[0])])
+        in_dac = r < self.r_lim * np.sin(oa - phi)
+        return self.table.loc[in_dac, 'equiv'].nunique()
 
     def copy(self):
         """

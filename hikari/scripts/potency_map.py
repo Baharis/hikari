@@ -590,13 +590,10 @@ def potency_map2(a, b, c, al, be, ga,
         _cplt_mesh = np.zeros_like(th_mesh)
         lst = open(lst_path, 'w+', buffering=1)
         lst.write('#     th      ph    cplt  reflns\n')
-        vectors = [_angles_to_vector(th, ph) for th in th_range
-                   for ph in ph_range]
-        uniques = p.dac_count(opening_angle=opening_angle, vectors=vectors)
-        # _cplt_mesh = (uniques / total_reflections).reshape(len(th_range), len(ph_range))
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
-                hkl_len = uniques[i * len(ph_range) + j]
+                v = _angles_to_vector(theta=th, phi=ph)
+                hkl_len = p.dac_count(opening_angle=opening_angle, vector=v)
                 data_dict['th'].append(th)
                 data_dict['ph'].append(ph)
                 data_dict['cplt'].append(hkl_len / total_reflections)
@@ -715,5 +712,5 @@ def potency_map2(a, b, c, al, be, ga,
 if __name__ == '__main__':
     #potency_map(20, 20, 20, 90, 90, 120, space_group=SG['P6/mcc'], output_quality=5,
     #            output_directory='~/_/', output_name='potency1')
-    potency_map2(20, 20, 20, 90, 90, 120, space_group=SG['P6/mcc'], output_quality=5,
+    potency_map2(10, 10, 10, 90, 90, 120, space_group=SG['P6/mcc'], output_quality=5,
                 output_directory='~/_/', output_name='potency2')
