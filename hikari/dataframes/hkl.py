@@ -4,6 +4,7 @@ import random
 import numpy as np
 import numpy.linalg as lin
 import pandas as pd
+from functools import lru_cache
 
 from hikari.dataframes import BaseFrame
 from hikari.symmetry import PG, SG
@@ -430,66 +431,62 @@ class HklFrame(BaseFrame):
         """
         return 2 / self.la
 
-    def dac(self, opening_angle=35.0, vector=None):
+    @property
+    @lru_cache(maxsize=1)
+    def _xyz_array(self):
+        return self.table.loc[:, ('x', 'y', 'z')].to_numpy()
+
+    @property
+    @lru_cache(maxsize=1)
+    def _r_array(self):
+        return self.table.loc[:, 'r'].to_numpy()
+
+    def _in_dac(self, opening_angle, vector=None):
+        if vector is None:
+            l_v = np.array((1.0, 0.0, 0.0))             # vec. parallel to beam
+            h = np.dot(lin.inv(self.orientation), l_v)  # calculate hkl vector
+            v = h[0] * self.a_w + h[1] * self.b_w + h[2] * self.c_w
+        else:                                           # calculate xyz* vector
+            v = np.array(vector)
+        oa = np.deg2rad(opening_angle)
+        v = v / lin.norm(v)  # normalised `vector`
+        m1 = v @ self._xyz_array.T  # distance from dac plane "p" (see also phi)
+        phi = np.abs(np.arcsin((m1/self._r_array).clip(-1, 1)))  # angle from p
+        return self._r_array < self.r_lim * np.sin(oa - phi)  # True if in dac
+
+    def dac_trim(self, opening_angle=35.0, vector=None):
         """
-        Cut all reflections which lie outside the accessible volume of diamond
+        Remove reflections which lie outside the accessible volume of diamond
         anvil cell. Sample/DAC orientation can be supplied either via specifying
-        crystal orientation in :class:`hikari.dataframes.BaseFrame`,
-        in :attr:`orientation` or by providing a xyz *vector* perpendicular to
-        the dac-accessible space traced by the tori. For further details about
-        the dac-accessible space and orientation matrix / vector please refer to
-        *Merrill & Bassett, Review of Scientific Instruments 45, 290 (1974)*
-        and *Paciorek et al., Acta Cryst. A55, 543 (1999)*, respectively.
+        crystal orientation in :class:`hikari.dataframes.BaseFrame`, in
+        :attr:`orientation` or providing a xyz *vector* perpendicular to the
+        dac-accessible disc. For further details refer to *Tchoń & Makal, IUCrJ
+        8, 1006-1017 (2021)* `https://doi.org/10.1107/s2052252521009532`_.
 
         :param opening_angle: DAC single opening angle in degrees, default 35.0.
         :type opening_angle: float
         :param vector: Provides information about orientation of crystal
           relative to DAC. If None, current :attr:`orientation` is used instead.
         :type vector: Tuple[float]
+        :return: HklFrame containing only reflections in dac-accessible region.
+        :rtype: HklFrame
         """
-
-        opening_angle_in_radians = np.deg2rad(opening_angle)
-        if vector is None:
-            l_v = np.array((1.0, 0.0, 0.0))             # vec. parallel to beam
-            h = np.dot(lin.inv(self.orientation), l_v)  # calculate hkl vector
-            n = h[0] * self.a_w + h[1] * self.b_w + h[2] * self.c_w
-        else:                                           # calculate xyz* vector
-            n = np.array(vector)
-        n = 1 / lin.norm(n) * n                        # normalise the n vector
-
-        # remove reflections perpendicular to disc's normal vector
-        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
-        self.table = self.table.loc[~np.isclose(xyz @ n, self.table['r'])]
-        # calculate reflection's position in 2D disc reference system "m"
-        # m1 / m2 is a coordinate parallel / perpendicular to vector n
-        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
-        m1 = np.outer(xyz @ n, n)
-        m2 = xyz - m1
-        m1 = m1 @ n
-        m2 = lin.norm(m2, axis=1)
-        # find the middle of two tori, which trace the DAC-limiting shape
-        t1 = 1 / 2 * self.r_lim * np.cos(opening_angle_in_radians)
-        t2 = 1 / 2 * self.r_lim * np.sin(opening_angle_in_radians)
-        # check if points lie in one of two tori making the DAC shape
-        in_torus1 = (m1 - t1) ** 2 + (m2 - t2) ** 2 <= (self.r_lim / 2) ** 2
-        in_torus2 = (m1 + t1) ** 2 + (m2 - t2) ** 2 <= (self.r_lim / 2) ** 2
-        # leave only points which lie in both tori
-        self.table = self.table[in_torus1 * in_torus2]
+        in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
+        self.table = self.table[in_dac]
         self.table.reset_index(drop=True, inplace=True)
 
-    def dac_count(self, opening_angle=35.0, vector=np.array((1, 0, 0))):
-        oa = np.deg2rad(opening_angle)
-        v = np.array(vector)
-        v = v / lin.norm(v)
-        # transform reflections to m1 height / radial m2 cylindrical coordinates
-        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
-        r = self.table.loc[:, 'r'].to_numpy()
-        # calculate reflection's position in 2D disc reference system "m"
-        # m1 / m2 is a coordinate parallel / perpendicular to vector n
-        # 1st dim. = vectors, 2nd dim. = xyz reflections, 3rd dim. = x/y/z coord
-        m1 = v @ xyz.T
-        phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))
-        in_dac = r < self.r_lim * np.sin(oa - phi)
+    def dac_count(self, opening_angle=35.0, vector=None):
+        """
+        Count dac-accessible reflections. For details see :meth:`dac_trim`.
+        :param opening_angle: DAC single opening angle in degrees, default 35.0.
+        :type opening_angle: float
+        :param vector: Provides information about orientation of crystal
+          relative to DAC. If None, current :attr:`orientation` is used instead.
+        :type vector: Tuple[float]
+        :return: Number of symmetry-unique reflections in dac-accessible region.
+        :rtype: int
+        """
+        in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
         return self.table.loc[in_dac, 'equiv'].nunique()
 
     def copy(self):
