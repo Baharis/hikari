@@ -686,8 +686,7 @@ class HklFrame(BaseFrame):
         Save four new keys and their values into the dataframe.
         """
         hkl = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
-        abc = np.array((self.a_w, self.b_w, self.c_w))
-        xyz = hkl @ abc
+        xyz = hkl @ self.A_r
         self.table.loc[:, 'x'] = xyz[:, 0]
         self.table.loc[:, 'y'] = xyz[:, 1]
         self.table.loc[:, 'z'] = xyz[:, 2]
