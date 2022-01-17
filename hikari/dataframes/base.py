@@ -515,3 +515,43 @@ class BaseFrame:
         :rtype: numpy.array
         """
         return self.__c_w / lin.norm(self.__c_w)
+
+    @property
+    def A_d(self):
+        """
+        Matrix of vertically stacked direct space unit vectors a_v, b_v, c_v.
+
+        :return:
+        :rtype:
+        """
+        return np.vstack([self.__a_v, self.__b_v, self.__c_v])
+
+    @property
+    def A_r(self):
+        """
+        Matrix of vertically stacked reciprocal space unit vectors a_w, b_w,c_w.
+
+        :return:
+        :rtype:
+        """
+        return np.vstack([self.__a_w, self.__b_w, self.__c_w])
+
+    @property
+    def G_d(self):
+        """
+        Direct space metric matrix [ai . aj]ij, where: a1=a_v, a2=b_v, a3=c_v.
+
+        :return:
+        :rtype:
+        """
+        return self.A_d @ self.A_d.T
+
+    @property
+    def G_r(self):
+        """
+        Reciprocal space metric matrix [ai . aj]ij: a1=a_w, a2=b_w, a3=c_w.
+
+        :return:
+        :rtype:
+        """
+        return self.A_r @ self.A_r.T
