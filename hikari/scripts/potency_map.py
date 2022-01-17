@@ -361,5 +361,5 @@ def potency_map(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    potency_map(9, 9, 9, 90, 90, 120, space_group=SG['P6/mcc'],
+    potency_map(9, 9, 9, 90, 90, 120, space_group=SG['P6/mcc'], output_quality=4,
                 output_directory='~/_/', output_name='_')

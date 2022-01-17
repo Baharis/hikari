@@ -443,10 +443,10 @@ class HklFrame(BaseFrame):
 
     def _in_dac(self, opening_angle, vector=None):
         if vector is None:
-            l_v = np.array((1.0, 0.0, 0.0))             # vec. parallel to beam
-            h = np.dot(lin.inv(self.orientation), l_v)  # calculate hkl vector
-            v = h[0] * self.a_w + h[1] * self.b_w + h[2] * self.c_w
-        else:                                           # calculate xyz* vector
+            l_v = np.array((1.0, 0.0, 0.0))          # vector parallel to beam
+            hkl = lin.inv(self.orientation) @ l_v    # calculate hkl vector
+            v = hkl @ self.A_r                       # calculate xyz* vector
+        else:
             v = np.array(vector)
         oa = np.deg2rad(opening_angle)
         v = v / lin.norm(v)  # normalised `vector`
