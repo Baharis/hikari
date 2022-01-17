@@ -183,8 +183,8 @@ def potency_map(a, b, c, al, be, ga,
         """Define the spherical coordinate system based on given point group.
         v1, v2, v3 are normal vectors pointing in zenith direction z*,
         orthogonal direction (x) and direction orthogonal to them both."""
-        _v1 = p.z_w
-        _v2 = p.x_v
+        _v1 = p.c_w / lin.norm(p.c_w)
+        _v2 = p.a_v / lin.norm(p.a_v)
         _v3 = np.cross(_v1, _v2)
 
         if space_group.system is Group.System.triclinic:
@@ -303,7 +303,9 @@ def potency_map(a, b, c, al, be, ga,
 
         # direction lines
         _len = 1.25
-        _x, _y, _z = p.x_w, p.y_w, p.z_w
+        _x = p.a_w / lin.norm(p.a_w)
+        _y = p.b_w / lin.norm(p.b_w)
+        _z = p.c_w / lin.norm(p.c_w)
         ax.add_line(art3d.Line3D((_x[0], _len * _x[0]), (_x[1], _len * _x[1]),
                                  (_x[2], _len * _x[2]), color='r', linewidth=5))
         ax.add_line(art3d.Line3D((_y[0], _len * _y[0]), (_y[1], _len * _y[1]),
@@ -333,15 +335,15 @@ def potency_map(a, b, c, al, be, ga,
         """Prepare input to completeness map in radial coordinates in gnuplot"""
         gnu = open(gnu_path, 'w+', buffering=1)
         gnu.write(potency_map_template.format(
-            axis_x1=p.x_w[0],
-            axis_x2=p.x_w[1],
-            axis_x3=p.x_w[2],
-            axis_y1=p.y_w[0],
-            axis_y2=p.y_w[1],
-            axis_y3=p.y_w[2],
-            axis_z1=p.z_w[0],
-            axis_z2=p.z_w[1],
-            axis_z3=p.z_w[2],
+            axis_x1=(p.a_w / lin.norm(p.a_w))[0],
+            axis_x2=(p.a_w / lin.norm(p.a_w))[1],
+            axis_x3=(p.a_w / lin.norm(p.a_w))[2],
+            axis_y1=(p.b_w / lin.norm(p.b_w))[0],
+            axis_y2=(p.b_w / lin.norm(p.b_w))[1],
+            axis_y3=(p.b_w / lin.norm(p.b_w))[2],
+            axis_z1=(p.c_w / lin.norm(p.c_w))[0],
+            axis_z2=(p.c_w / lin.norm(p.c_w))[1],
+            axis_z3=(p.c_w / lin.norm(p.c_w))[2],
             cplt_min=0 if fix_scale else min(data_dict['cplt']) * 100,
             cplt_max=100 if fix_scale else max(data_dict['cplt']) * 100,
             job_name=output_name,
