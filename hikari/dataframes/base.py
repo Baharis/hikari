@@ -145,13 +145,6 @@ class BaseFrame:
         based on the currently stored values of the aforementioned six.
         """
 
-        def calculate_volume(a, b, c, al, be, ga):
-            return a * b * c * \
-               (1 - np.cos(al) ** 2 - np.cos(be) ** 2 - np.cos(ga) ** 2
-                + 2 * np.cos(al) * np.cos(be) * np.cos(ga)) ** 0.5
-        self.__v_d = calculate_volume(self.a_d, self.b_d, self.c_d,
-                                      self.al_d, self.be_d, self.ga_d)
-
         def calculate_reciprocal_cell(a, b, c, al, be, ga, v):
             a_r = b * c * np.sin(al) / v
             b_r = c * a * np.sin(be) / v
@@ -166,8 +159,6 @@ class BaseFrame:
         self.a_r, self.b_r, self.c_r, self.al_r, self.be_r, self.ga_r = \
             calculate_reciprocal_cell(self.a_d, self.b_d, self.c_d,
                                       self.al_d, self.be_d, self.ga_d, self.v_d)
-        self.__v_r = calculate_volume(self.a_r, self.b_r, self.c_r,
-                                      self.al_r, self.be_r, self.ga_r)
 
         def calculate_vectors():
             self.__a_v = np.array((self.a_d, 0, 0))
@@ -262,7 +253,7 @@ class BaseFrame:
         :return: Unit cell volume in direct space.
         :rtype: float
         """
-        return self.__v_d
+        return np.linalg.det(self.A_d)
 
     @property
     def a_v(self):
@@ -382,7 +373,7 @@ class BaseFrame:
         :return: Unit cell volume in reciprocal space.
         :rtype: float
         """
-        return self.__v_r
+        return np.linalg.det(self.A_r)
 
     @property
     def a_w(self):
