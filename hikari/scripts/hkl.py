@@ -92,7 +92,7 @@ def dac_completeness_vs_opening_angle(output_path='output.txt',
     out = open(output_path, 'w', buffering=1)
     out.write('#oa      cplt\n')
     for a in angles:
-        p.dac(opening_angle=a, vector=np.array((1, np.pi/4, np.e/5)))  # rand. v
+        p.dac_trim(opening_angle=a, vector=np.array((1, np.pi / 4, np.e / 5)))  # rand. v
         out.write(' {a:7.4f} {c:7.5f}\n'.format(a=a, c=len(p.table)/total))
     out.close()
 
@@ -180,7 +180,7 @@ def potency_violin_plot(job_name='violin',
             log.write('max_r_in_reciprocal: ' + str(max(p.table['r'])) + '\n')
             for vector in vectors:
                 q = p.copy()
-                q.dac(opening_angle=opening_angle, vector=vector)
+                q.dac_trim(opening_angle=opening_angle, vector=vector)
                 reflections.append(q.table['equiv'].nunique())
                 log.write(str(vector)+': '+str(q.table['equiv'].nunique())+'\n')
             log.write('max_reflections: ' + str(max(reflections)) + '\n')
@@ -288,7 +288,7 @@ def dac_statistics(a, b, c, al, be, ga,
 
     q = p.copy()
     q.fill(radius=resolution)
-    q.dac(opening_angle=opening_angle)
+    q.dac_trim(opening_angle=opening_angle)
 
     # uncomment and fill this if you have 2 crystals in different orientations
     # q2 = p.copy()
@@ -391,7 +391,7 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
     p.trim(max(rads))
     for t in toppleds:
         q = p.copy()
-        q.dac(opening_angle=opening_angle, vector=t)
+        q.dac_trim(opening_angle=opening_angle, vector=t)
         for cplt_bin, rad in enumerate(rads, start=1):
             q.trim(rad)
             cplt[-cplt_bin] += q.table['equiv'].nunique()
@@ -474,7 +474,7 @@ def simulate_dac(a, b, c, al, be, ga,
     p.orientation = np.array(orientation)
     if not(resolution is None):
         p.trim(resolution)
-    p.dac(opening_angle=opening_angle, vector=vector)
+    p.dac_trim(opening_angle=opening_angle, vector=vector)
     p.write(hkl_path=output_path, hkl_format=output_format)
 
 
