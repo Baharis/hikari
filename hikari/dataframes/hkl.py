@@ -447,9 +447,9 @@ class HklFrame(BaseFrame):
             hkl = lin.inv(self.orientation) @ l_v    # calculate hkl vector
             v = hkl @ self.A_r                       # calculate xyz* vector
         else:
-            v = np.array(vector)
+            v = vector
         oa = np.deg2rad(opening_angle)
-        v = v / lin.norm(v)  # normalised `vector`
+        v = v / np.sqrt(v.dot(v))   # normalised `vector`
         m1 = v @ self._xyz_array.T  # distance from dac plane "p" (see also phi)
         phi = np.abs(np.arcsin((m1/self._r_array).clip(-1, 1)))  # angle from p
         return self._r_array < self.r_lim * np.sin(oa - phi)  # True if in dac
