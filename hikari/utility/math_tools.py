@@ -42,11 +42,9 @@ def fibonacci_sphere(samples=1, seed=1337):
     Return a 3D cartesian coordinates of *samples* number of points
     evenly distributed on a surface of a unit sphere at (0, 0, 0).
 
-    The algorithm utilised in this function gives a distribution which is
-    even on the surface of a sphere. Contrary to an even distribution of two
-    angle values in spherical representation, this algorithm does not favour
-    points in a proximity to sphere poles. For more details please refer to
-    a fantastic article by Martin Roberts `here
+    The algorithm utilised in this function gives a uniform distribution on the
+    sphere. Contrary to an uniform distribution on coordinates, this algorithm
+    does not favour points close to poles. For more details see `this article
     <http://extremelearning.com.au/evenly-distributing-points-on-a-sphere/>`_.
 
     The function is written so that it does always return the same set of points
@@ -56,27 +54,27 @@ def fibonacci_sphere(samples=1, seed=1337):
     :Example:
 
     >>> fibonacci_sphere(4)
-    [(0.62069, -0.75, -0.22857),
-     (-0.44395, -0.25, 0.86047),
-     (0.41275, 0.25, 0.87587),
-     (-0.61208, 0.75, -0.25072)]
+    array([[ 0.62069, -0.75, -0.22857],
+           [-0.44395, -0.25,  0.86047],
+           [ 0.41275,  0.25,  0.87587],
+           [-0.61208,  0.75, -0.25072]])
     >>> fibonacci_sphere(4)
-    [(0.62069, -0.75, -0.22857),
-     (-0.44395, -0.25, 0.86047),
-     (0.41275, 0.25, 0.87586),
-     (-0.61208, 0.75, -0.25072)]
+    array([[ 0.62069, -0.75, -0.22857],
+           [-0.44395, -0.25,  0.86047],
+           [ 0.41275,  0.25,  0.87587],
+           [-0.61208,  0.75, -0.25072]])
     >>> fibonacci_sphere(4, seed=420)
-    [(0.64040, -0.75, 0.16550),
-     (-0.85489, -0.25, 0.45460),
-     (0.32329, 0.25, -0.91268),
-     (0.25831, 0.75, 0.60892)]
+    array([[ 0.64040, -0.75,  0.16550],
+           [-0.85489, -0.25,  0.45460],
+           [ 0.32329,  0.25, -0.91268],
+           [ 0.25831,  0.75,  0.60892]])
 
     :param samples: Number of points to be generated.
     :type samples: int
     :param seed: A seed value used once to slightly randomise point position.
     :type seed: any
-    :return: A list of 3-element tuple containing points' cartesian coordinates.
-    :rtype: list
+    :return: (x,y,z) arrays representing points' cartesian coordinates.
+    :rtype: np.array
     """
     random.seed(seed)
     rnd = random.random() * samples
@@ -89,8 +87,8 @@ def fibonacci_sphere(samples=1, seed=1337):
         phi = ((i + rnd) % samples) * increment
         x = np.cos(phi) * r
         z = np.sin(phi) * r
-        points.append((x, y, z))
-    return points
+        points.append(np.array([x, y, z]))
+    return np.vstack(points)
 
 
 def euler_rodrigues_matrix(a, b, c, d):
