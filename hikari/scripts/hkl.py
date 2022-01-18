@@ -160,8 +160,9 @@ def potency_violin_plot(job_name='violin',
                                   for sg in space_groups) else None
     c = _make_ball(ga=90) if not all(_is_tri_or_hexagonal(sg)
                                      for sg in space_groups) else None
-    vectors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (0.57735, 0.57735, 0.57735)]\
-              + fibonacci_sphere(samples=precision-4, seed=1337)
+    vectors = np.vstack([np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1],
+                                   [0.57735, 0.57735, 0.57735]]),
+                         fibonacci_sphere(samples=precision-4, seed=1337)])
 
     try:
         cplt_frame = pd.read_csv(csv_path, index_col=0)
