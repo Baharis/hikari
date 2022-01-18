@@ -17,7 +17,7 @@ import numpy.linalg as lin
 
 
 def completeness_statistics(a, b, c, al, be, ga,
-                            space_group=SG['P-1'],
+                            space_group='P-1',
                             input_path='shelx.hkl',
                             input_format=4,
                             input_wavelength='CuKa'):
@@ -37,8 +37,9 @@ def completeness_statistics(a, b, c, al, be, ga,
     :type be: float
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
-    :param space_group: Space group of the crystal.
-    :type space_group: hikari.symmetry.Group
+    :param space_group: Short Hermann-Mauguin name or index of space group.
+        For details see table in hikari.symmetry.space_groups.
+    :type space_group: str or int
     :param input_path: Path to the input .hkl file.
     :type input_path: str
     :param input_format: Format of the .hkl file. For reference see
@@ -47,12 +48,13 @@ def completeness_statistics(a, b, c, al, be, ga,
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str
     :return: None
+    :rtype: None
     """
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
     p.read(input_path, input_format)
-    p.stats(space_group=space_group)
+    p.stats(space_group=SG[space_group])
 
 
 def dac_completeness_vs_opening_angle(output_path='output.txt',
@@ -229,7 +231,7 @@ def potency_violin_plot(job_name='violin',
 
 
 def dac_statistics(a, b, c, al, be, ga,
-                   space_group=SG['P1'],
+                   space_group='P1',
                    opening_angle=35.0,
                    orientation=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
                    input_path='shelx.hkl',
@@ -252,9 +254,9 @@ def dac_statistics(a, b, c, al, be, ga,
     :type be: float
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
-    :param space_group: Space group of the crystal,
-        defined as an instance of :class:`hikari.symmetry.Group`
-    :type space_group: hikari.symmetry.Group
+    :param space_group: Short Hermann-Mauguin name or index of space group.
+        For details see table in hikari.symmetry.space_groups.
+    :type space_group: str or int
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
@@ -274,7 +276,8 @@ def dac_statistics(a, b, c, al, be, ga,
     :return: None
     """
 
-    point_group = space_group.reciprocate()
+    sg = SG[space_group]
+    pg = sg.reciprocate()
 
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
@@ -284,7 +287,7 @@ def dac_statistics(a, b, c, al, be, ga,
 
     resolution = p.r_lim if resolution is None else resolution
     p.trim(limit=resolution)
-    p.merge(point_group=point_group)
+    p.merge(point_group=pg)
 
     q = p.copy()
     q.fill(radius=resolution)
@@ -297,13 +300,13 @@ def dac_statistics(a, b, c, al, be, ga,
     # q2.dac(opening_angle=opening_angle)
     # q = q + q2
 
-    q.merge(point_group=point_group)
-    q.extinct(space_group=space_group)
+    q.merge(point_group=pg)
+    q.extinct(space_group=sg)
 
     b = p.copy()
     b.fill(radius=resolution)
-    b.extinct(space_group=space_group)
-    b.merge(point_group=point_group)
+    b.extinct(space_group=sg)
+    b.merge(point_group=pg)
 
     r_max = resolution
     print('radius    experimnt theoryDAC theorBall DAC-Cplt  Ball-Cplt ')
@@ -321,7 +324,7 @@ def dac_statistics(a, b, c, al, be, ga,
 
 
 def completeness_statistics_around_axis(a, b, c, al, be, ga,
-                                        space_group=SG['P1'],
+                                        space_group='P1',
                                         opening_angle=35.0,
                                         wavelength='MoKa',
                                         vector=(1, 0, 0),
@@ -342,9 +345,9 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
     :type be: float
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
-    :param space_group: Space group of the crystal,
-        defined as an instance of :class:`hikari.symmetry.Group`
-    :type space_group: hikari.symmetry.Group
+    :param space_group: Short Hermann-Mauguin name or index of space group.
+        For details see table in hikari.symmetry.space_groups.
+    :type space_group: str or int
     :param wavelength: Wavelength of radiation utilised in experiment.
     :type wavelength: float or str
     :param opening_angle: Value of single opening angle as defined in
@@ -357,15 +360,16 @@ def completeness_statistics_around_axis(a, b, c, al, be, ga,
     :return: None
     """
 
-    point_group = space_group.reciprocate()  # .lauefy()
+    sg = SG[space_group]
+    pg = sg.reciprocate()  # .lauefy()
 
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = wavelength
     p.fill(radius=p.r_lim)
     p.place()
-    p.extinct(space_group=space_group)
-    p.find_equivalents(point_group=point_group)
+    p.extinct(space_group=sg)
+    p.find_equivalents(point_group=pg)
 
     # generate perpendicular vector for rotation
     v = np.array(vector) / lin.norm(np.array(vector))
