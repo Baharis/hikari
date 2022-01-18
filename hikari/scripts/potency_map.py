@@ -21,90 +21,60 @@ def potency_map(a, b, c, al, be, ga,
                 wavelength='MoKa'):
     """
     Calculate and draw a potency map for a given crystal in diamond anvil cell
-    (dac) with a given opening angle, as a function of crystal orientation. For
-    details see `this paper <https://doi.org/10.1107/S2052252521009532>`_.
+    (DAC) with a given opening angle, as a function of crystal orientation.
+    For details see `this paper <https://doi.org/10.1107/S2052252521009532>`_.
 
-    The script accepts and takes into consideration unit cell dimensions,
-    laue group and extinctions, which allows to predict the completeness of
-    fully merged data for investigated crystal in any space group.
-    The results are printed and visualised using various formats,
-    including raw text files and ready-to-review .png file.
-    A gnuplot input is also provided for convenience.
+    The script accepts unit cell & space group information, and predicts the
+    completeness of fully merged data for investigated crystal in said group.
+    Results are logged into text files and drawn with gnuplot or matplotlib,
+    depending on settings.
 
-    Program presents the results using a 2-dimensional spherical heatmap.
-    Information about predicted completeness is visualised on a unit sphere,
-    where each point on a sphere is associated with a certain orientation
-    of the crystal relative to dac:
-
-    - Firstly, the map presents the results in a reciprocal space.
-      Therefore red, green and blue lines / vectors represent
-      crystallographic directions **X\***, **Y\*** and **Z\***, respectively.
-
-    - Since the *distribution* of reflections in reciprocal space has always
-      at least a centre of inversion, it is unnecessary to show the whole
-      sphere, as at least half of the data would be redundant.
-      For this reason the script shows only a certain part of the unit sphere,
-      whereas the information about other directions
-      can be retrieved using reciprocal space symmetry for a given laue group.
-
-    - Each point on the sphere is associated with a unit vector,
-      which shows a direction perpendicular to a disc of dac-accessible volume.
-      In other words, each point on the surface can be associated with a vector
-      in reciprocal space from the origin towards said point. This vector is
-      perpendicular to the dac-accessible plane (volume),
-      which has been originally used to limit the sphere of hkl data.
+    Potency is calculated and visualised in a unit-sphere orientation heatmap.
+    Each point **p** is associated with a certain crystal orientation in DAC,
+    such that vector from **0** to **p** acts as a symmetry axis for the
+    dac-accesible volume traced in the reciprocal space up to `resolution`.
+    Red / green / blue vectors represent crystallographic directions **X\***,
+    **Y\*** and **Z\***, respectively. Since the distribution has some inherent
+    symmetry, only a certain part of sphere (usually an octant) is shown.
 
     As an example, let's assume a orthorhombic cell with *a* = *b* = *c* = 10
     and laue group "mmm". Running the script and generating completeness the map
     yields the lowest values close to **X\***, **Y\*** and **Z\*** vector,
-    while the highest values are observed inbeetween those vectors.
+    while the highest values are observed between those vectors.
     Placing the crystal on its [100] face inside the dac will cause the
     dac-accessible plane to be placed perpendicularly to (100) direction
     in reciprocal space. Since the values close to **X\*** ((100) direction)
     are low, such a placement will allow us to collect data with low coverage.
     On the other hand, placing the crystal on its [111] face will cause the
-    dac-acessible plane to be placed perpendicularly to (100) direction
+    dac-accessible plane to be placed perpendicularly to (100) direction
     in reciprocal space. As on the sphere the values tend to rise the further
     we are from of **X\***, **Y\*** and **Z\***, we expect this crystal
     orientation to warrant a high completeness of collected data.
 
-    The completeness is calculated as a ratio between the number of unique
-    reflections inside the dac-accessible space and the number of unique
-    reflections inside a reference sphere of a radius equal to `resolution`.
-
-
-    Completeness is visualised using an extended rainbow heatmap,
+    The potency is calculated as a ratio of the number of unique reflections
+    inside the DAC-accessible space to the number of unique reflections
+    inside a reference sphere of a radius equal to `resolution`.
+    Visualisation is performed using an extended rainbow heatmap,
     which utilises a wide color range to emphasize even small differences.
-    Dy default, the color scale is dynamic and adapts to span between
-    minimum and maximum values of found completeness,
-    but it can be fixed to span between 0 and 100% using `fix_scale` parameter.
+    Dy default, the color scale is dynamic and adapts to the range of calculated
+    potency, but it can be fixed to 0-100% range using `fix_scale=True`.
 
-    Since the orientation is described using spherical coordinates,
-    the exact positions of individual points on the sphere
-    are described using *theta* and *phi* angles instead of using
-    crystallographic directions. The *theta* and *phi* angles follow the
-    physical definition of spherical coordinate system - for a given
-    vector **v** perpendicular to the dac plane:
+    Since the orientation is given in spherical coordinates, the exact positions
+    of individual points is given using *theta* and *phi* angles instead of
+    crystallographic coordinates. The *theta* and *phi* angles here follow the
+    physical definition (ISO 80000-2:2019). For a given DAC-axis vector **v**:
 
-    - *theta* is the azimuth angle,
-      i.e. angle between vector **Z\*** and **v**.
-      *Theta* equals zero when **v** is parallel to **Z\***,
-      equals *pi/2* when **v** is perpendicular to **Z\*** and
-      equals *pi* when **v** is anti-parallel to **Z\***.
-      Therefore *theta* should take values between zero and *pi*.
+    - *theta* is the azimuth angle found between vector **Z\*** and **v**.
+      It can assume values between zero and *pi* (*pi/2* in one octant).
 
-    - *phi* is the rotational angle,
-      i.e. degree of rotation of **v** around **Z\***.
-      *Phi* equals zero when **v** is in **X\*Z\*** plane,
-      equals *beta\** when **v** is in **Y\*Z\*** plane,
-      and equals *pi* when **v** is back in **X\*Z\*** plane.
-      Therefore *phi* should take values between zero and *2 pi*.
+    - *phi* is the rotational angle denoting rotation of **v** around **Z\***.
+      It can assume values between zero and *2 pi* (*pi/2* in one octant).
 
-    Finally, the script does not treat reflections in special positions (hk0,
-    00l) in any special manner and thus does not consider lack of coverage in
-    any crystallographic plane or direction as an issue. This information should
-    be additionally considered while choosing crystal orientation and data
-    collection strategy based on the script output.
+    Finally it must be noted that higher potency setting is not always better.
+    For example, for opening angle below 45 degrees, most potent orientation in
+    laue class mmm renders all 0kl, h0l, hk0 reflections inaccessible.
+    Potency map should be consulted before a high-pressure experiment, but it
+    should not be treated as an universal quality indicator of given set-up.
 
     :param a: Unit cell parameter *a* in Angstrom.
     :type a: float
@@ -118,26 +88,26 @@ def potency_map(a, b, c, al, be, ga,
     :type be: float
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
-    :param space_group: Instance of :class:`hikari.symmetry.Group`
-        describing symmetry of the crystal
-    :type space_group: hikari.symmetry.Group
-    :param axis: area to calculate completeness of. Accepts 'x', 'y', 'z', 'xy',
-        'xz', 'yz' or '' for whole sphere.
+    :param space_group: Short Hermann-Mauguin name or index of space group.
+        For details see table in hikari.symmetry.space_groups.
+    :type space_group: str or int
+    :param axis: domain to calculate potency in. Accepts 'x'/ 'y'/ 'z' for h00/
+        0k0/ 00l, 'xy'/'xz'/'yz' for hk0/ h0l/ 0kl, or '' for all reflections.
     :type axis: string
-    :param fix_scale: If true, the colour scheme will not adapt to
-        be fixed to the range from 0 to 100%
-    :type fix_scale:
-    :param opening_angle:
-    :type opening_angle:
-    :param output_directory:
-    :type output_directory:
-    :param output_name:
-    :type output_name:
-    :param output_quality:
-    :type output_quality:
-    :param resolution: If given, additionally limit data resolution to given
-        value. Please provide the resolution as a distance from the origin
-        in reciprocal space (twice the resolution in reciprocal angstrom).
+    :param fix_scale: If true, the colour scheme will fix to 0 - 100% range.
+    :type fix_scale: bool
+    :param opening_angle: Value of single opening angle as defined in
+        :meth:`hikari.dataframes.HklFrame.dac`.
+    :type opening_angle: float
+    :param output_directory: Path to directory where output should be saved.
+    :type output_directory: str
+    :param output_name: Base name for files created in `output_directory`.
+    :type output_name: str
+    :param output_quality: Density of individual orientations to be considered.
+        Should be in range from 1 (every 15 degrees) to 5 (every 1 degree).
+    :type output_quality: int
+    :param resolution: Upper limit of reflection resolution, given as a distance
+        from zero to node in reciprocal space (one over plane spacing) in A-1.
     :type resolution: float
     :param wavelength: Wavelength of radiation to be simulated.
     :type wavelength: float or str
@@ -149,6 +119,7 @@ def potency_map(a, b, c, al, be, ga,
     lst_path = make_abspath(output_directory, output_name + '.lst')
     png_path = make_abspath(output_directory, output_name + '.png')
     axis = axis.lower()
+    space_group = SG[space_group]
     laue_group = space_group.reciprocate()
 
     def _make_hkl_frame(ax=axis):
@@ -363,5 +334,5 @@ def potency_map(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    potency_map(9, 9, 9, 90, 90, 120, space_group=SG['P6/mcc'], output_quality=4,
-                output_directory='~/_/', output_name='_')
+    potency_map(9, 9, 9, 90, 90, 120, space_group=SG['P6/mcc'], output_quality=3,
+                resolution=1.0, output_directory='~/_/', output_name='_')
