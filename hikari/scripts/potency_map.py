@@ -219,11 +219,12 @@ def potency_map(a, b, c, al, be, ga,
         best_th, best_ph = th_range[index_max[1]], ph_range[index_max[0]]
         index_min = np.unravel_index(np.argmin(_cplt_mesh), _cplt_mesh.shape)
         worst_th, worst_ph = th_range[index_min[1]], ph_range[index_min[0]]
-        lst.write('# best cplt = {_max} for th = {_th}, ph = {_ph}\n'.format(
-            _max=max(data_dict['cplt']), _th=best_th, _ph=best_ph))
-        lst.write('# worst cplt = {_min} for th = {_th}, ph = {_ph}\n'.format(
-            _min=min(data_dict['cplt']), _th=worst_th, _ph=worst_ph))
-        lst.write('# mean cplt = {}\n'.format(np.mean(data_dict['cplt'])))
+        max_p = max(data_dict['cplt'])
+        min_p = min(data_dict['cplt'])
+        mean_p = np.mean(data_dict['cplt'])
+        lst.write(f'# best cplt = {max_p} for th = {best_th}, ph = {best_ph}\n'
+                  f'# worst cplt = {min_p} for th = {worst_th}, ph = {worst_ph}'
+                  f'\n# mean cplt = {mean_p}\n')
         lst.close()
         np.savetxt(dat_path, _cplt_mesh)
         return data_dict, _cplt_mesh
@@ -323,6 +324,5 @@ def potency_map(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    potency_map(9, 9, 9, 90, 90, 120, space_group='P6/mcc',
-                output_quality=5,
+    potency_map(9, 9, 9, 90, 90, 120, space_group='P6/mcc', output_quality=5,
                 resolution=2.0, output_directory='~/_/', output_name='2_')
