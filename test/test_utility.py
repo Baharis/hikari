@@ -45,7 +45,7 @@ class TestMathTools(unittest.TestCase):
             (fibonacci_sphere(9)-fibonacci_sphere(9, seed=1337)).max().max(), 0)
         self.assertNotAlmostEqual(
             (fibonacci_sphere(9)-fibonacci_sphere(9, seed=123)).max().max(), 0)
-        self.assertTrue(fibonacci_sphere(9999).sum().sum() < 1.0)
+        self.assertTrue(abs(fibonacci_sphere(99999).sum().sum() < 1.0))
 
 
 class TestOsTools(unittest.TestCase):
