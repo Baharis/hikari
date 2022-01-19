@@ -432,28 +432,20 @@ class HklFrame(BaseFrame):
         """
         return 2 / self.la
 
-    @property
-    @lru_cache(maxsize=1)
-    def _xyz_array(self):
-        return self.table.loc[:, ('x', 'y', 'z')].to_numpy()
-
-    @property
-    @lru_cache(maxsize=1)
-    def _r_array(self):
-        return self.table.loc[:, 'r'].to_numpy()
-
     def _in_dac(self, opening_angle, vector=None):
         if vector is None:
-            l_v = np.array((1.0, 0.0, 0.0))          # vector parallel to beam
-            hkl = lin.inv(self.orientation) @ l_v    # calculate hkl vector
-            v = hkl @ self.A_r                       # calculate xyz* vector
+            l_v = np.array((1.0, 0.0, 0.0))           # vector parallel to beam
+            hkl = lin.inv(self.orientation) @ l_v     # calculate hkl vector
+            v = hkl @ self.A_r                        # calculate xyz* vector
         else:
             v = vector
-        oa = np.deg2rad(opening_angle)
-        v = v / np.sqrt(v.dot(v))   # normalised `vector`
-        m = v @ self._xyz_array.T   # distance from dac plane "p" (see also phi)
-        phi = np.abs(np.arcsin((m/self._r_array).clip(-1, 1)))  # angle <(p, v)
-        return self._r_array < self.r_lim * np.sin(oa - phi)    # True if in dac
+        oa = np.deg2rad(opening_angle)                # opening angle in radians
+        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
+        r = self.table.loc[:, 'r'].to_numpy()
+        v = v / np.sqrt(v.dot(v))                     # normalise vector v
+        m = v @ xyz.T                                 # dist from dac plane "p"
+        phi = np.abs(np.arcsin((m/r).clip(-1, 1)))    # angle <(p, v)
+        return r < self.r_lim * np.sin(oa - phi)      # True if in dac
 
     def dac_trim(self, opening_angle=35.0, vector=None):
         """
@@ -472,14 +464,9 @@ class HklFrame(BaseFrame):
         :return: HklFrame containing only reflections in dac-accessible region.
         :rtype: HklFrame
         """
-        # print(len(self.table))
         in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
-        # print(len(self.table))
         self.table = self.table[in_dac]
         self.table.reset_index(drop=True, inplace=True)
-        # print(len(self.table))
-        # TODO problem found! _xyz_array doesn't change when self.table does! :(
-        # TODO has to find some faster way with setter / getter, unfortunately
 
     def dac_count(self, opening_angle=35.0, vector=None):
         """
@@ -503,15 +490,14 @@ class HklFrame(BaseFrame):
             return np.hstack([self.dacs_count(opening_angle, vectors=v)
                               for v in vectors_split])
 
-        oa = np.deg2rad(opening_angle)
-        v = np.array(vectors)
-        v = (v.T / lin.norm(v, axis=1)).T  # normalise every vector in vectors
-        # transform reflections to m1 height / radial m2 cylindrical coordinates
+        oa = np.deg2rad(opening_angle)                # opening angle in radians
         xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
         r = self.table.loc[:, 'r'].to_numpy()
-        m1 = np.matmul(v, xyz.T)  # distance from dac plane "p" (see also phi)
-        phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))  # angle <(plane p, v)
-        lim = self.r_lim * np.sin(oa - phi)            # True if in dac
+        v = np.array(vectors)
+        v = (v.T / lin.norm(v, axis=1)).T             # normalise vectors v
+        m1 = np.matmul(v, xyz.T)                      # dist from dac plane "p"
+        phi = np.abs(np.arcsin((m1/r).clip(-1, 1)))   # angle <(plane p, v)
+        lim = self.r_lim * np.sin(oa - phi)           # True if in dac
         in_dac = r[None, :] < lim
         return np.array([self.table.loc[in_dac[n, :], 'equiv'].nunique()
                          for n in range(v.shape[0])])
