@@ -206,7 +206,9 @@ def potency_map(a, b, c, al, be, ga,
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
                 v = _angles_to_vector(theta=th, phi=ph)
-                count = p.dac_count(opening_angle=opening_angle, vector=v)
+                q = p.copy()
+                q.dac_trim(opening_angle=opening_angle, vector=v)
+                count = q.table['equiv'].nunique()
                 potency = count / total_reflections
                 data_dict['th'].append(th)
                 data_dict['ph'].append(ph)
@@ -640,7 +642,7 @@ def potency_map2(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm', output_quality=5,
+    potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm', output_quality=3,
                 resolution=1.2, output_directory='~/_/', output_name='1_')
-    potency_map2(10, 10, 10, 90, 90, 90, space_group='Pmmm', output_quality=5,
+    potency_map2(10, 10, 10, 90, 90, 90, space_group='Pmmm', output_quality=3,
                 resolution=1.2, output_directory='~/_/', output_name='2_')
