@@ -328,7 +328,7 @@ def potency_map(a, b, c, al, be, ga,
         pass
 
 
-def dac_potency_vs_opening_angle(output_path='~/output.txt',
+def potency_vs_dac_opening_angle(output_path='~/output.txt',
                                  precision=91,
                                  resolution=1.2,
                                  wavelength='MoKa',
@@ -336,6 +336,7 @@ def dac_potency_vs_opening_angle(output_path='~/output.txt',
     """
     Calculate completeness in P1 as a function of DAC opening angle,
     assuming certain resolution and wavelength used.
+
     :param output_path: Path of created file containing calculated data.
     :type output_path: str
     :param precision: Number of probed opening angles between 0 and 90 degrees.
@@ -358,15 +359,18 @@ def dac_potency_vs_opening_angle(output_path='~/output.txt',
         side = 10 * precision**(1/3) / res  # adapt to res&la
         hkl_frame.edit_cell(a=side, b=side, c=side, al=90, be=90, ga=90)
         hkl_frame.fill(radius=res)
+        hkl_frame.find_equivalents()
         return hkl_frame
+
     p = _make_reference_ball()
-    total = len(p.table)
+    v = fibonacci_sphere(10)
+    total = len(p)
     angles = np.linspace(start=90, stop=0, num=precision)
     out = open(make_abspath(output_path), 'w')
     out.write('#oa      cplt\n')
-    for a in angles:
-        p.dac_trim(opening_angle=a, vector=np.array((1, np.pi / 4, np.e / 5)))  # rand. v
-        out.write(' {a:7.4f} {c:7.5f}\n'.format(a=a, c=len(p.table)/total))
+    for a in angles:  # for one random vector v
+        c = p.dacs_count(opening_angle=a, vectors=v)
+        out.write(' {a:7.4f} {c:7.5f}\n'.format(a=a, c=np.mean(c)/total))
     out.close()
 
 
@@ -596,6 +600,7 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm',
-                output_quality=3,
-                resolution=1.2, output_directory='~/_/', output_name='_')
+    # potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm',
+    #             output_quality=3,
+    #             resolution=1.2, output_directory='~/_/', output_name='_')
+    potency_vs_dac_opening_angle(output_path='~/_/_.dat')

@@ -388,8 +388,6 @@ class BaseFrame:
         """
         return self.__c_w
 
-
-
     @property
     def A_r(self):
         """

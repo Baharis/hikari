@@ -7,7 +7,6 @@ which utilise DAC - diamond anvil cell.
 """
 
 from hikari.dataframes import HklFrame
-from hikari.scripts import dac_potency_vs_opening_angle
 from hikari.symmetry import SG
 from hikari.utility import cubespace
 import numpy as np
@@ -233,4 +232,4 @@ if __name__ == '__main__':
     #     ga = 120 if v in {'P-3', 'P-3m1', 'P6om', 'P6ommm'} else 90
     #     completeness_map(space_group=SG[k], ga=ga,
     #                      output_name=name, **kwargs)
-    dac_potency_vs_opening_angle(output_path='~/_/pot_vs_oa.dat')
+    pass
