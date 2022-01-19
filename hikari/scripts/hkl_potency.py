@@ -404,7 +404,7 @@ def potency_violin_plot(job_name='violin',
     :type opening_angle: float
     :param precision: Number of orientations to investigate, defaults to 1000.
     :type precision: int
-    :param space_groups: List of space groups to investigat, given as instances
+    :param space_groups: List of space groups to investigate, given as instances
         of :class:`hikari.symmetry.Group`. Defaults to 11 "Laue" groups.
     :type space_groups: list[hikari.symmetry.Group]
     :param labels: List of git-style labels to be used for logging and plotting.
@@ -450,26 +450,23 @@ def potency_violin_plot(job_name='violin',
             p = h.copy() if _is_tri_or_hexagonal(sg) else c.copy()
             p.find_equivalents(point_group=sg.reciprocate())
             p.extinct(space_group=sg)
-            reflections = list()
             total_reflections = p.table['equiv'].nunique()
             log.write('space_group: ' + str(label) + '\n')
             log.write('total_reflections: ' + str(total_reflections) + '\n')
             log.write('max_r_in_reciprocal: ' + str(max(p.table['r'])) + '\n')
-            for vector in vectors:
-                q = p.copy()
-                q.dac_trim(opening_angle=opening_angle, vector=vector)
-                reflections.append(q.table['equiv'].nunique())
-                log.write(str(vector)+': '+str(q.table['equiv'].nunique())+'\n')
+            reflections = p.dacs_count(opening_angle, vectors)
+            for v, r in zip(vectors, reflections):
+                log.write(str(v)+': '+str(r)+'\n')
             log.write('max_reflections: ' + str(max(reflections)) + '\n')
             log.write('min_reflections: ' + str(min(reflections)) + '\n')
-            log.write('avg_reflections: ' + str(np.mean(reflections)) + '\n')
+            log.write('avg_reflections: ' + str(np.mean(reflections)) + '\n\n')
             cplt_dict[label] = [r / total_reflections for r in reflections]
 
         cplt_frame = pd.DataFrame.from_dict(cplt_dict)
         cplt_frame = cplt_frame.mul(100)
         cplt_frame.to_csv(csv_path)
         pd.set_option('display.expand_frame_repr', False)
-        log.write('\nSummary:\n' + str(cplt_frame.describe().round(2)) + '\n')
+        log.write('Summary:\n' + str(cplt_frame.describe().round(2)) + '\n')
         log.close()
 
     palette_number = {Group.System.triclinic: 0,
@@ -603,4 +600,4 @@ if __name__ == '__main__':
     # potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm',
     #             output_quality=3,
     #             resolution=1.2, output_directory='~/_/', output_name='_')
-    potency_vs_dac_opening_angle(output_path='~/_/_.dat')
+    potency_violin_plot(directory='~/_/', resolution=1.2)
