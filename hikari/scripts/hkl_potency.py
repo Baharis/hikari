@@ -8,7 +8,7 @@ from numpy import linalg as lin
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
-    fibonacci_sphere
+    fibonacci_sphere, rotation_around
 from hikari.resources import potency_map_template
 
 
@@ -374,9 +374,8 @@ def potency_vs_dac_opening_angle(output_path='~/output.txt',
     out.close()
 
 
-laue_space_groups = SG['P-1'], SG['P2/m'], SG['Pmmm'], \
-                    SG['P4/m'], SG['P4/mmm'], SG['P-3'], SG['P-3m1'], \
-                    SG['P6/m'], SG['P6/mmm'], SG['Pm-3'], SG['Pm-3m']
+laue_space_groups = 'P-1', 'P2/m', 'Pmmm', 'P4/m', 'P4/mmm', 'P-3', 'P-3m1',\
+                    'P6/m', 'P6/mmm', 'Pm-3', 'Pm-3m'
 laue_class_names = r"$\overline{1}$", r"$2/m$", r"$mmm$",\
                    r"$4/m$", r"$4/mmm$", r"$\overline{3}$", r"$\overline{3}m$",\
                    r"$6/m$", r"$6/mmm$", r"$m\overline{3}$", r"$m\overline{3}m$"
@@ -404,11 +403,11 @@ def potency_violin_plot(job_name='violin',
     :type opening_angle: float
     :param precision: Number of orientations to investigate, defaults to 1000.
     :type precision: int
-    :param space_groups: List of space groups to investigate, given as instances
-        of :class:`hikari.symmetry.Group`. Defaults to 11 "Laue" groups.
-    :type space_groups: list[hikari.symmetry.Group]
-    :param labels: List of git-style labels to be used for logging and plotting.
-    :type labels: list[str]
+    :param space_groups: List of space groups to investigate, strings or ints
+        (see :class:`hikari.symmetry.Group`). Defaults to 11 "Laue" groups.
+    :type space_groups: Tuple[int] or Tuple[str]
+    :param labels: List of tex-style labels to be used for logging and plotting.
+    :type labels: Tuple[str]
     :param resolution: If given, additionally limit data resolution to given
         value. Please provide the resolution as a distance from the origin
         in reciprocal space (twice the resolution in reciprocal angstrom).
@@ -422,6 +421,7 @@ def potency_violin_plot(job_name='violin',
     csv_path = make_abspath(directory, job_name + '.csv')
     png_path = make_abspath(directory, job_name + '.png')
     log_path = make_abspath(directory, job_name + '.log')
+    space_groups = [SG[sg] for sg in space_groups]
 
     def _is_tri_or_hexagonal(sg):
         return sg.system in {sg.System.hexagonal, sg.System.trigonal}
@@ -520,9 +520,9 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     :type c: float
     :param al: Unit cell parameter *alpha* in degrees.
     :type al: float
-    :param be: Unit cell parameter *alpha* in degrees.
+    :param be: Unit cell parameter *beta* in degrees.
     :type be: float
-    :param ga: Unit cell parameter *alpha* in degrees.
+    :param ga: Unit cell parameter *gamma* in degrees.
     :type ga: float
     :param space_group: Short Hermann-Mauguin name or index of space group.
         For details see table in hikari.symmetry.space_groups.
@@ -560,9 +560,7 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     perp = np.cross(v, temp)
 
     def rotate(_v, _k, angle):
-        _c = np.cos(np.deg2rad(angle))
-        _s = np.sin(np.deg2rad(angle))
-        return _v * _c + np.cross(_k, _v) * _s + _k * np.dot(_k, _v) * (1 - _c)
+        return _v @ rotation_around(_k, by=np.deg2rad(angle))
 
     # generate 360 toppled vectors
     toppled = rotate(v, perp, topple)
@@ -598,6 +596,5 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
 
 if __name__ == '__main__':
     # potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm',
-    #             output_quality=3,
     #             resolution=1.2, output_directory='~/_/', output_name='_')
-    potency_violin_plot(directory='~/_/', resolution=1.2)
+    pass
