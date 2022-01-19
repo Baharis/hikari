@@ -640,7 +640,7 @@ def potency_map2(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    potency_map(5, 5, 5, 90, 90, 90, space_group='Pmmm', output_quality=5,
+    potency_map(20, 20, 20, 90, 90, 90, space_group='Pmmm', output_quality=5,
                 resolution=1.2, output_directory='~/_/', output_name='1_')
-    potency_map2(5, 5, 5, 90, 90, 90, space_group='Pmmm', output_quality=5,
+    potency_map2(20, 20, 20, 90, 90, 90, space_group='Pmmm', output_quality=5,
                 resolution=1.2, output_directory='~/_/', output_name='2_')
