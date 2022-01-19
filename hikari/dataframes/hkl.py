@@ -471,9 +471,14 @@ class HklFrame(BaseFrame):
         :return: HklFrame containing only reflections in dac-accessible region.
         :rtype: HklFrame
         """
+        # print(len(self.table))
         in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
+        # print(len(self.table))
         self.table = self.table[in_dac]
         self.table.reset_index(drop=True, inplace=True)
+        # print(len(self.table))
+        # TODO problem found! _xyz_array doesn't change when self.table does! :(
+        # TODO has to find some faster way with setter / getter, unfortunately
 
     def dac_count(self, opening_angle=35.0, vector=None):
         """
@@ -488,6 +493,23 @@ class HklFrame(BaseFrame):
         """
         in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
         return self.table.loc[in_dac, 'equiv'].nunique()
+
+    def dacs_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
+        # TODO: WARNING! This works really fast, but breaks for large systems!
+        oa = np.deg2rad(opening_angle)
+        v = np.array(vectors)
+        v = (v.T / lin.norm(v, axis=1)).T  # normalise every vector in vectors
+        # transform reflections to m1 height / radial m2 cylindrical coordinates
+        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
+        r = self.table.loc[:, 'r'].to_numpy()
+        # let m1 / m2 be a coordinate parallel / perpendicular to vector n
+        # 1st dim. = vectors, 2nd dim. = xyz reflections, 3rd dim. = x/y/z coord
+        m1 = np.matmul(v, xyz.T)
+        phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))
+        lim = self.r_lim * np.sin(oa - phi)
+        in_dac = r[None, :] < lim
+        return np.array([self.table.loc[in_dac[n, :], 'equiv'].nunique()
+                         for n in range(v.shape[0])])
 
     def copy(self):
         """

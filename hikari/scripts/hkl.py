@@ -57,13 +57,13 @@ def completeness_statistics(a, b, c, al, be, ga,
     p.stats(space_group=SG[space_group])
 
 
-def dac_completeness_vs_opening_angle(output_path='output.txt',
+def dac_completeness_vs_opening_angle(output_path='~/output.txt',
                                       precision=91,
                                       resolution=1.2,
                                       wavelength='MoKa',
                                       theta=None):
     """
-    Calculate completeness in P-1 as a function of DAC opening angle,
+    Calculate completeness in P1 as a function of DAC opening angle,
     assuming certain resolution and wavelength used.
     :param output_path: Path of created file containing calculated data.
     :type output_path: str
@@ -84,14 +84,14 @@ def dac_completeness_vs_opening_angle(output_path='output.txt',
         hkl_frame.la = wavelength
         res = hkl_frame.r_lim * np.sin(np.deg2rad(theta)) \
             if theta is not None else resolution
-        side = 10 * precision**(1/3) / res  # adapt to prec&la
+        side = 10 * precision**(1/3) / res  # adapt to res&la
         hkl_frame.edit_cell(a=side, b=side, c=side, al=90, be=90, ga=90)
         hkl_frame.fill(radius=res)
         return hkl_frame
     p = _make_reference_ball()
     total = len(p.table)
     angles = np.linspace(start=90, stop=0, num=precision)
-    out = open(output_path, 'w', buffering=1)
+    out = open(make_abspath(output_path), 'w')
     out.write('#oa      cplt\n')
     for a in angles:
         p.dac_trim(opening_angle=a, vector=np.array((1, np.pi / 4, np.e / 5)))  # rand. v
@@ -503,4 +503,4 @@ if __name__ == '__main__':
     #     ga = 120 if v in {'P-3', 'P-3m1', 'P6om', 'P6ommm'} else 90
     #     completeness_map(space_group=SG[k], ga=ga,
     #                      output_name=name, **kwargs)
-    pass
+    dac_completeness_vs_opening_angle(output_path='~/_/pot_vs_oa.dat')
