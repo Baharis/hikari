@@ -492,12 +492,13 @@ class HklFrame(BaseFrame):
         :return: Number of symmetry-unique reflections in dac-accessible region.
         :rtype: int
         """
-        print(self.a_r)
-        print(self.b_r)
-        print(self.c_r)
-        print(self.al_r)
-        print(self.be_r)
-        print(self.ga_r)
+
+        print(self.a_d, self.b_d, self.c_d)
+        print(self.al_d, self.be_d, self.ga_d)
+        print(self.v_d)
+        print('-'*20)
+        print(self.a_r, self.b_r, self.c_r)
+        print(self.al_r, self.be_r, self.ga_r)
         print(self.v_r)
         assert False
         in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)

@@ -144,36 +144,25 @@ class BaseFrame:
         :attr:`b_d`, :attr:`c_d`, :attr:`al_d`, :attr:`be_d`, :attr:`ga_d`
         based on the currently stored values of the aforementioned six.
         """
+        a, b, c = self.a_d, self.b_d, self.c_d
+        sa, sb, sg = np.sin(self.al_d), np.sin(self.be_d), np.sin(self.ga_d)
+        ca, cb, cg = np.cos(self.al_d), np.cos(self.be_d), np.cos(self.ga_d)
+        v = a * b * c * np.sqrt(1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg)
 
-        def calculate_reciprocal_cell(a, b, c, al, be, ga, v):
-            a_r = b * c * np.sin(al) / v
-            b_r = c * a * np.sin(be) / v
-            c_r = a * b * np.sin(ga) / v
-            al_r = np.arccos((np.cos(be) * np.cos(ga) - np.cos(al)) /
-                             (np.sin(be) * np.sin(ga)))
-            be_r = np.arccos((np.cos(ga) * np.cos(al) - np.cos(be)) /
-                             (np.sin(ga) * np.sin(al)))
-            ga_r = np.arccos((np.cos(al) * np.cos(be) - np.cos(ga)) /
-                             (np.sin(al) * np.sin(be)))
-            return a_r, b_r, c_r, al_r, be_r, ga_r
-        self.a_r, self.b_r, self.c_r, self.al_r, self.be_r, self.ga_r = \
-            calculate_reciprocal_cell(self.a_d, self.b_d, self.c_d,
-                                      self.al_d, self.be_d, self.ga_d, self.v_d)
+        self.__a_v = np.array([a, 0, 0])
+        self.__b_v = np.array([b * cg, b * sg, 0])
+        self.__c_v = np.array([c * cb, c * (ca - cb * cg)/sg, v/(a * b * sg)])
 
-        def calculate_vectors():
-            self.__a_v = np.array((self.a_d, 0, 0))
-            self.__b_v = np.array((self.b_d * np.cos(self.ga_d),
-                                   self.b_d * np.sin(self.ga_d), 0))
-            self.__c_v = np.array((self.c_d * np.cos(self.be_d),
-                                   self.c_d * (
-                                   np.cos(self.al_d) - np.cos(self.be_d)
-                                   * np.cos(self.ga_d)) / np.sin(self.ga_d),
-                                   self.v_d / (
-                                   self.a_d * self.b_d * np.sin(self.ga_d))))
-            self.__a_w = np.cross(self.b_v, self.c_v) / self.v_d
-            self.__b_w = np.cross(self.c_v, self.a_v) / self.v_d
-            self.__c_w = np.cross(self.a_v, self.b_v) / self.v_d
-        calculate_vectors()
+        self.a_r = b * c * sa / v
+        self.b_r = c * a * sb / v
+        self.c_r = a * b * sg / v
+        self.al_r = np.arccos((cb * cg - ca) / (sb * sg))
+        self.be_r = np.arccos((cg * ca - cb) / (sg * sa))
+        self.ga_r = np.arccos((ca * cb - cg) / (sa * sb))
+
+        self.__a_w = np.cross(self.b_v, self.c_v) / v
+        self.__b_w = np.cross(self.c_v, self.a_v) / v
+        self.__c_w = np.cross(self.a_v, self.b_v) / v
 
     @property
     def a_d(self):
