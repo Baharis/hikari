@@ -451,9 +451,9 @@ class HklFrame(BaseFrame):
             v = vector
         oa = np.deg2rad(opening_angle)
         v = v / np.sqrt(v.dot(v))   # normalised `vector`
-        m1 = v @ self._xyz_array.T  # distance from dac plane "p" (see also phi)
-        phi = np.abs(np.arcsin((m1/self._r_array).clip(-1, 1)))  # angle from p
-        return self._r_array < self.r_lim * np.sin(oa - phi)  # True if in dac
+        m = v @ self._xyz_array.T   # distance from dac plane "p" (see also phi)
+        phi = np.abs(np.arcsin((m/self._r_array).clip(-1, 1)))  # angle <(p, v)
+        return self._r_array < self.r_lim * np.sin(oa - phi)    # True if in dac
 
     def dac_trim(self, opening_angle=35.0, vector=None):
         """
@@ -496,21 +496,12 @@ class HklFrame(BaseFrame):
         return self.table.loc[in_dac, 'equiv'].nunique()
 
     def dacs_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
-        # TODO: WARNING! This works really fast, but breaks for large systems!
-        memory_estimate = 26 * len(self) * len(vectors)
-        cycles_needed = -(memory_estimate // -hikari.MEMORY_SIZE)
+        memory_estimate = 26 * len(self) * len(vectors)  # estimate memory use
+        cycles_needed = -(memory_estimate // -hikari.MEMORY_SIZE)  # and split
         if cycles_needed > 1:
             vectors_split = np.array_split(vectors, cycles_needed)
-            count = np.hstack([self.dacs_count(opening_angle, vectors=v)
-                               for v in vectors_split])
-            return count
-        #print(vectors.shape)
-        #print(hikari.MEMORY_SIZE)
-        #print(memory_estimate)
-        #print(cycles_needed)
-        #print(np.array_split(vectors, cycles_needed)[0].shape)
-        #print(np.array_split(vectors, cycles_needed)[1].shape)
-        #assert False
+            return np.hstack([self.dacs_count(opening_angle, vectors=v)
+                              for v in vectors_split])
 
         oa = np.deg2rad(opening_angle)
         v = np.array(vectors)
@@ -518,26 +509,10 @@ class HklFrame(BaseFrame):
         # transform reflections to m1 height / radial m2 cylindrical coordinates
         xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
         r = self.table.loc[:, 'r'].to_numpy()
-        # let m1 / m2 be a coordinate parallel / perpendicular to vector n
-        # 1st dim. = vectors, 2nd dim. = xyz reflections, 3rd dim. = x/y/z coord
-        m1 = np.matmul(v, xyz.T)
-        phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))
-        lim = self.r_lim * np.sin(oa - phi)
+        m1 = np.matmul(v, xyz.T)  # distance from dac plane "p" (see also phi)
+        phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))  # angle <(plane p, v)
+        lim = self.r_lim * np.sin(oa - phi)            # True if in dac
         in_dac = r[None, :] < lim
-        #print(f'oa:     {oa.shape} * {oa.itemsize:12d}')
-        #print(f'v:      {v.shape} * {v.itemsize:12d}')
-        #print(f'xyz:    {xyz.shape} * {xyz.itemsize:12d}')
-        #print(f'r:      {r.shape} * {r.itemsize:12d}')
-        #print(f'm1:     {m1.shape} * {m1.itemsize:12d}')
-        #print(f'phi:    {phi.shape} * {phi.itemsize:12d}')
-        #print(f'lim:    {lim.shape} * {lim.itemsize:12d}')
-        #print(f'in_dac: {in_dac.shape} * {in_dac.itemsize:12d}')
-        memory = sum([_.size * _.itemsize for _ in [oa, v, xyz, r, m1, phi, lim, in_dac]])
-        print(f'total memory use: '
-              f'{memory:12d} B, '
-              f'{memory//2**10:12d} KiB, '
-              f'{memory//2**20:12d} MiB, '
-              f'{memory//2**30:12d} GiB')
         return np.array([self.table.loc[in_dac[n, :], 'equiv'].nunique()
                          for n in range(v.shape[0])])
 
