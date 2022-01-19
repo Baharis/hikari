@@ -449,10 +449,10 @@ class HklFrame(BaseFrame):
 
     def dac_trim(self, opening_angle=35.0, vector=None):
         """
-        Remove reflections which lie outside the accessible volume of diamond
-        anvil cell. Sample/DAC orientation can be supplied either via specifying
-        crystal orientation in :class:`hikari.dataframes.BaseFrame`, in
-        :attr:`orientation` or providing a xyz *vector* perpendicular to the
+        Remove reflections outside the opening_angle DAC-accessible volume.
+        Sample/DAC orientation can be supplied either via specifying crystal
+        orientation in :class:`hikari.dataframes.BaseFrame`, in
+        :attr:`orientation` or providing a xyz\* *vector* perpendicular to the
         dac-accessible disc. For further details refer to *Tchoń & Makal, IUCrJ
         8, 1006-1017 (2021)* `https://doi.org/10.1107/s2052252521009532`_.
 
@@ -468,21 +468,18 @@ class HklFrame(BaseFrame):
         self.table = self.table[in_dac]
         self.table.reset_index(drop=True, inplace=True)
 
-    def dac_count(self, opening_angle=35.0, vector=None):
+    def dacs_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
         """
-        Count dac-accessible reflections. For details see :meth:`dac_trim`.
+        Count unique dac-accessible reflections for n crystals placed such that
+        vector n is perpendicular to diamond. For details see :meth:`dac_trim`.
+
         :param opening_angle: DAC single opening angle in degrees, default 35.0.
         :type opening_angle: float
-        :param vector: Provides information about orientation of crystal
-          relative to DAC. If None, current :attr:`orientation` is used instead.
-        :type vector: Tuple[float]
-        :return: Number of symmetry-unique reflections in dac-accessible region.
+        :param vectors: Array containing rotational axes of available DAC-discs.
+        :type vectors: np.array
+        :return: Array with numbers of unique reflns in DAC-accessible region.
         :rtype: int
         """
-        in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
-        return self.table.loc[in_dac, 'equiv'].nunique()
-
-    def dacs_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
         memory_estimate = 26 * len(self) * len(vectors)  # estimate memory use
         cycles_needed = -(memory_estimate // -hikari.MEMORY_SIZE)  # and split
         if cycles_needed > 1:
