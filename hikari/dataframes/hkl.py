@@ -6,6 +6,7 @@ import numpy.linalg as lin
 import pandas as pd
 from functools import lru_cache
 
+import hikari
 from hikari.dataframes import BaseFrame
 from hikari.symmetry import PG, SG
 from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style, \
@@ -431,35 +432,23 @@ class HklFrame(BaseFrame):
         """
         return 2 / self.la
 
-    @property
-    @lru_cache(maxsize=1)
-    def _xyz_array(self):
-        return self.table.loc[:, ('x', 'y', 'z')].to_numpy()
-
-    @property
-    @lru_cache(maxsize=1)
-    def _r_array(self):
-        return self.table.loc[:, 'r'].to_numpy()
-
-    def _in_dac(self, opening_angle, vector=None):
-        if vector is None:
-            l_v = np.array((1.0, 0.0, 0.0))          # vector parallel to beam
-            hkl = lin.inv(self.orientation) @ l_v    # calculate hkl vector
-            v = hkl @ self.A_r                       # calculate xyz* vector
-        else:
-            v = np.array(vector)
-        oa = np.deg2rad(opening_angle)
-        v = v / lin.norm(v)  # normalised `vector`
-        m1 = v @ self._xyz_array.T  # distance from dac plane "p" (see also phi)
-        phi = np.abs(np.arcsin((m1/self._r_array).clip(-1, 1)))  # angle from p
-        return self._r_array < self.r_lim * np.sin(oa - phi)  # True if in dac
+    def _in_dacs(self, opening_angle, vectors):
+        oa = np.deg2rad(opening_angle)                # opening angle in radians
+        xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
+        r = self.table.loc[:, 'r'].to_numpy()
+        v = np.array(vectors)
+        v = (v.T / lin.norm(v, axis=1)).T              # normalise vectors v
+        m1 = np.matmul(v, xyz.T)                       # dist from dac plane "p"
+        phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))  # angle <(plane p, v)
+        lim = self.r_lim * np.sin(oa - phi)            # True if in dac
+        return r[None, :] < lim
 
     def dac_trim(self, opening_angle=35.0, vector=None):
         """
-        Remove reflections which lie outside the accessible volume of diamond
-        anvil cell. Sample/DAC orientation can be supplied either via specifying
-        crystal orientation in :class:`hikari.dataframes.BaseFrame`, in
-        :attr:`orientation` or providing a xyz *vector* perpendicular to the
+        Remove reflections outside the opening_angle DAC-accessible volume.
+        Sample/DAC orientation can be supplied either via specifying crystal
+        orientation in :class:`hikari.dataframes.BaseFrame`, in
+        :attr:`orientation` or providing a xyz\* *vector* perpendicular to the
         dac-accessible disc. For further details refer to *Tchoń & Makal, IUCrJ
         8, 1006-1017 (2021)* `https://doi.org/10.1107/s2052252521009532`_.
 
@@ -471,23 +460,38 @@ class HklFrame(BaseFrame):
         :return: HklFrame containing only reflections in dac-accessible region.
         :rtype: HklFrame
         """
-        in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
+        if vector is None:
+            l_v = np.array((1.0, 0.0, 0.0))           # vector parallel to beam
+            hkl = lin.inv(self.orientation) @ l_v     # calculate hkl vector
+            v = hkl @ self.A_r                        # calculate xyz* vector
+        else:
+            v = vector
+        in_dac = self._in_dacs(opening_angle, vectors=np.array([v, ]))[0]
         self.table = self.table[in_dac]
         self.table.reset_index(drop=True, inplace=True)
 
-    def dac_count(self, opening_angle=35.0, vector=None):
+    def dacs_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
         """
-        Count dac-accessible reflections. For details see :meth:`dac_trim`.
+        Count unique dac-accessible reflections for n crystals placed such that
+        vector n is perpendicular to diamond. For details see :meth:`dac_trim`.
+
         :param opening_angle: DAC single opening angle in degrees, default 35.0.
         :type opening_angle: float
-        :param vector: Provides information about orientation of crystal
-          relative to DAC. If None, current :attr:`orientation` is used instead.
-        :type vector: Tuple[float]
-        :return: Number of symmetry-unique reflections in dac-accessible region.
-        :rtype: int
+        :param vectors: Array containing rotational axes of available DAC-discs.
+        :type vectors: np.array
+        :return: Array with numbers of unique reflns in DAC-accessible region.
+        :rtype: np.array
         """
-        in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
-        return self.table.loc[in_dac, 'equiv'].nunique()
+        memory_estimate = 26 * len(self) * len(vectors)  # estimate memory use
+        cycles_needed = -(memory_estimate // -hikari.MEMORY_SIZE)  # and split
+        if cycles_needed > 1:
+            vectors_split = np.array_split(vectors, cycles_needed)
+            return np.hstack([self.dacs_count(opening_angle, vectors=v)
+                              for v in vectors_split])
+        else:
+            in_dac = self._in_dacs(opening_angle, vectors)
+            return np.array([self.table.loc[in_dac[n, :], 'equiv'].nunique()
+                             for n in range(vectors.shape[0])])
 
     def copy(self):
         """
