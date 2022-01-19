@@ -6,6 +6,7 @@ import numpy.linalg as lin
 import pandas as pd
 from functools import lru_cache
 
+import hikari
 from hikari.dataframes import BaseFrame
 from hikari.symmetry import PG, SG
 from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style, \
@@ -491,11 +492,34 @@ class HklFrame(BaseFrame):
         :return: Number of symmetry-unique reflections in dac-accessible region.
         :rtype: int
         """
+        print(self.a_r)
+        print(self.b_r)
+        print(self.c_r)
+        print(self.al_r)
+        print(self.be_r)
+        print(self.ga_r)
+        print(self.v_r)
+        assert False
         in_dac = self._in_dac(opening_angle=opening_angle, vector=vector)
         return self.table.loc[in_dac, 'equiv'].nunique()
 
     def dacs_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
         # TODO: WARNING! This works really fast, but breaks for large systems!
+        memory_estimate = 26 * len(self) * len(vectors)
+        cycles_needed = -(memory_estimate // -hikari.MEMORY_SIZE)
+        if cycles_needed > 1:
+            vectors_split = np.array_split(vectors, cycles_needed)
+            count = np.hstack([self.dacs_count(opening_angle, vectors=v)
+                               for v in vectors_split])
+            return count
+        #print(vectors.shape)
+        #print(hikari.MEMORY_SIZE)
+        #print(memory_estimate)
+        #print(cycles_needed)
+        #print(np.array_split(vectors, cycles_needed)[0].shape)
+        #print(np.array_split(vectors, cycles_needed)[1].shape)
+        #assert False
+
         oa = np.deg2rad(opening_angle)
         v = np.array(vectors)
         v = (v.T / lin.norm(v, axis=1)).T  # normalise every vector in vectors
@@ -508,6 +532,20 @@ class HklFrame(BaseFrame):
         phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))
         lim = self.r_lim * np.sin(oa - phi)
         in_dac = r[None, :] < lim
+        #print(f'oa:     {oa.shape} * {oa.itemsize:12d}')
+        #print(f'v:      {v.shape} * {v.itemsize:12d}')
+        #print(f'xyz:    {xyz.shape} * {xyz.itemsize:12d}')
+        #print(f'r:      {r.shape} * {r.itemsize:12d}')
+        #print(f'm1:     {m1.shape} * {m1.itemsize:12d}')
+        #print(f'phi:    {phi.shape} * {phi.itemsize:12d}')
+        #print(f'lim:    {lim.shape} * {lim.itemsize:12d}')
+        #print(f'in_dac: {in_dac.shape} * {in_dac.itemsize:12d}')
+        memory = sum([_.size * _.itemsize for _ in [oa, v, xyz, r, m1, phi, lim, in_dac]])
+        print(f'total memory use: '
+              f'{memory:12d} B, '
+              f'{memory//2**10:12d} KiB, '
+              f'{memory//2**20:12d} MiB, '
+              f'{memory//2**30:12d} GiB')
         return np.array([self.table.loc[in_dac[n, :], 'equiv'].nunique()
                          for n in range(v.shape[0])])
 

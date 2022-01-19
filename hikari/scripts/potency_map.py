@@ -517,8 +517,8 @@ def potency_map2(a, b, c, al, be, ga,
         _cplt_mesh = np.zeros_like(th_mesh)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
-        vectors = [_angles_to_vector(th, ph) for th in th_range
-                                             for ph in ph_range]
+        vectors = np.vstack([_angles_to_vector(th, ph) for th in th_range
+                                             for ph in ph_range])
         uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
@@ -640,7 +640,7 @@ def potency_map2(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    potency_map(9, 9, 9, 90, 90, 120, space_group='P6/mcc', output_quality=5,
-                resolution=2.0, output_directory='~/_/', output_name='1_')
-    potency_map2(9, 9, 9, 90, 90, 120, space_group='P6/mcc', output_quality=5,
-                resolution=2.0, output_directory='~/_/', output_name='2_')
+    potency_map(5, 5, 5, 90, 90, 90, space_group='Pmmm', output_quality=5,
+                resolution=1.2, output_directory='~/_/', output_name='1_')
+    potency_map2(5, 5, 5, 90, 90, 90, space_group='Pmmm', output_quality=5,
+                resolution=1.2, output_directory='~/_/', output_name='2_')
