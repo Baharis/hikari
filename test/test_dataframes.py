@@ -1,7 +1,7 @@
+import tempfile, unittest
 import numpy as np
-import unittest
-from hikari.dataframes import BaseFrame
-
+from hikari.dataframes import BaseFrame, HklFrame
+from hikari.resources import nacl_hkl
 
 rad60 = 1.0471975511965976
 rad70 = 1.2217304763960306
@@ -72,8 +72,40 @@ class TestBaseFrame(unittest.TestCase):
 
 
 class TestHklFrame(unittest.TestCase):
-    def test_init(self):
-        pass
+    h = HklFrame()
+    temporary_hkl_file = tempfile.NamedTemporaryFile('w+')
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.temporary_hkl_file.write(nacl_hkl)
+        cls.h.read(cls.temporary_hkl_file.name, hkl_format='shelx_4')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.temporary_hkl_file.close()
+
+    def test_len(self):
+        self.assertEqual(len(self.h), 8578)
+
+    def test_add(self):
+        h2 = self.h + self.h
+        self.assertEqual(len(h2), 17156)
+        self.assertIsInstance(h2, HklFrame)
+
+    def test_str(self):
+        str_h = str(self.h)
+        self.assertIn(str_h[:300], 'h')
+        self.assertIn(str_h[:300], '52001.50')
+        self.assertIn(str_h[-300:], '0.0')
+
+    def test_read(self):
+        self.h.read(self.temporary_hkl_file.name, hkl_format='free_4')
+        self.assertEqual(self.h.table.__len__(), 8578)
+
+# test other functions, in particular trim, dac, merge etc
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
