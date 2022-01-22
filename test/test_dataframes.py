@@ -1,7 +1,8 @@
-import tempfile, unittest
+import copy, tempfile, unittest
 import numpy as np
 from hikari.dataframes import BaseFrame, HklFrame
 from hikari.resources import nacl_hkl
+from hikari.symmetry import PG
 
 rad60 = 1.0471975511965976
 rad70 = 1.2217304763960306
@@ -72,39 +73,92 @@ class TestBaseFrame(unittest.TestCase):
 
 
 class TestHklFrame(unittest.TestCase):
-    h = HklFrame()
+    h1 = HklFrame()
+    h2 = HklFrame()
     temporary_hkl_file = tempfile.NamedTemporaryFile('w+')
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.temporary_hkl_file.write(nacl_hkl)
-        cls.h.read(cls.temporary_hkl_file.name, hkl_format='shelx_4')
+        cls.h1.read(cls.temporary_hkl_file.name, hkl_format='shelx_4')
+        cls.h1.edit_cell(a=5.64109, b=5.64109, c=5.64109)
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temporary_hkl_file.close()
 
+    def setUp(self) -> None:
+        self.h2 = copy.deepcopy(self.h1)
+
     def test_len(self):
-        self.assertEqual(len(self.h), 8578)
+        self.assertEqual(len(self.h1), 8578)
 
     def test_add(self):
-        h2 = self.h + self.h
-        self.assertEqual(len(h2), 17156)
-        self.assertIsInstance(h2, HklFrame)
+        h3 = self.h1 + self.h2
+        self.assertEqual(len(h3), 17156)
+        self.assertIsInstance(h3, HklFrame)
 
     def test_str(self):
-        str_h = str(self.h)
-        self.assertIn(str_h[:300], 'h')
-        self.assertIn(str_h[:300], '52001.50')
-        self.assertIn(str_h[-300:], '0.0')
+        str_h = str(self.h1)
+        self.assertIn('h', str_h[:300])
+        self.assertIn('52001.5', str_h[:300])
+        self.assertIn('419.465', str_h[-300:])
 
     def test_read(self):
-        self.h.read(self.temporary_hkl_file.name, hkl_format='free_4')
-        self.assertEqual(self.h.table.__len__(), 8578)
+        self.h2.read(self.temporary_hkl_file.name, hkl_format='free_4')
+        self.assertEqual(self.h2.table.__len__(), 8578)
 
-# test other functions, in particular trim, dac, merge etc
+    def test_la_and_r_lim(self):
+        self.h2.la = 0.50
+        self.assertAlmostEqual(self.h2.la, 0.50)
+        self.assertAlmostEqual(self.h2.r_lim, 4.0)
+        self.h2.la = 'AgKa'
+        self.assertAlmostEqual(self.h2.la, 0.5608)
+        self.assertAlmostEqual(self.h2.r_lim, 3.56633380884)
 
+    def test_copy(self):
+        h = self.h1.copy()
+        self.assertEqual(str(h), str(self.h1))
 
+    def test_find_equivalents(self):
+        self.h2.find_equivalents()
+        self.assertEqual(self.h2.table['equiv'].nunique(), 2861)
+        self.h2.find_equivalents(point_group=PG['m-3m'])
+        self.assertEqual(self.h2.table['equiv'].nunique(), 111)
+
+    def test_place(self):
+        self.h2.place()
+        xyz = self.h2.table.loc[:, ['x', 'y', 'z']].to_numpy()
+        expected_xyz_sum = np.array([882.09902696, 1188.0682634, 516.21229231])
+        expected_xyz_mean = np.array([0.102832710, 0.1385017800, 0.0601786300])
+        self.assertAlmostEqual(xyz.max(), 2.4817898668519733)
+        self.assertAlmostEqual(xyz.sum(), 2586.379582669306)
+        self.assertAlmostEqual(sum(xyz.sum(axis=0) - expected_xyz_sum), 0.0)
+        self.assertAlmostEqual(sum(xyz.mean(axis=0) - expected_xyz_mean), 0.0)
+
+    def test_trim(self):
+        self.h2.place()
+        self.h2.trim(limit=1.2)
+        self.h2.find_equivalents(point_group=PG['m-3m'])
+        self.assertEqual(len(self.h2), 1761)
+        self.assertEqual(self.h2.table['equiv'].nunique(), 18)
+
+    def test_dac_trim(self):
+        self.h2.place()
+        self.h2.dac_trim(opening_angle=30, vector=np.array([1, 0, 0]))
+        self.h2.find_equivalents(point_group=PG['m-3m'])
+        self.assertEqual(len(self.h2), 434)
+        self.assertEqual(self.h2.table['equiv'].nunique(), 10)
+
+    def test_merge(self):
+        self.h2.merge(point_group=PG['2/m'])
+        self.assertEqual(len(self.h2.table), 831)
+        self.h2.merge(point_group=PG['4/m'])
+        self.assertEqual(len(self.h2.table), 390)
+        self.h2.merge(point_group=PG['m-3'])
+        self.assertEqual(len(self.h2.table), 159)
+        self.h2.merge(point_group=PG['m-3m'])
+        self.assertEqual(len(self.h2.table), 111)
 
 
 if __name__ == '__main__':
