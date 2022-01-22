@@ -1,5 +1,5 @@
-from hikari.utility import angle2rad
 import numpy as np
+from hikari.utility import angle2rad
 
 
 class BaseFrame:

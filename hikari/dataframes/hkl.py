@@ -4,7 +4,6 @@ import random
 import numpy as np
 import numpy.linalg as lin
 import pandas as pd
-from functools import lru_cache
 
 import hikari
 from hikari.dataframes import BaseFrame
@@ -1283,9 +1282,6 @@ class HklToResConverter:
         with open(make_abspath(path, '../hkl.msd'), 'w') as style:
             style.write(hkl_mercury_style)
 
-
-if __name__ == '__main__':
-    pass
 
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
