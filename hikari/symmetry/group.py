@@ -192,8 +192,10 @@ class Group:
 
     @property
     def is_symmorphic(self):
-        return all(g.typ not in {g.Type.rototranslation, g.Type.transflection}
-                   and sum(g.origin) == 0 for g in self.generators)
+        zero_vector = np.array([0, 0, 0])
+        trans = [o for o in self.operations if o.typ is o.Type.translation]
+        zero_tl = [o for o in self.operations if np.allclose(o.tl, zero_vector)]
+        return self.order == len(zero_tl) * (len(trans) + 1)
 
     @property
     def is_polar(self):
