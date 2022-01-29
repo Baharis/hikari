@@ -54,7 +54,7 @@ class Group:
             return [(), (_b, ), (_a, _b, _c), (_c, _a, _ab),
                     (_c, _a, _ab), (_c, _abc, _ab), (_c, _a, _ab)][self.value]
 
-    BRAVAIS_PRIORITY_RULES = 'A+B+C=F>I>C>B>A>H>P'
+    BRAVAIS_PRIORITY_RULES = 'A+B+C=F>R>I>C>B>A>H>P'
     AXIS_PRIORITY_RULES = '6>61>62>63>64>65>-6>4>41>42>43>-4>-3>3>31>32>2>21'
     PLANE_PRIORITY_RULES = 'm>a+b=e>a+c=e>b+c=e>a>b>c>n>d'
 
@@ -129,9 +129,7 @@ class Group:
         # TODO: enantiomorphs like P41 / P43 not recognised
         # TODO: 'e' found always whenever 'a' and 'b' present
         # TODO: some mistakes occur in trigonal crystal system (see SG149+)
-        tl = ([o.name for o in self.operations if o.typ is o.Type.translation])
-        tl.append('H' if self.system is self.System.trigonal else 'P')
-        name = find_best(tl, self.BRAVAIS_PRIORITY_RULES)
+        name = self.centering_symbol
         for d in self.system.directions:
             ops = [o.name.partition(':')[0] for o in self.operations
                    if o.orientation is not None and
@@ -141,6 +139,12 @@ class Group:
             sep = '/' if len(best_axis) > 0 and len(best_plane) > 0 else ''
             name += ' ' + best_axis + sep + best_plane
         return name.strip()
+
+    @property
+    def centering_symbol(self):
+        tl = ([o.name for o in self.operations if o.typ is o.Type.translation])
+        tl.append('H' if self.system is self.System.trigonal else 'P')
+        return find_best(tl, self.BRAVAIS_PRIORITY_RULES)
 
     @property
     def generators(self):

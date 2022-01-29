@@ -51,7 +51,7 @@ class SymmOp:
             replace('\n', '').replace(' ', '')
 
     def __str__(self):
-        origin = ','.join([str(Fraction(o).limit_denominator(9))
+        origin = ','.join([str(Fraction(o).limit_denominator(12))
                            for o in self.origin])
         return self.name + ': ' + self.code + ' (' + origin + ')'
 
@@ -207,7 +207,8 @@ class SymmOp:
         _glide = self.glide
         _glide_dir = 'n' if np.linalg.norm(_glide) < 1e-8 else 'x'
         d = {(1, 0, 0): 'a', (0, 1, 0): 'b', (0, 0, 1): 'c',
-             (0, 1, 1): 'A', (1, 0, 1): 'B', (1, 1, 0): 'C', (1, 1, 1): 'I'}
+             (0, 1, 1): 'A', (1, 0, 1): 'B', (1, 1, 0): 'C', (1, 1, 1): 'I',
+             (1, 2, 2): 'R', (2, 1, 1): 'R', (2, 1, 2): 'R', (1, 2, 1): 'R'}
         for key, value in d.items():
             if np.allclose(_glide, self._project(_glide, np.array(key))):
                 _glide_dir = value
@@ -252,9 +253,8 @@ class SymmOp:
         translation, eg.: n for all n-fold axes, 2 for other (max 6)
         :rtype: int
         """
-        op = SymmOp(self.tf)
         for f in (1, 2, 3, 4, 5, 6):
-            if (op ** f).trace == 3:
+            if pow(self, f, 1).typ is self.Type.identity:
                 return f
         raise NotImplementedError('order is not in range 1 to 6')
 
