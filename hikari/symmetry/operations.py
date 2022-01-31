@@ -327,10 +327,13 @@ class SymmOp:
         if self.det < 0:
             o = SymmOp(-1 * self.tf).orientation
         elif self.typ in {self.Type.rotation, self.Type.rototranslation}:
-            o = self.invariants[0]
+            m = self.tf  # method: see https://math.stackexchange.com/q/3441262
+            t = m + m.T - (m.trace() - 1) * np.eye(3)
+            o = [_ for _ in t if not np.isclose(sum(abs(_)), 0)][0]
         else:
             return None
-        return np.linalg.norm(sum(o) / sum(abs(o)) * o)
+        o = o if sum(o) > 0 else -o
+        return o / np.sqrt(sum(o*o))
 
     @property
     def sense(self):
