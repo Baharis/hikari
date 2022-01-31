@@ -218,18 +218,19 @@ class SymmOp:
         elif self.typ is self.Type.reflection:
             return 'm'
         elif self.typ is self.Type.rotation:
-            return str(self.fold)
+            return str(self.fold) + self.sense
         elif self.typ is self.Type.inversion:
             return '-1'
         elif self.typ is self.Type.rototranslation:
-            return str(self.fold) + str(round(np.linalg.norm(_glide)*self.fold))
+            return str(self.fold) + \
+                   str(round(np.linalg.norm(_glide)*self.fold)) + self.sense
         elif self.typ is self.Type.transflection:
             return _glide_dir.replace('A', 'n').replace('B', 'n').\
                 replace('C', 'n') if self.glide_fold == 2 else 'd'
         elif self.typ is self.Type.translation:
             return _glide_dir
         elif self.typ is self.Type.rotoinversion:
-            return str(-self.fold)
+            return str(-self.fold) + self.sense
         else:
             return '?'
 
@@ -323,12 +324,24 @@ class SymmOp:
         :return: Direction of symmetry element (if can be defined) else None
         :rtype: Union[np.ndarray, None]
         """
-        if self.typ in {self.Type.rotation, self.Type.rototranslation}:
-            return self.invariants[0]
-        elif self.det < 0:
-            return SymmOp(-1 * self.tf).orientation
+        if self.det < 0:
+            o = SymmOp(-1 * self.tf).orientation
+        elif self.typ in {self.Type.rotation, self.Type.rototranslation}:
+            o = self.invariants[0]
         else:
             return None
+        return np.linalg.norm(sum(o) / sum(abs(o)) * o)
+
+    @property
+    def sense(self):
+        """
+        :return: "+" or "-", the "sense" of rotation, as given in ITC A, 11.1.2
+        :rtype: str
+        """
+        unique = np.array([np.sqrt(2), np.e, np.pi])
+        rotation = self.tf if self.det > 0 else -self.tf
+        sign = np.dot(self.orientation, np.cross(unique, rotation @ unique))
+        return '' if np.isclose(sign, 0) else '+' if sign > 0 else '-'
 
     def at(self, point):
         """
