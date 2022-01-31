@@ -7,7 +7,7 @@ import pandas as pd
 
 def _load_indexed_csv(filename):
     return pd.read_csv(io.StringIO(get(__name__, filename).decode('utf-8')), 
-                       index_col=0)
+                       comment='#', index_col=0)
 
 
 def _load_json(filename):
