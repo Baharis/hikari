@@ -1,8 +1,9 @@
 from enum import Enum
 from collections import OrderedDict, defaultdict
-from hikari.dataframes import BaseFrame
+import numpy as np
 from pandas import DataFrame
-
+from hikari.dataframes import BaseFrame
+from hikari.resources import Xray_atomic_form_factors
 
 res_instructions = defaultdict(set)
 
@@ -18,6 +19,35 @@ class ResFrame(BaseFrame):
     def __init__(self):
         super().__init__()
         self.data = OrderedDict()
+
+    def atomic_form_factor(self, atom, hkl, u):
+        s = Xray_atomic_form_factors.loc[atom]
+        sintl2 = np.dot(self.A_r @ hkl, self.A_r @ hkl) / 4
+        # u = np.array([[u11, u12, u13], [u12, u22, u23], [u13, u23, u33]])
+        q = np.exp(-2*np.pi**2 * (hkl.T @ self.G_r @ u @ self.G_r @ hkl))
+        f = s['a1'] * np.exp(-s['b1'] * sintl2) + \
+            s['a2'] * np.exp(-s['b2'] * sintl2) + \
+            s['a3'] * np.exp(-s['b3'] * sintl2) + \
+            s['a4'] * np.exp(-s['b4'] * sintl2) + s['c']
+        return q * f
+
+    def form_factor(self, hkl, space_group):
+        f = 0.0
+        for k, v in self.data['ATOM'].items():
+            atom = k.title()[:2]
+            xyz = np.fromiter(map(float, v[1:4]), dtype=np.float)
+            percent = float(v[4]) % 10
+            u11, u22, u33, u12, u13, u23 = map(float, v[5:11])
+            u = np.array([[u11, u12, u13], [u12, u22, u23], [u13, u23, u33]])
+            for o in space_group.operations:
+                new_xyz = (o.tf @ np.array(xyz)).T + o.tl
+                new_u = o.tf @ u
+                # new_u = np.zeros_like(u)
+                f_atom = percent * self.atomic_form_factor(atom, hkl, new_u)
+                # print(f_atom, percent, self.atomic_form_factor(atom, hkl, new_u))
+                f += f_atom * np.exp(2 * np.pi * 1j * np.dot(new_xyz, hkl))
+        return f
+    # TODO imprecise, especially when sintl is large - see far NaCl reflections
 
     def read(self, path):
         """Read data from specified ins/res file and return an OrderedDict"""
