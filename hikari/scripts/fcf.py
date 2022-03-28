@@ -184,3 +184,19 @@ def fcf_descriptors(input_path='shelx.fcf', input_format='shelx_fcf'):
     print('awR2  = {:f}'.format(awr2))
     print('GoF*  = {:f}'.format(gof_if_alpha_equal_one))
     print('aGoF* = {:f}'.format(agof_if_alpha_equal_one))
+
+
+def temp_calculate_nacl_form_factors():
+    from hikari.dataframes import ResFrame
+    from hikari.symmetry import SG
+    r = ResFrame()
+    r.read('/home/dtchon/x/NaCl/cifmaking/NaCl.res')
+    r.edit_cell(a=5.641087, b=5.641087, c=5.641087)
+    for hkl in [(0, 0, 0), (1, 1, 1), (2, 2, 2), (5, 5, 5), (0, 6, 8)]:
+        f = r.form_factor(np.array(hkl), SG['Fm-3m'])
+        f2 = abs(f**2)
+        print(f'{hkl}: {f2:12f} --- {f}')
+
+
+if __name__ == '__main__':
+    temp_calculate_nacl_form_factors()

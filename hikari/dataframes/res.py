@@ -22,8 +22,9 @@ class ResFrame(BaseFrame):
 
     def atomic_form_factor(self, atom, hkl, u):
         s = Xray_atomic_form_factors.loc[atom]
-        sintl2 = np.dot(self.A_r @ hkl, self.A_r @ hkl) / 4
-        q = np.exp(-2*5.641087*5.641087*np.pi**2 * (hkl.T @ self.G_r @ u @ self.G_r @ hkl))
+        sintl2 = np.dot(self.A_r @ hkl, self.A_r @ hkl) / 4  # 5.641087
+        q = np.exp(-2*np.pi**2 * (hkl.T @ self.G_r @ self.A_d.T @ u @
+                                  self.A_d @ self.G_r @ hkl))
         # TODO for some bizarre reason multiplying q by a**2 magically works???
         f = s['a1'] * np.exp(-s['b1'] * sintl2) + \
             s['a2'] * np.exp(-s['b2'] * sintl2) + \
