@@ -4,7 +4,8 @@ from scipy.optimize import minimize
 from scipy.special import erfinv
 from scipy.stats import norm
 
-from hikari.dataframes import HklFrame
+from hikari.dataframes import HklFrame, ResFrame
+from hikari.symmetry import SG
 
 
 def baycon_plot(x_key='ze', y_key='si',
@@ -186,32 +187,19 @@ def fcf_descriptors(input_path='shelx.fcf', input_format='shelx_fcf'):
     print('aGoF* = {:f}'.format(agof_if_alpha_equal_one))
 
 
-def temp_calculate_nacl_form_factors():
-    from hikari.dataframes import ResFrame
-    from hikari.symmetry import SG
+def calculate_sample_form_factors(a, b, c, al, be, ga, space_group, res_path):
     r = ResFrame()
-    r.read('/home/dtchon/x/NaCl/cifmaking/NaCl.res')
-    r.edit_cell(a=5.641087, b=5.641087, c=5.641087)
-    for hkl in [(0, 0, 0), (1, 1, 1), (2, 2, 2), (5, 5, 5), (0, 6, 8)]:
-        f = r.form_factor(np.array(hkl), SG['Fm-3m'])
-        f2 = abs(f**2)
-        print(f'{hkl}: {f2:12f} --- {f}')
-
-
-def temp_calculate_other_form_factors():
-    from hikari.dataframes import ResFrame
-    from hikari.symmetry import SG
-    r = ResFrame()
-    r.read('/home/dtchon/x/SiO2_basia/olex2_1.2.res')
-    r.edit_cell(a=4.91344, b=4.91344, c=5.40512, ga=120)
+    r.read(res_path)
+    r.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     for hkl in [(0, 0, 0), (1, 1, 1), (2, 2, 2), (2, 0, 0), (0, 0, 3),
                 (1, 0, 1), (1, 1, 8), (5, 0, 2), (4, 4, 0), (2, 0, 6),
                 (2, 0, 1), (2, 0, 2), (2, 0, 3), (2, 0, 4), (2, 0, 5)]:
-        f = r.form_factor(np.array(hkl), SG['P3221'])
+        f = r.form_factor(np.array(hkl), SG[space_group])
         f2 = abs(f**2)
         print(f'{hkl}: {f2:12f} --- {f}')
 
 
 if __name__ == '__main__':
-    temp_calculate_nacl_form_factors()
-    temp_calculate_other_form_factors()
+    calculate_sample_form_factors(a=7.210241, b=16.487567, c=11.279203,
+                                  al=90, be=90, ga=90, space_group='Pnma',
+                                  res_path='/home/dtchon/x/HP/2oAP/_/_.res')

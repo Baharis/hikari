@@ -1,10 +1,9 @@
 from enum import Enum
 from collections import OrderedDict, defaultdict
 import numpy as np
-from pandas import DataFrame
 from hikari.dataframes import BaseFrame
 from hikari.resources import Xray_atomic_form_factors
-from hikari.utility import split_atom_label
+from hikari.utility import split_atom_label, make_abspath
 
 res_instructions = defaultdict(set)
 
@@ -26,7 +25,6 @@ class ResFrame(BaseFrame):
         sintl2 = np.dot(self.A_r @ hkl, self.A_r @ hkl) / 4  # 5.641087
         q = np.exp(-2*np.pi**2 * (hkl.T @ self.G_r @ self.A_d.T @ u @
                                   self.A_d @ self.G_r @ hkl))
-        # TODO for some bizarre reason multiplying q by a**2 magically works???
         f = s['a1'] * np.exp(-s['b1'] * sintl2) + \
             s['a2'] * np.exp(-s['b2'] * sintl2) + \
             s['a3'] * np.exp(-s['b3'] * sintl2) + \
@@ -85,7 +83,7 @@ class ResFrame(BaseFrame):
         ])
 
         # READ THE FILE AND JOIN LINES SEPARATED BY '=' SIGN
-        with open(path, 'r') as res_file:
+        with open(make_abspath(path), 'r') as res_file:
             lines = res_file.read().replace('=\n', '').split('\n')
             lines = [line.strip() for line in lines if line.strip()]
 
