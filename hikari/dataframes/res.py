@@ -4,6 +4,7 @@ import numpy as np
 from pandas import DataFrame
 from hikari.dataframes import BaseFrame
 from hikari.resources import Xray_atomic_form_factors
+from hikari.utility import split_atom_label
 
 res_instructions = defaultdict(set)
 
@@ -35,10 +36,11 @@ class ResFrame(BaseFrame):
     def form_factor(self, hkl, space_group):
         f = 0.0
         for k, v in self.data['ATOM'].items():
-            atom = k.title()[:2]
+            atom = split_atom_label(k)[0].title()
             xyz = np.fromiter(map(float, v[1:4]), dtype=np.float)
             percent = float(v[4]) % 10
-            u11, u22, u33, u12, u13, u23 = map(float, v[5:11])
+            uij_strings = v[5:] if len(v[5:11]) == 6 else [v[5]] * 3 + ['0'] * 3
+            u11, u22, u33, u12, u13, u23 = map(float, uij_strings)
             u = np.array([[u11, u12, u13], [u12, u22, u23], [u13, u23, u33]])
             for o in space_group.operations:
                 new_xyz = (o.tf @ np.array(xyz)).T + o.tl

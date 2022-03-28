@@ -198,5 +198,20 @@ def temp_calculate_nacl_form_factors():
         print(f'{hkl}: {f2:12f} --- {f}')
 
 
+def temp_calculate_other_form_factors():
+    from hikari.dataframes import ResFrame
+    from hikari.symmetry import SG
+    r = ResFrame()
+    r.read('/home/dtchon/x/SiO2_basia/olex2_1.2.res')
+    r.edit_cell(a=4.91344, b=4.91344, c=5.40512, ga=120)
+    for hkl in [(0, 0, 0), (1, 1, 1), (2, 2, 2), (2, 0, 0), (0, 0, 3),
+                (1, 0, 1), (1, 1, 8), (5, 0, 2), (4, 4, 0), (2, 0, 6),
+                (2, 0, 1), (2, 0, 2), (2, 0, 3), (2, 0, 4), (2, 0, 5)]:
+        f = r.form_factor(np.array(hkl), SG['P3221'])
+        f2 = abs(f**2)
+        print(f'{hkl}: {f2:12f} --- {f}')
+
+
 if __name__ == '__main__':
     temp_calculate_nacl_form_factors()
+    temp_calculate_other_form_factors()
