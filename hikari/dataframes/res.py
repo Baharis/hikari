@@ -23,8 +23,8 @@ class ResFrame(BaseFrame):
     def atomic_form_factor(self, atom, hkl, u):
         s = Xray_atomic_form_factors.loc[atom]
         sintl2 = np.dot(self.A_r @ hkl, self.A_r @ hkl) / 4
-        # u = np.array([[u11, u12, u13], [u12, u22, u23], [u13, u23, u33]])
-        q = np.exp(-2*np.pi**2 * (hkl.T @ self.G_r @ u @ self.G_r @ hkl))
+        q = np.exp(-2*5.641087*5.641087*np.pi**2 * (hkl.T @ self.G_r @ u @ self.G_r @ hkl))
+        # TODO for some bizarre reason multiplying q by a**2 magically works???
         f = s['a1'] * np.exp(-s['b1'] * sintl2) + \
             s['a2'] * np.exp(-s['b2'] * sintl2) + \
             s['a3'] * np.exp(-s['b3'] * sintl2) + \
@@ -41,10 +41,8 @@ class ResFrame(BaseFrame):
             u = np.array([[u11, u12, u13], [u12, u22, u23], [u13, u23, u33]])
             for o in space_group.operations:
                 new_xyz = (o.tf @ np.array(xyz)).T + o.tl
-                new_u = o.tf @ u
-                # new_u = np.zeros_like(u)
+                new_u = o.tf @ u @ (o**-1).tf
                 f_atom = percent * self.atomic_form_factor(atom, hkl, new_u)
-                # print(f_atom, percent, self.atomic_form_factor(atom, hkl, new_u))
                 f += f_atom * np.exp(2 * np.pi * 1j * np.dot(new_xyz, hkl))
         return f
     # TODO imprecise, especially when sintl is large - see far NaCl reflections

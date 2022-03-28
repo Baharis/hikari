@@ -332,6 +332,8 @@ class SymmOp:
             o = [_ for _ in t if not np.isclose(sum(abs(_)), 0)][0]
         else:
             return None
+        if o is None:
+            return o
         o = o if sum(o) > 0 else -o
         return o / np.sqrt(sum(o*o))
 
