@@ -38,7 +38,7 @@ class ResFrame(BaseFrame):
             xyz = np.fromiter(map(float, v[1:4]), dtype=np.float)
             occupation = float(v[4]) % 10
             uij_strings = v[5:] if len(v[5:]) == 6 else [v[5]] * 3 + ['0'] * 3
-            u11, u22, u33, u12, u13, u23 = map(float, uij_strings)
+            u11, u22, u33, u23, u13, u12 = map(float, uij_strings)
             u = np.array([[u11, u12, u13], [u12, u22, u23], [u13, u23, u33]])
             for o in space_group.operations:
                 new_xyz = (o.tf @ np.array(xyz)).T + o.tl
