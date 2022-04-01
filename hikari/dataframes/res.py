@@ -21,10 +21,10 @@ class ResFrame(BaseFrame):
         self.data = OrderedDict()
 
     def atomic_form_factor(self, atom, hkl, u):
+        r_star = self.A_r @ hkl
         s = Xray_atomic_form_factors.loc[atom]
-        sintl2 = np.dot(self.A_r @ hkl, self.A_r @ hkl) / 4  # 5.641087
-        q = np.exp(-2*np.pi**2 * (hkl.T @ self.G_r @ self.A_d.T @ u @
-                                  self.A_d @ self.G_r @ hkl))
+        sintl2 = np.dot(r_star, r_star) / 4
+        q = np.exp(-2 * np.pi**2 * r_star.T @ self.G_r @ u @ self.G_r @ r_star)
         f = s['a1'] * np.exp(-s['b1'] * sintl2) + \
             s['a2'] * np.exp(-s['b2'] * sintl2) + \
             s['a3'] * np.exp(-s['b3'] * sintl2) + \
@@ -36,17 +36,17 @@ class ResFrame(BaseFrame):
         for k, v in self.data['ATOM'].items():
             atom = split_atom_label(k)[0].title()
             xyz = np.fromiter(map(float, v[1:4]), dtype=np.float)
-            percent = float(v[4]) % 10
-            uij_strings = v[5:] if len(v[5:11]) == 6 else [v[5]] * 3 + ['0'] * 3
+            occupation = float(v[4]) % 10
+            uij_strings = v[5:] if len(v[5:]) == 6 else [v[5]] * 3 + ['0'] * 3
             u11, u22, u33, u12, u13, u23 = map(float, uij_strings)
             u = np.array([[u11, u12, u13], [u12, u22, u23], [u13, u23, u33]])
             for o in space_group.operations:
                 new_xyz = (o.tf @ np.array(xyz)).T + o.tl
                 new_u = o.tf @ u @ (o**-1).tf
-                f_atom = percent * self.atomic_form_factor(atom, hkl, new_u)
+                f_atom = occupation * self.atomic_form_factor(atom, hkl, new_u)
                 f += f_atom * np.exp(2 * np.pi * 1j * np.dot(new_xyz, hkl))
         return f
-    # TODO imprecise, especially when sintl is large - see far NaCl reflections
+    # TODO imprecise, all values ~5% too low
 
     def read(self, path):
         """Read data from specified ins/res file and return an OrderedDict"""
