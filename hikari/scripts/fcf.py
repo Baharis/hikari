@@ -191,13 +191,14 @@ def calculate_sample_form_factors(a, b, c, al, be, ga, space_group, res_path):
     r = ResFrame()
     r.read(res_path)
     r.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-    for hkl in [(0, 0, 0), (1, 1, 1), (2, 2, 2), (2, 0, 0), (0, 0, 3),
+    hkl = np.array([(0, 0, 0), (1, 1, 1), (2, 2, 2), (2, 0, 0), (0, 0, 3),
                 (1, 0, 1), (1, 1, 8), (5, 0, 2), (4, 4, 0), (2, 0, 6),
                 (2, 0, 1), (2, 0, 2), (2, 0, 3), (2, 0, 4), (2, 0, 5),
-                (5, 9, 9), (0, 0, 10), (0, 2, 10), (0, 4, 10)]:
-        f = r.form_factor(np.array(hkl), SG[space_group])
-        f2 = abs(f**2)
-        print(f'{hkl}: {f2:12f} --- {f}')
+                (5, 9, 9), (0, 0, 10), (0, 2, 10), (0, 4, 10)])
+    f = r.form_factor(np.array(hkl), SG[space_group])
+    f2 = f * np.conj(f)
+    for _hkl, _f, _f2 in zip(hkl, f, f2):
+        print(f'{_hkl}: {_f2:12f} --- {_f}')
 
 
 if __name__ == '__main__':

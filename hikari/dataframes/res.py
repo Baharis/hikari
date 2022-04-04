@@ -23,7 +23,7 @@ class ResFrame(BaseFrame):
     def atomic_form_factor(self, atom, hkl):
         r_star = self.A_r @ hkl.T
         s = Xray_atomic_form_factors.loc[atom]
-        sintl2 = np.dot(r_star, r_star) / 4
+        sintl2 = (r_star * r_star).sum(axis=0) / 4
         return s['a1'] * np.exp(-s['b1'] * sintl2) + \
                s['a2'] * np.exp(-s['b2'] * sintl2) + \
                s['a3'] * np.exp(-s['b3'] * sintl2) + \
@@ -31,10 +31,11 @@ class ResFrame(BaseFrame):
 
     def temperature_factor(self, hkl, u):
         n_matrix = np.diag([self.a_r, self.b_r, self.c_r])
-        return np.exp(-2 * np.pi ** 2 * hkl.T @ n_matrix @ u @ n_matrix.T @ hkl)
+        hkl_n_u_n_hkl = (hkl @ n_matrix * hkl @ n_matrix @ u.T).sum(axis=-1)
+        return np.exp(-2 * np.pi ** 2 * hkl_n_u_n_hkl)
 
     def form_factor(self, hkl, space_group):
-        f = 0.0
+        f = np.zeros_like(hkl.sum(axis=-1), dtype='complex128')
         for k, v in self.data['ATOM'].items():
             atom = split_atom_label(k)[0].title()
             xyz = np.fromiter(map(float, v[1:4]), dtype=np.float)
@@ -43,11 +44,11 @@ class ResFrame(BaseFrame):
             u11, u22, u33, u23, u13, u12 = map(float, uij_strings)
             u = np.array([[u11, u12, u13], [u12, u22, u23], [u13, u23, u33]])
             for o in space_group.operations:
-                new_xyz = (o.tf @ np.array(xyz)).T + o.tl
-                new_u = o.tf @ u @ (o**-1).tf
-                f_atom = occupation * self.atomic_form_factor(atom, hkl) * \
-                    self.temperature_factor(hkl, new_u)
-                f += f_atom * np.exp(2 * np.pi * 1j * np.dot(new_xyz, hkl))
+                xyz_t = (o.tf @ np.array(xyz)).T + o.tl
+                u_t = o.tf @ u @ (o**-1).tf
+                fa = occupation * self.atomic_form_factor(atom, hkl) * \
+                    self.temperature_factor(hkl, u_t)
+                f += fa * np.exp(2j * np.pi * xyz_t @ hkl.T)
         return f
     # TODO seems ok for 2oAP, but worse for NaCl high-res - wrong with SFactors?
 
