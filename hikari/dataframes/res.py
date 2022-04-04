@@ -24,7 +24,8 @@ class ResFrame(BaseFrame):
         r_star = self.A_r @ hkl
         s = Xray_atomic_form_factors.loc[atom]
         sintl2 = np.dot(r_star, r_star) / 4
-        q = np.exp(-2 * np.pi**2 * r_star.T @ self.G_r @ u @ self.G_r @ r_star)
+        N = np.diag([self.a_r, self.b_r, self.c_r])
+        q = np.exp(-2 * np.pi**2 * hkl.T @ N @ u @ N.T @ hkl)
         f = s['a1'] * np.exp(-s['b1'] * sintl2) + \
             s['a2'] * np.exp(-s['b2'] * sintl2) + \
             s['a3'] * np.exp(-s['b3'] * sintl2) + \
@@ -46,7 +47,8 @@ class ResFrame(BaseFrame):
                 f_atom = occupation * self.atomic_form_factor(atom, hkl, new_u)
                 f += f_atom * np.exp(2 * np.pi * 1j * np.dot(new_xyz, hkl))
         return f
-    # TODO imprecise, all values ~5% too low
+    # TODO unfortunately, it looks like all of this still doesn't work.
+    # TODO ok for 2oAP, but much worse for NaCl - maybe wrong with Str.Factors?
 
     def read(self, path):
         """Read data from specified ins/res file and return an OrderedDict"""

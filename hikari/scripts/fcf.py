@@ -193,13 +193,17 @@ def calculate_sample_form_factors(a, b, c, al, be, ga, space_group, res_path):
     r.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     for hkl in [(0, 0, 0), (1, 1, 1), (2, 2, 2), (2, 0, 0), (0, 0, 3),
                 (1, 0, 1), (1, 1, 8), (5, 0, 2), (4, 4, 0), (2, 0, 6),
-                (2, 0, 1), (2, 0, 2), (2, 0, 3), (2, 0, 4), (2, 0, 5)]:
+                (2, 0, 1), (2, 0, 2), (2, 0, 3), (2, 0, 4), (2, 0, 5),
+                (5, 9, 9), (0, 0, 10), (0, 2, 10), (0, 4, 10)]:
         f = r.form_factor(np.array(hkl), SG[space_group])
         f2 = abs(f**2)
         print(f'{hkl}: {f2:12f} --- {f}')
 
 
 if __name__ == '__main__':
+    # calculate_sample_form_factors(a=5.64109, b=5.64109, c=5.64109,
+    #                               al=90, be=90, ga=90, space_group='Fm-3m',
+    #                               res_path='/home/dtchon/x/NaCl/cifmaking/NaCl_more_res.res')
     calculate_sample_form_factors(a=7.210241, b=16.487567, c=11.279203,
                                   al=90, be=90, ga=90, space_group='Pnma',
                                   res_path='/home/dtchon/x/HP/2oAP/_/_.res')
