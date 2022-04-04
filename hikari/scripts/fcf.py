@@ -201,9 +201,9 @@ def calculate_sample_form_factors(a, b, c, al, be, ga, space_group, res_path):
 
 
 if __name__ == '__main__':
-    # calculate_sample_form_factors(a=5.64109, b=5.64109, c=5.64109,
-    #                               al=90, be=90, ga=90, space_group='Fm-3m',
-    #                               res_path='/home/dtchon/x/NaCl/cifmaking/NaCl_more_res.res')
-    calculate_sample_form_factors(a=7.210241, b=16.487567, c=11.279203,
-                                  al=90, be=90, ga=90, space_group='Pnma',
-                                  res_path='/home/dtchon/x/HP/2oAP/_/_.res')
+    calculate_sample_form_factors(a=5.64109, b=5.64109, c=5.64109,
+                                  al=90, be=90, ga=90, space_group='Fm-3m',
+                                  res_path='/home/dtchon/x/NaCl/cifmaking/NaCl_more_res.res')
+    # calculate_sample_form_factors(a=7.210241, b=16.487567, c=11.279203,
+    #                               al=90, be=90, ga=90, space_group='Pnma',
+    #                               res_path='/home/dtchon/x/HP/2oAP/_/_.res')
