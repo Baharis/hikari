@@ -20,17 +20,18 @@ class ResFrame(BaseFrame):
         super().__init__()
         self.data = OrderedDict()
 
-    def atomic_form_factor(self, atom, hkl, u):
-        r_star = self.A_r @ hkl
+    def atomic_form_factor(self, atom, hkl):
+        r_star = self.A_r @ hkl.T
         s = Xray_atomic_form_factors.loc[atom]
         sintl2 = np.dot(r_star, r_star) / 4
-        N = np.diag([self.a_r, self.b_r, self.c_r])
-        q = np.exp(-2 * np.pi**2 * hkl.T @ N @ u @ N.T @ hkl)
-        f = s['a1'] * np.exp(-s['b1'] * sintl2) + \
-            s['a2'] * np.exp(-s['b2'] * sintl2) + \
-            s['a3'] * np.exp(-s['b3'] * sintl2) + \
-            s['a4'] * np.exp(-s['b4'] * sintl2) + s['c']
-        return q * f
+        return s['a1'] * np.exp(-s['b1'] * sintl2) + \
+               s['a2'] * np.exp(-s['b2'] * sintl2) + \
+               s['a3'] * np.exp(-s['b3'] * sintl2) + \
+               s['a4'] * np.exp(-s['b4'] * sintl2) + s['c']
+
+    def temperature_factor(self, hkl, u):
+        n_matrix = np.diag([self.a_r, self.b_r, self.c_r])
+        return np.exp(-2 * np.pi ** 2 * hkl.T @ n_matrix @ u @ n_matrix.T @ hkl)
 
     def form_factor(self, hkl, space_group):
         f = 0.0
@@ -44,11 +45,11 @@ class ResFrame(BaseFrame):
             for o in space_group.operations:
                 new_xyz = (o.tf @ np.array(xyz)).T + o.tl
                 new_u = o.tf @ u @ (o**-1).tf
-                f_atom = occupation * self.atomic_form_factor(atom, hkl, new_u)
+                f_atom = occupation * self.atomic_form_factor(atom, hkl) * \
+                    self.temperature_factor(hkl, new_u)
                 f += f_atom * np.exp(2 * np.pi * 1j * np.dot(new_xyz, hkl))
         return f
-    # TODO unfortunately, it looks like all of this still doesn't work.
-    # TODO ok for 2oAP, but much worse for NaCl - maybe wrong with Str.Factors?
+    # TODO seems ok for 2oAP, but worse for NaCl high-res - wrong with SFactors?
 
     def read(self, path):
         """Read data from specified ins/res file and return an OrderedDict"""
