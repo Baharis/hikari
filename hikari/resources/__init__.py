@@ -1,6 +1,13 @@
 from pkgutil import get_data as get
+import io
 import json
 import pickle
+import pandas as pd
+
+
+def _load_indexed_csv(filename):
+    return pd.read_csv(io.StringIO(get(__name__, filename).decode('utf-8')), 
+                       comment='#', index_col=0)
 
 
 def _load_json(filename):
@@ -27,3 +34,4 @@ hkl_aliases = _load_json('hkl_formats_aliases.json')
 hkl_mercury_style = get(__name__, 'hkl.msd').decode('utf-8')
 characteristic_radiation = _load_json('characteristic_radiation.json')
 nacl_hkl = get(__name__, 'NaCl.hkl').decode('utf-8')
+Xray_atomic_form_factors = _load_indexed_csv('Xray_atomic_form_factors.csv')

@@ -51,7 +51,7 @@ class SymmOp:
             replace('\n', '').replace(' ', '')
 
     def __str__(self):
-        origin = ','.join([str(Fraction(o).limit_denominator(9))
+        origin = ','.join([str(Fraction(o).limit_denominator(12))
                            for o in self.origin])
         return self.name + ': ' + self.code + ' (' + origin + ')'
 
@@ -207,7 +207,8 @@ class SymmOp:
         _glide = self.glide
         _glide_dir = 'n' if np.linalg.norm(_glide) < 1e-8 else 'x'
         d = {(1, 0, 0): 'a', (0, 1, 0): 'b', (0, 0, 1): 'c',
-             (0, 1, 1): 'A', (1, 0, 1): 'B', (1, 1, 0): 'C', (1, 1, 1): 'I'}
+             (0, 1, 1): 'A', (1, 0, 1): 'B', (1, 1, 0): 'C', (1, 1, 1): 'I',
+             (1, 2, 2): 'R', (2, 1, 1): 'R', (2, 1, 2): 'R', (1, 2, 1): 'R'}
         for key, value in d.items():
             if np.allclose(_glide, self._project(_glide, np.array(key))):
                 _glide_dir = value
@@ -217,18 +218,19 @@ class SymmOp:
         elif self.typ is self.Type.reflection:
             return 'm'
         elif self.typ is self.Type.rotation:
-            return str(self.fold)
+            return str(self.fold) + self.sense
         elif self.typ is self.Type.inversion:
             return '-1'
         elif self.typ is self.Type.rototranslation:
-            return str(self.fold) + str(round(np.linalg.norm(_glide)*self.fold))
+            return str(self.fold) + \
+                   str(round(np.linalg.norm(_glide)*self.fold)) + self.sense
         elif self.typ is self.Type.transflection:
             return _glide_dir.replace('A', 'n').replace('B', 'n').\
                 replace('C', 'n') if self.glide_fold == 2 else 'd'
         elif self.typ is self.Type.translation:
             return _glide_dir
         elif self.typ is self.Type.rotoinversion:
-            return str(-self.fold)
+            return str(-self.fold) + self.sense
         else:
             return '?'
 
@@ -252,9 +254,8 @@ class SymmOp:
         translation, eg.: n for all n-fold axes, 2 for other (max 6)
         :rtype: int
         """
-        op = SymmOp(self.tf)
         for f in (1, 2, 3, 4, 5, 6):
-            if (op ** f).trace == 3:
+            if pow(self, f, 1).typ is self.Type.identity:
                 return f
         raise NotImplementedError('order is not in range 1 to 6')
 
@@ -323,12 +324,29 @@ class SymmOp:
         :return: Direction of symmetry element (if can be defined) else None
         :rtype: Union[np.ndarray, None]
         """
-        if self.typ in {self.Type.rotation, self.Type.rototranslation}:
-            return self.invariants[0]
-        elif self.det < 0:
-            return SymmOp(-1 * self.tf).orientation
+        if self.det < 0:
+            o = SymmOp(-1 * self.tf).orientation
+        elif self.typ in {self.Type.rotation, self.Type.rototranslation}:
+            m = self.tf  # method: see https://math.stackexchange.com/q/3441262
+            t = m + m.T - (m.trace() - 1) * np.eye(3)
+            o = [_ for _ in t if not np.isclose(sum(abs(_)), 0)][0]
         else:
             return None
+        if o is None:
+            return o
+        o = o if sum(o) > 0 else -o
+        return o / np.sqrt(sum(o*o))
+
+    @property
+    def sense(self):
+        """
+        :return: "+" or "-", the "sense" of rotation, as given in ITC A, 11.1.2
+        :rtype: str
+        """
+        unique = np.array([np.sqrt(2), np.e, np.pi])
+        rotation = self.tf if self.det > 0 else -self.tf
+        sign = np.dot(self.orientation, np.cross(unique, rotation @ unique))
+        return '' if np.isclose(sign, 0) else '+' if sign > 0 else '-'
 
     def at(self, point):
         """
