@@ -6,6 +6,7 @@ from scipy.stats import norm
 
 from hikari.dataframes import HklFrame, ResFrame
 from hikari.symmetry import SG
+from hikari.utility import make_abspath
 
 
 def baycon_plot(x_key='ze', y_key='si',
@@ -188,8 +189,30 @@ def fcf_descriptors(input_path='shelx.fcf', input_format='shelx_fcf'):
 
 
 def calculate_sample_form_factors(a, b, c, al, be, ga, space_group, res_path):
+    """
+    Estimate and print selected IAM XRD form factors for given crystal structure
+    :param a: Unit cell parameter *a* in Angstrom.
+    :type a: float
+    :param b: Unit cell parameter *b* in Angstrom.
+    :type b: float
+    :param c: Unit cell parameter *c* in Angstrom.
+    :type c: float
+    :param al: Unit cell parameter *alpha* in degrees.
+    :type al: float
+    :param be: Unit cell parameter *alpha* in degrees.
+    :type be: float
+    :param ga: Unit cell parameter *alpha* in degrees.
+    :type ga: float
+    :param space_group: Short Hermann-Mauguin name or index of space group.
+        For details see table in hikari.symmetry.space_groups.
+    :type space_group: str or int
+    :param res_path: Absolute or relative path to the input .res file.
+    :type res_path: str
+    :return: None
+    :rtype: None
+    """
     r = ResFrame()
-    r.read(res_path)
+    r.read(make_abspath(res_path))
     r.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     hkl = np.array([(0, 0, 0), (1, 1, 1), (2, 2, 2), (2, 0, 0), (0, 0, 3),
                 (1, 0, 1), (1, 1, 8), (5, 0, 2), (4, 4, 0), (2, 0, 6),
@@ -204,7 +227,7 @@ def calculate_sample_form_factors(a, b, c, al, be, ga, space_group, res_path):
 if __name__ == '__main__':
     # calculate_sample_form_factors(a=5.64109, b=5.64109, c=5.64109,
     #                               al=90, be=90, ga=90, space_group='Fm-3m',
-    #                               res_path='/home/dtchon/x/NaCl/cifmaking/NaCl_more_res.res')
+    #                               res_path='~/x/NaCl/cifmaking/NaCl_more_res.res')
     calculate_sample_form_factors(a=7.210241, b=16.487567, c=11.279203,
                                   al=90, be=90, ga=90, space_group='Pnma',
-                                  res_path='/home/dtchon/x/HP/2oAP/_/_.res')
+                                  res_path='~/x/HP/2oAP/_/_.res')
