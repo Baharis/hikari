@@ -8,7 +8,7 @@ which utilise DAC - diamond anvil cell.
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG
-from hikari.utility import cubespace
+from hikari.utility import cubespace, make_abspath
 import numpy as np
 
 
@@ -49,7 +49,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
-    p.read(input_path, input_format)
+    p.read(make_abspath(input_path), input_format)
     p.stats(space_group=SG[space_group])
 
 
@@ -105,7 +105,7 @@ def dac_statistics(a, b, c, al, be, ga,
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
-    p.read(input_path, input_format)
+    p.read(make_abspath(input_path), input_format)
     p.orientation = np.array(orientation)
 
     resolution = p.r_lim if resolution is None else resolution
@@ -203,12 +203,12 @@ def simulate_dac(a, b, c, al, be, ga,
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
-    p.read(input_path, input_format)
+    p.read(make_abspath(input_path), input_format)
     p.orientation = np.array(orientation)
     if not(resolution is None):
         p.trim(resolution)
     p.dac_trim(opening_angle=opening_angle, vector=vector)
-    p.write(hkl_path=output_path, hkl_format=output_format)
+    p.write(hkl_path=make_abspath(output_path), hkl_format=output_format)
 
 
 if __name__ == '__main__':
