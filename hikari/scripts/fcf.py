@@ -49,7 +49,7 @@ def baycon_plot(x_key='ze', y_key='si',
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
-    p.read(input_path, input_format)
+    p.read(make_abspath(input_path), input_format)
     p.place()
     p.calculate_fcf_statistics()
     x = p.table.loc[:, x_key].rank(pct=True).to_numpy()
@@ -74,20 +74,20 @@ def baycon_plot(x_key='ze', y_key='si',
     pyplot.xlabel('"' + x_key + '" rank')
     pyplot.ylabel('"' + y_key + '" rank')
     pyplot.tight_layout()
-    pyplot.savefig(fname=output_path, dpi=300)
+    pyplot.savefig(fname=make_abspath(output_path), dpi=300)
 
 
 def observed_vs_calculated_plot(input_path='shelx.fcf',
                                 input_format='shelx_fcf',
                                 output_path='Io_vs_Ic.png'):
     p = HklFrame()
-    p.read(input_path, input_format)
+    p.read(make_abspath(input_path), input_format)
     icalc = p.table.loc[:, 'Ic'].to_numpy()
     iobs = p.table.loc[:, 'I'].to_numpy()
     i_min = min(np.min(icalc[icalc > 0]), np.min(iobs[iobs > 0]))
     i_max = max(np.max(icalc[icalc > 0]), np.max(iobs[iobs > 0]))
     fig = pyplot.figure()
-    ax = fig.add_subplot(111) # , aspect='equal'
+    ax = fig.add_subplot(111)  # , aspect='equal'
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlim([i_min, i_max])
@@ -98,7 +98,7 @@ def observed_vs_calculated_plot(input_path='shelx.fcf',
     pyplot.xlabel('I_cal')
     pyplot.ylabel('I_obs')
     pyplot.tight_layout()
-    pyplot.savefig(fname=output_path, dpi=300)
+    pyplot.savefig(fname=make_abspath(output_path), dpi=300)
 
 
 def normal_probability_plot(input_path='shelx.fcf',
@@ -110,7 +110,7 @@ def normal_probability_plot(input_path='shelx.fcf',
     b = 0.0
 
     p = HklFrame()
-    p.read(input_path, input_format)
+    p.read(make_abspath(input_path), input_format)
     i_obs = p.table.loc[:, 'I'].to_numpy()
     i_calc = p.table.loc[:, 'Ic'].to_numpy()
     si = p.table.loc[:, 'si'].to_numpy()
@@ -149,7 +149,7 @@ def normal_probability_plot(input_path='shelx.fcf',
     pyplot.xlabel('delta_m experiment')
     pyplot.ylabel('delta_m simulated')
     pyplot.tight_layout()
-    pyplot.savefig(fname=output_path, dpi=300)
+    pyplot.savefig(fname=make_abspath(output_path), dpi=300)
 
 
 def fcf_descriptors(input_path='shelx.fcf', input_format='shelx_fcf'):
@@ -158,7 +158,7 @@ def fcf_descriptors(input_path='shelx.fcf', input_format='shelx_fcf'):
     b = 0.0
 
     p = HklFrame()
-    p.read(input_path, input_format)
+    p.read(make_abspath(input_path), input_format)
     i_obs = p.table.loc[:, 'I'].to_numpy()
     i_calc = p.table.loc[:, 'Ic'].to_numpy()
     si = p.table.loc[:, 'si'].to_numpy()

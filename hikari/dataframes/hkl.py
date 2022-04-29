@@ -903,7 +903,7 @@ class HklIo:
     def __init__(self, hkl_file_path, hkl_file_format):
         self.keys = HklKeys()
         self.use_separator = True
-        self.file_path = hkl_file_path
+        self.file_path = make_abspath(hkl_file_path)
         self.formats_defined = hkl_formats
         self.formats_aliases = hkl_aliases
         self.__format = 'shelx_4'
