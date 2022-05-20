@@ -16,6 +16,7 @@ def potency_map(a, b, c, al, be, ga,
                 space_group='P1',
                 axis='',
                 fix_scale=False,
+                histogram=True,
                 opening_angle=35,
                 output_directory='~',
                 output_name='cplt_map',
@@ -99,6 +100,8 @@ def potency_map(a, b, c, al, be, ga,
     :type axis: string
     :param fix_scale: If true, the colour scheme will fix to 0 - 100% range.
     :type fix_scale: bool
+    :param histogram: If true, potency distribution will be plotted as histogram
+    :type histogram: bool
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
@@ -181,26 +184,44 @@ def potency_map(a, b, c, al, be, ga,
 
     v1, v2, v3, th_limits, ph_limits = _determine_theta_and_phi_limits()
 
-    def _make_theta_and_phi_mesh():
-        """Define a list of theta and phi values to be investigated."""
+    def _determine_angle_res():
         if output_quality not in {1, 2, 3, 4, 5}:
             raise KeyError('output_quality should be 1, 2, 3, 4 or 5')
-        angle_res = {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
+        return {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
+    angle_res = _determine_angle_res()
+
+    def _make_theta_and_phi_mesh():
+        """Define a list of theta and phi values to be investigated."""
         _th_range = np.arange(th_limits[0], th_limits[1] + 0.001, angle_res)
         _ph_range = np.arange(ph_limits[0], ph_limits[1] + 0.001, angle_res)
         _th_mesh, _ph_mesh = np.meshgrid(_th_range, _ph_range)
         return _th_range, _ph_range, _th_mesh, _ph_mesh
 
+    # range: 1D range-like, mesh: 2D grid, comb: 1D list for all combinations
     th_range, ph_range, th_mesh, ph_mesh = _make_theta_and_phi_mesh()
-    data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': []}
+    one_comb, ph_comb, th_comb = np.array(np.meshgrid(
+        1, np.deg2rad(th_range), np.deg2rad(ph_range))).reshape(3, -1)
+    data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': [], 'weight': []}
+
+    def orientation_weight(th, ph):
+        """Calculate how much each point should contribute to distribution"""
+        def sphere_cutout_area(th1, th2, ph_span):
+            """Calculate sphere area in specified ph and th degree range.
+            For exact math, see articles about spherical cap and sector."""
+            return np.deg2rad(abs(ph_span)) * \
+                   abs(np.cos(np.deg2rad(th1)) - np.cos(np.deg2rad(th2)))
+        th_max = min(th + angle_res / 2.0, th_limits[1])
+        th_min = max(th - angle_res / 2.0, th_limits[0])
+        ph_max = min(ph + angle_res / 2.0, ph_limits[1])
+        ph_min = max(ph - angle_res / 2.0, ph_limits[0])
+        return sphere_cutout_area(th_min, th_max, ph_max-ph_min)
 
     def _calculate_completeness_mesh():
         """Calculate completeness for each individual pair of theta and phi."""
         _cplt_mesh = np.zeros_like(th_mesh)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
-        v = np.array(np.meshgrid(1, np.deg2rad(th_range), np.deg2rad(ph_range)))
-        vectors = np.vstack(spherical2cartesian(*v.reshape(3, -1))).T
+        vectors = np.vstack(spherical2cartesian(one_comb, ph_comb, th_comb)).T
         uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
@@ -210,6 +231,7 @@ def potency_map(a, b, c, al, be, ga,
                 data_dict['ph'].append(ph)
                 data_dict['cplt'].append(potency)
                 data_dict['reflns'].append(count)
+                data_dict['weight'].append(orientation_weight(th, ph))
                 lst.write(f'{th:8.0f}{ph:8.0f}{potency:8.5f}{count:8d}\n')
                 _cplt_mesh[j][i] = potency
             lst.write('\n')
@@ -228,6 +250,12 @@ def potency_map(a, b, c, al, be, ga,
         return data_dict, _cplt_mesh
 
     data_dict, cplt_mesh = _calculate_completeness_mesh()
+    cplt_min = 0 if fix_scale else min(data_dict['cplt'])
+    cplt_max = 1 if fix_scale else max(data_dict['cplt'])
+    hist_bins, hist_edges = np.histogram(data_dict['cplt'], density=True,
+                                         weights=data_dict['weight'], bins=32,
+                                         range=(cplt_min, cplt_max))
+    hist_bins = hist_bins / sum(hist_bins)
 
     def _plot_in_matplotlib():
         """Plot the completeness map in radial coordinates using matplotlib"""
@@ -303,8 +331,8 @@ def potency_map(a, b, c, al, be, ga,
             axis_z1=(p.c_w / lin.norm(p.c_w))[0],
             axis_z2=(p.c_w / lin.norm(p.c_w))[1],
             axis_z3=(p.c_w / lin.norm(p.c_w))[2],
-            cplt_min=0 if fix_scale else min(data_dict['cplt']) * 100,
-            cplt_max=100 if fix_scale else max(data_dict['cplt']) * 100,
+            cplt_min=cplt_min * 100,
+            cplt_max=cplt_max * 100,
             job_name=output_name,
             min_ph=min(ph_limits),
             max_ph=max(ph_limits),
