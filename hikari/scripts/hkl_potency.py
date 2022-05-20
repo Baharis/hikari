@@ -199,7 +199,8 @@ def potency_map(a, b, c, al, be, ga,
         _cplt_mesh = np.zeros_like(th_mesh)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
-        vectors = np.vstack(spherical2cartesian(*np.array(np.meshgrid([1], np.deg2rad(th_range), np.deg2rad(ph_range))).reshape(3, -1))).T
+        v = np.array(np.meshgrid(1, np.deg2rad(th_range), np.deg2rad(ph_range)))
+        vectors = np.vstack(spherical2cartesian(*v.reshape(3, -1))).T
         uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):

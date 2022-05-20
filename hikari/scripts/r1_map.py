@@ -102,6 +102,7 @@ def r1_map(a, b, c, al, be, ga,
         lst.write('#     th      ph    cplt      R1\n')
         vectors = np.vstack([_angles_to_vector(th, ph) for th in th_range
                                              for ph in ph_range])
+        #TODO rewrite using spherical2cartesian as in potency_map
 
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
