@@ -156,14 +156,18 @@ def potency_map(a, b, c, al, be, ga,
 
     def _determine_theta_and_phi_limits():
         """Define range of coordinates where potency map will be calculated.
-        v1, v2, v3 are normal vectors pointing in zenith direction z*,
-        orthogonal direction (x) and direction perpendicular to them both."""
+        Unit vectors v1, v2, v3 point in zenith z*, orthogonal x and product."""
         _v1 = p.c_w / lin.norm(p.c_w)
         _v2 = p.a_v / lin.norm(p.a_v)
         _v3 = np.cross(_v1, _v2)
 
-        if sg.system in {Group.System.triclinic, Group.System.monoclinic,
-                         Group.System.orthorhombic, Group.System.tetragonal,
+        if sg.system in {Group.System.triclinic}:
+            _th_limits = [0, 180]
+            _ph_limits = [-45, 135]
+        elif sg.system in {Group.System.monoclinic}:
+            _th_limits = [0, 180]
+            _ph_limits = [0, 90]
+        elif sg.system in {Group.System.orthorhombic, Group.System.tetragonal,
                          Group.System.cubic}:
             _th_limits = [0, 90]
             _ph_limits = [0, 90]
@@ -317,7 +321,7 @@ def potency_map(a, b, c, al, be, ga,
             max_ph=max(ph_limits),
             min_th=min(th_limits),
             max_th=max(th_limits),
-            palette=gnuplot_map_palette[axis.lower()]))
+            palette=gnuplot_map_palette[axis]))
 
     _prepare_gnuplot_input()
     try:
