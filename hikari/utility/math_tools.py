@@ -41,11 +41,11 @@ def cartesian2spherical(x, y, z):
     """
     Convert Cartesian coordinates x, y, z
     to conventional spherical coordinates r, p, a
-    :param x: Cartesian coordinate x
+    :param x: Cartesian coordinate or vector x
     :type x: float or np.ndarray
-    :param y: Cartesian coordinate y
+    :param y: Cartesian coordinate or vector y
     :type y: float or np.ndarray
-    :param z: Cartesian coordinate z
+    :param z: Cartesian coordinates or vector z
     :type z: float or np.ndarray
     :return: Spherical coordinates: radius, polar angle, and azimuth angle
     :rtype: tuple[float, float, float] or tuple[np.ndarray, np.ndarray, np.ndarray]
@@ -60,11 +60,11 @@ def spherical2cartesian(r, p, a):
     """
     Convert conventional spherical coordinates r, p, a
     to Cartesian coordinates x, y, z
-    :param r: Spherical radius
+    :param r: Spherical coordinate or vector radius
     :type r: float or np.ndarray
-    :param p: Spherical polar angle
+    :param p: Spherical coordinate or vector polar angle
     :type p: float or np.ndarray
-    :param a: Spherical azimuth angle
+    :param a: Spherical coordinate or vector azimuth angle
     :type a: float or np.ndarray
     :return: Cartesian coordinates: x, y, and z
     :rtype: tuple[float, float, float] or tuple[np.ndarray, np.ndarray, np.ndarray]

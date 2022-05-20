@@ -8,7 +8,7 @@ from numpy import linalg as lin
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
-    fibonacci_sphere, rotation_around
+    fibonacci_sphere, rotation_around, spherical2cartesian, cartesian2spherical
 from hikari.resources import potency_map_template
 
 
@@ -194,24 +194,12 @@ def potency_map(a, b, c, al, be, ga,
     th_range, ph_range, th_mesh, ph_mesh = _make_theta_and_phi_mesh()
     data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': []}
 
-    def _angles_to_vector(theta, phi):
-        """Find the vector by rotating v1 by theta and then phi, in degrees."""
-        _sin_th = np.sin(np.deg2rad(theta))
-        _sin_ph = np.sin(np.deg2rad(phi))
-        _cos_th = np.cos(np.deg2rad(theta))
-        _cos_ph = np.cos(np.deg2rad(phi))
-        _v = v1 * _cos_th + v2 * _sin_th
-        _v_parallel = np.dot(_v, v1) * v1
-        _v_perpend = lin.norm(_v - _v_parallel) * (_cos_ph * v2 + _sin_ph * v3)
-        return _v_parallel + _v_perpend
-
     def _calculate_completeness_mesh():
         """Calculate completeness for each individual pair of theta and phi."""
         _cplt_mesh = np.zeros_like(th_mesh)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
-        vectors = np.vstack([_angles_to_vector(th, ph) for th in th_range
-                                             for ph in ph_range])
+        vectors = np.vstack(spherical2cartesian(*np.array(np.meshgrid([1], np.deg2rad(th_range), np.deg2rad(ph_range))).reshape(3, -1))).T
         uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
