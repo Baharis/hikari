@@ -37,6 +37,44 @@ def angle2rad(value):
     return value if -3.15 < value < 3.15 else np.deg2rad(value)
 
 
+def cartesian2spherical(x, y, z):
+    """
+    Convert Cartesian coordinates x, y, z
+    to conventional spherical coordinates r, p, a
+    :param x: Cartesian coordinate x
+    :type x: float or np.ndarray
+    :param y: Cartesian coordinate y
+    :type y: float or np.ndarray
+    :param z: Cartesian coordinate z
+    :type z: float or np.ndarray
+    :return: Spherical coordinates: radius, polar angle, and azimuth angle
+    :rtype: tuple[float, float, float] or tuple[np.ndarray, np.ndarray, np.ndarray]
+    """
+    r = (x ** 2 + y ** 2 + z ** 2) ** 0.5
+    p = np.arccos(z / r)
+    a = np.arctan2(y, x)
+    return r, p, a
+
+
+def spherical2cartesian(r, p, a):
+    """
+    Convert conventional spherical coordinates r, p, a
+    to Cartesian coordinates x, y, z
+    :param r: Spherical radius
+    :type r: float or np.ndarray
+    :param p: Spherical polar angle
+    :type p: float or np.ndarray
+    :param a: Spherical azimuth angle
+    :type a: float or np.ndarray
+    :return: Cartesian coordinates: x, y, and z
+    :rtype: tuple[float, float, float] or tuple[np.ndarray, np.ndarray, np.ndarray]
+    """
+    x = r * np.cos(a) * np.sin(p)
+    y = r * np.sin(a) * np.sin(p)
+    z = r * np.cos(p)
+    return x, y, z
+
+
 def fibonacci_sphere(samples=1, seed=1337):
     """
     Return a 3D cartesian coordinates of *samples* number of points
