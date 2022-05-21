@@ -37,9 +37,9 @@ set format z ''
 set tics scale 0
 set format cb "%.0f%%"
 set colorbox user origin 0.825, 0.05 size 0.075, 0.90
-set lmargin screen 0.04
+set lmargin screen 0.00
 set bmargin screen 0.00
-set rmargin screen 0.76
+set rmargin screen 0.72
 set tmargin screen 0.90
 
 # prepare mapping on sphere
@@ -76,7 +76,9 @@ splot '{job_name}.lst' using 2:(90-$1):(1):($3*100) with pm3d, \
 
 # if asked, add histogram based on .his file
 if (make_histogram == 1) {{
-set lmargin screen 0.325
+unset parametric
+stats '{job_name}.his' u 3 prefix 'heat' nooutput
+set lmargin screen 0.825 - 0.15 / heat_max
 set bmargin screen 0.050
 set rmargin screen 0.825
 set tmargin screen 0.950
