@@ -13,7 +13,7 @@ from hikari.dataframes import HklFrame, LstFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
     fibonacci_sphere, rotation_around
-from hikari.resources import potency_map_template
+from hikari.resources import gnuplot_angular_heatmap_template
 
 
 def r1_map(a, b, c, al, be, ga,
@@ -207,7 +207,7 @@ def r1_map(a, b, c, al, be, ga,
     def _prepare_gnuplot_input():
         """Prepare input to completeness map in radial coordinates in gnuplot"""
         gnu = open(gnu_path, 'w+')
-        gnu.write(potency_map_template.format(
+        gnu.write(gnuplot_angular_heatmap_template.format(
             axis_x1=(p.a_w / lin.norm(p.a_w))[0],
             axis_x2=(p.a_w / lin.norm(p.a_w))[1],
             axis_x3=(p.a_w / lin.norm(p.a_w))[2],

@@ -1,7 +1,7 @@
 import abc
 from pathlib import Path
 from .palettes import gnuplot_map_palette
-from hikari.resources import potency_map_template
+from hikari.resources import gnuplot_angular_heatmap_template
 
 
 class ArtistError(Exception):
@@ -11,8 +11,6 @@ class ArtistError(Exception):
 
 
 class Artist:
-    HEAT_EXTENSION = '.lst'
-
     @staticmethod
     def _assert_iterable_length(iterable, length):
         try:
@@ -28,7 +26,11 @@ class Artist:
 
 
 class AngularHeatmapArtist(Artist, abc.ABC):
+    HEAT_EXTENSION = '.lst'
+    HISTOGRAM_EXTENSION = '.his'
+
     def __init__(self):
+        self.histogram = False
         self._x_axis = ()
         self._y_axis = ()
         self._z_axis = ()
@@ -112,13 +114,13 @@ class MatplotlibArtist(abc.ABC):
 
 
 class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
-    template = potency_map_template
+    template = gnuplot_angular_heatmap_template
 
     def plot(self, path):
         p = Path(path)
         directory, stem, ext = p.parent, p.stem, p.suffix
         gnu_file_name = p.stem + self.GNUPLOT_EXTENSION
-        s = potency_map_template.format(
+        s = gnuplot_angular_heatmap_template.format(
             axis_x1=self.x_axis[0], axis_x2=self.x_axis[1],
             axis_x3=self.x_axis[2], axis_y1=self.y_axis[0],
             axis_y2=self.y_axis[1], axis_y3=self.y_axis[2],

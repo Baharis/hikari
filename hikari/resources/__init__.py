@@ -22,7 +22,8 @@ def _save_pickle(data, filename):
     pickle.dump(data, open(filename, 'wb'), protocol=4)
 
 
-potency_map_template = get(__name__, 'cplt_map_template.gnu').decode('utf-8')
+gnuplot_angular_heatmap_template = \
+    get(__name__, 'gnuplot_angular_heatmap_template.gnu').decode('utf-8')
 point_groups_json = _load_json('point_groups.json')
 space_groups_json = _load_json('space_groups.json')
 point_groups_pickle = get(__name__, 'point_groups.pickle')

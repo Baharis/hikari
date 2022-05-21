@@ -10,7 +10,6 @@ from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
     fibonacci_sphere, rotation_around, spherical2cartesian, \
     GnuplotAngularHeatmapArtist
-from hikari.resources import potency_map_template
 
 
 def potency_map(a, b, c, al, be, ga,
