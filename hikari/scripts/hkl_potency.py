@@ -8,7 +8,8 @@ from numpy import linalg as lin
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
-    fibonacci_sphere, rotation_around, spherical2cartesian, cartesian2spherical
+    fibonacci_sphere, rotation_around, spherical2cartesian, \
+    GnuplotAngularHeatmapArtist
 from hikari.resources import potency_map_template
 
 
@@ -124,6 +125,7 @@ def potency_map(a, b, c, al, be, ga,
     gnu_path = make_abspath(output_directory, output_name + '.gnu')
     lst_path = make_abspath(output_directory, output_name + '.lst')
     png_path = make_abspath(output_directory, output_name + '.png')
+    his_path = make_abspath(output_directory, output_name + '.his')
     axis = axis.lower()
     sg = SG[space_group]
     lg = sg.reciprocate()
@@ -257,6 +259,13 @@ def potency_map(a, b, c, al, be, ga,
                                          range=(cplt_min, cplt_max))
     hist_bins = hist_bins / sum(hist_bins)
 
+    def _prepare_hist_file():
+        with open(his_path, 'w+') as h:
+            h.write('#   from      to   prob.\n')
+            for _f, _t, _p in zip(hist_edges[:-1], hist_edges[1:], hist_bins):
+                h.write(f'{_f:8.5f}{_t:8.5f}{_p:8.5f}\n')
+    _prepare_hist_file()
+
     def _plot_in_matplotlib():
         """Plot the completeness map in radial coordinates using matplotlib"""
         fig = pyplot.figure(figsize=(5, 3))
@@ -318,35 +327,16 @@ def potency_map(a, b, c, al, be, ga,
         pyplot.savefig(png_path, dpi=600, format='png', bbox_inches=None)
     _plot_in_matplotlib()
 
-    def _prepare_gnuplot_input():
-        """Prepare input to completeness map in radial coordinates in gnuplot"""
-        gnu = open(gnu_path, 'w+')
-        gnu.write(potency_map_template.format(
-            axis_x1=(p.a_w / lin.norm(p.a_w))[0],
-            axis_x2=(p.a_w / lin.norm(p.a_w))[1],
-            axis_x3=(p.a_w / lin.norm(p.a_w))[2],
-            axis_y1=(p.b_w / lin.norm(p.b_w))[0],
-            axis_y2=(p.b_w / lin.norm(p.b_w))[1],
-            axis_y3=(p.b_w / lin.norm(p.b_w))[2],
-            axis_z1=(p.c_w / lin.norm(p.c_w))[0],
-            axis_z2=(p.c_w / lin.norm(p.c_w))[1],
-            axis_z3=(p.c_w / lin.norm(p.c_w))[2],
-            cplt_min=cplt_min * 100,
-            cplt_max=cplt_max * 100,
-            job_name=output_name,
-            min_ph=min(ph_limits),
-            max_ph=max(ph_limits),
-            min_th=min(th_limits),
-            max_th=max(th_limits),
-            palette=gnuplot_map_palette[axis]))
-
-    _prepare_gnuplot_input()
-    try:
-        from os import system, getcwd
-        _path = make_abspath(output_directory)
-        system('cd ' + _path + '; gnuplot ' + gnu_path)
-    except OSError:
-        pass
+    # new plotting capability
+    gaha = GnuplotAngularHeatmapArtist()
+    gaha.x_axis = p.a_w / lin.norm(p.a_w)
+    gaha.y_axis = p.b_w / lin.norm(p.b_w)
+    gaha.z_axis = p.c_w / lin.norm(p.c_w)
+    gaha.heat_limits = (cplt_min * 100, cplt_max * 100)
+    gaha.heat_palette = axis
+    gaha.polar_limits = (min(th_limits), max(th_limits))
+    gaha.azimuth_limits = (min(ph_limits), max(ph_limits))
+    gaha.plot(png_path)
 
 
 def potency_vs_dac_opening_angle(output_path='~/output.txt',

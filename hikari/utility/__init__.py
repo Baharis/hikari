@@ -5,6 +5,7 @@ to the actual contents of the whole library,
 but do significantly improve clarity of the code present in other modules.
 """
 
+from .artists import GnuplotAngularHeatmapArtist
 from .chem_tools import chemical_elements, split_atom_label
 from .math_tools import angle2rad,  cartesian2spherical, spherical2cartesian, \
     fibonacci_sphere, rotation_from, rotation_around
