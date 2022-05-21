@@ -117,9 +117,10 @@ class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
     template = gnuplot_angular_heatmap_template
 
     def plot(self, path):
-        p = Path(path)
-        directory, stem, ext = p.parent, p.stem, p.suffix
-        gnu_file_name = p.stem + self.GNUPLOT_EXTENSION
+        png_path = Path(path)
+        directory, stem, ext = png_path.parent, png_path.stem, png_path.suffix
+        gnu_name = png_path.stem + self.GNUPLOT_EXTENSION
+        gnu_path = Path().joinpath(directory, gnu_name)
         s = gnuplot_angular_heatmap_template.format(
             axis_x1=self.x_axis[0], axis_x2=self.x_axis[1],
             axis_x3=self.x_axis[2], axis_y1=self.y_axis[0],
@@ -128,19 +129,20 @@ class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
             axis_z3=self.z_axis[2],
             cplt_min=self.heat_limits[0],
             cplt_max=self.heat_limits[1],
+            histogram=int(self.histogram),
             job_name=stem,
             min_ph=self.azimuth_limits[0],
             max_ph=self.azimuth_limits[1],
             min_th=self.polar_limits[0],
             max_th=self.polar_limits[1],
             palette=self.heat_palette)
-        with open(gnu_file_name, 'w+') as f:
+        with open(gnu_path, 'w+') as f:
             f.write(s)
         try:
             from os import system, getcwd
-            system('cd ' + str(directory) + '; gnuplot ' + gnu_file_name)
+            system('cd ' + str(directory) + '; gnuplot ' + gnu_name)
         except OSError:
-            raise ArtistError(f'OSError passed: Cannot plot {gnu_file_name}')
+            raise ArtistError(f'OSError passed: Cannot plot {gnu_name}')
 
 
 class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):

@@ -333,6 +333,7 @@ def potency_map(a, b, c, al, be, ga,
     gaha.z_axis = p.c_w / lin.norm(p.c_w)
     gaha.heat_limits = (cplt_min * 100, cplt_max * 100)
     gaha.heat_palette = axis
+    gaha.histogram = histogram
     gaha.polar_limits = (min(th_limits), max(th_limits))
     gaha.azimuth_limits = (min(ph_limits), max(ph_limits))
     gaha.plot(png_path)
