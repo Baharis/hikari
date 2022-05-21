@@ -23,7 +23,6 @@ Z2 = {axis_z2}
 Z3 = {axis_z3}
 
 # color definitions
-set border lw 1.5
 set style line 1  lt 1 lc rgb "#000000" lw 2     # map edge
 set style arrow 1 lt 1 lc rgb "#ff0000" lw 5     # x arrow
 set style arrow 2 lt 1 lc rgb "#008000" lw 5     # y arrow
@@ -36,7 +35,6 @@ set format x ''
 set format y ''
 set format z ''
 set tics scale 0
-set cbtics
 set format cb "%.0f%%"
 set colorbox user origin 0.825, 0.05 size 0.075, 0.90
 set lmargin screen 0.04
@@ -82,14 +80,7 @@ set lmargin screen 0.325
 set bmargin screen 0.050
 set rmargin screen 0.825
 set tmargin screen 0.950
-unset key
-unset border
 unset arrow
-unset format x
-unset format y
-unset format z
-unset xtics
-unset ytics
 set xrange [1:0]
 set yrange [min_heat:max_heat]
 set style fill solid border lt 0
