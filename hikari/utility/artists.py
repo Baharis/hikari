@@ -58,7 +58,7 @@ class AngularHeatmapArtist(Artist, abc.ABC):
 
     @property
     def z_axis(self):
-        return self._x_axis
+        return self._z_axis
 
     @z_axis.setter
     def z_axis(self, a):
