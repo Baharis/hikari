@@ -70,9 +70,9 @@ set multiplot
 # draw everything, minding different coordinate system of splot
 r = 1.001
 splot '{job_name}.lst' using 2:(90-$1):(1):($3*100) with pm3d, \
-      r*cos(v)*cos(0),r*cos(v)*sin(0),r*sin(v) with line ls 1, \
-      r*cos(v)*cos(max_ph),r*cos(v)*sin(max_ph),r*sin(v) with line ls 1, \
-      r*cos(0)*cos(u),r*cos(0)*sin(u),r*sin(0) with line ls 1
+      r*cos(min_ph)*sin(v),r*sin(min_ph)*sin(v),r*cos(v) with line ls 1, \
+      r*cos(max_ph)*sin(v),r*sin(max_ph)*sin(v),r*cos(v) with line ls 1, \
+      r*cos(u)*sin(max_th),r*sin(u)*sin(max_th),r*cos(max_th) with line ls 1
 
 # if asked, add histogram based on .his file
 if (make_histogram == 1) {{
