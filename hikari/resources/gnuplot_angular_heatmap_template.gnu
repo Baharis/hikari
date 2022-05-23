@@ -64,6 +64,9 @@ set palette maxcolors 32
 set arrow from X1, X2, X3 to 1.2*X1, 1.2*X2, 1.2*X3 as 1 front
 set arrow from Y1, Y2, Y3 to 1.2*Y1, 1.2*Y2, 1.2*Y3 as 2 front
 set arrow from Z1, Z2, Z3 to 1.2*Z1, 1.2*Z2, 1.2*Z3 as 3 front
+set label at 1.2*X1, 1.2*X2, 1.2*X3 '(100)' offset screen 0.01, 0 nopoint front
+set label at 1.2*Y1, 1.2*Y2, 1.2*Y3 '(010)' offset screen 0.01, 0 nopoint front
+set label at 1.2*Z1, 1.2*Z2, 1.2*Z3 '(001)' offset screen 0.01, 0 nopoint front
 
 set style line 10 pt 12 ps 3 lw 3 lc rgb '#000000'
 {focus_string}

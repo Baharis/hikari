@@ -287,6 +287,8 @@ def potency_map(a, b, c, al, be, ga,
             ph_in_limits = min(ph_limits) <= np.rad2deg(c[2]) <= max(ph_limits)
             if ph_in_limits and th_in_limits:
                 focus.append(v / lin.norm(v))
+    # TODO point positions seem to be placed wrong in hexagonal!
+    # TODO op.tf should act on hkls, not xyz => try to fix
 
     def _plot_in_matplotlib():
         """Plot the completeness map in radial coordinates using matplotlib"""
