@@ -35,7 +35,7 @@ class AngularHeatmapArtist(Artist, abc.ABC):
         self._x_axis = ()
         self._y_axis = ()
         self._z_axis = ()
-        self._focus = {}
+        self._focus = ()
         self._heat_limits = ()
         self._polar_limits = ()
         self._azimuth_limits = ()
@@ -83,8 +83,8 @@ class AngularHeatmapArtist(Artist, abc.ABC):
     @focus.setter
     def focus(self, coords):
         self._assert_is_iterable(coords)
-        [self._assert_is_iterable(v, 3) for k, v in coords.items()]
-        self._focus = coords
+        [self._assert_is_iterable(c, 3) for c in coords]
+        self._focus = tuple(coords)
 
     @property
     def polar_limits(self):
@@ -130,9 +130,8 @@ class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
 
     @property
     def focus_string(self):
-        label = "set label at {x}, {y}, {z} '' point ls 10 front"
-        return '\n'.join([label.format(k=k, x=v[0], y=v[1], z=v[2])
-                          for k, v in self.focus.items()])
+        label = "set label at {}, {}, {} '' point ls 10 front"
+        return '\n'.join([label.format(*f) for f in self.focus])
 
     def plot(self, path):
         png_path = Path(path)

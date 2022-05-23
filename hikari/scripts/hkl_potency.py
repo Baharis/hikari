@@ -277,7 +277,7 @@ def potency_map(a, b, c, al, be, ga,
                 h.write(f'{_f:8.5f}{_t:8.5f}{_p:8.5f}\n')
     _prepare_hist_file()
 
-    focus = {}
+    focus = []
     if orientation is not None:
         focus_input = lin.inv(orientation) @ np.array((1, 0, 0)) @ p.A_r
         for i, op in enumerate(lg.operations):
@@ -286,7 +286,7 @@ def potency_map(a, b, c, al, be, ga,
             th_in_limits = min(th_limits) <= np.rad2deg(c[1]) <= max(th_limits)
             ph_in_limits = min(ph_limits) <= np.rad2deg(c[2]) <= max(ph_limits)
             if ph_in_limits and th_in_limits:
-                focus[str(i)] = v / lin.norm(v)
+                focus.append(v / lin.norm(v))
 
     def _plot_in_matplotlib():
         """Plot the completeness map in radial coordinates using matplotlib"""
