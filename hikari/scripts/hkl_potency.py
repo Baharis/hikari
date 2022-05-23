@@ -9,7 +9,7 @@ from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
     fibonacci_sphere, rotation_around, spherical2cartesian, \
-    GnuplotAngularHeatmapArtist
+    GnuplotAngularHeatmapArtist, weighted_quantile
 
 
 def potency_map(a, b, c, al, be, ga,
@@ -240,12 +240,20 @@ def potency_map(a, b, c, al, be, ga,
         best_th, best_ph = th_range[index_max[1]], ph_range[index_max[0]]
         index_min = np.unravel_index(np.argmin(_cplt_mesh), _cplt_mesh.shape)
         worst_th, worst_ph = th_range[index_min[1]], ph_range[index_min[0]]
+        q1, q2, q3 = weighted_quantile(values=data_dict['cplt'],
+                                       quantiles=[0.25, 0.50, 0.75],
+                                       weights=data_dict['weight'])
+        m = np.average(data_dict['cplt'], weights=data_dict['weight'])
         max_p = max(data_dict['cplt'])
         min_p = min(data_dict['cplt'])
-        mean_p = np.mean(data_dict['cplt'])
-        lst.write(f'# best cplt = {max_p} for th = {best_th}, ph = {best_ph}\n'
-                  f'# worst cplt = {min_p} for th = {worst_th}, ph = {worst_ph}'
-                  f'\n# mean cplt = {mean_p}\n')
+        s = f'# descriptive statistics for potency:\n' \
+            f'# max ={max_p:8.5f} at th ={best_th :6.1f} ph ={best_ph :6.1f}\n'\
+            f'# min ={min_p:8.5f} at th ={worst_th:6.1f} ph ={worst_ph:6.1f}\n'\
+            f'# q_1 ={q1   :8.5f}\n' \
+            f'# q_2 ={q2   :8.5f}\n' \
+            f'# q_3 ={q3   :8.5f}\n' \
+            f'# avg ={m    :8.5f}\n'
+        lst.write(s)
         lst.close()
         np.savetxt(dat_path, _cplt_mesh)
         return data_dict, _cplt_mesh
