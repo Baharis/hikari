@@ -8,8 +8,8 @@ from numpy import linalg as lin
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
-    fibonacci_sphere, rotation_around, spherical2cartesian, \
-    GnuplotAngularHeatmapArtist, weighted_quantile
+    fibonacci_sphere, rotation_around, spherical2cartesian,\
+    cartesian2spherical, GnuplotAngularHeatmapArtist, weighted_quantile
 
 
 def potency_map(a, b, c, al, be, ga,
@@ -18,6 +18,7 @@ def potency_map(a, b, c, al, be, ga,
                 fix_scale=False,
                 histogram=True,
                 opening_angle=35,
+                orientation=None,
                 output_directory='~',
                 output_name='cplt_map',
                 output_quality=3,
@@ -105,6 +106,8 @@ def potency_map(a, b, c, al, be, ga,
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
+    :param orientation: 3x3 matrix of crystal orientation to be marked on a map
+    :type orientation: np.ndarray
     :param output_directory: Path to directory where output should be saved.
     :type output_directory: str
     :param output_name: Base name for files created in `output_directory`.
@@ -127,7 +130,8 @@ def potency_map(a, b, c, al, be, ga,
     his_path = make_abspath(output_directory, output_name + '.his')
     axis = axis.lower()
     sg = SG[space_group]
-    lg = sg.reciprocate()
+    pg = sg.reciprocate()
+    lg = pg.lauefy()
 
     def _make_hkl_frame(ax=axis):
         """Make ball or axis of hkl which will be cut in further steps"""
@@ -148,12 +152,12 @@ def potency_map(a, b, c, al, be, ga,
         elif ax in {'yz'}:
             _f.table = _f.table.loc[_f.table['h'].eq(0)]
         if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz'}:
-            _f.transform([o.tf for o in lg.operations])
+            _f.transform([o.tf for o in pg.operations])
         _f.extinct(sg)
         return _f
 
     p = _make_hkl_frame()
-    p.find_equivalents(point_group=lg)
+    p.find_equivalents(point_group=pg)
     total_reflections = p.table['equiv'].nunique()
     if total_reflections == 0:
         raise KeyError('Specified part of reciprocal space contains zero nodes')
@@ -273,6 +277,17 @@ def potency_map(a, b, c, al, be, ga,
                 h.write(f'{_f:8.5f}{_t:8.5f}{_p:8.5f}\n')
     _prepare_hist_file()
 
+    focus = {}
+    if orientation is not None:
+        focus_input = lin.inv(orientation) @ np.array((1, 0, 0)) @ p.A_r
+        for i, op in enumerate(lg.operations):
+            v = op.tf @ focus_input
+            c = cartesian2spherical(*v)
+            th_in_limits = min(th_limits) <= np.rad2deg(c[1]) <= max(th_limits)
+            ph_in_limits = min(ph_limits) <= np.rad2deg(c[2]) <= max(ph_limits)
+            if ph_in_limits and th_in_limits:
+                focus[str(i)] = v / lin.norm(v)
+
     def _plot_in_matplotlib():
         """Plot the completeness map in radial coordinates using matplotlib"""
         fig = pyplot.figure(figsize=(5, 3))
@@ -339,6 +354,7 @@ def potency_map(a, b, c, al, be, ga,
     gaha.x_axis = p.a_w / lin.norm(p.a_w)
     gaha.y_axis = p.b_w / lin.norm(p.b_w)
     gaha.z_axis = p.c_w / lin.norm(p.c_w)
+    gaha.focus = focus
     gaha.heat_limits = (cplt_min * 100, cplt_max * 100)
     gaha.heat_palette = axis
     gaha.histogram = histogram

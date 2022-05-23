@@ -65,6 +65,9 @@ set arrow from X1, X2, X3 to 1.2*X1, 1.2*X2, 1.2*X3 as 1 front
 set arrow from Y1, Y2, Y3 to 1.2*Y1, 1.2*Y2, 1.2*Y3 as 2 front
 set arrow from Z1, Z2, Z3 to 1.2*Z1, 1.2*Z2, 1.2*Z3 as 3 front
 
+set style line 10 pt 12 ps 3 lw 3 lc rgb '#000000'
+{focus_string}
+
 set multiplot
 
 # draw everything, minding different coordinate system of splot
@@ -82,6 +85,7 @@ set lmargin screen 0.825 - 0.15 / heat_max
 set bmargin screen 0.050
 set rmargin screen 0.825
 set tmargin screen 0.950
+unset label
 unset arrow
 set xrange [1:0]
 set yrange [min_heat:max_heat]
