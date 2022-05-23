@@ -12,13 +12,14 @@ class ArtistError(Exception):
 
 class Artist:
     @staticmethod
-    def _assert_iterable_length(iterable, length):
+    def _assert_is_iterable(iterable, length=0):
         try:
-            if not len(iterable) == length:
+            _ = len(iterable)
+            if not len(iterable) == length and length is not 0:
                 raise TypeError()
         except TypeError:
-            raise ArtistError(f'object {iterable} should be'
-                                      f'an iterable of length {length}')
+            raise ArtistError(f'object {iterable} should be an iterable' + \
+                              f'of length {length}' if length else '')
 
     @abc.abstractmethod
     def plot(self, path):
@@ -44,7 +45,7 @@ class AngularHeatmapArtist(Artist, abc.ABC):
 
     @x_axis.setter
     def x_axis(self, a):
-        self._assert_iterable_length(a, 3)
+        self._assert_is_iterable(a, 3)
         self._x_axis = tuple(a)
 
     @property
@@ -53,7 +54,7 @@ class AngularHeatmapArtist(Artist, abc.ABC):
 
     @y_axis.setter
     def y_axis(self, a):
-        self._assert_iterable_length(a, 3)
+        self._assert_is_iterable(a, 3)
         self._y_axis = tuple(a)
 
     @property
@@ -62,7 +63,7 @@ class AngularHeatmapArtist(Artist, abc.ABC):
 
     @z_axis.setter
     def z_axis(self, a):
-        self._assert_iterable_length(a, 3)
+        self._assert_is_iterable(a, 3)
         self._z_axis = tuple(a)
 
     @property
@@ -71,7 +72,7 @@ class AngularHeatmapArtist(Artist, abc.ABC):
 
     @heat_limits.setter
     def heat_limits(self, lims):
-        self._assert_iterable_length(lims, 2)
+        self._assert_is_iterable(lims, 2)
         self._heat_limits = tuple(lims)
 
     @property
@@ -80,7 +81,7 @@ class AngularHeatmapArtist(Artist, abc.ABC):
 
     @polar_limits.setter
     def polar_limits(self, lims):
-        self._assert_iterable_length(lims, 2)
+        self._assert_is_iterable(lims, 2)
         self._polar_limits = tuple(lims)
 
     @property
@@ -89,7 +90,7 @@ class AngularHeatmapArtist(Artist, abc.ABC):
 
     @azimuth_limits.setter
     def azimuth_limits(self, lims):
-        self._assert_iterable_length(lims, 2)
+        self._assert_is_iterable(lims, 2)
         self._azimuth_limits = tuple(lims)
 
 
