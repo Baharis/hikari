@@ -191,12 +191,18 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         heat_mesh = np.loadtxt(str(mesh_path))
 
         # set-up the plot
-        fig = pyplot.figure(figsize=(5, 3))
+        fig = pyplot.figure(figsize=(8, 6))
         ax = fig.add_subplot(111, projection='3d')
+        pyplot.rcParams.update({'font.size': 16})
         ax.view_init(elev=90 - sum(self.polar_limits) / 2,
                      azim=sum(self.azimuth_limits) / 2)
-        ax.dist = 10
+        ax.dist = 7.5
+        ax.plot([1], [1], [1], 'w')
+        ax.plot([-1], [-1], [-1], 'w')
         ax.set_axis_off()
+        # for direction in (-1, 1):
+        #     for point in np.diag(direction * np.array([1, 1, 1])):
+        #         ax.plot([point[0]], [point[1]], [point[2]], 'w')
 
         # prepare surface in cartesian coordinates
         polar_range = np.linspace(start=self.polar_limits[0],
@@ -217,10 +223,10 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         m = cm.ScalarMappable(cmap=self.heat_palette)
         m.set_array(heat_mesh)
         m.set_clim(*self.heat_limits)
-        pyplot.colorbar(m, fraction=0.046, pad=0.04)
+        pyplot.colorbar(m, fraction=0.05, pad=0.05)
         norm = colors.Normalize(*self.heat_limits)
 
-        # (100), (010), (010) lines and focus point
+        # draw (100), (010), (010) lines and focus point
         len_ = 1.25
         x, y, z = self.x_axis, self.y_axis, self.z_axis
         ax.add_line(art3d.Line3D((x[0], len_ * x[0]), (x[1], len_ * x[1]),
@@ -239,7 +245,7 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         ax.plot_surface(x_mesh, y_mesh, z_mesh, rstride=1, cstride=1,
                         cmap=self.heat_palette, linewidth=0,
                         antialiased=False, facecolors=color_mesh)
-        pyplot.savefig(png_path, dpi=600, format='png', bbox_inches=None)
+        pyplot.savefig(png_path, dpi=100, format='png', bbox_inches=None)
 
 
 
