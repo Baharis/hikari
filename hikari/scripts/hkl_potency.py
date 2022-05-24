@@ -292,6 +292,7 @@ def potency_map(a, b, c, al, be, ga,
     ma.x_axis = p.a_w / lin.norm(p.a_w)
     ma.y_axis = p.b_w / lin.norm(p.b_w)
     ma.z_axis = p.c_w / lin.norm(p.c_w)
+    ma.focus = focus
     ma.heat_limits = (cplt_min, cplt_max)
     ma.heat_palette = axis
     ma.polar_limits = (min(th_limits), max(th_limits))

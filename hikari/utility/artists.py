@@ -226,15 +226,25 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         pyplot.colorbar(m, fraction=0.05, pad=0.0, shrink=0.9)
         norm = colors.Normalize(*self.heat_limits)
 
-        # draw (100), (010), (010) lines and focus point
+        # draw (100), (010), (010) axes
         len_ = 1.25
-        x, y, z = self.x_axis, self.y_axis, self.z_axis
-        ax.add_line(art3d.Line3D((x[0], len_ * x[0]), (x[1], len_ * x[1]),
-                                 (x[2], len_ * x[2]), color='r', linewidth=5))
-        ax.add_line(art3d.Line3D((y[0], len_ * y[0]), (y[1], len_ * y[1]),
-                                 (y[2], len_ * y[2]), color='g', linewidth=5))
-        ax.add_line(art3d.Line3D((z[0], len_ * z[0]), (z[1], len_ * z[1]),
-                                 (z[2], len_ * z[2]), color='b', linewidth=5))
+        xa, ya, za = self.x_axis, self.y_axis, self.z_axis
+        ax.add_line(art3d.Line3D((xa[0], len_ * xa[0]), (xa[1], len_ * xa[1]),
+                                 (xa[2], len_ * xa[2]),
+                                 color='r', linewidth=5, zorder=10))
+        ax.add_line(art3d.Line3D((ya[0], len_ * ya[0]), (ya[1], len_ * ya[1]),
+                                 (ya[2], len_ * ya[2]),
+                                 color='g', linewidth=5, zorder=10))
+        ax.add_line(art3d.Line3D((za[0], len_ * za[0]), (za[1], len_ * za[1]),
+                                 (za[2], len_ * za[2]),
+                                 color='b', linewidth=5, zorder=10))
+
+        # draw focus points
+        if self.focus:
+            xf, yf, zf = np.array(self.focus).T
+            ax.plot(xf, yf, zf, linestyle='none', marker='D', markersize=10,
+                    markerfacecolor='none', markeredgewidth=2,
+                    markeredgecolor='k',  zorder=8)
 
         # prepare smaller heat mesh for polygon centers and plot the heatmap
         face_heat_mesh = (heat_mesh[1:, 1:] + heat_mesh[1:, :-1] +
