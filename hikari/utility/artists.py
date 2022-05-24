@@ -196,7 +196,7 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         pyplot.rcParams.update({'font.size': 16})
         ax.view_init(elev=90 - sum(self.polar_limits) / 2,
                      azim=sum(self.azimuth_limits) / 2)
-        ax.dist = 7.5
+        ax.dist = 6.5
         ax.plot([1], [1], [1], 'w')
         ax.plot([-1], [-1], [-1], 'w')
         ax.set_axis_off()
@@ -223,7 +223,7 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         m = cm.ScalarMappable(cmap=self.heat_palette)
         m.set_array(heat_mesh)
         m.set_clim(*self.heat_limits)
-        pyplot.colorbar(m, fraction=0.05, pad=0.05)
+        pyplot.colorbar(m, fraction=0.05, pad=0.0, shrink=0.9)
         norm = colors.Normalize(*self.heat_limits)
 
         # draw (100), (010), (010) lines and focus point
@@ -245,6 +245,11 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         ax.plot_surface(x_mesh, y_mesh, z_mesh, rstride=1, cstride=1,
                         cmap=self.heat_palette, linewidth=0,
                         antialiased=False, facecolors=color_mesh)
+        pyplot.subplots_adjust(left=0.0,
+                            bottom=0.0,
+                            right=0.95,
+                            top=1.0)
+        #fig.tight_layout()
         pyplot.savefig(png_path, dpi=100, format='png', bbox_inches=None)
 
 
