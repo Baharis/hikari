@@ -7,9 +7,10 @@ from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
-    fibonacci_sphere, rotation_around, spherical2cartesian,\
-    cartesian2spherical, GnuplotAngularHeatmapArtist, weighted_quantile
+from hikari.utility import make_abspath, weighted_quantile, \
+    fibonacci_sphere, rotation_around, sph2cart, cart2sph
+from hikari.utility import GnuplotAngularHeatmapArtist, \
+    MatplotlibAngularHeatmapArtist
 
 
 def potency_map(a, b, c, al, be, ga,
@@ -226,7 +227,7 @@ def potency_map(a, b, c, al, be, ga,
         _cplt_mesh = np.zeros_like(th_mesh)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
-        vectors = np.vstack(spherical2cartesian(one_comb, ph_comb, th_comb)).T
+        vectors = np.vstack(sph2cart(one_comb, ph_comb, th_comb)).T
         uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
@@ -281,7 +282,7 @@ def potency_map(a, b, c, al, be, ga,
     if orientation is not None:
         for i, op in enumerate(lg.operations):
             v = p.A_r.T @ op.tf @ lin.inv(orientation) @ np.array((1, 0, 0))
-            c = cartesian2spherical(*v)
+            c = cart2sph(*v)
             th_in_limits = min(th_limits) <= np.rad2deg(c[1]) <= max(th_limits)
             ph_in_limits = min(ph_limits) <= np.rad2deg(c[2]) <= max(ph_limits)
             if ph_in_limits and th_in_limits:

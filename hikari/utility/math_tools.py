@@ -37,7 +37,7 @@ def angle2rad(value):
     return value if -3.15 < value < 3.15 else np.deg2rad(value)
 
 
-def cartesian2spherical(x, y, z):
+def cart2sph(x, y, z):
     """
     Convert Cartesian coordinates x, y, z
     to conventional spherical coordinates r, p, a
@@ -56,7 +56,7 @@ def cartesian2spherical(x, y, z):
     return r, p, a
 
 
-def spherical2cartesian(r, p, a):
+def sph2cart(r, p, a):
     """
     Convert conventional spherical coordinates r, p, a
     to Cartesian coordinates x, y, z
