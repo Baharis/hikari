@@ -228,16 +228,18 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
 
         # draw (100), (010), (010) axes
         len_ = 1.25
-        xa, ya, za = self.x_axis, self.y_axis, self.z_axis
-        ax.add_line(art3d.Line3D((xa[0], len_ * xa[0]), (xa[1], len_ * xa[1]),
-                                 (xa[2], len_ * xa[2]),
-                                 color='r', linewidth=5, zorder=10))
-        ax.add_line(art3d.Line3D((ya[0], len_ * ya[0]), (ya[1], len_ * ya[1]),
-                                 (ya[2], len_ * ya[2]),
-                                 color='g', linewidth=5, zorder=10))
-        ax.add_line(art3d.Line3D((za[0], len_ * za[0]), (za[1], len_ * za[1]),
-                                 (za[2], len_ * za[2]),
-                                 color='b', linewidth=5, zorder=10))
+        xa, xb = self.x_axis, [_ * len_ for _ in self.x_axis]
+        ya, yb = self.y_axis, [_ * len_ for _ in self.y_axis]
+        za, zb = self.z_axis, [_ * len_ for _ in self.z_axis]
+        ax.add_line(art3d.Line3D((xa[0], xb[0]), (xa[1], xb[1]), (xa[2], xb[2]),
+                                 color='r', linewidth=5, zorder=9))
+        ax.text(*xb, '(100)', zorder=10, color='k')
+        ax.add_line(art3d.Line3D((ya[0], yb[0]), (ya[1], yb[1]), (ya[2], yb[2]),
+                                 color='g', linewidth=5, zorder=9))
+        ax.text(*yb, '(010)', zorder=10, color='k')
+        ax.add_line(art3d.Line3D((za[0], zb[0]), (za[1], zb[1]), (za[2], zb[2]),
+                                 color='b', linewidth=5, zorder=9))
+        ax.text(*zb, '(001)', zorder=10, color='k')
 
         # draw focus points
         if self.focus:
