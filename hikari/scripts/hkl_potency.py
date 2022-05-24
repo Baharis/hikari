@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib import pyplot, colors, cm
-from mpl_toolkits.mplot3d import art3d
+from matplotlib import pyplot
 from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
@@ -288,79 +287,29 @@ def potency_map(a, b, c, al, be, ga,
             if ph_in_limits and th_in_limits:
                 focus.append(v / lin.norm(v))
 
-    def _plot_in_matplotlib():
-        """Plot the completeness map in radial coordinates using matplotlib"""
-        fig = pyplot.figure(figsize=(5, 3))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.view_init(elev=90 - sum(th_limits) / 2, azim=sum(ph_limits) / 2)
-        ax.dist = 10
-        ax.set_axis_off()
+    # plot potency map using built-in matplotlib
+    ma = MatplotlibAngularHeatmapArtist()
+    ma.x_axis = p.a_w / lin.norm(p.a_w)
+    ma.y_axis = p.b_w / lin.norm(p.b_w)
+    ma.z_axis = p.c_w / lin.norm(p.c_w)
+    ma.heat_limits = (cplt_min, cplt_max)
+    ma.heat_palette = axis
+    ma.polar_limits = (min(th_limits), max(th_limits))
+    ma.azimuth_limits = (min(ph_limits), max(ph_limits))
+    ma.plot(png_path)
 
-        # surface in cartesian coordinates
-        x = np.sin(np.deg2rad(th_mesh)) * np.cos(np.deg2rad(ph_mesh))
-        y = np.sin(np.deg2rad(th_mesh)) * np.sin(np.deg2rad(ph_mesh))
-        z = np.cos(np.deg2rad(th_mesh))
-
-        # wireframe
-        np.warnings.filterwarnings('ignore',
-                                   category=np.VisibleDeprecationWarning)
-        ax.plot_wireframe(x, y, z, colors='k', linewidth=0.25)  # <- mpl warning
-
-        # color map
-        my_heatmap_colors = mpl_map_palette[axis]
-        my_colormap = colors.LinearSegmentedColormap.from_list(
-            'heatmapEX', my_heatmap_colors, N=256)
-        m = cm.ScalarMappable(cmap=my_colormap)
-        m.set_array(cplt_mesh)
-        if fix_scale is True:
-            m.set_clim(0, 1)
-            norm = colors.Normalize(vmin=0, vmax=1)
-        else:
-            norm = colors.Normalize(vmin=min(data_dict['cplt']),
-                                    vmax=max(data_dict['cplt']))
-        pyplot.colorbar(m, fraction=0.046, pad=0.04)
-
-        # direction lines
-        _len = 1.25
-        _x = p.a_w / lin.norm(p.a_w)
-        _y = p.b_w / lin.norm(p.b_w)
-        _z = p.c_w / lin.norm(p.c_w)
-        ax.add_line(art3d.Line3D((_x[0], _len * _x[0]), (_x[1], _len * _x[1]),
-                                 (_x[2], _len * _x[2]), color='r', linewidth=5))
-        ax.add_line(art3d.Line3D((_y[0], _len * _y[0]), (_y[1], _len * _y[1]),
-                                 (_y[2], _len * _y[2]), color='g', linewidth=5))
-        ax.add_line(art3d.Line3D((_z[0], _len * _z[0]), (_z[1], _len * _z[1]),
-                                 (_z[2], _len * _z[2]), color='b', linewidth=5))
-
-        # color mesh for heatmap
-        color_mesh = cplt_mesh[:-1, :-1]
-        for i in range(cplt_mesh.shape[0] - 1):
-            for j in range(cplt_mesh.shape[1] - 1):
-                color_mesh[i, j] = (cplt_mesh[i + 1, j] + cplt_mesh[i, j + 1] +
-                                    cplt_mesh[i, j] + cplt_mesh[
-                                        i + 1, j + 1]) / 4
-
-        # heatmap surface
-        for item in [fig, ax]:
-            item.patch.set_visible(False)
-        ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=my_colormap,
-                        linewidth=0, antialiased=False,
-                        facecolors=my_colormap(norm(color_mesh)))
-        pyplot.savefig(png_path, dpi=600, format='png', bbox_inches=None)
-    _plot_in_matplotlib()
-
-    # new plotting capability
-    gaha = GnuplotAngularHeatmapArtist()
-    gaha.x_axis = p.a_w / lin.norm(p.a_w)
-    gaha.y_axis = p.b_w / lin.norm(p.b_w)
-    gaha.z_axis = p.c_w / lin.norm(p.c_w)
-    gaha.focus = focus
-    gaha.heat_limits = (cplt_min * 100, cplt_max * 100)
-    gaha.heat_palette = axis
-    gaha.histogram = histogram
-    gaha.polar_limits = (min(th_limits), max(th_limits))
-    gaha.azimuth_limits = (min(ph_limits), max(ph_limits))
-    gaha.plot(png_path)
+    # plot potency map using external gnuplot
+    ga = GnuplotAngularHeatmapArtist()
+    ga.x_axis = p.a_w / lin.norm(p.a_w)
+    ga.y_axis = p.b_w / lin.norm(p.b_w)
+    ga.z_axis = p.c_w / lin.norm(p.c_w)
+    ga.focus = focus
+    ga.heat_limits = (cplt_min * 100, cplt_max * 100)
+    ga.heat_palette = axis
+    ga.histogram = histogram
+    ga.polar_limits = (min(th_limits), max(th_limits))
+    ga.azimuth_limits = (min(ph_limits), max(ph_limits))
+    ga.plot(png_path)
 
 
 def potency_vs_dac_opening_angle(output_path='~/output.txt',

@@ -1,6 +1,10 @@
 import abc
 from pathlib import Path
-from .palettes import gnuplot_map_palette
+from matplotlib import pyplot, colors, cm
+from mpl_toolkits.mplot3d import art3d
+import numpy as np
+
+from hikari.utility import gnuplot_map_palette, mpl_map_palette, sph2cart
 from hikari.resources import gnuplot_angular_heatmap_template
 
 
@@ -122,7 +126,19 @@ class GnuplotArtist(abc.ABC):
 
 
 class MatplotlibArtist(abc.ABC):
-    pass
+    def __init__(self):
+        super().__init__()
+        self._heat_palette = colors.LinearSegmentedColormap.from_list(
+            'heatmap', mpl_map_palette[''], N=256)
+
+    @property
+    def heat_palette(self):
+        return self._heat_palette
+
+    @heat_palette.setter
+    def heat_palette(self, name):
+        self._heat_palette = colors.LinearSegmentedColormap.from_list(
+            'heatmap', mpl_map_palette[name], N=256)
 
 
 class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
@@ -164,7 +180,68 @@ class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
 
 
 class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
-    pass
+    MESH_EXTENSION = '.dat'
+
+    def plot(self, path):
+        # OS and I/O operations
+        png_path = Path(path)
+        directory, stem, ext = png_path.parent, png_path.stem, png_path.suffix
+        mesh_name = png_path.stem + self.MESH_EXTENSION
+        mesh_path = Path().joinpath(directory, mesh_name)
+        heat_mesh = np.loadtxt(str(mesh_path))
+
+        # set-up the plot
+        fig = pyplot.figure(figsize=(5, 3))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.view_init(elev=90 - sum(self.polar_limits) / 2,
+                     azim=sum(self.azimuth_limits) / 2)
+        ax.dist = 10
+        ax.set_axis_off()
+
+        # prepare surface in cartesian coordinates
+        polar_range = np.linspace(start=self.polar_limits[0],
+                                  stop=self.polar_limits[1],
+                                  num=heat_mesh.shape[1])  # 1=angle_res
+        azimuth_range = np.linspace(start=self.azimuth_limits[0],
+                                    stop=self.azimuth_limits[1],
+                                    num=heat_mesh.shape[0])
+        polar_mesh, azimuth_mesh = np.meshgrid(polar_range, azimuth_range)
+        x_mesh, y_mesh, z_mesh = sph2cart(r=np.ones_like(polar_mesh),
+                                          p=np.deg2rad(polar_mesh),
+                                          a=np.deg2rad(azimuth_mesh))
+        np.warnings.filterwarnings('ignore',  # mpl uses depreciated numpy
+                                   category=np.VisibleDeprecationWarning)
+        ax.plot_wireframe(x_mesh, y_mesh, z_mesh, colors='k', linewidth=0.25)
+
+        # color map declarations
+        m = cm.ScalarMappable(cmap=self.heat_palette)
+        m.set_array(heat_mesh)
+        m.set_clim(*self.heat_limits)
+        pyplot.colorbar(m, fraction=0.046, pad=0.04)
+        norm = colors.Normalize(*self.heat_limits)
+
+        # (100), (010), (010) lines and focus point
+        len_ = 1.25
+        x, y, z = self.x_axis, self.y_axis, self.z_axis
+        ax.add_line(art3d.Line3D((x[0], len_ * x[0]), (x[1], len_ * x[1]),
+                                 (x[2], len_ * x[2]), color='r', linewidth=5))
+        ax.add_line(art3d.Line3D((y[0], len_ * y[0]), (y[1], len_ * y[1]),
+                                 (y[2], len_ * y[2]), color='g', linewidth=5))
+        ax.add_line(art3d.Line3D((z[0], len_ * z[0]), (z[1], len_ * z[1]),
+                                 (z[2], len_ * z[2]), color='b', linewidth=5))
+
+        # prepare smaller heat mesh for polygon centers and plot the heatmap
+        face_heat_mesh = (heat_mesh[1:, 1:] + heat_mesh[1:, :-1] +
+                          heat_mesh[:-1, 1:] + heat_mesh[:-1, :-1]) / 4
+        color_mesh = self.heat_palette(norm(face_heat_mesh))
+        for item in [fig, ax]:
+            item.patch.set_visible(False)
+        ax.plot_surface(x_mesh, y_mesh, z_mesh, rstride=1, cstride=1,
+                        cmap=self.heat_palette, linewidth=0,
+                        antialiased=False, facecolors=color_mesh)
+        pyplot.savefig(png_path, dpi=600, format='png', bbox_inches=None)
+
+
 
 
 
