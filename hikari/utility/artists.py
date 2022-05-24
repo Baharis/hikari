@@ -223,7 +223,7 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         m = cm.ScalarMappable(cmap=self.heat_palette)
         m.set_array(heat_mesh)
         m.set_clim(*self.heat_limits)
-        pyplot.colorbar(m, fraction=0.05, pad=0.0, shrink=0.9)
+        pyplot.colorbar(m, fraction=0.06, pad=0.0, shrink=0.9)
         norm = colors.Normalize(*self.heat_limits)
 
         # draw (100), (010), (010) axes
