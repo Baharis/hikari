@@ -1,23 +1,17 @@
 def _min(*args):
-    """Recursively returns minimum of arguments or their elements."""
-    minimum = min(args)
+    """Recursively returns minimum of args if possible, otherwise args"""
     try:
-        _ = iter(minimum)
+        return min(args)
     except TypeError:
-        return minimum
-    else:
-        return _min(*minimum)
+        return args
 
 
 def _max(*args):
-    """Recursively returns maximum of arguments or their elements."""
-    maximum = max(args)
+    """Recursively returns maximum of args if possible, otherwise args"""
     try:
-        _ = iter(maximum)
+        return max(args)
     except TypeError:
-        return maximum
-    else:
-        return _max(*maximum)
+        return args
 
 
 class Interval:
