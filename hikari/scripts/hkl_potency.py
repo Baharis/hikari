@@ -7,7 +7,7 @@ from numpy import linalg as lin
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, weighted_quantile, \
-    fibonacci_sphere, rotation_around, sph2cart, cart2sph
+    fibonacci_sphere, rotation_around, sph2cart, cart2sph, Interval
 from hikari.utility import GnuplotAngularHeatmapArtist, \
     MatplotlibAngularHeatmapArtist
 
@@ -124,7 +124,6 @@ def potency_map(a, b, c, al, be, ga,
     :rtype: None
     """
     dat_path = make_abspath(output_directory, output_name + '.dat')
-    gnu_path = make_abspath(output_directory, output_name + '.gnu')
     lst_path = make_abspath(output_directory, output_name + '.lst')
     png_path = make_abspath(output_directory, output_name + '.png')
     his_path = make_abspath(output_directory, output_name + '.his')
@@ -170,23 +169,21 @@ def potency_map(a, b, c, al, be, ga,
         _v3 = np.cross(_v1, _v2)
 
         if sg.system in {Group.System.triclinic}:
-            _th_limits = [0, 180]
-            _ph_limits = [-45, 135]
+            _th_limits = Interval(0, 180)
+            _ph_limits = Interval(-45, 135)
         elif sg.system in {Group.System.monoclinic}:
-            _th_limits = [0, 180]
-            _ph_limits = [0, 90]
+            _th_limits = Interval(0, 180)
+            _ph_limits = Interval(0, 90)
         elif sg.system in {Group.System.orthorhombic, Group.System.tetragonal,
                          Group.System.cubic}:
-            _th_limits = [0, 90]
-            _ph_limits = [0, 90]
-        elif sg.system in {Group.System.trigonal,
-                           Group.System.hexagonal}:
-            _th_limits = [0, 90]
-            _ph_limits = [0, 120]
+            _th_limits = Interval(0, 90)
+            _ph_limits = Interval(0, 90)
+        elif sg.system in {Group.System.trigonal, Group.System.hexagonal}:
+            _th_limits = Interval(0, 90)
+            _ph_limits = Interval(0, 120)
         else:
             raise ValueError('Unknown crystal system (trigonal not supported)')
         return _v1, _v2, _v3, _th_limits, _ph_limits
-
     v1, v2, v3, th_limits, ph_limits = _determine_theta_and_phi_limits()
 
     def _determine_angle_res():
@@ -195,17 +192,12 @@ def potency_map(a, b, c, al, be, ga,
         return {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
     angle_res = _determine_angle_res()
 
-    def _make_theta_and_phi_mesh():
-        """Define a list of theta and phi values to be investigated."""
-        _th_range = np.arange(th_limits[0], th_limits[1] + 0.001, angle_res)
-        _ph_range = np.arange(ph_limits[0], ph_limits[1] + 0.001, angle_res)
-        _th_mesh, _ph_mesh = np.meshgrid(_th_range, _ph_range)
-        return _th_range, _ph_range, _th_mesh, _ph_mesh
-
     # range: 1D range-like, mesh: 2D grid, comb: 1D list for all combinations
-    th_range, ph_range, th_mesh, ph_mesh = _make_theta_and_phi_mesh()
-    one_comb, ph_comb, th_comb = np.array(np.meshgrid(
-        1, np.deg2rad(th_range), np.deg2rad(ph_range))).reshape(3, -1)
+    th_range = th_limits.arange(step=angle_res)
+    ph_range = ph_limits.arange(step=angle_res)
+    th_mesh, ph_mesh = th_limits.mesh_with(ph_limits, step=angle_res)
+    one_comb, th_comb, ph_comb = \
+        Interval(1, 1).comb_with(th_limits, ph_limits, step=angle_res)
     data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': [], 'weight': []}
 
     def orientation_weight(th, ph):
@@ -223,10 +215,11 @@ def potency_map(a, b, c, al, be, ga,
 
     def _calculate_completeness_mesh():
         """Calculate completeness for each individual pair of theta and phi."""
-        _cplt_mesh = np.zeros_like(th_mesh)
+        _cplt_mesh = np.zeros_like(th_mesh, dtype=float)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
-        vectors = np.vstack(sph2cart(one_comb, ph_comb, th_comb)).T
+        vectors = np.vstack(sph2cart(one_comb, np.deg2rad(th_comb),
+                                     np.deg2rad(ph_comb))).T
         uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
