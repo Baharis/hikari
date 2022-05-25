@@ -18,6 +18,17 @@ def _max(*args):
 
 
 class Interval:
+    """
+    A class handling [A, B] line segments and numpy operations on them.
+    The following magic methods have been implemented for `Interval`:
+
+    - creation using `Interval(A, B)` syntax (if `A == B`, represents a point)
+    - comparison operations with numbers (True if holds for the whole Interval)
+    - arithmetic operations, which act element-wise for left and right edge
+    - access methods: `A == Interval(A, B)[0] == Interval(A, B).left`
+    - container methods: 5 and 6.2 are `in Interval(5, 7)`, but 7. might not be
+    """
+
     # CREATION METHODS
     def __init__(self, left, right):
         self.left = min(left, right)
