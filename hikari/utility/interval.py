@@ -86,6 +86,19 @@ class Interval:
         size = 1 + int((self.right - self.left + epsilon) / step)
         return np.array([self.left + step * i for i in range(size)])
 
+    def comb_with(self, *others, step=1):
+        """
+        Return combinations of self.arange(step) with every other.arange(step)
+        :param others: interval or iterable of intervals to comb self with
+        :type others: Interval or tuple or list
+        :param step: spacing between adjacent values, default 1.
+        :type step: int or float
+        :return: array of all combinations found in numpy.meshgrid every step
+        :rtype: np.array
+        """
+        arrays = [self.arange(step)] + [other.arange(step) for other in others]
+        return np.array(np.meshgrid(*arrays)).reshape(len(arrays), -1)
+
     def mesh_with(self, *others, step=1):
         """
         Return a numpy.mesh of self.arange(step) with every other.arange(step)
