@@ -70,3 +70,24 @@ class Interval:
 
     def __contains__(self, item):
         return self.left <= _min(item) and _max(item) <= self.right
+
+    def arange(self, step=1):
+        """
+        Return a 1D-list of values from left to right every step
+        :param step: spacing between adjacent values, default 1.
+        :type step: int or float
+        :return: list of values from left to right (including right) every step
+        :rtype: list
+        """
+        epsilon = step * 1e-7
+        size = 1 + int((self.right - self.left + epsilon) / step)
+        return [self.left + step * i for i in range(size)]
+
+
+
+
+
+
+
+
+
