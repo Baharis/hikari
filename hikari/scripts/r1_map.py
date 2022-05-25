@@ -106,7 +106,8 @@ def r1_map(a, b, c, al, be, ga,
                 Path(dir_path2).mkdir()
                 shutil.copy(res_path, ins_path2)
                 q = p.copy()
-                q.dac_trim(opening_angle, sph2cart(1.0, th, ph))
+                q.dac_trim(opening_angle, sph2cart(1.0, np.deg2rad(th),
+                                                   np.deg2rad(ph)))
                 q.write(hkl_path2, hkl_format='shelx_4')
                 count = q.table['equiv'].nunique()
                 os.system(f'cd {dir_path2}; shelxl {job_name}')
