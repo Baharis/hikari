@@ -113,29 +113,30 @@ class TestInterval(unittest.TestCase):
 
     def test_arange(self):
         a = Interval(1, 3)
-        self.assertTrue(np.all(a.arange() == np.array([1, 2, 3])))
-        self.assertTrue(np.all(a.arange(step=2) == np.array([1, 3])))
+        self.assertTrue(np.array_equal(a.arange(), np.array([1, 2, 3])))
+        self.assertTrue(np.array_equal(a.arange(step=2), np.array([1, 3])))
         self.assertTrue(np.allclose(a.arange(step=0.5), np.arange(1, 3.1, 0.5)))
 
     def test_comb_with(self):
         a = Interval(1, 3)
         b = Interval(4, 5)
         c = Interval(6, 6)
-        self.assertTrue(np.all(a.comb_with(b)[0] == np.array([1, 2, 3] * 2)))
+        self.assertTrue(np.array_equal(a.comb_with(b)[0],
+                                       np.array([1, 2, 3] * 2)))
         self.assertTrue(np.allclose(a.comb_with(b, step=2)[1], [4, 4]))
         self.assertTrue(np.allclose(a.comb_with(b, step=0.9)[1],
                                     np.array([4.0] * 3 + [4.9] * 3)))
-        self.assertTrue(np.all(a.comb_with(b, c)[:2] ==
-                               a.comb_with(b, c, c)[:2]))
+        self.assertTrue(np.array_equal(a.comb_with(b, c)[:2],
+                                       a.comb_with(b, c, c, c, c, c)[:2]))
 
     def test_mesh_with(self):
         a = Interval(1, 3)
         b = Interval(4, 5)
-        self.assertTrue(np.all(a.mesh_with(b)[0] ==
-                               np.array([[1, 2, 3], [1, 2, 3]])))
+        self.assertTrue(np.array_equal(a.mesh_with(b)[0],
+                                       np.array([[1, 2, 3], [1, 2, 3]])))
         self.assertTrue(np.allclose(a.mesh_with(b, step=0.8)[1],
                                     np.array([[4., 4., 4.], [4.8, 4.8, 4.8]])))
-        self.assertTrue(np.all(a.mesh_with(b)[0] == b.mesh_with(a)[1].T))
+        self.assertTrue(np.array_equal(a.mesh_with(b)[0], b.mesh_with(a)[1].T))
 
 
 if __name__ == '__main__':
