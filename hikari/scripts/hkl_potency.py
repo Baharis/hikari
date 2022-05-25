@@ -247,7 +247,7 @@ def potency_map(a, b, c, al, be, ga,
         q1, q2, q3 = weighted_quantile(values=data_dict['cplt'],
                                        quantiles=[0.25, 0.50, 0.75],
                                        weights=data_dict['weight'])
-        m = np.average(data_dict['cplt'], weights=data_dict['weight'])
+        avg_p = np.average(data_dict['cplt'], weights=data_dict['weight'])
         max_p = max(data_dict['cplt'])
         min_p = min(data_dict['cplt'])
         s = f'# descriptive statistics for potency:\n' \
@@ -256,13 +256,13 @@ def potency_map(a, b, c, al, be, ga,
             f'# q_1 ={q1   :8.5f}\n' \
             f'# q_2 ={q2   :8.5f}\n' \
             f'# q_3 ={q3   :8.5f}\n' \
-            f'# avg ={m    :8.5f}\n'
+            f'# avg ={avg_p:8.5f}\n'
         lst.write(s)
         lst.close()
         np.savetxt(dat_path, _cplt_mesh)
-        return data_dict, _cplt_mesh
+        return data_dict
 
-    data_dict, cplt_mesh = _calculate_completeness_mesh()
+    data_dict = _calculate_completeness_mesh()
     cplt_min = 0 if fix_scale else min(data_dict['cplt'])
     cplt_max = 1 if fix_scale else max(data_dict['cplt'])
     hist_bins, hist_edges = np.histogram(data_dict['cplt'], density=True,
