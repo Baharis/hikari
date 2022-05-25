@@ -10,11 +10,14 @@ from hikari.resources import gnuplot_angular_heatmap_template
 
 class ArtistError(Exception):
     """Exception raised when a problem with plotting in hikari occurs."""
+
     def __init__(self, message):
         super().__init__(message)
 
 
 class Artist:
+    """Base class used for plotting matplotlib and gnuplot plots"""
+
     @staticmethod
     def _assert_is_iterable(iterable, length=0):
         try:
@@ -31,6 +34,8 @@ class Artist:
 
 
 class AngularHeatmapArtist(Artist, abc.ABC):
+    """Base class used for plotting angular heatmaps"""
+
     HEAT_EXTENSION = '.lst'
     HISTOGRAM_EXTENSION = '.his'
 
@@ -110,6 +115,8 @@ class AngularHeatmapArtist(Artist, abc.ABC):
 
 
 class GnuplotArtist(abc.ABC):
+    """Base class used for plotting gnuplot plots"""
+
     GNUPLOT_EXTENSION = '.gnu'
 
     def __init__(self):
@@ -126,6 +133,8 @@ class GnuplotArtist(abc.ABC):
 
 
 class MatplotlibArtist(abc.ABC):
+    """Base class used for plotting matplotlib plots"""
+
     def __init__(self):
         super().__init__()
         self._heat_palette = colors.LinearSegmentedColormap.from_list(
@@ -142,6 +151,8 @@ class MatplotlibArtist(abc.ABC):
 
 
 class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
+    """Base class used for plotting gnuplot angular heatmaps"""
+
     template = gnuplot_angular_heatmap_template
 
     @property
@@ -180,6 +191,8 @@ class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
 
 
 class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
+    """Base class used for plotting matplotlib angular heatmaps"""
+
     MESH_EXTENSION = '.dat'
 
     def plot(self, path):
@@ -200,9 +213,6 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         ax.plot([1], [1], [1], 'w')
         ax.plot([-1], [-1], [-1], 'w')
         ax.set_axis_off()
-        # for direction in (-1, 1):
-        #     for point in np.diag(direction * np.array([1, 1, 1])):
-        #         ax.plot([point[0]], [point[1]], [point[2]], 'w')
 
         # prepare surface in cartesian coordinates
         polar_range = np.linspace(start=self.polar_limits[0],
@@ -259,9 +269,3 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
                         antialiased=False, facecolors=color_mesh)
         pyplot.subplots_adjust(left=0.0, bottom=0.0, right=0.95, top=1.0)
         pyplot.savefig(png_path, dpi=100, format='png', bbox_inches=None)
-
-
-
-
-
-

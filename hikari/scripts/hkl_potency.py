@@ -124,7 +124,6 @@ def potency_map(a, b, c, al, be, ga,
     :rtype: None
     """
     dat_path = make_abspath(output_directory, output_name + '.dat')
-    gnu_path = make_abspath(output_directory, output_name + '.gnu')
     lst_path = make_abspath(output_directory, output_name + '.lst')
     png_path = make_abspath(output_directory, output_name + '.png')
     his_path = make_abspath(output_directory, output_name + '.his')
