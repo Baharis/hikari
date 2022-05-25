@@ -114,7 +114,7 @@ class GnuplotArtist(abc.ABC):
 
     def __init__(self):
         super().__init__()
-        self._heat_palette = ''
+        self._heat_palette = gnuplot_map_palette['']
 
     @property
     def heat_palette(self):
@@ -257,11 +257,7 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         ax.plot_surface(x_mesh, y_mesh, z_mesh, rstride=1, cstride=1,
                         cmap=self.heat_palette, linewidth=0,
                         antialiased=False, facecolors=color_mesh)
-        pyplot.subplots_adjust(left=0.0,
-                            bottom=0.0,
-                            right=0.95,
-                            top=1.0)
-        #fig.tight_layout()
+        pyplot.subplots_adjust(left=0.0, bottom=0.0, right=0.95, top=1.0)
         pyplot.savefig(png_path, dpi=100, format='png', bbox_inches=None)
 
 

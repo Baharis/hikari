@@ -3,17 +3,12 @@ from pathlib import Path
 import shutil
 
 import numpy as np
-import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot, colors, cm
-from mpl_toolkits.mplot3d import art3d
 from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame, LstFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
-    fibonacci_sphere, rotation_around
-from hikari.resources import gnuplot_angular_heatmap_template
+from hikari.utility import make_abspath, \
+    GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist
 
 
 def r1_map(a, b, c, al, be, ga,
@@ -99,7 +94,7 @@ def r1_map(a, b, c, al, be, ga,
         """Calculate completeness for each individual pair of theta and phi."""
         _r1_mesh = np.zeros_like(th_mesh)
         lst = open(lst_path, 'w+')
-        lst.write('#     th      ph    cplt      R1\n')
+        lst.write('#     th      ph      R1    cplt\n')
         vectors = np.vstack([_angles_to_vector(th, ph) for th in th_range
                                              for ph in ph_range])
         #TODO rewrite using spherical2cartesian as in potency_map
@@ -124,7 +119,7 @@ def r1_map(a, b, c, al, be, ga,
                 data_dict['ph'].append(ph)
                 data_dict['cplt'].append(cplt)
                 data_dict['r1'].append(r1)
-                lst.write(f'{th:8.0f}{ph:8.0f}{cplt:8.5f}{r1:8.4}\n')
+                lst.write(f'{th:8.0f}{ph:8.0f}{r1:8.5}{cplt:8.5f}\n')
                 _r1_mesh[j][i] = r1
             lst.write('\n')
         index_max = np.unravel_index(np.argmax(_r1_mesh), _r1_mesh.shape)
@@ -143,96 +138,26 @@ def r1_map(a, b, c, al, be, ga,
 
     data_dict, r1_mesh = _calculate_completeness_mesh()
 
-    def _plot_in_matplotlib():
-        """Plot the completeness map in radial coordinates using matplotlib"""
-        fig = pyplot.figure(figsize=(5, 3))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.view_init(elev=90 - sum(th_limits) / 2, azim=sum(ph_limits) / 2)
-        ax.dist = 10
-        ax.set_axis_off()
+    ma = MatplotlibAngularHeatmapArtist()
+    ma.x_axis = p.a_w / lin.norm(p.a_w)
+    ma.y_axis = p.b_w / lin.norm(p.b_w)
+    ma.z_axis = p.c_w / lin.norm(p.c_w)
+    ma.heat_limits = (0 if fix_scale else min(data_dict['r1']),
+                      1 if fix_scale else max(data_dict['r1']))
+    ma.polar_limits = (min(th_limits), max(th_limits))
+    ma.azimuth_limits = (min(ph_limits), max(ph_limits))
+    ma.plot(png_path)
 
-        # surface in cartesian coordinates
-        x = np.sin(np.deg2rad(th_mesh)) * np.cos(np.deg2rad(ph_mesh))
-        y = np.sin(np.deg2rad(th_mesh)) * np.sin(np.deg2rad(ph_mesh))
-        z = np.cos(np.deg2rad(th_mesh))
-
-        # wireframe
-        np.warnings.filterwarnings('ignore',
-                                   category=np.VisibleDeprecationWarning)
-        ax.plot_wireframe(x, y, z, colors='k', linewidth=0.25)  # <- mpl warning
-
-        # color map
-        my_heatmap_colors = mpl_map_palette['']
-        my_colormap = colors.LinearSegmentedColormap.from_list(
-            'heatmapEX', my_heatmap_colors, N=256)
-        m = cm.ScalarMappable(cmap=my_colormap)
-        m.set_array(r1_mesh)
-        if fix_scale is True:
-            m.set_clim(0, 1)
-            norm = colors.Normalize(vmin=0, vmax=1)
-        else:
-            norm = colors.Normalize(vmin=min(data_dict['cplt']),
-                                    vmax=max(data_dict['cplt']))
-        pyplot.colorbar(m, fraction=0.046, pad=0.04)
-
-        # direction lines
-        _len = 1.25
-        _x = p.a_w / lin.norm(p.a_w)
-        _y = p.b_w / lin.norm(p.b_w)
-        _z = p.c_w / lin.norm(p.c_w)
-        ax.add_line(art3d.Line3D((_x[0], _len * _x[0]), (_x[1], _len * _x[1]),
-                                 (_x[2], _len * _x[2]), color='r', linewidth=5))
-        ax.add_line(art3d.Line3D((_y[0], _len * _y[0]), (_y[1], _len * _y[1]),
-                                 (_y[2], _len * _y[2]), color='g', linewidth=5))
-        ax.add_line(art3d.Line3D((_z[0], _len * _z[0]), (_z[1], _len * _z[1]),
-                                 (_z[2], _len * _z[2]), color='b', linewidth=5))
-
-        # color mesh for heatmap
-        color_mesh = r1_mesh[:-1, :-1]
-        for i in range(r1_mesh.shape[0] - 1):
-            for j in range(r1_mesh.shape[1] - 1):
-                color_mesh[i, j] = (r1_mesh[i + 1, j] + r1_mesh[i, j + 1] +
-                                    r1_mesh[i, j] + r1_mesh[
-                                        i + 1, j + 1]) / 4
-
-        # heatmap surface
-        for item in [fig, ax]:
-            item.patch.set_visible(False)
-        ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=my_colormap,
-                        linewidth=0, antialiased=False,
-                        facecolors=my_colormap(norm(color_mesh)))
-        pyplot.savefig(png_path, dpi=600, format='png', bbox_inches=None)
-    _plot_in_matplotlib()
-
-    def _prepare_gnuplot_input():
-        """Prepare input to completeness map in radial coordinates in gnuplot"""
-        gnu = open(gnu_path, 'w+')
-        gnu.write(gnuplot_angular_heatmap_template.format(
-            axis_x1=(p.a_w / lin.norm(p.a_w))[0],
-            axis_x2=(p.a_w / lin.norm(p.a_w))[1],
-            axis_x3=(p.a_w / lin.norm(p.a_w))[2],
-            axis_y1=(p.b_w / lin.norm(p.b_w))[0],
-            axis_y2=(p.b_w / lin.norm(p.b_w))[1],
-            axis_y3=(p.b_w / lin.norm(p.b_w))[2],
-            axis_z1=(p.c_w / lin.norm(p.c_w))[0],
-            axis_z2=(p.c_w / lin.norm(p.c_w))[1],
-            axis_z3=(p.c_w / lin.norm(p.c_w))[2],
-            cplt_min=0 if fix_scale else min(data_dict['r1']),
-            cplt_max=1 if fix_scale else max(data_dict['r1']),
-            job_name=job_name,
-            min_ph=min(ph_limits),
-            max_ph=max(ph_limits),
-            min_th=min(th_limits),
-            max_th=max(th_limits),
-            palette=gnuplot_map_palette['']))
-
-    _prepare_gnuplot_input()
-    try:
-        from os import system, getcwd
-        _path = make_abspath(job_directory)
-        os.system('cd ' + _path + '; gnuplot ' + gnu_path)
-    except OSError:
-        pass
+    # plot potency map using external gnuplot
+    ga = GnuplotAngularHeatmapArtist()
+    ga.x_axis = p.a_w / lin.norm(p.a_w)
+    ga.y_axis = p.b_w / lin.norm(p.b_w)
+    ga.z_axis = p.c_w / lin.norm(p.c_w)
+    ga.heat_limits = (0 if fix_scale else min(data_dict['r1']) * 100,
+                      1 if fix_scale else max(data_dict['r1']) * 100)
+    ga.polar_limits = (min(th_limits), max(th_limits))
+    ga.azimuth_limits = (min(ph_limits), max(ph_limits))
+    ga.plot(png_path)
 
 
 if __name__ == '__main__':
