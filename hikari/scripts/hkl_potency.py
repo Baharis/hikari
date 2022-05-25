@@ -1,22 +1,24 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib import pyplot, colors, cm
-from mpl_toolkits.mplot3d import art3d
+from matplotlib import pyplot
 from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, mpl_map_palette, gnuplot_map_palette, \
-    fibonacci_sphere, rotation_around
-from hikari.resources import potency_map_template
+from hikari.utility import make_abspath, weighted_quantile, \
+    fibonacci_sphere, rotation_around, sph2cart, cart2sph
+from hikari.utility import GnuplotAngularHeatmapArtist, \
+    MatplotlibAngularHeatmapArtist
 
 
 def potency_map(a, b, c, al, be, ga,
                 space_group='P1',
                 axis='',
                 fix_scale=False,
+                histogram=True,
                 opening_angle=35,
+                orientation=None,
                 output_directory='~',
                 output_name='cplt_map',
                 output_quality=3,
@@ -99,9 +101,13 @@ def potency_map(a, b, c, al, be, ga,
     :type axis: string
     :param fix_scale: If true, the colour scheme will fix to 0 - 100% range.
     :type fix_scale: bool
+    :param histogram: If true, potency distribution will be plotted as histogram
+    :type histogram: bool
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
+    :param orientation: 3x3 matrix of crystal orientation to be marked on a map
+    :type orientation: np.ndarray
     :param output_directory: Path to directory where output should be saved.
     :type output_directory: str
     :param output_name: Base name for files created in `output_directory`.
@@ -121,9 +127,11 @@ def potency_map(a, b, c, al, be, ga,
     gnu_path = make_abspath(output_directory, output_name + '.gnu')
     lst_path = make_abspath(output_directory, output_name + '.lst')
     png_path = make_abspath(output_directory, output_name + '.png')
+    his_path = make_abspath(output_directory, output_name + '.his')
     axis = axis.lower()
     sg = SG[space_group]
-    lg = sg.reciprocate()
+    pg = sg.reciprocate()
+    lg = pg.lauefy()
 
     def _make_hkl_frame(ax=axis):
         """Make ball or axis of hkl which will be cut in further steps"""
@@ -144,26 +152,30 @@ def potency_map(a, b, c, al, be, ga,
         elif ax in {'yz'}:
             _f.table = _f.table.loc[_f.table['h'].eq(0)]
         if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz'}:
-            _f.transform([o.tf for o in lg.operations])
+            _f.transform([o.tf for o in pg.operations])
         _f.extinct(sg)
         return _f
 
     p = _make_hkl_frame()
-    p.find_equivalents(point_group=lg)
+    p.find_equivalents(point_group=pg)
     total_reflections = p.table['equiv'].nunique()
     if total_reflections == 0:
         raise KeyError('Specified part of reciprocal space contains zero nodes')
 
     def _determine_theta_and_phi_limits():
         """Define range of coordinates where potency map will be calculated.
-        v1, v2, v3 are normal vectors pointing in zenith direction z*,
-        orthogonal direction (x) and direction perpendicular to them both."""
+        Unit vectors v1, v2, v3 point in zenith z*, orthogonal x and product."""
         _v1 = p.c_w / lin.norm(p.c_w)
         _v2 = p.a_v / lin.norm(p.a_v)
         _v3 = np.cross(_v1, _v2)
 
-        if sg.system in {Group.System.triclinic, Group.System.monoclinic,
-                         Group.System.orthorhombic, Group.System.tetragonal,
+        if sg.system in {Group.System.triclinic}:
+            _th_limits = [0, 180]
+            _ph_limits = [-45, 135]
+        elif sg.system in {Group.System.monoclinic}:
+            _th_limits = [0, 180]
+            _ph_limits = [0, 90]
+        elif sg.system in {Group.System.orthorhombic, Group.System.tetragonal,
                          Group.System.cubic}:
             _th_limits = [0, 90]
             _ph_limits = [0, 90]
@@ -177,37 +189,44 @@ def potency_map(a, b, c, al, be, ga,
 
     v1, v2, v3, th_limits, ph_limits = _determine_theta_and_phi_limits()
 
-    def _make_theta_and_phi_mesh():
-        """Define a list of theta and phi values to be investigated."""
+    def _determine_angle_res():
         if output_quality not in {1, 2, 3, 4, 5}:
             raise KeyError('output_quality should be 1, 2, 3, 4 or 5')
-        angle_res = {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
+        return {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
+    angle_res = _determine_angle_res()
+
+    def _make_theta_and_phi_mesh():
+        """Define a list of theta and phi values to be investigated."""
         _th_range = np.arange(th_limits[0], th_limits[1] + 0.001, angle_res)
         _ph_range = np.arange(ph_limits[0], ph_limits[1] + 0.001, angle_res)
         _th_mesh, _ph_mesh = np.meshgrid(_th_range, _ph_range)
         return _th_range, _ph_range, _th_mesh, _ph_mesh
 
+    # range: 1D range-like, mesh: 2D grid, comb: 1D list for all combinations
     th_range, ph_range, th_mesh, ph_mesh = _make_theta_and_phi_mesh()
-    data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': []}
+    one_comb, ph_comb, th_comb = np.array(np.meshgrid(
+        1, np.deg2rad(th_range), np.deg2rad(ph_range))).reshape(3, -1)
+    data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': [], 'weight': []}
 
-    def _angles_to_vector(theta, phi):
-        """Find the vector by rotating v1 by theta and then phi, in degrees."""
-        _sin_th = np.sin(np.deg2rad(theta))
-        _sin_ph = np.sin(np.deg2rad(phi))
-        _cos_th = np.cos(np.deg2rad(theta))
-        _cos_ph = np.cos(np.deg2rad(phi))
-        _v = v1 * _cos_th + v2 * _sin_th
-        _v_parallel = np.dot(_v, v1) * v1
-        _v_perpend = lin.norm(_v - _v_parallel) * (_cos_ph * v2 + _sin_ph * v3)
-        return _v_parallel + _v_perpend
+    def orientation_weight(th, ph):
+        """Calculate how much each point should contribute to distribution"""
+        def sphere_cutout_area(th1, th2, ph_span):
+            """Calculate sphere area in specified ph and th degree range.
+            For exact math, see articles about spherical cap and sector."""
+            return np.deg2rad(abs(ph_span)) * \
+                   abs(np.cos(np.deg2rad(th1)) - np.cos(np.deg2rad(th2)))
+        th_max = min(th + angle_res / 2.0, th_limits[1])
+        th_min = max(th - angle_res / 2.0, th_limits[0])
+        ph_max = min(ph + angle_res / 2.0, ph_limits[1])
+        ph_min = max(ph - angle_res / 2.0, ph_limits[0])
+        return sphere_cutout_area(th_min, th_max, ph_max-ph_min)
 
     def _calculate_completeness_mesh():
         """Calculate completeness for each individual pair of theta and phi."""
         _cplt_mesh = np.zeros_like(th_mesh)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
-        vectors = np.vstack([_angles_to_vector(th, ph) for th in th_range
-                                             for ph in ph_range])
+        vectors = np.vstack(sph2cart(one_comb, ph_comb, th_comb)).T
         uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
         for i, th in enumerate(th_range):
             for j, ph in enumerate(ph_range):
@@ -217,6 +236,7 @@ def potency_map(a, b, c, al, be, ga,
                 data_dict['ph'].append(ph)
                 data_dict['cplt'].append(potency)
                 data_dict['reflns'].append(count)
+                data_dict['weight'].append(orientation_weight(th, ph))
                 lst.write(f'{th:8.0f}{ph:8.0f}{potency:8.5f}{count:8d}\n')
                 _cplt_mesh[j][i] = potency
             lst.write('\n')
@@ -224,108 +244,73 @@ def potency_map(a, b, c, al, be, ga,
         best_th, best_ph = th_range[index_max[1]], ph_range[index_max[0]]
         index_min = np.unravel_index(np.argmin(_cplt_mesh), _cplt_mesh.shape)
         worst_th, worst_ph = th_range[index_min[1]], ph_range[index_min[0]]
+        q1, q2, q3 = weighted_quantile(values=data_dict['cplt'],
+                                       quantiles=[0.25, 0.50, 0.75],
+                                       weights=data_dict['weight'])
+        avg_p = np.average(data_dict['cplt'], weights=data_dict['weight'])
         max_p = max(data_dict['cplt'])
         min_p = min(data_dict['cplt'])
-        mean_p = np.mean(data_dict['cplt'])
-        lst.write(f'# best cplt = {max_p} for th = {best_th}, ph = {best_ph}\n'
-                  f'# worst cplt = {min_p} for th = {worst_th}, ph = {worst_ph}'
-                  f'\n# mean cplt = {mean_p}\n')
+        s = f'# descriptive statistics for potency:\n' \
+            f'# max ={max_p:8.5f} at th ={best_th :6.1f} ph ={best_ph :6.1f}\n'\
+            f'# min ={min_p:8.5f} at th ={worst_th:6.1f} ph ={worst_ph:6.1f}\n'\
+            f'# q_1 ={q1   :8.5f}\n' \
+            f'# q_2 ={q2   :8.5f}\n' \
+            f'# q_3 ={q3   :8.5f}\n' \
+            f'# avg ={avg_p:8.5f}\n'
+        lst.write(s)
         lst.close()
         np.savetxt(dat_path, _cplt_mesh)
-        return data_dict, _cplt_mesh
+        return data_dict
 
-    data_dict, cplt_mesh = _calculate_completeness_mesh()
+    data_dict = _calculate_completeness_mesh()
+    cplt_min = 0 if fix_scale else min(data_dict['cplt'])
+    cplt_max = 1 if fix_scale else max(data_dict['cplt'])
+    hist_bins, hist_edges = np.histogram(data_dict['cplt'], density=True,
+                                         weights=data_dict['weight'], bins=32,
+                                         range=(cplt_min, cplt_max))
+    hist_bins = hist_bins / sum(hist_bins)
 
-    def _plot_in_matplotlib():
-        """Plot the completeness map in radial coordinates using matplotlib"""
-        fig = pyplot.figure(figsize=(5, 3))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.view_init(elev=90 - sum(th_limits) / 2, azim=sum(ph_limits) / 2)
-        ax.dist = 10
-        ax.set_axis_off()
+    def _prepare_hist_file():
+        with open(his_path, 'w+') as h:
+            h.write('#   from      to   prob.\n')
+            for _f, _t, _p in zip(hist_edges[:-1], hist_edges[1:], hist_bins):
+                h.write(f'{_f:8.5f}{_t:8.5f}{_p:8.5f}\n')
+    _prepare_hist_file()
 
-        # surface in cartesian coordinates
-        x = np.sin(np.deg2rad(th_mesh)) * np.cos(np.deg2rad(ph_mesh))
-        y = np.sin(np.deg2rad(th_mesh)) * np.sin(np.deg2rad(ph_mesh))
-        z = np.cos(np.deg2rad(th_mesh))
+    focus = []
+    if orientation is not None:
+        for i, op in enumerate(lg.operations):
+            v = p.A_r.T @ op.tf @ lin.inv(orientation) @ np.array((1, 0, 0))
+            c = cart2sph(*v)
+            th_in_limits = min(th_limits) <= np.rad2deg(c[1]) <= max(th_limits)
+            ph_in_limits = min(ph_limits) <= np.rad2deg(c[2]) <= max(ph_limits)
+            if ph_in_limits and th_in_limits:
+                focus.append(v / lin.norm(v))
 
-        # wireframe
-        np.warnings.filterwarnings('ignore',
-                                   category=np.VisibleDeprecationWarning)
-        ax.plot_wireframe(x, y, z, colors='k', linewidth=0.25)  # <- mpl warning
+    # plot potency map using built-in matplotlib
+    ma = MatplotlibAngularHeatmapArtist()
+    ma.x_axis = p.a_w / lin.norm(p.a_w)
+    ma.y_axis = p.b_w / lin.norm(p.b_w)
+    ma.z_axis = p.c_w / lin.norm(p.c_w)
+    ma.focus = focus
+    ma.heat_limits = (cplt_min, cplt_max)
+    ma.heat_palette = axis
+    ma.polar_limits = (min(th_limits), max(th_limits))
+    ma.azimuth_limits = (min(ph_limits), max(ph_limits))
+    ma.plot(png_path)
 
-        # color map
-        my_heatmap_colors = mpl_map_palette[axis]
-        my_colormap = colors.LinearSegmentedColormap.from_list(
-            'heatmapEX', my_heatmap_colors, N=256)
-        m = cm.ScalarMappable(cmap=my_colormap)
-        m.set_array(cplt_mesh)
-        if fix_scale is True:
-            m.set_clim(0, 1)
-            norm = colors.Normalize(vmin=0, vmax=1)
-        else:
-            norm = colors.Normalize(vmin=min(data_dict['cplt']),
-                                    vmax=max(data_dict['cplt']))
-        pyplot.colorbar(m, fraction=0.046, pad=0.04)
-
-        # direction lines
-        _len = 1.25
-        _x = p.a_w / lin.norm(p.a_w)
-        _y = p.b_w / lin.norm(p.b_w)
-        _z = p.c_w / lin.norm(p.c_w)
-        ax.add_line(art3d.Line3D((_x[0], _len * _x[0]), (_x[1], _len * _x[1]),
-                                 (_x[2], _len * _x[2]), color='r', linewidth=5))
-        ax.add_line(art3d.Line3D((_y[0], _len * _y[0]), (_y[1], _len * _y[1]),
-                                 (_y[2], _len * _y[2]), color='g', linewidth=5))
-        ax.add_line(art3d.Line3D((_z[0], _len * _z[0]), (_z[1], _len * _z[1]),
-                                 (_z[2], _len * _z[2]), color='b', linewidth=5))
-
-        # color mesh for heatmap
-        color_mesh = cplt_mesh[:-1, :-1]
-        for i in range(cplt_mesh.shape[0] - 1):
-            for j in range(cplt_mesh.shape[1] - 1):
-                color_mesh[i, j] = (cplt_mesh[i + 1, j] + cplt_mesh[i, j + 1] +
-                                    cplt_mesh[i, j] + cplt_mesh[
-                                        i + 1, j + 1]) / 4
-
-        # heatmap surface
-        for item in [fig, ax]:
-            item.patch.set_visible(False)
-        ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap=my_colormap,
-                        linewidth=0, antialiased=False,
-                        facecolors=my_colormap(norm(color_mesh)))
-        pyplot.savefig(png_path, dpi=600, format='png', bbox_inches=None)
-    _plot_in_matplotlib()
-
-    def _prepare_gnuplot_input():
-        """Prepare input to completeness map in radial coordinates in gnuplot"""
-        gnu = open(gnu_path, 'w+')
-        gnu.write(potency_map_template.format(
-            axis_x1=(p.a_w / lin.norm(p.a_w))[0],
-            axis_x2=(p.a_w / lin.norm(p.a_w))[1],
-            axis_x3=(p.a_w / lin.norm(p.a_w))[2],
-            axis_y1=(p.b_w / lin.norm(p.b_w))[0],
-            axis_y2=(p.b_w / lin.norm(p.b_w))[1],
-            axis_y3=(p.b_w / lin.norm(p.b_w))[2],
-            axis_z1=(p.c_w / lin.norm(p.c_w))[0],
-            axis_z2=(p.c_w / lin.norm(p.c_w))[1],
-            axis_z3=(p.c_w / lin.norm(p.c_w))[2],
-            cplt_min=0 if fix_scale else min(data_dict['cplt']) * 100,
-            cplt_max=100 if fix_scale else max(data_dict['cplt']) * 100,
-            job_name=output_name,
-            min_ph=min(ph_limits),
-            max_ph=max(ph_limits),
-            min_th=min(th_limits),
-            max_th=max(th_limits),
-            palette=gnuplot_map_palette[axis.lower()]))
-
-    _prepare_gnuplot_input()
-    try:
-        from os import system, getcwd
-        _path = make_abspath(output_directory)
-        system('cd ' + _path + '; gnuplot ' + gnu_path)
-    except OSError:
-        pass
+    # plot potency map using external gnuplot
+    ga = GnuplotAngularHeatmapArtist()
+    ga.x_axis = p.a_w / lin.norm(p.a_w)
+    ga.y_axis = p.b_w / lin.norm(p.b_w)
+    ga.z_axis = p.c_w / lin.norm(p.c_w)
+    ga.focus = focus
+    ga.heat_limits = (cplt_min * 100, cplt_max * 100)
+    ga.heat_palette = axis
+    ga.histogram = histogram
+    ga.polar_limits = (min(th_limits), max(th_limits))
+    ga.azimuth_limits = (min(ph_limits), max(ph_limits))
+    ga.plot(png_path)
 
 
 def potency_vs_dac_opening_angle(output_path='~/output.txt',

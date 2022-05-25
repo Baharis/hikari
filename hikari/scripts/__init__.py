@@ -17,3 +17,4 @@ from .hkl_potency import potency_map, potency_vs_dac_opening_angle, \
 from .hkl_completeness import completeness_statistics
 from .hkl_completeness import dac_statistics
 from .hkl_completeness import simulate_dac
+from .r1_map import r1_map

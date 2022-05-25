@@ -1,7 +1,7 @@
-kesshou
-=======
+hikari
+======
 
 .. toctree::
    :maxdepth: 4
 
-   kesshou
+   hikari

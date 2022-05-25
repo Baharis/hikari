@@ -37,6 +37,44 @@ def angle2rad(value):
     return value if -3.15 < value < 3.15 else np.deg2rad(value)
 
 
+def cart2sph(x, y, z):
+    """
+    Convert Cartesian coordinates x, y, z
+    to conventional spherical coordinates r, p, a
+    :param x: Cartesian coordinate or vector x
+    :type x: float or np.ndarray
+    :param y: Cartesian coordinate or vector y
+    :type y: float or np.ndarray
+    :param z: Cartesian coordinates or vector z
+    :type z: float or np.ndarray
+    :return: Spherical coordinates: radius, polar angle, and azimuth angle
+    :rtype: tuple[float, float, float] or tuple[np.ndarray, np.ndarray, np.ndarray]
+    """
+    r = (x ** 2 + y ** 2 + z ** 2) ** 0.5
+    p = np.arccos(z / r)
+    a = np.arctan2(y, x)
+    return r, p, a
+
+
+def sph2cart(r, p, a):
+    """
+    Convert conventional spherical coordinates r, p, a
+    to Cartesian coordinates x, y, z
+    :param r: Spherical coordinate or vector radius
+    :type r: float or np.ndarray
+    :param p: Spherical coordinate or vector polar angle
+    :type p: float or np.ndarray
+    :param a: Spherical coordinate or vector azimuth angle
+    :type a: float or np.ndarray
+    :return: Cartesian coordinates: x, y, and z
+    :rtype: tuple[float, float, float] or tuple[np.ndarray, np.ndarray, np.ndarray]
+    """
+    x = r * np.cos(a) * np.sin(p)
+    y = r * np.sin(a) * np.sin(p)
+    z = r * np.cos(p)
+    return x, y, z
+
+
 def fibonacci_sphere(samples=1, seed=1337):
     """
     Return a 3D cartesian coordinates of *samples* number of points
@@ -100,6 +138,7 @@ def euler_rodrigues_matrix(a, b, c, d):
 def rotation_from(from_, to):
     """
     Return matrix associated with rotation of vector `from_` onto `to`.
+
     :param from_: A 3D vector which will have been rotated onto `to`.
     :type from_: np.ndarray
     :param to: A 3D vector onto which `from` will have been rotated.
@@ -132,6 +171,7 @@ def rotation_around(axis, by):
     """
     Return matrix associated with counterclockwise rotation about `axis` through
     `by` radians. See Euler-Rodrigues form.,https://stackoverflow.com/q/6802577/
+
     :param axis: A 3D vector about which rotation is performed
     :type axis: np.ndarray
     :param by: Angle of rotation in radians
@@ -144,5 +184,48 @@ def rotation_around(axis, by):
     axis = axis / np.linalg.norm(axis)
     return euler_rodrigues_matrix(np.cos(by / 2.0), *(-axis * np.sin(by / 2.0)))
 
+
+def weighted_quantile(values, quantiles, weights=None):
+    """
+    A function to approximate quantiles based on many weighted points. Quantiles
+    are derived exactly using method 7 of H&F from an unweighted distribution,
+    otherwise they are approximated by comparing two opposing interpolations.
+
+    Let A: {1, 2, 2, 2, 3} and B: {1, 2(x3), 3} be seemingly equivalent sets
+    where (x3) denotes triple weight of the "2". Let q[n] denote quantiles.
+    For set A, q[1/4](A) = q[3/4](A) = 2. However, for set B we need to
+    extrapolate and read quantile from PDF, obtained via linear interpolation.
+    As a result, q[1/4](B) = 4/3 < q[3/4](B) = 2 since f(0) = 1 and f(3/4) = 2
+    at f(1/4) and the results are always underestimated.
+
+    To combat this effect, we can repeat the process for -B: {-3, -2(x3), -1}.
+    Here, q[1/4](-B) = -8/3 and q[3/4](-B) = -2. As a result, the quantile
+    q[n](A) is described a bit better using formula (q[n](B) - q[1-n](-B)) / 2.
+
+    :param values: data to be evaluated
+    :type values: tuple or list or np.ndarray
+    :param quantiles: iterable containing desired quartiles between 0 and 1
+    :type quantiles: tuple or list or np.ndarray
+    :param weights: weights of data in the same order
+    :type weights: tuple or list or np.ndarray
+    :return: array containing approximated quartiles
+    :rtype: np.ndarray
+    """
+
+    values = np.array(values)
+    quantiles = np.array(quantiles)
+    w = np.ones_like(values) if weights is None else np.array(weights)
+    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
+        'quantiles should be in [0, 1]'
+
+    sorter = np.argsort(values)
+    values = values[sorter]
+    w = w[sorter]
+
+    weighted_cumsum_0to1 = (np.cumsum(w) - w[0]) / np.sum(w[1:])
+    weighted_cumsum_1to0 = (np.cumsum(np.flip(w)) - w[-1]) / np.sum(w[:-1])
+    results_0to1 = np.interp(quantiles, weighted_cumsum_0to1, values)
+    results_1to0 = np.interp(1-quantiles, weighted_cumsum_1to0, np.flip(values))
+    return (results_0to1 + results_1to0) / 2.0
 
 # TODO later check scipy.spatial.transform.Rotation.from_rotvec as substitute
