@@ -8,7 +8,7 @@ from numpy import linalg as lin
 from hikari.dataframes import HklFrame, LstFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, sph2cart, weighted_quantile, \
-    GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist
+    GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist, Interval
 
 
 def r1_map(a, b, c, al, be, ga,
@@ -44,25 +44,27 @@ def r1_map(a, b, c, al, be, ga,
 
     def _determine_theta_and_phi_limits():
         """Define range of coordinates where potency map will be calculated.
-        v1, v2, v3 are normal vectors pointing in zenith direction z*,
-        orthogonal direction (x) and direction perpendicular to them both."""
+        Unit vectors v1, v2, v3 point in zenith z*, orthogonal x and product."""
         _v1 = p.c_w / lin.norm(p.c_w)
         _v2 = p.a_v / lin.norm(p.a_v)
         _v3 = np.cross(_v1, _v2)
 
-        if sg.system in {Group.System.triclinic, Group.System.monoclinic,
-                         Group.System.orthorhombic, Group.System.tetragonal,
+        if sg.system in {Group.System.triclinic}:
+            _th_limits = Interval(0, 180)
+            _ph_limits = Interval(-45, 135)
+        elif sg.system in {Group.System.monoclinic}:
+            _th_limits = Interval(0, 180)
+            _ph_limits = Interval(0, 90)
+        elif sg.system in {Group.System.orthorhombic, Group.System.tetragonal,
                          Group.System.cubic}:
-            _th_limits = [0, 90]
-            _ph_limits = [0, 90]
-        elif sg.system in {Group.System.trigonal,
-                           Group.System.hexagonal}:
-            _th_limits = [0, 90]
-            _ph_limits = [0, 120]
+            _th_limits = Interval(0, 90)
+            _ph_limits = Interval(0, 90)
+        elif sg.system in {Group.System.trigonal, Group.System.hexagonal}:
+            _th_limits = Interval(0, 90)
+            _ph_limits = Interval(0, 120)
         else:
             raise ValueError('Unknown crystal system (trigonal not supported)')
         return _v1, _v2, _v3, _th_limits, _ph_limits
-
     v1, v2, v3, th_limits, ph_limits = _determine_theta_and_phi_limits()
 
     def _determine_angle_res():
@@ -71,14 +73,9 @@ def r1_map(a, b, c, al, be, ga,
         return {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
     angle_res = _determine_angle_res()
 
-    def _make_theta_and_phi_mesh():
-        """Define a list of theta and phi values to be investigated."""
-        _th_range = np.arange(th_limits[0], th_limits[1] + 0.001, angle_res)
-        _ph_range = np.arange(ph_limits[0], ph_limits[1] + 0.001, angle_res)
-        _th_mesh, _ph_mesh = np.meshgrid(_th_range, _ph_range)
-        return _th_range, _ph_range, _th_mesh, _ph_mesh
-
-    th_range, ph_range, th_mesh, ph_mesh = _make_theta_and_phi_mesh()
+    th_range = th_limits.arange(step=angle_res)
+    ph_range = ph_limits.arange(step=angle_res)
+    th_mesh, ph_mesh = th_limits.mesh_with(ph_limits, step=angle_res)
     data_dict = {'th': [], 'ph': [], 'cplt': [], 'r1': [], 'weight': []}
 
     def orientation_weight(th, ph):
@@ -96,7 +93,7 @@ def r1_map(a, b, c, al, be, ga,
 
     def _calculate_completeness_mesh():
         """Calculate completeness for each individual pair of theta and phi."""
-        _r1_mesh = np.zeros_like(th_mesh)
+        _r1_mesh = np.zeros_like(th_mesh, dtype=float)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph      R1    cplt\n')
         for i, th in enumerate(th_range):

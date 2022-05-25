@@ -71,6 +71,22 @@ class Interval:
         yield self.left
         yield self.right
 
+    def __getitem__(self, key):
+        if key is 0:
+            return self.left
+        elif key is 1:
+            return self.right
+        else:
+            raise IndexError('Interval index out of range')
+
+    def __setitem__(self, key, value):
+        if key is 0:
+            self.left = value
+        elif key is 1:
+            self.right = value
+        else:
+            raise IndexError('Interval index out of range')
+
     def __contains__(self, item):
         return self.left <= _min(item) and _max(item) <= self.right
 
@@ -111,9 +127,3 @@ class Interval:
         """
         arrays = [self.arange(step)] + [other.arange(step) for other in others]
         return np.meshgrid(*arrays)
-
-
-
-
-
-
