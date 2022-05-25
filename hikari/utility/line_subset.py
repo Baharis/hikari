@@ -1,19 +1,26 @@
-def xmin(obj):
+def _min(*args):
+    """Recursively returns minimum of arguments or their elements."""
+    minimum = min(args)
     try:
-        return min(obj)
+        _ = iter(minimum)
     except TypeError:
-        return obj
+        return minimum
+    else:
+        return _min(*minimum)
 
 
-def xmax(obj):
+def _max(*args):
+    """Recursively returns maximum of arguments or their elements."""
+    maximum = max(args)
     try:
-        return max(obj)
+        _ = iter(maximum)
     except TypeError:
-        return obj
+        return maximum
+    else:
+        return _max(*maximum)
 
 
 class LineSubset:
-
     # SEGMENT METHODS
     class LineSegment:
         def __init__(self, left=None, right=None):
@@ -36,7 +43,8 @@ class LineSubset:
             yield self.right
 
         def __contains__(self, item):
-            return all((xmin(self) <= xmin(item), xmax(self) >= xmax(item)))
+            return all((_min(self) <= _min(item),
+                        _max(self) >= _max(item)))
 
     # CREATION METHODS
     def __init__(self, left=None, right=None):
