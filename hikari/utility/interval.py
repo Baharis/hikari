@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def _min(*args):
     """Recursively returns minimum of args if possible, otherwise args"""
     try:
@@ -76,15 +79,25 @@ class Interval:
         Return a 1D-list of values from left to right every step
         :param step: spacing between adjacent values, default 1.
         :type step: int or float
-        :return: list of values from left to right (including right) every step
-        :rtype: list
+        :return: array of values from left to right (including right) every step
+        :rtype: np.array
         """
         epsilon = step * 1e-7
         size = 1 + int((self.right - self.left + epsilon) / step)
-        return [self.left + step * i for i in range(size)]
+        return np.array([self.left + step * i for i in range(size)])
 
-
-
+    def mesh_with(self, *others, step=1):
+        """
+        Return a numpy.mesh of self.arange(step) with every other.arange(step)
+        :param others: interval or iterable of intervals to mesh self with
+        :type others: Interval or tuple or list
+        :param step: spacing between adjacent values, default 1.
+        :type step: int or float
+        :return: array of values meshed by numpy.meshgrid every step
+        :rtype: np.array
+        """
+        arrays = [self.arange(step)] + [other.arange(step) for other in others]
+        return np.meshgrid(*arrays)
 
 
 
