@@ -42,6 +42,11 @@ class AngularPropertyExplorer:
     - explore
     """
 
+    hkl_is_read_not_generated = True
+    property_name = 'UNDEFINED'
+    property_theoretical_minimum = 0
+    property_theoretical_maximum = 1
+
     GNUPLOT_INPUT_EXTENSION = '.gnu'
     GNUPLOT_OUTPUT_EXTENSION = '.pnG'
     HISTOGRAM_EXTENSION = '.his'
@@ -49,8 +54,6 @@ class AngularPropertyExplorer:
     LISTING_EXTENSION = '.lst'
     MATPLOTLIB_EXTENSION = '.png'
     MESH_EXTENSION = '.dat'
-
-    HKL_IS_READ_NOT_GENERATED = True
 
     POLAR_LIMIT_DICT = {Group.System.triclinic: Interval(0, 180),
                         Group.System.monoclinic: Interval(0, 180),
@@ -81,6 +84,7 @@ class AngularPropertyExplorer:
         self.fix_scale = False
         self.histogram = False
         self.output_quality = 1
+        self.data_dict = {'th': [], 'ph': [], 'cplt': [], 'r1': [], 'weight': []}
 
     def set_experimental(self, opening_angle, orientation, resolution):
         self.oa = opening_angle
@@ -92,10 +96,10 @@ class AngularPropertyExplorer:
         self.hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         self.hkl_frame.la = wavelength
         self.axis = axis
-        if self.HKL_IS_READ_NOT_GENERATED:
+        if self.hkl_is_read_not_generated:
             self._read_hkl_frame(hkl_format='shelx_4')
         else:
-            self._make_hkl_frame(ax=axis)
+            self._make_hkl_frame()
         self.hkl_frame.find_equivalents(point_group=self.pg)
         total_reflections = self.hkl_frame.table['equiv'].nunique()
         if total_reflections == 0:
@@ -115,23 +119,33 @@ class AngularPropertyExplorer:
             0 if self.fix_scale else min(data_dict['heat']),
             1 if self.fix_scale else max(data_dict['heat']))
 
-    def _make_hkl_frame(self, ax):
+    @property
+    def prop_limits(self):
+        if not self.fix_scale and self.data_dict[self.property_name]:
+            lower_property_limit = min(self.data_dict[self.property_name])
+            upper_property_limit = max(self.data_dict[self.property_name])
+        else:
+            lower_property_limit = self.property_theoretical_minimum
+            upper_property_limit = self.property_theoretical_maximum
+        return Interval(lower_property_limit, upper_property_limit)
+
+    def _make_hkl_frame(self):
         """Make ball or axis of hkl which will be cut in further steps"""
         f = self.hkl_frame
         f.fill(radius=min(self.hkl_frame.r_lim, self.resolution))
-        if ax in {'x'}:
+        if self.axis in {'x'}:
             f.table = f.table.loc[f.table['k'].eq(0) & f.table['l'].eq(0)]
-        elif ax in {'y'}:
+        elif self.axis in {'y'}:
             f.table = f.table.loc[f.table['h'].eq(0) & f.table['l'].eq(0)]
-        elif ax in {'z'}:
+        elif self.axis in {'z'}:
             f.table = f.table.loc[f.table['h'].eq(0) & f.table['k'].eq(0)]
-        elif ax in {'xy'}:
+        elif self.axis in {'xy'}:
             f.table = f.table.loc[f.table['l'].eq(0)]
-        elif ax in {'xz'}:
+        elif self.axis in {'xz'}:
             f.table = f.table.loc[f.table['k'].eq(0)]
-        elif ax in {'yz'}:
+        elif self.axis in {'yz'}:
             f.table = f.table.loc[f.table['h'].eq(0)]
-        if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz'}:
+        if self.axis in {'x', 'y', 'z', 'xy', 'xz', 'yz'}:
             f.transform([o.tf for o in self.pg.operations])
         f.extinct(self.sg)
         return f
@@ -252,10 +266,15 @@ class AngularPropertyExplorer:
 
 
 class AngularPotencyExplorer(AngularPropertyExplorer):
-    HKL_IS_READ_NOT_GENERATED = False
+    hkl_is_read_not_generated = False
+    property_name = 'cplt'
+    property_theoretical_minimum = 0
+    property_theoretical_maximum = 1
 
 
 class AngularR1Explorer(AngularPropertyExplorer):
-    HKL_IS_READ_NOT_GENERATED = True
-
+    hkl_is_read_not_generated = True
+    property_name = 'r1'
+    property_theoretical_minimum = 0
+    property_theoretical_maximum = 1
 
