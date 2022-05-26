@@ -75,7 +75,6 @@ class AngularPropertyExplorer:
         self._path = ''
         self.sg = Group()
         self.axis = ''
-        self.heat_limits = Interval(0, 1)
         self.hkl_frame = HklFrame()
         self.oa = 0.0
         self.orientation = None
@@ -111,13 +110,13 @@ class AngularPropertyExplorer:
         self.histogram = histogram
         self.output_quality = output_quality
 
+    @abc.abstractmethod
     def explore(self):
-
-        data_dict = {'th': [], 'ph': [], 'cplt': [], 'r1': [], 'weight': []}
-
-        self.heat_limits = Interval(
-            0 if self.fix_scale else min(data_dict['heat']),
-            1 if self.fix_scale else max(data_dict['heat']))
+        """
+        Main interface method which, apart from the setters, is run within
+        the script itself and generates data and figures using class methods
+        """
+        pass
 
     @property
     def prop_limits(self):
@@ -174,7 +173,7 @@ class AngularPropertyExplorer:
         ma.y_axis = self.hkl_frame.b_w / lin.norm(self.hkl_frame.b_w)
         ma.z_axis = self.hkl_frame.c_w / lin.norm(self.hkl_frame.c_w)
         ma.focus = self.focus
-        ma.heat_limits = self.heat_limits
+        ma.heat_limits = self.prop_limits
         ma.heat_palette = self.axis
         ma.polar_limits = self.th_limits
         ma.azimuth_limits = self.ph_limits
@@ -186,7 +185,7 @@ class AngularPropertyExplorer:
         ga.y_axis = self.hkl_frame.b_w / lin.norm(self.hkl_frame.b_w)
         ga.z_axis = self.hkl_frame.c_w / lin.norm(self.hkl_frame.c_w)
         ga.focus = self.focus
-        ga.heat_limits = self.heat_limits
+        ga.heat_limits = self.prop_limits
         ga.heat_palette = self.axis
         ga.histogram = self.histogram
         ga.polar_limits = self.th_limits
