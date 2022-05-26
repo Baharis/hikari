@@ -48,12 +48,12 @@ def cart2sph(x, y, z):
     :param z: Cartesian coordinates or vector z
     :type z: float or np.ndarray
     :return: Spherical coordinates: radius, polar angle, and azimuth angle
-    :rtype: tuple[float, float, float] or tuple[np.ndarray, np.ndarray, np.ndarray]
+    :rtype: np.ndarray
     """
     r = (x ** 2 + y ** 2 + z ** 2) ** 0.5
     p = np.arccos(z / r)
     a = np.arctan2(y, x)
-    return r, p, a
+    return np.array([r, p, a])
 
 
 def sph2cart(r, p, a):
@@ -67,12 +67,12 @@ def sph2cart(r, p, a):
     :param a: Spherical coordinate or vector azimuth angle
     :type a: float or np.ndarray
     :return: Cartesian coordinates: x, y, and z
-    :rtype: tuple[float, float, float] or tuple[np.ndarray, np.ndarray, np.ndarray]
+    :rtype: np.ndarray
     """
     x = r * np.cos(a) * np.sin(p)
     y = r * np.sin(a) * np.sin(p)
     z = r * np.cos(p)
-    return x, y, z
+    return np.array([x, y, z])
 
 
 def fibonacci_sphere(samples=1, seed=1337):
