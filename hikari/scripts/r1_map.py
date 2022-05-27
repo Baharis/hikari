@@ -9,6 +9,32 @@ from hikari.dataframes import HklFrame, LstFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, sph2cart, weighted_quantile, \
     GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist, Interval
+from .angular_explorer import AngularR1Explorer
+
+
+def r1_map2(a, b, c, al, be, ga,
+                 space_group='P1',
+                 axis='',
+                 fix_scale=False,
+                 histogram=True,
+                 opening_angle=35,
+                 orientation=None,
+                 path='~/sortav.lst',
+                 output_quality=3,
+                 resolution=1.2,
+                 wavelength='MoKa'):
+    are = AngularR1Explorer()
+    are.set_experimental(opening_angle=opening_angle,
+                         orientation=orientation,
+                         resolution=resolution)
+    are.set_options(path=path, fix_scale=fix_scale,
+                    histogram=histogram, output_quality=output_quality)
+    are.set_hkl_frame(a=a, b=b, c=c, al=al, be=be, ga=ga, axis=axis,
+                      space_group=space_group, wavelength=wavelength)
+    are.explore()
+    are.write_hist_file()
+    are.draw_matplotlib_map()
+    are.draw_gnuplot_map()
 
 
 def r1_map(a, b, c, al, be, ga,

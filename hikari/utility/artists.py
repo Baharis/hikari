@@ -26,8 +26,8 @@ class Artist:
             if not len(iterable) == length and length is not 0:
                 raise TypeError()
         except TypeError:
-            raise ArtistError(f'object {iterable} should be an iterable' + \
-                              f'of length {length}' if length else '')
+            raise ArtistError(f'object {iterable} should be an iterable'
+                              f' of length {length}' if length else '')
 
     @abc.abstractmethod
     def plot(self, path):

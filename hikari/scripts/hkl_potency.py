@@ -10,6 +10,32 @@ from hikari.utility import make_abspath, weighted_quantile, \
     fibonacci_sphere, rotation_around, sph2cart, cart2sph, Interval
 from hikari.utility import GnuplotAngularHeatmapArtist, \
     MatplotlibAngularHeatmapArtist
+from .angular_explorer import AngularPotencyExplorer
+
+
+def potency_map2(a, b, c, al, be, ga,
+                 space_group='P1',
+                 axis='',
+                 fix_scale=False,
+                 histogram=True,
+                 opening_angle=35,
+                 orientation=None,
+                 path='~/sortav.lst',
+                 output_quality=3,
+                 resolution=1.2,
+                 wavelength='MoKa'):
+    ape = AngularPotencyExplorer()
+    ape.set_experimental(opening_angle=opening_angle,
+                         orientation=orientation,
+                         resolution=resolution)
+    ape.set_options(path=path, fix_scale=fix_scale,
+                    histogram=histogram, output_quality=output_quality)
+    ape.set_hkl_frame(a=a, b=b, c=c, al=al, be=be, ga=ga, axis=axis,
+                      space_group=space_group, wavelength=wavelength)
+    ape.explore()
+    ape.write_hist_file()
+    ape.draw_matplotlib_map()
+    ape.draw_gnuplot_map()
 
 
 def potency_map(a, b, c, al, be, ga,

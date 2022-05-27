@@ -77,12 +77,13 @@ class AngularPropertyExplorer:
         self.hkl_frame = HklFrame()
         self.opening_angle = 0.0
         self.orientation = None
-        self.resolution = 1.2
+        self.resolution = 0.0
         self.axis = ''
         self.fix_scale = False
         self.histogram = False
         self.output_quality = 1
-        self.data_dict = {'th': [], 'ph': [], 'cplt': [], 'r1': [], 'weight': []}
+        self.data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': [],
+                          'r1': [], 'weight': []}
 
     def set_experimental(self, opening_angle, orientation, resolution):
         self.opening_angle = opening_angle
@@ -126,6 +127,16 @@ class AngularPropertyExplorer:
             _prop_limits = self.property_theoretical_limits
         return _prop_limits
 
+    def write_hist_file(self):
+        hist_bins, hist_edges = np.histogram(
+            self.data_dict[self.property_name], density=True,
+            weights=self.data_dict['weight'], bins=32, range=self.prop_limits)
+        hist_bins = hist_bins / sum(hist_bins)
+        with open(self.path + self.HISTOGRAM_EXTENSION, 'w+') as h:
+            h.write('#   from      to   prob.\n')
+            for _f, _t, _p in zip(hist_edges[:-1], hist_edges[1:], hist_bins):
+                h.write(f'{_f:8.5f}{_t:8.5f}{_p:8.5f}\n')
+
     def _make_hkl_frame(self):
         """Make ball or axis of hkl which will be cut in further steps"""
         f = self.hkl_frame
@@ -165,7 +176,7 @@ class AngularPropertyExplorer:
         """Interval range of azimuth angle where property will be calculated"""
         return self.AZIMUTH_LIMIT_DICT[self.sg.system]
 
-    def _draw_matplotlib_map(self):
+    def draw_matplotlib_map(self):
         ma = MatplotlibAngularHeatmapArtist()
         ma.x_axis = self.hkl_frame.a_w / lin.norm(self.hkl_frame.a_w)
         ma.y_axis = self.hkl_frame.b_w / lin.norm(self.hkl_frame.b_w)
@@ -177,13 +188,13 @@ class AngularPropertyExplorer:
         ma.azimuth_limits = self.ph_limits
         ma.plot(self.path + self.MATPLOTLIB_EXTENSION)
 
-    def _draw_gnuplot_map(self):
+    def draw_gnuplot_map(self):
         ga = GnuplotAngularHeatmapArtist()
         ga.x_axis = self.hkl_frame.a_w / lin.norm(self.hkl_frame.a_w)
         ga.y_axis = self.hkl_frame.b_w / lin.norm(self.hkl_frame.b_w)
         ga.z_axis = self.hkl_frame.c_w / lin.norm(self.hkl_frame.c_w)
         ga.focus = self.focus
-        ga.heat_limits = self.prop_limits
+        ga.heat_limits = self.prop_limits * 100
         ga.heat_palette = self.axis
         ga.histogram = self.histogram
         ga.polar_limits = self.th_limits
@@ -246,7 +257,7 @@ class AngularPropertyExplorer:
 
     @property
     def ph_comb(self):
-        return self.ph_limits.comb_with(self.ph_limits, step=self.angle_res)[1]
+        return self.th_limits.comb_with(self.ph_limits, step=self.angle_res)[1]
 
     @property
     def th_mesh(self):
@@ -306,17 +317,19 @@ class AngularPotencyExplorer(AngularPropertyExplorer):
         dat_path = self.path + self.MESH_EXTENSION
         lst_path = self.path + self.LISTING_EXTENSION
 
-        cplt_mesh = np.zeros_like(self.th_mesh)
+        cplt_mesh = np.zeros_like(self.th_mesh, dtype=float)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
         vectors = sph2cart(r=np.ones_like(self.th_comb),
                            p=np.deg2rad(self.th_comb),
-                           a=np.deg2rad(self.ph_comb))
+                           a=np.deg2rad(self.ph_comb)).T
         uniques = self.hkl_frame.dacs_count(self.opening_angle, vectors=vectors)
+        total_unique = self.hkl_frame.table['equiv'].nunique('')
+
         for i, th in enumerate(self.th_range):
             for j, ph in enumerate(self.ph_range):
-                count = uniques[i * len(self.ph_range) + j]
-                potency = count / len(self.hkl_frame)
+                count = uniques[j * len(self.th_range) + i]
+                potency = count / total_unique
                 self.data_dict['th'].append(th)
                 self.data_dict['ph'].append(ph)
                 self.data_dict['cplt'].append(potency)
@@ -343,9 +356,11 @@ class AngularR1Explorer(AngularPropertyExplorer):
         lst_path = self.path + self.LISTING_EXTENSION
         job_name = Path(self.path).stem
 
-        r1_mesh = np.zeros_like(self.th_mesh)
+        r1_mesh = np.zeros_like(self.th_mesh, dtype=float)
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
+
+        total_unique = self.hkl_frame.table['equiv'].nunique()
         for i, th in enumerate(self.th_range):
             for j, ph in enumerate(self.ph_range):
                 subdir = self.path + f'_th{int(th+.1)}_ph{int(ph+.1)}'
@@ -362,17 +377,17 @@ class AngularR1Explorer(AngularPropertyExplorer):
                 count = q.table['equiv'].nunique()
                 os.system(f'cd {dir_path2}; shelxl {job_name}')
                 r1 = LstFrame().read_r1(lst_path2)
-                potency = count / len(self.hkl_frame)
+                potency = count / total_unique
                 self.data_dict['th'].append(th)
                 self.data_dict['ph'].append(ph)
                 self.data_dict['cplt'].append(potency)
                 self.data_dict['r1'].append(r1)
                 self.data_dict['weight'].append(self.orientation_weight(th, ph))
                 lst.write(f'{th:8.0f}{ph:8.0f}{r1:8.5}{potency:8.5f}\n')
-                r1_mesh[j][i] = r1
+                r1_mesh[i][j] = r1
             lst.write('\n')
 
-            # noinspection PyTypeChecker
-            np.savetxt(dat_path, r1_mesh)
-            lst.write(self.descriptive_statistics_string)
-            lst.close()
+        # noinspection PyTypeChecker
+        np.savetxt(dat_path, r1_mesh)
+        lst.write(self.descriptive_statistics_string)
+        lst.close()
