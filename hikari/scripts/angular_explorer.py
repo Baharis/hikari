@@ -1,6 +1,7 @@
 """This file contains tools for making property maps visualised on sphere"""
 
 import abc
+import numbers
 from pathlib import Path
 
 import numpy as np
@@ -42,10 +43,9 @@ class AngularPropertyExplorer:
     - explore
     """
 
-    hkl_is_read_not_generated = True
-    property_name = 'UNDEFINED'
-    property_theoretical_minimum = 0
-    property_theoretical_maximum = 1
+    hkl_is_read_not_generated: bool
+    property_name: str
+    property_theoretical_limits: Interval
 
     GNUPLOT_INPUT_EXTENSION = '.gnu'
     GNUPLOT_OUTPUT_EXTENSION = '.pnG'
@@ -121,12 +121,11 @@ class AngularPropertyExplorer:
     @property
     def prop_limits(self):
         if not self.fix_scale and self.data_dict[self.property_name]:
-            lower_property_limit = min(self.data_dict[self.property_name])
-            upper_property_limit = max(self.data_dict[self.property_name])
+            _prop_limits = Interval(min(self.data_dict[self.property_name]),
+                                    max(self.data_dict[self.property_name]))
         else:
-            lower_property_limit = self.property_theoretical_minimum
-            upper_property_limit = self.property_theoretical_maximum
-        return Interval(lower_property_limit, upper_property_limit)
+            _prop_limits = self.property_theoretical_limits
+        return _prop_limits
 
     def _make_hkl_frame(self):
         """Make ball or axis of hkl which will be cut in further steps"""
@@ -267,13 +266,17 @@ class AngularPropertyExplorer:
 class AngularPotencyExplorer(AngularPropertyExplorer):
     hkl_is_read_not_generated = False
     property_name = 'cplt'
-    property_theoretical_minimum = 0
-    property_theoretical_maximum = 1
+    property_theoretical_limits = Interval(0, 1)
+
+    def explore(self):
+        pass
 
 
 class AngularR1Explorer(AngularPropertyExplorer):
+
     hkl_is_read_not_generated = True
     property_name = 'r1'
-    property_theoretical_minimum = 0
-    property_theoretical_maximum = 1
+    property_theoretical_limits = Interval(0, 1)
 
+    def explore(self):
+        pass
