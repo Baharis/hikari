@@ -10,7 +10,7 @@ from hikari.utility import make_abspath, weighted_quantile, \
     fibonacci_sphere, rotation_around, sph2cart, cart2sph, Interval
 from hikari.utility import GnuplotAngularHeatmapArtist, \
     MatplotlibAngularHeatmapArtist
-from .angular_explorer import AngularPotencyExplorer
+from hikari.scripts.angular_explorer import AngularPotencyExplorer
 
 
 def potency_map2(a, b, c, al, be, ga,

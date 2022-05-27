@@ -72,7 +72,11 @@ class AngularPropertyExplorer:
 
     def __init__(self):
         self._path = ''
-        self.sg = Group()
+        self._sg = Group()
+        self._pg = Group()
+        self._lg = Group()
+        self._th_limits = Interval(0, 0)
+        self._ph_limits = Interval(0, 0)
         self.axis = ''
         self.hkl_frame = HklFrame()
         self.opening_angle = 0.0
@@ -169,12 +173,12 @@ class AngularPropertyExplorer:
     @property
     def th_limits(self):
         """Interval range of polar angle where property will be calculated"""
-        return self.POLAR_LIMIT_DICT[self.sg.system]
+        return self._th_limits
 
     @property
     def ph_limits(self):
         """Interval range of azimuth angle where property will be calculated"""
-        return self.AZIMUTH_LIMIT_DICT[self.sg.system]
+        return self._ph_limits
 
     def draw_matplotlib_map(self):
         ma = MatplotlibAngularHeatmapArtist()
@@ -222,12 +226,26 @@ class AngularPropertyExplorer:
         self._path = str(Path().joinpath(dir_, stem))
 
     @property
+    def sg(self):
+        return self._sg
+
+    @sg.setter
+    def sg(self, value):
+        _pg = value.reciprocate()
+        _sg_system = value.system
+        self._sg = value
+        self._pg = _pg
+        self._lg = _pg.lauefy()
+        self._th_limits = self.POLAR_LIMIT_DICT[_sg_system]
+        self._ph_limits = self.AZIMUTH_LIMIT_DICT[_sg_system]
+
+    @property
     def pg(self):
-        return self.sg.reciprocate()
+        return self._pg
 
     @property
     def lg(self):
-        return self.pg.lauefy()
+        return self._lg
 
     @property
     def focus(self):

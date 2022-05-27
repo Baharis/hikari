@@ -9,7 +9,7 @@ from hikari.dataframes import HklFrame, LstFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, sph2cart, weighted_quantile, \
     GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist, Interval
-from .angular_explorer import AngularR1Explorer
+from hikari.scripts.angular_explorer import AngularR1Explorer
 
 
 def r1_map2(a, b, c, al, be, ga,
