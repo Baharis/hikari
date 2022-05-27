@@ -1,18 +1,17 @@
 """This file contains tools for making property maps visualised on sphere"""
 
 import abc
-import numbers
+import os
+import shutil
 from pathlib import Path
 
 import numpy as np
 from numpy import linalg as lin
 
-from hikari.dataframes import HklFrame
+from hikari.dataframes import HklFrame, LstFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, weighted_quantile, \
-    fibonacci_sphere, rotation_around, sph2cart, cart2sph, Interval
-from hikari.utility import GnuplotAngularHeatmapArtist, \
-    MatplotlibAngularHeatmapArtist
+from hikari.utility import make_abspath, weighted_quantile, sph2cart, cart2sph,\
+    Interval, GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist
 
 
 class AngularPropertyExplorerFactory:
@@ -76,7 +75,7 @@ class AngularPropertyExplorer:
         self.sg = Group()
         self.axis = ''
         self.hkl_frame = HklFrame()
-        self.oa = 0.0
+        self.opening_angle = 0.0
         self.orientation = None
         self.resolution = 1.2
         self.axis = ''
@@ -86,7 +85,7 @@ class AngularPropertyExplorer:
         self.data_dict = {'th': [], 'ph': [], 'cplt': [], 'r1': [], 'weight': []}
 
     def set_experimental(self, opening_angle, orientation, resolution):
-        self.oa = opening_angle
+        self.opening_angle = opening_angle
         self.orientation = orientation
         self.resolution = resolution
 
@@ -242,6 +241,14 @@ class AngularPropertyExplorer:
         return self.ph_limits.arange(step=self.angle_res)
 
     @property
+    def th_comb(self):
+        return self.th_limits.comb_with(self.ph_limits, step=self.angle_res)[0]
+
+    @property
+    def ph_comb(self):
+        return self.ph_limits.comb_with(self.ph_limits, step=self.angle_res)[1]
+
+    @property
     def th_mesh(self):
         return self.th_limits.mesh_with(self.ph_limits, step=self.angle_res)[0]
 
@@ -262,6 +269,33 @@ class AngularPropertyExplorer:
         ph_min = max(ph - self.angle_res / 2., self.ph_limits[0])
         return sphere_cutout_area(th_min, th_max, ph_max-ph_min)
 
+    @property
+    def descriptive_statistics_string(self):
+        min_p = min(self.data_dict[self.property_name])
+        worst_index = self.data_dict[self.property_name].index(min_p)
+        worst_th = self.data_dict['th'][worst_index]
+        worst_ph = self.data_dict['ph'][worst_index]
+
+        max_p = max(self.data_dict[self.property_name])
+        best_index = self.data_dict[self.property_name].index(max_p)
+        best_th = self.data_dict['th'][best_index]
+        best_ph = self.data_dict['ph'][best_index]
+
+        avg_p = np.average(self.data_dict[self.property_name],
+                           weights=self.data_dict['weight'])
+        q1, q2, q3 = weighted_quantile(values=self.data_dict['cplt'],
+                                       quantiles=[0.25, 0.50, 0.75],
+                                       weights=self.data_dict['weight'])
+
+        s = f'# descriptive statistics for {self.property_name}:\n' \
+            f'# max ={max_p:8.5f} at th ={best_th :6.1f} ph ={best_ph :6.1f}\n'\
+            f'# min ={min_p:8.5f} at th ={worst_th:6.1f} ph ={worst_ph:6.1f}\n'\
+            f'# q_1 ={q1   :8.5f}\n' \
+            f'# q_2 ={q2   :8.5f}\n' \
+            f'# q_3 ={q3   :8.5f}\n' \
+            f'# avg ={avg_p:8.5f}\n'
+        return s
+
 
 class AngularPotencyExplorer(AngularPropertyExplorer):
     hkl_is_read_not_generated = False
@@ -269,7 +303,33 @@ class AngularPotencyExplorer(AngularPropertyExplorer):
     property_theoretical_limits = Interval(0, 1)
 
     def explore(self):
-        pass
+        dat_path = self.path + self.MESH_EXTENSION
+        lst_path = self.path + self.LISTING_EXTENSION
+
+        cplt_mesh = np.zeros_like(self.th_mesh)
+        lst = open(lst_path, 'w+')
+        lst.write('#     th      ph    cplt  reflns\n')
+        vectors = sph2cart(r=np.ones_like(self.th_comb),
+                           p=np.deg2rad(self.th_comb),
+                           a=np.deg2rad(self.ph_comb))
+        uniques = self.hkl_frame.dacs_count(self.opening_angle, vectors=vectors)
+        for i, th in enumerate(self.th_range):
+            for j, ph in enumerate(self.ph_range):
+                count = uniques[i * len(self.ph_range) + j]
+                potency = count / len(self.hkl_frame)
+                self.data_dict['th'].append(th)
+                self.data_dict['ph'].append(ph)
+                self.data_dict['cplt'].append(potency)
+                self.data_dict['reflns'].append(count)
+                self.data_dict['weight'].append(self.orientation_weight(th, ph))
+                lst.write(f'{th:8.0f}{ph:8.0f}{potency:8.5f}{count:8d}\n')
+                cplt_mesh[j][i] = potency
+            lst.write('\n')
+
+        # noinspection PyTypeChecker
+        np.savetxt(dat_path, cplt_mesh)
+        lst.write(self.descriptive_statistics_string)
+        lst.close()
 
 
 class AngularR1Explorer(AngularPropertyExplorer):
@@ -279,4 +339,40 @@ class AngularR1Explorer(AngularPropertyExplorer):
     property_theoretical_limits = Interval(0, 1)
 
     def explore(self):
-        pass
+        dat_path = self.path + self.MESH_EXTENSION
+        lst_path = self.path + self.LISTING_EXTENSION
+        job_name = Path(self.path).stem
+
+        r1_mesh = np.zeros_like(self.th_mesh)
+        lst = open(lst_path, 'w+')
+        lst.write('#     th      ph    cplt  reflns\n')
+        for i, th in enumerate(self.th_range):
+            for j, ph in enumerate(self.ph_range):
+                subdir = self.path + f'_th{int(th+.1)}_ph{int(ph+.1)}'
+                hkl_path2 = make_abspath(subdir, job_name+'.hkl')
+                ins_path2 = make_abspath(subdir, job_name+'.ins')
+                lst_path2 = make_abspath(subdir, job_name+'.lst')
+                dir_path2 = make_abspath(subdir)
+                Path(dir_path2).mkdir()
+                shutil.copy(self.path + '.res', ins_path2)
+                q = self.hkl_frame.copy()
+                q.dac_trim(self.opening_angle,
+                           sph2cart(1.0, np.deg2rad(th), np.deg2rad(ph)))
+                q.write(hkl_path2, hkl_format='shelx_4')
+                count = q.table['equiv'].nunique()
+                os.system(f'cd {dir_path2}; shelxl {job_name}')
+                r1 = LstFrame().read_r1(lst_path2)
+                potency = count / len(self.hkl_frame)
+                self.data_dict['th'].append(th)
+                self.data_dict['ph'].append(ph)
+                self.data_dict['cplt'].append(potency)
+                self.data_dict['r1'].append(r1)
+                self.data_dict['weight'].append(self.orientation_weight(th, ph))
+                lst.write(f'{th:8.0f}{ph:8.0f}{r1:8.5}{potency:8.5f}\n')
+                r1_mesh[j][i] = r1
+            lst.write('\n')
+
+            # noinspection PyTypeChecker
+            np.savetxt(dat_path, r1_mesh)
+            lst.write(self.descriptive_statistics_string)
+            lst.close()
