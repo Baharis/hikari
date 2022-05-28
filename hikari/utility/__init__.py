@@ -13,4 +13,4 @@ from .list_tools import cubespace, find_best, rescale_list_to_range,\
     rescale_list_to_other
 from .os_tools import make_abspath
 from .palettes import gnuplot_map_palette, mpl_map_palette
-from .artists import GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist
+from .artists import artist_factory

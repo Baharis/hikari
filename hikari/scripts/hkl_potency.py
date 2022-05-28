@@ -402,10 +402,10 @@ if __name__ == '__main__':
               (0.0609273000, -0.0215065000, 0.0389391000)))
     # potency_map(a=10, b=10, c=10, al=90, be=100, ga=90, space_group='P21/c',
     #              fix_scale=False,
-    #             output_directory='~/Documents/python_stubs/histogram_on_potency_map/hikari-0.1.4/', output_name='dev2_free',
+    #              output_directory='~/Documents/python_stubs/histogram_on_potency_map/hikari-0.1.4/', output_name='dev2_free',
     #              output_quality=5, histogram=True, orientation=ori2)
-    potency_map(a=10, b=10, c=10, al=90, be=100, ga=90, space_group='P21/c',
-                fix_scale=False,
-                path='~/Documents/python_stubs/histogram_on_potency_map/hikari-0.1.4/dev2_free',
+    potency_map(a=10, b=10, c=10, al=90, be=90, ga=120, space_group='P63/mcm',
+                fix_scale=True, resolution=2.0,
+                path='~/Documents/python_stubs/histogram_on_potency_map/hikari-0.1.4/dev2_fixed',
                 output_quality=5, histogram=True, orientation=ori2)
     pass

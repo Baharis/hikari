@@ -6,8 +6,8 @@ set output '{job_name}_gnu.png'
 
 # load variables from python
 make_histogram = {histogram}
-min_heat = {cplt_min}
-max_heat = {cplt_max}
+min_heat = 100. * {cplt_min}
+max_heat = 100. * {cplt_max}
 min_ph = {min_ph}
 max_ph = {max_ph}
 min_th = {min_th}

@@ -16,6 +16,21 @@ class ArtistError(Exception):
         super().__init__(message)
 
 
+class ArtistFactory:
+    """A factory method for creating artists."""
+    def __init__(self):
+        self._artists = {}
+
+    def register(self, name, artist):
+        self._artists[name] = artist
+
+    def create(self, name, **kwargs):
+        artist = self._artists.get(name)
+        if not artist:
+            raise ValueError(f'Artist called "{name}" has not been registered!')
+        return artist(**kwargs)
+
+
 class Artist:
     """Base class used for plotting matplotlib and gnuplot plots"""
 
@@ -270,3 +285,10 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
                         antialiased=False, facecolors=color_mesh)
         pyplot.subplots_adjust(left=0.0, bottom=0.0, right=0.95, top=1.0)
         pyplot.savefig(png_path, dpi=100, format='png', bbox_inches=None)
+
+
+artist_factory = ArtistFactory()
+artist_factory.register(name='gnuplot_angular_heatmap_artist',
+                        artist=GnuplotAngularHeatmapArtist)
+artist_factory.register(name='matplotlib_angular_heatmap_artist',
+                        artist=MatplotlibAngularHeatmapArtist)

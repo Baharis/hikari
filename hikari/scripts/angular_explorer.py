@@ -11,7 +11,7 @@ from numpy import linalg as lin
 from hikari.dataframes import HklFrame, LstFrame
 from hikari.symmetry import SG, Group
 from hikari.utility import make_abspath, weighted_quantile, sph2cart, cart2sph,\
-    Interval, GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist
+    Interval, artist_factory
 
 
 class AngularPropertyExplorerFactory:
@@ -19,7 +19,7 @@ class AngularPropertyExplorerFactory:
     def __init__(self):
         self._explorers = {}
 
-    def register_explorer(self, prop, explorer):
+    def register(self, prop, explorer):
         self._explorers[prop] = explorer
 
     def create(self, prop, **kwargs):
@@ -178,30 +178,26 @@ class AngularPropertyExplorer:
         """Interval range of azimuth angle where property will be calculated"""
         return self._ph_limits
 
+    def _draw_map(self, artist, extension):
+        a = artist
+        a.x_axis = self.hkl_frame.a_w / lin.norm(self.hkl_frame.a_w)
+        a.y_axis = self.hkl_frame.b_w / lin.norm(self.hkl_frame.b_w)
+        a.z_axis = self.hkl_frame.c_w / lin.norm(self.hkl_frame.c_w)
+        a.focus = self.focus
+        a.heat_limits = self.prop_limits
+        a.heat_palette = self.axis
+        a.histogram = self.histogram
+        a.polar_limits = self.th_limits
+        a.azimuth_limits = self.ph_limits
+        a.plot(self.path + extension)
+
     def draw_matplotlib_map(self):
-        ma = MatplotlibAngularHeatmapArtist()
-        ma.x_axis = self.hkl_frame.a_w / lin.norm(self.hkl_frame.a_w)
-        ma.y_axis = self.hkl_frame.b_w / lin.norm(self.hkl_frame.b_w)
-        ma.z_axis = self.hkl_frame.c_w / lin.norm(self.hkl_frame.c_w)
-        ma.focus = self.focus
-        ma.heat_limits = self.prop_limits
-        ma.heat_palette = self.axis
-        ma.polar_limits = self.th_limits
-        ma.azimuth_limits = self.ph_limits
-        ma.plot(self.path + self.MATPLOTLIB_EXTENSION)
+        a = artist_factory.create('matplotlib_angular_heatmap_artist')
+        self._draw_map(artist=a, extension=self.MATPLOTLIB_EXTENSION)
 
     def draw_gnuplot_map(self):
-        ga = GnuplotAngularHeatmapArtist()
-        ga.x_axis = self.hkl_frame.a_w / lin.norm(self.hkl_frame.a_w)
-        ga.y_axis = self.hkl_frame.b_w / lin.norm(self.hkl_frame.b_w)
-        ga.z_axis = self.hkl_frame.c_w / lin.norm(self.hkl_frame.c_w)
-        ga.focus = self.focus
-        ga.heat_limits = self.prop_limits * 100
-        ga.heat_palette = self.axis
-        ga.histogram = self.histogram
-        ga.polar_limits = self.th_limits
-        ga.azimuth_limits = self.ph_limits
-        ga.plot(self.path + self.GNUPLOT_OUTPUT_EXTENSION)
+        a = artist_factory.create('gnuplot_angular_heatmap_artist')
+        self._draw_map(artist=a, extension=self.GNUPLOT_OUTPUT_EXTENSION)
 
     @property
     def angle_res(self):
@@ -415,8 +411,8 @@ class AngularR1Explorer(AngularPropertyExplorer):
 
 
 angular_property_explorer_factory = AngularPropertyExplorerFactory()
-angular_property_explorer_factory.register_explorer(
+angular_property_explorer_factory.register(
     prop='potency', explorer=AngularPotencyExplorer)
-angular_property_explorer_factory.register_explorer(
+angular_property_explorer_factory.register(
     prop='r1', explorer=AngularR1Explorer)
 

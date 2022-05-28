@@ -1,14 +1,3 @@
-import os
-from pathlib import Path
-import shutil
-
-import numpy as np
-from numpy import linalg as lin
-
-from hikari.dataframes import HklFrame, LstFrame
-from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, sph2cart, weighted_quantile, \
-    GnuplotAngularHeatmapArtist, MatplotlibAngularHeatmapArtist, Interval
 from hikari.scripts.angular_explorer import angular_property_explorer_factory
 
 
