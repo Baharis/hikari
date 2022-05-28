@@ -90,7 +90,7 @@ def potency_map(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param space_group: Short Hermann-Mauguin name or index of space group.
-        For details see table in hikari.symmetry.space_groups.
+        For details see :py:mod:`hikari.symmetry.space_groups`.
     :type space_group: str or int
     :param axis: domain to calculate potency in. Accepts 'x'/ 'y'/ 'z' for h00/
         0k0/ 00l, 'xy'/'xz'/'yz' for hk0/ h0l/ 0kl, or '' for all reflections.
@@ -158,18 +158,17 @@ def potency_vs_dac_opening_angle(output_path='~/output.txt',
         side = 10 * precision**(1/3) / res  # adapt to res&la
         hkl_frame.edit_cell(a=side, b=side, c=side, al=90, be=90, ga=90)
         hkl_frame.fill(radius=res)
-        hkl_frame.find_equivalents()
         return hkl_frame
 
     p = _make_reference_ball()
-    v = fibonacci_sphere(10)
+    v = fibonacci_sphere(100)
     total = len(p)
     angles = np.linspace(start=90, stop=0, num=precision)
     out = open(make_abspath(output_path), 'w')
     out.write('#oa      cplt\n')
     for a in angles:  # for one random vector v
         c = p.dacs_count(opening_angle=a, vectors=v)
-        out.write(' {a:7.4f} {c:7.5f}\n'.format(a=a, c=np.mean(c)/total))
+        out.write(f' {a:7.4f} {np.mean(c)/total:7.5f}\n')
     out.close()
 
 
@@ -324,7 +323,7 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *gamma* in degrees.
     :type ga: float
     :param space_group: Short Hermann-Mauguin name or index of space group.
-        For details see table in hikari.symmetry.space_groups.
+        For details see :py:mod:`hikari.symmetry.space_groups`.
     :type space_group: str or int
     :param wavelength: Wavelength of radiation utilised in experiment.
     :type wavelength: float or str
