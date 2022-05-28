@@ -6,36 +6,8 @@ from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, weighted_quantile, \
-    fibonacci_sphere, rotation_around, sph2cart, cart2sph, Interval
-from hikari.utility import GnuplotAngularHeatmapArtist, \
-    MatplotlibAngularHeatmapArtist
-from hikari.scripts.angular_explorer import AngularPotencyExplorer
-
-
-def potency_map2(a, b, c, al, be, ga,
-                 space_group='P1',
-                 axis='',
-                 fix_scale=False,
-                 histogram=True,
-                 opening_angle=35,
-                 orientation=None,
-                 path='~/sortav.lst',
-                 output_quality=3,
-                 resolution=1.2,
-                 wavelength='MoKa'):
-    ape = AngularPotencyExplorer()
-    ape.set_experimental(opening_angle=opening_angle,
-                         orientation=orientation,
-                         resolution=resolution)
-    ape.set_options(path=path, fix_scale=fix_scale,
-                    histogram=histogram, output_quality=output_quality)
-    ape.set_hkl_frame(a=a, b=b, c=c, al=al, be=be, ga=ga, axis=axis,
-                      space_group=space_group, wavelength=wavelength)
-    ape.explore()
-    ape.write_hist_file()
-    ape.draw_matplotlib_map()
-    ape.draw_gnuplot_map()
+from hikari.utility import make_abspath, fibonacci_sphere, rotation_around
+from hikari.scripts.angular_explorer import angular_property_explorer_factory
 
 
 def potency_map(a, b, c, al, be, ga,
@@ -45,8 +17,7 @@ def potency_map(a, b, c, al, be, ga,
                 histogram=True,
                 opening_angle=35,
                 orientation=None,
-                output_directory='~',
-                output_name='cplt_map',
+                path='~/sortav.lst',
                 output_quality=3,
                 resolution=1.2,
                 wavelength='MoKa'):
@@ -134,10 +105,9 @@ def potency_map(a, b, c, al, be, ga,
     :type opening_angle: float
     :param orientation: 3x3 matrix of crystal orientation to be marked on a map
     :type orientation: np.ndarray
-    :param output_directory: Path to directory where output should be saved.
-    :type output_directory: str
-    :param output_name: Base name for files created in `output_directory`.
-    :type output_name: str
+    :param path: Path to a file where script is to be run. Extension is ignored,
+        but file name will and must be the same for all input and output files.
+    :type path: str
     :param output_quality: Density of individual orientations to be considered.
         Should be in range from 1 (every 15 degrees) to 5 (every 1 degree).
     :type output_quality: int
@@ -149,187 +119,13 @@ def potency_map(a, b, c, al, be, ga,
     :return: None
     :rtype: None
     """
-    dat_path = make_abspath(output_directory, output_name + '.dat')
-    lst_path = make_abspath(output_directory, output_name + '.lst')
-    png_path = make_abspath(output_directory, output_name + '.png')
-    his_path = make_abspath(output_directory, output_name + '.his')
-    axis = axis.lower()
-    sg = SG[space_group]
-    pg = sg.reciprocate()
-    lg = pg.lauefy()
-
-    def _make_hkl_frame(ax=axis):
-        """Make ball or axis of hkl which will be cut in further steps"""
-        _f = HklFrame()
-        _f.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-        _f.la = wavelength
-        _f.fill(radius=min(_f.r_lim, resolution))
-        if ax in {'x'}:
-            _f.table = _f.table.loc[_f.table['k'].eq(0) & _f.table['l'].eq(0)]
-        elif ax in {'y'}:
-            _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['l'].eq(0)]
-        elif ax in {'z'}:
-            _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['k'].eq(0)]
-        elif ax in {'xy'}:
-            _f.table = _f.table.loc[_f.table['l'].eq(0)]
-        elif ax in {'xz'}:
-            _f.table = _f.table.loc[_f.table['k'].eq(0)]
-        elif ax in {'yz'}:
-            _f.table = _f.table.loc[_f.table['h'].eq(0)]
-        if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz'}:
-            _f.transform([o.tf for o in pg.operations])
-        _f.extinct(sg)
-        return _f
-
-    p = _make_hkl_frame()
-    p.find_equivalents(point_group=pg)
-    total_reflections = p.table['equiv'].nunique()
-    if total_reflections == 0:
-        raise KeyError('Specified part of reciprocal space contains zero nodes')
-
-    def _determine_theta_and_phi_limits():
-        """Define range of coordinates where potency map will be calculated.
-        Unit vectors v1, v2, v3 point in zenith z*, orthogonal x and product."""
-        _v1 = p.c_w / lin.norm(p.c_w)
-        _v2 = p.a_v / lin.norm(p.a_v)
-        _v3 = np.cross(_v1, _v2)
-
-        if sg.system in {Group.System.triclinic}:
-            _th_limits = Interval(0, 180)
-            _ph_limits = Interval(-45, 135)
-        elif sg.system in {Group.System.monoclinic}:
-            _th_limits = Interval(0, 180)
-            _ph_limits = Interval(0, 90)
-        elif sg.system in {Group.System.orthorhombic, Group.System.tetragonal,
-                         Group.System.cubic}:
-            _th_limits = Interval(0, 90)
-            _ph_limits = Interval(0, 90)
-        elif sg.system in {Group.System.trigonal, Group.System.hexagonal}:
-            _th_limits = Interval(0, 90)
-            _ph_limits = Interval(0, 120)
-        else:
-            raise ValueError('Unknown crystal system (trigonal not supported)')
-        return _v1, _v2, _v3, _th_limits, _ph_limits
-    v1, v2, v3, th_limits, ph_limits = _determine_theta_and_phi_limits()
-
-    def _determine_angle_res():
-        if output_quality not in {1, 2, 3, 4, 5}:
-            raise KeyError('output_quality should be 1, 2, 3, 4 or 5')
-        return {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
-    angle_res = _determine_angle_res()
-
-    # range: 1D range-like, mesh: 2D grid, comb: 1D list for all combinations
-    th_range = th_limits.arange(step=angle_res)
-    ph_range = ph_limits.arange(step=angle_res)
-    th_mesh, ph_mesh = th_limits.mesh_with(ph_limits, step=angle_res)
-    one_comb, th_comb, ph_comb = \
-        Interval(1, 1).comb_with(th_limits, ph_limits, step=angle_res)
-    data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': [], 'weight': []}
-
-    def orientation_weight(th, ph):
-        """Calculate how much each point should contribute to distribution"""
-        def sphere_cutout_area(th1, th2, ph_span):
-            """Calculate sphere area in specified ph and th degree range.
-            For exact math, see articles about spherical cap and sector."""
-            return np.deg2rad(abs(ph_span)) * \
-                   abs(np.cos(np.deg2rad(th1)) - np.cos(np.deg2rad(th2)))
-        th_max = min(th + angle_res / 2.0, th_limits[1])
-        th_min = max(th - angle_res / 2.0, th_limits[0])
-        ph_max = min(ph + angle_res / 2.0, ph_limits[1])
-        ph_min = max(ph - angle_res / 2.0, ph_limits[0])
-        return sphere_cutout_area(th_min, th_max, ph_max-ph_min)
-
-    def _calculate_completeness_mesh():
-        """Calculate completeness for each individual pair of theta and phi."""
-        _cplt_mesh = np.zeros_like(th_mesh, dtype=float)
-        lst = open(lst_path, 'w+')
-        lst.write('#     th      ph    cplt  reflns\n')
-        vectors = np.vstack(sph2cart(one_comb, np.deg2rad(th_comb),
-                                     np.deg2rad(ph_comb))).T
-        uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
-        for i, th in enumerate(th_range):
-            for j, ph in enumerate(ph_range):
-                count = uniques[i * len(ph_range) + j]
-                potency = count / total_reflections
-                data_dict['th'].append(th)
-                data_dict['ph'].append(ph)
-                data_dict['cplt'].append(potency)
-                data_dict['reflns'].append(count)
-                data_dict['weight'].append(orientation_weight(th, ph))
-                lst.write(f'{th:8.0f}{ph:8.0f}{potency:8.5f}{count:8d}\n')
-                _cplt_mesh[j][i] = potency
-            lst.write('\n')
-        index_max = np.unravel_index(np.argmax(_cplt_mesh), _cplt_mesh.shape)
-        best_th, best_ph = th_range[index_max[1]], ph_range[index_max[0]]
-        index_min = np.unravel_index(np.argmin(_cplt_mesh), _cplt_mesh.shape)
-        worst_th, worst_ph = th_range[index_min[1]], ph_range[index_min[0]]
-        q1, q2, q3 = weighted_quantile(values=data_dict['cplt'],
-                                       quantiles=[0.25, 0.50, 0.75],
-                                       weights=data_dict['weight'])
-        avg_p = np.average(data_dict['cplt'], weights=data_dict['weight'])
-        max_p = max(data_dict['cplt'])
-        min_p = min(data_dict['cplt'])
-        s = f'# descriptive statistics for potency:\n' \
-            f'# max ={max_p:8.5f} at th ={best_th :6.1f} ph ={best_ph :6.1f}\n'\
-            f'# min ={min_p:8.5f} at th ={worst_th:6.1f} ph ={worst_ph:6.1f}\n'\
-            f'# q_1 ={q1   :8.5f}\n' \
-            f'# q_2 ={q2   :8.5f}\n' \
-            f'# q_3 ={q3   :8.5f}\n' \
-            f'# avg ={avg_p:8.5f}\n'
-        lst.write(s)
-        lst.close()
-        np.savetxt(dat_path, _cplt_mesh)
-        return data_dict
-
-    data_dict = _calculate_completeness_mesh()
-    cplt_min = 0 if fix_scale else min(data_dict['cplt'])
-    cplt_max = 1 if fix_scale else max(data_dict['cplt'])
-    hist_bins, hist_edges = np.histogram(data_dict['cplt'], density=True,
-                                         weights=data_dict['weight'], bins=32,
-                                         range=(cplt_min, cplt_max))
-    hist_bins = hist_bins / sum(hist_bins)
-
-    def _prepare_hist_file():
-        with open(his_path, 'w+') as h:
-            h.write('#   from      to   prob.\n')
-            for _f, _t, _p in zip(hist_edges[:-1], hist_edges[1:], hist_bins):
-                h.write(f'{_f:8.5f}{_t:8.5f}{_p:8.5f}\n')
-    _prepare_hist_file()
-
-    focus = []
-    if orientation is not None:
-        for i, op in enumerate(lg.operations):
-            v = p.A_r.T @ op.tf @ lin.inv(orientation) @ np.array((1, 0, 0))
-            c = cart2sph(*v)
-            th_in_limits = min(th_limits) <= np.rad2deg(c[1]) <= max(th_limits)
-            ph_in_limits = min(ph_limits) <= np.rad2deg(c[2]) <= max(ph_limits)
-            if ph_in_limits and th_in_limits:
-                focus.append(v / lin.norm(v))
-
-    # plot potency map using built-in matplotlib
-    ma = MatplotlibAngularHeatmapArtist()
-    ma.x_axis = p.a_w / lin.norm(p.a_w)
-    ma.y_axis = p.b_w / lin.norm(p.b_w)
-    ma.z_axis = p.c_w / lin.norm(p.c_w)
-    ma.focus = focus
-    ma.heat_limits = (cplt_min, cplt_max)
-    ma.heat_palette = axis
-    ma.polar_limits = (min(th_limits), max(th_limits))
-    ma.azimuth_limits = (min(ph_limits), max(ph_limits))
-    ma.plot(png_path)
-
-    # plot potency map using external gnuplot
-    ga = GnuplotAngularHeatmapArtist()
-    ga.x_axis = p.a_w / lin.norm(p.a_w)
-    ga.y_axis = p.b_w / lin.norm(p.b_w)
-    ga.z_axis = p.c_w / lin.norm(p.c_w)
-    ga.focus = focus
-    ga.heat_limits = (cplt_min * 100, cplt_max * 100)
-    ga.heat_palette = axis
-    ga.histogram = histogram
-    ga.polar_limits = (min(th_limits), max(th_limits))
-    ga.azimuth_limits = (min(ph_limits), max(ph_limits))
-    ga.plot(png_path)
+    kwargs = locals()
+    ape = angular_property_explorer_factory.create(prop='potency')
+    ape.set_up(**kwargs)
+    ape.explore()
+    ape.write_hist_file()
+    ape.draw_matplotlib_map()
+    ape.draw_gnuplot_map()
 
 
 def potency_vs_dac_opening_angle(output_path='~/output.txt',
@@ -601,4 +397,15 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
 if __name__ == '__main__':
     # potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm',
     #             resolution=1.2, output_directory='~/_/', output_name='_')
+    ori2 = np.array(((-0.0763491000, -0.0083505000, 0.0385930000),
+              (-0.0182458000, -0.0367852000, -0.0315399000),
+              (0.0609273000, -0.0215065000, 0.0389391000)))
+    # potency_map(a=10, b=10, c=10, al=90, be=100, ga=90, space_group='P21/c',
+    #              fix_scale=False,
+    #             output_directory='~/Documents/python_stubs/histogram_on_potency_map/hikari-0.1.4/', output_name='dev2_free',
+    #              output_quality=5, histogram=True, orientation=ori2)
+    potency_map(a=10, b=10, c=10, al=90, be=100, ga=90, space_group='P21/c',
+                fix_scale=False,
+                path='~/Documents/python_stubs/histogram_on_potency_map/hikari-0.1.4/dev2_free',
+                output_quality=5, histogram=True, orientation=ori2)
     pass

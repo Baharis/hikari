@@ -89,12 +89,16 @@ class AngularPropertyExplorer:
         self.data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': [],
                           'r1': [], 'weight': []}
 
-    def set_experimental(self, opening_angle, orientation, resolution):
+    def set_up(self, a, b, c, al, be, ga, space_group, wavelength, axis,
+               opening_angle, orientation, resolution,
+               path, fix_scale, histogram, output_quality):
         self.opening_angle = opening_angle
         self.orientation = orientation
         self.resolution = resolution
-
-    def set_hkl_frame(self, a, b, c, al, be, ga, space_group, wavelength, axis):
+        self.path = path
+        self.fix_scale = fix_scale
+        self.histogram = histogram
+        self.output_quality = output_quality
         self.sg = SG[space_group]
         self.hkl_frame.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
         self.hkl_frame.la = wavelength
@@ -107,12 +111,6 @@ class AngularPropertyExplorer:
         total_unique = self.hkl_frame.table['equiv'].nunique()
         if total_unique == 0:
             raise KeyError('Specified part of reciprocal space has zero nodes')
-
-    def set_options(self, path, fix_scale, histogram, output_quality):
-        self.path = path
-        self.fix_scale = fix_scale
-        self.histogram = histogram
-        self.output_quality = output_quality
 
     @abc.abstractmethod
     def explore(self):
@@ -414,3 +412,11 @@ class AngularR1Explorer(AngularPropertyExplorer):
         np.savetxt(dat_path, r1_mesh)
         lst.write(self.descriptive_statistics_string)
         lst.close()
+
+
+angular_property_explorer_factory = AngularPropertyExplorerFactory()
+angular_property_explorer_factory.register_explorer(
+    prop='potency', explorer=AngularPotencyExplorer)
+angular_property_explorer_factory.register_explorer(
+    prop='r1', explorer=AngularR1Explorer)
+
