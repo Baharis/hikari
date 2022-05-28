@@ -448,8 +448,8 @@ class HklFrame(BaseFrame):
         Sample/DAC orientation can be supplied either via specifying crystal
         orientation in :class:`hikari.dataframes.BaseFrame`, in
         :attr:`orientation` or providing a xyz\* *vector* perpendicular to the
-        dac-accessible disc. For further details refer to *Tchoń & Makal, IUCrJ
-        8, 1006-1017 (2021)* `https://doi.org/10.1107/s2052252521009532`_.
+        dac-accessible disc. For further details refer to `*Tchoń & Makal, IUCrJ
+        8, 1006-1017 (2021)* <https://doi.org/10.1107/s2052252521009532>`_.
 
         :param opening_angle: DAC single opening angle in degrees, default 35.0.
         :type opening_angle: float
@@ -597,7 +597,8 @@ class HklFrame(BaseFrame):
         :type bins: int
         :param space_group: Group used to calculate equivalence and extinctions.
         :type space_group: hikari.symmetry.Group
-        :returns
+        :return: String containing table with stats as a function of resolution
+        :rtype: str
         """
 
         point_group = space_group.reciprocate()
@@ -1285,4 +1286,3 @@ class HklToResConverter:
 
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
-    # TODO import problems - PG / SG must be imported first???

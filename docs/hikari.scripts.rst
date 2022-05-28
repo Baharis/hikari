@@ -4,6 +4,14 @@ hikari.scripts package
 Submodules
 ----------
 
+hikari.scripts.angular\_explorer module
+---------------------------------------
+
+.. automodule:: hikari.scripts.angular_explorer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 hikari.scripts.fcf module
 -------------------------
 

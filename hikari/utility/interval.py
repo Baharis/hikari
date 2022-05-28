@@ -101,6 +101,9 @@ class Interval:
     def __contains__(self, item):
         return self.left <= _min(item) and _max(item) <= self.right
 
+    def __len__(self):
+        return 2
+
     def arange(self, step=1):
         """
         Return a 1D-list of values from left to right every step

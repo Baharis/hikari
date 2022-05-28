@@ -4,7 +4,8 @@ from matplotlib import pyplot, colors, cm
 from mpl_toolkits.mplot3d import art3d
 import numpy as np
 
-from hikari.utility import gnuplot_map_palette, mpl_map_palette, sph2cart
+from hikari.utility import gnuplot_map_palette, make_abspath, \
+    mpl_map_palette, sph2cart
 from hikari.resources import gnuplot_angular_heatmap_template
 
 
@@ -13,6 +14,21 @@ class ArtistError(Exception):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class ArtistFactory:
+    """A factory method for creating artists."""
+    def __init__(self):
+        self._artists = {}
+
+    def register(self, name, artist):
+        self._artists[name] = artist
+
+    def create(self, name, **kwargs):
+        artist = self._artists.get(name)
+        if not artist:
+            raise ValueError(f'Artist called "{name}" has not been registered!')
+        return artist(**kwargs)
 
 
 class Artist:
@@ -25,8 +41,8 @@ class Artist:
             if not len(iterable) == length and length is not 0:
                 raise TypeError()
         except TypeError:
-            raise ArtistError(f'object {iterable} should be an iterable' + \
-                              f'of length {length}' if length else '')
+            raise ArtistError(f'object {iterable} should be an iterable'
+                              f' of length {length}' if length else '')
 
     @abc.abstractmethod
     def plot(self, path):
@@ -161,7 +177,7 @@ class GnuplotAngularHeatmapArtist(GnuplotArtist, AngularHeatmapArtist):
         return '\n'.join([label.format(*f) for f in self.focus])
 
     def plot(self, path):
-        png_path = Path(path)
+        png_path = Path(make_abspath(path))
         directory, stem, ext = png_path.parent, png_path.stem, png_path.suffix
         gnu_name = png_path.stem + self.GNUPLOT_EXTENSION
         gnu_path = Path().joinpath(directory, gnu_name)
@@ -197,7 +213,7 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
 
     def plot(self, path):
         # OS and I/O operations
-        png_path = Path(path)
+        png_path = Path(make_abspath(path))
         directory, stem, ext = png_path.parent, png_path.stem, png_path.suffix
         mesh_name = png_path.stem + self.MESH_EXTENSION
         mesh_path = Path().joinpath(directory, mesh_name)
@@ -269,3 +285,10 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
                         antialiased=False, facecolors=color_mesh)
         pyplot.subplots_adjust(left=0.0, bottom=0.0, right=0.95, top=1.0)
         pyplot.savefig(png_path, dpi=100, format='png', bbox_inches=None)
+
+
+artist_factory = ArtistFactory()
+artist_factory.register(name='gnuplot_angular_heatmap_artist',
+                        artist=GnuplotAngularHeatmapArtist)
+artist_factory.register(name='matplotlib_angular_heatmap_artist',
+                        artist=MatplotlibAngularHeatmapArtist)

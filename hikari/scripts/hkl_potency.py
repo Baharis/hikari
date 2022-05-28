@@ -6,10 +6,8 @@ from numpy import linalg as lin
 
 from hikari.dataframes import HklFrame
 from hikari.symmetry import SG, Group
-from hikari.utility import make_abspath, weighted_quantile, \
-    fibonacci_sphere, rotation_around, sph2cart, cart2sph, Interval
-from hikari.utility import GnuplotAngularHeatmapArtist, \
-    MatplotlibAngularHeatmapArtist
+from hikari.utility import make_abspath, fibonacci_sphere, rotation_around
+from hikari.scripts.angular_explorer import angular_property_explorer_factory
 
 
 def potency_map(a, b, c, al, be, ga,
@@ -19,8 +17,7 @@ def potency_map(a, b, c, al, be, ga,
                 histogram=True,
                 opening_angle=35,
                 orientation=None,
-                output_directory='~',
-                output_name='cplt_map',
+                path='~/sortav.lst',
                 output_quality=3,
                 resolution=1.2,
                 wavelength='MoKa'):
@@ -29,10 +26,9 @@ def potency_map(a, b, c, al, be, ga,
     (DAC) with a given opening angle, as a function of crystal orientation.
     For details see `this paper <https://doi.org/10.1107/S2052252521009532>`_.
 
-    The script accepts unit cell & space group information, and predicts the
+    The script accepts unit cell & space group information, and predicts max
     completeness of fully merged data for investigated crystal in said group.
-    Results are logged into text files and drawn with gnuplot or matplotlib,
-    depending on settings.
+    Results are logged into text files and drawn with gnuplot or matplotlib.
 
     Potency is calculated and visualised on a unit-sphere orientation heatmap.
     Each point **p** is associated with a certain crystal orientation in DAC,
@@ -43,7 +39,7 @@ def potency_map(a, b, c, al, be, ga,
     symmetry, only a representative part of sphere (usually an octant) is shown.
 
     As an example, let's assume a orthorhombic cell with *a* = *b* = *c* = 10
-    and laue group "mmm". Running the script and generating completeness the map
+    and laue group "mmm". Running the script and generating the potency the map
     yields the lowest values close to **X\***, **Y\*** and **Z\*** vector,
     while the highest values are observed between those vectors.
     Placing the crystal on its [100] face inside the dac will cause the
@@ -94,7 +90,7 @@ def potency_map(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *alpha* in degrees.
     :type ga: float
     :param space_group: Short Hermann-Mauguin name or index of space group.
-        For details see table in hikari.symmetry.space_groups.
+        For details see :py:mod:`hikari.symmetry.space_groups`.
     :type space_group: str or int
     :param axis: domain to calculate potency in. Accepts 'x'/ 'y'/ 'z' for h00/
         0k0/ 00l, 'xy'/'xz'/'yz' for hk0/ h0l/ 0kl, or '' for all reflections.
@@ -106,12 +102,12 @@ def potency_map(a, b, c, al, be, ga,
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
-    :param orientation: 3x3 matrix of crystal orientation to be marked on a map
+    :param orientation: either a cif-style 3x3 matrix of crystal orientation or
+        a 3-length array with a diamond-perpendicular face to be marked on a map
     :type orientation: np.ndarray
-    :param output_directory: Path to directory where output should be saved.
-    :type output_directory: str
-    :param output_name: Base name for files created in `output_directory`.
-    :type output_name: str
+    :param path: Path to a file where script is to be run. Extension is ignored,
+        but file name will and must be the same for all input and output files.
+    :type path: str
     :param output_quality: Density of individual orientations to be considered.
         Should be in range from 1 (every 15 degrees) to 5 (every 1 degree).
     :type output_quality: int
@@ -123,187 +119,13 @@ def potency_map(a, b, c, al, be, ga,
     :return: None
     :rtype: None
     """
-    dat_path = make_abspath(output_directory, output_name + '.dat')
-    lst_path = make_abspath(output_directory, output_name + '.lst')
-    png_path = make_abspath(output_directory, output_name + '.png')
-    his_path = make_abspath(output_directory, output_name + '.his')
-    axis = axis.lower()
-    sg = SG[space_group]
-    pg = sg.reciprocate()
-    lg = pg.lauefy()
-
-    def _make_hkl_frame(ax=axis):
-        """Make ball or axis of hkl which will be cut in further steps"""
-        _f = HklFrame()
-        _f.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-        _f.la = wavelength
-        _f.fill(radius=min(_f.r_lim, resolution))
-        if ax in {'x'}:
-            _f.table = _f.table.loc[_f.table['k'].eq(0) & _f.table['l'].eq(0)]
-        elif ax in {'y'}:
-            _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['l'].eq(0)]
-        elif ax in {'z'}:
-            _f.table = _f.table.loc[_f.table['h'].eq(0) & _f.table['k'].eq(0)]
-        elif ax in {'xy'}:
-            _f.table = _f.table.loc[_f.table['l'].eq(0)]
-        elif ax in {'xz'}:
-            _f.table = _f.table.loc[_f.table['k'].eq(0)]
-        elif ax in {'yz'}:
-            _f.table = _f.table.loc[_f.table['h'].eq(0)]
-        if ax in {'x', 'y', 'z', 'xy', 'xz', 'yz'}:
-            _f.transform([o.tf for o in pg.operations])
-        _f.extinct(sg)
-        return _f
-
-    p = _make_hkl_frame()
-    p.find_equivalents(point_group=pg)
-    total_reflections = p.table['equiv'].nunique()
-    if total_reflections == 0:
-        raise KeyError('Specified part of reciprocal space contains zero nodes')
-
-    def _determine_theta_and_phi_limits():
-        """Define range of coordinates where potency map will be calculated.
-        Unit vectors v1, v2, v3 point in zenith z*, orthogonal x and product."""
-        _v1 = p.c_w / lin.norm(p.c_w)
-        _v2 = p.a_v / lin.norm(p.a_v)
-        _v3 = np.cross(_v1, _v2)
-
-        if sg.system in {Group.System.triclinic}:
-            _th_limits = Interval(0, 180)
-            _ph_limits = Interval(-45, 135)
-        elif sg.system in {Group.System.monoclinic}:
-            _th_limits = Interval(0, 180)
-            _ph_limits = Interval(0, 90)
-        elif sg.system in {Group.System.orthorhombic, Group.System.tetragonal,
-                         Group.System.cubic}:
-            _th_limits = Interval(0, 90)
-            _ph_limits = Interval(0, 90)
-        elif sg.system in {Group.System.trigonal, Group.System.hexagonal}:
-            _th_limits = Interval(0, 90)
-            _ph_limits = Interval(0, 120)
-        else:
-            raise ValueError('Unknown crystal system (trigonal not supported)')
-        return _v1, _v2, _v3, _th_limits, _ph_limits
-    v1, v2, v3, th_limits, ph_limits = _determine_theta_and_phi_limits()
-
-    def _determine_angle_res():
-        if output_quality not in {1, 2, 3, 4, 5}:
-            raise KeyError('output_quality should be 1, 2, 3, 4 or 5')
-        return {1: 15, 2: 10, 3: 5, 4: 2, 5: 1}[output_quality]
-    angle_res = _determine_angle_res()
-
-    # range: 1D range-like, mesh: 2D grid, comb: 1D list for all combinations
-    th_range = th_limits.arange(step=angle_res)
-    ph_range = ph_limits.arange(step=angle_res)
-    th_mesh, ph_mesh = th_limits.mesh_with(ph_limits, step=angle_res)
-    one_comb, th_comb, ph_comb = \
-        Interval(1, 1).comb_with(th_limits, ph_limits, step=angle_res)
-    data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': [], 'weight': []}
-
-    def orientation_weight(th, ph):
-        """Calculate how much each point should contribute to distribution"""
-        def sphere_cutout_area(th1, th2, ph_span):
-            """Calculate sphere area in specified ph and th degree range.
-            For exact math, see articles about spherical cap and sector."""
-            return np.deg2rad(abs(ph_span)) * \
-                   abs(np.cos(np.deg2rad(th1)) - np.cos(np.deg2rad(th2)))
-        th_max = min(th + angle_res / 2.0, th_limits[1])
-        th_min = max(th - angle_res / 2.0, th_limits[0])
-        ph_max = min(ph + angle_res / 2.0, ph_limits[1])
-        ph_min = max(ph - angle_res / 2.0, ph_limits[0])
-        return sphere_cutout_area(th_min, th_max, ph_max-ph_min)
-
-    def _calculate_completeness_mesh():
-        """Calculate completeness for each individual pair of theta and phi."""
-        _cplt_mesh = np.zeros_like(th_mesh, dtype=float)
-        lst = open(lst_path, 'w+')
-        lst.write('#     th      ph    cplt  reflns\n')
-        vectors = np.vstack(sph2cart(one_comb, np.deg2rad(th_comb),
-                                     np.deg2rad(ph_comb))).T
-        uniques = p.dacs_count(opening_angle=opening_angle, vectors=vectors)
-        for i, th in enumerate(th_range):
-            for j, ph in enumerate(ph_range):
-                count = uniques[i * len(ph_range) + j]
-                potency = count / total_reflections
-                data_dict['th'].append(th)
-                data_dict['ph'].append(ph)
-                data_dict['cplt'].append(potency)
-                data_dict['reflns'].append(count)
-                data_dict['weight'].append(orientation_weight(th, ph))
-                lst.write(f'{th:8.0f}{ph:8.0f}{potency:8.5f}{count:8d}\n')
-                _cplt_mesh[j][i] = potency
-            lst.write('\n')
-        index_max = np.unravel_index(np.argmax(_cplt_mesh), _cplt_mesh.shape)
-        best_th, best_ph = th_range[index_max[1]], ph_range[index_max[0]]
-        index_min = np.unravel_index(np.argmin(_cplt_mesh), _cplt_mesh.shape)
-        worst_th, worst_ph = th_range[index_min[1]], ph_range[index_min[0]]
-        q1, q2, q3 = weighted_quantile(values=data_dict['cplt'],
-                                       quantiles=[0.25, 0.50, 0.75],
-                                       weights=data_dict['weight'])
-        avg_p = np.average(data_dict['cplt'], weights=data_dict['weight'])
-        max_p = max(data_dict['cplt'])
-        min_p = min(data_dict['cplt'])
-        s = f'# descriptive statistics for potency:\n' \
-            f'# max ={max_p:8.5f} at th ={best_th :6.1f} ph ={best_ph :6.1f}\n'\
-            f'# min ={min_p:8.5f} at th ={worst_th:6.1f} ph ={worst_ph:6.1f}\n'\
-            f'# q_1 ={q1   :8.5f}\n' \
-            f'# q_2 ={q2   :8.5f}\n' \
-            f'# q_3 ={q3   :8.5f}\n' \
-            f'# avg ={avg_p:8.5f}\n'
-        lst.write(s)
-        lst.close()
-        np.savetxt(dat_path, _cplt_mesh)
-        return data_dict
-
-    data_dict = _calculate_completeness_mesh()
-    cplt_min = 0 if fix_scale else min(data_dict['cplt'])
-    cplt_max = 1 if fix_scale else max(data_dict['cplt'])
-    hist_bins, hist_edges = np.histogram(data_dict['cplt'], density=True,
-                                         weights=data_dict['weight'], bins=32,
-                                         range=(cplt_min, cplt_max))
-    hist_bins = hist_bins / sum(hist_bins)
-
-    def _prepare_hist_file():
-        with open(his_path, 'w+') as h:
-            h.write('#   from      to   prob.\n')
-            for _f, _t, _p in zip(hist_edges[:-1], hist_edges[1:], hist_bins):
-                h.write(f'{_f:8.5f}{_t:8.5f}{_p:8.5f}\n')
-    _prepare_hist_file()
-
-    focus = []
-    if orientation is not None:
-        for i, op in enumerate(lg.operations):
-            v = p.A_r.T @ op.tf @ lin.inv(orientation) @ np.array((1, 0, 0))
-            c = cart2sph(*v)
-            th_in_limits = min(th_limits) <= np.rad2deg(c[1]) <= max(th_limits)
-            ph_in_limits = min(ph_limits) <= np.rad2deg(c[2]) <= max(ph_limits)
-            if ph_in_limits and th_in_limits:
-                focus.append(v / lin.norm(v))
-
-    # plot potency map using built-in matplotlib
-    ma = MatplotlibAngularHeatmapArtist()
-    ma.x_axis = p.a_w / lin.norm(p.a_w)
-    ma.y_axis = p.b_w / lin.norm(p.b_w)
-    ma.z_axis = p.c_w / lin.norm(p.c_w)
-    ma.focus = focus
-    ma.heat_limits = (cplt_min, cplt_max)
-    ma.heat_palette = axis
-    ma.polar_limits = (min(th_limits), max(th_limits))
-    ma.azimuth_limits = (min(ph_limits), max(ph_limits))
-    ma.plot(png_path)
-
-    # plot potency map using external gnuplot
-    ga = GnuplotAngularHeatmapArtist()
-    ga.x_axis = p.a_w / lin.norm(p.a_w)
-    ga.y_axis = p.b_w / lin.norm(p.b_w)
-    ga.z_axis = p.c_w / lin.norm(p.c_w)
-    ga.focus = focus
-    ga.heat_limits = (cplt_min * 100, cplt_max * 100)
-    ga.heat_palette = axis
-    ga.histogram = histogram
-    ga.polar_limits = (min(th_limits), max(th_limits))
-    ga.azimuth_limits = (min(ph_limits), max(ph_limits))
-    ga.plot(png_path)
+    kwargs = locals()
+    ape = angular_property_explorer_factory.create(prop='potency')
+    ape.set_up(**kwargs)
+    ape.explore()
+    ape.write_hist_file()
+    ape.draw_matplotlib_map()
+    ape.draw_gnuplot_map()
 
 
 def potency_vs_dac_opening_angle(output_path='~/output.txt',
@@ -312,7 +134,7 @@ def potency_vs_dac_opening_angle(output_path='~/output.txt',
                                  wavelength='MoKa',
                                  theta=None):
     """
-    Calculate completeness in P1 as a function of DAC opening angle,
+    Calculate potency in P1 space group as a function of DAC opening angle,
     assuming certain resolution and wavelength used.
 
     :param output_path: Path of created file containing calculated data.
@@ -341,15 +163,14 @@ def potency_vs_dac_opening_angle(output_path='~/output.txt',
         return hkl_frame
 
     p = _make_reference_ball()
-    v = fibonacci_sphere(10)
+    v = fibonacci_sphere(100)
     total = len(p)
     angles = np.linspace(start=90, stop=0, num=precision)
-    out = open(make_abspath(output_path), 'w')
-    out.write('#oa      cplt\n')
-    for a in angles:  # for one random vector v
-        c = p.dacs_count(opening_angle=a, vectors=v)
-        out.write(' {a:7.4f} {c:7.5f}\n'.format(a=a, c=np.mean(c)/total))
-    out.close()
+    with open(make_abspath(output_path), 'w', buffering=1) as out:
+        out.write('#     oa potency\n')
+        for a in angles:  # for one random vector v
+            c = p.dacs_count(opening_angle=a, vectors=v)
+            out.write(f' {a:7.4f} {np.mean(c)/total:7.5f}\n')
 
 
 laue_space_groups = 'P-1', 'P2/m', 'Pmmm', 'P4/m', 'P4/mmm', 'P-3', 'P-3m1',\
@@ -485,10 +306,10 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
                             opening_angle=35.0,
                             wavelength='MoKa',
                             vector=(1, 0, 0),
-                            topple=5):
+                            topple_angle=5):
     """
-    For a given simulated .hkl file calculate average completeness of data
-    obtained by toppling the crystal by "topple" degrees from the axis.
+    For a given crystal, opening angle, and wavelength calculate average potency
+    obtained by toppling the crystal by "topple_angle"° from the "vector" axis.
 
     :param a: Unit cell parameter *a* in Angstrom.
     :type a: float
@@ -503,22 +324,22 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     :param ga: Unit cell parameter *gamma* in degrees.
     :type ga: float
     :param space_group: Short Hermann-Mauguin name or index of space group.
-        For details see table in hikari.symmetry.space_groups.
+        For details see :py:mod:`hikari.symmetry.space_groups`.
     :type space_group: str or int
     :param wavelength: Wavelength of radiation utilised in experiment.
     :type wavelength: float or str
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
-    :param vector: Direction around which completeness will be calculated.
+    :param vector: Direction from which a theoretical crystal will be toppled.
     :type vector: tuple
-    :param topple: Angle by which vector will be toppled in varous directions.
-    :type topple: float
+    :param topple_angle: Angle by which theoretical crystal will be toppled.
+    :type topple_angle: float
     :return: None
     """
 
     sg = SG[space_group]
-    pg = sg.reciprocate()  # .lauefy()
+    pg = sg.reciprocate()  # .lauefy()  # uncomment if hkl and -h-k-l are equiv.
 
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
@@ -541,21 +362,21 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
         return _v @ rotation_around(_k, by=np.deg2rad(angle))
 
     # generate 360 toppled vectors
-    toppled = rotate(v, perp, topple)
-    toppleds = [rotate(toppled, v, i) for i in range(360)]
+    toppled_vector = rotate(v, perp, topple_angle)
+    toppled_vectors = [rotate(toppled_vector, v, i) for i in range(360)]
 
-    # calculate the completeness for toppleds
+    # calculate the potency for toppleds
     rads = [2.00, 1/0.7, 1.20, 1.00, 1/1.5]
     cplt = [0] * len(rads)
     p.trim(max(rads))
-    for t in toppleds:
+    for t in toppled_vectors:
         q = p.copy()
         q.dac_trim(opening_angle=opening_angle, vector=t)
         for cplt_bin, rad in enumerate(rads, start=1):
             q.trim(rad)
             cplt[-cplt_bin] += q.table['equiv'].nunique()
 
-    # divide lists of completeness by total and return from sums to individuals
+    # divide lists of potency by total and return from sums to individuals
     full = [0] * len(rads)
     for cplt_bin, rad in enumerate(rads, start=1):
         p.trim(rad)
@@ -566,13 +387,12 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     full = [f2 - f1 for f1, f2 in zip([0] + full[:-1], full)]
     cplt = [c / (360 * f) for c, f in zip(cplt, full)]
 
-    print('Resolution limits (in distance to reflection, twice reciprocal:')
+    print('Resolution limits in distance to reflection, twice sin(θ/λ):')
     print(np.array(list(reversed(rads))))
-    print('Average shell completeness with {}degree topple'.format(topple))
+    print(f'Average shell potency with {topple_angle} degree topple')
     print(np.array(cplt))
 
 
 if __name__ == '__main__':
-    # potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm',
-    #             resolution=1.2, output_directory='~/_/', output_name='_')
-    pass
+    potency_map(a=10, b=10, c=10, al=90, be=90, ga=120, space_group='P21/c',
+                path='~/_/potency.hkl', output_quality=5, wavelength='MoKa')

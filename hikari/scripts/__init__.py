@@ -14,7 +14,6 @@ Users are cordially invited to propose their own scripts or script ideas.
 """
 from .hkl_potency import potency_map, potency_vs_dac_opening_angle, \
     potency_violin_plot, dac_potency_around_axis
-from .hkl_completeness import completeness_statistics
-from .hkl_completeness import dac_statistics
-from .hkl_completeness import simulate_dac
+from .hkl_completeness import completeness_statistics, dac_statistics, \
+    simulate_dac
 from .r1_map import r1_map
