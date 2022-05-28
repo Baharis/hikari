@@ -104,8 +104,8 @@ class AngularPropertyExplorer:
         else:
             self._make_hkl_frame()
         self.hkl_frame.find_equivalents(point_group=self.pg)
-        total_reflections = self.hkl_frame.table['equiv'].nunique()
-        if total_reflections == 0:
+        total_unique = self.hkl_frame.table['equiv'].nunique()
+        if total_unique == 0:
             raise KeyError('Specified part of reciprocal space has zero nodes')
 
     def set_options(self, path, fix_scale, histogram, output_quality):
@@ -285,17 +285,17 @@ class AngularPropertyExplorer:
     def ph_mesh(self):
         return self.th_limits.mesh_with(self.ph_limits, step=self.angle_res)[1]
 
-    def orientation_weight(self, th, ph):
+    def orientation_weights(self, th, ph):
         """Calculate how much each point should contribute to distribution"""
         def sphere_cutout_area(th1, th2, ph_span):
             """Calculate sphere area in specified ph and th degree range.
             For exact math, see articles about spherical cap and sector."""
             return np.deg2rad(abs(ph_span)) * \
                    abs(np.cos(np.deg2rad(th1)) - np.cos(np.deg2rad(th2)))
-        th_max = min(th + self.angle_res / 2., self.th_limits[1])
-        th_min = max(th - self.angle_res / 2., self.th_limits[0])
-        ph_max = min(ph + self.angle_res / 2., self.ph_limits[1])
-        ph_min = max(ph - self.angle_res / 2., self.ph_limits[0])
+        th_max = (th + self.angle_res / 2.).clip(max=self.th_limits[1])
+        th_min = (th - self.angle_res / 2.).clip(min=self.th_limits[0])
+        ph_max = (ph + self.angle_res / 2.).clip(max=self.ph_limits[1])
+        ph_min = (ph - self.angle_res / 2.).clip(min=self.ph_limits[0])
         return sphere_cutout_area(th_min, th_max, ph_max-ph_min)
 
     @property
@@ -341,19 +341,21 @@ class AngularPotencyExplorer(AngularPropertyExplorer):
         vectors = sph2cart(r=np.ones_like(self.th_comb),
                            p=np.deg2rad(self.th_comb),
                            a=np.deg2rad(self.ph_comb)).T
+        weights = self.orientation_weights(th=self.th_comb, ph=self.ph_comb)
         uniques = self.hkl_frame.dacs_count(self.opening_angle, vectors=vectors)
         total_unique = self.hkl_frame.table['equiv'].nunique('')
 
         for i, th in enumerate(self.th_range):
             for j, ph in enumerate(self.ph_range):
-                count = uniques[j * len(self.th_range) + i]
-                potency = count / total_unique
+                unique = uniques[j * len(self.th_range) + i]
+                weight = weights[j * len(self.th_range) + i]
+                potency = unique / total_unique
                 self.data_dict['th'].append(th)
                 self.data_dict['ph'].append(ph)
                 self.data_dict['cplt'].append(potency)
-                self.data_dict['reflns'].append(count)
-                self.data_dict['weight'].append(self.orientation_weight(th, ph))
-                lst.write(f'{th:8.0f}{ph:8.0f}{potency:8.5f}{count:8d}\n')
+                self.data_dict['reflns'].append(unique)
+                self.data_dict['weight'].append(weight)
+                lst.write(f'{th:8.0f}{ph:8.0f}{potency:8.5f}{unique:8d}\n')
                 cplt_mesh[j][i] = potency
             lst.write('\n')
 
@@ -378,7 +380,9 @@ class AngularR1Explorer(AngularPropertyExplorer):
         lst = open(lst_path, 'w+')
         lst.write('#     th      ph    cplt  reflns\n')
 
+        weights = self.orientation_weights(th=self.th_comb, ph=self.ph_comb)
         total_unique = self.hkl_frame.table['equiv'].nunique()
+
         for i, th in enumerate(self.th_range):
             for j, ph in enumerate(self.ph_range):
                 subdir = self.path + f'_th{int(th+.1)}_ph{int(ph+.1)}'
@@ -392,15 +396,16 @@ class AngularR1Explorer(AngularPropertyExplorer):
                 q.dac_trim(self.opening_angle,
                            sph2cart(1.0, np.deg2rad(th), np.deg2rad(ph)))
                 q.write(hkl_path2, hkl_format='shelx_4')
-                count = q.table['equiv'].nunique()
+                unique = q.table['equiv'].nunique()
+                weight = weights[j * len(self.th_range) + i]
                 os.system(f'cd {dir_path2}; shelxl {job_name}')
                 r1 = LstFrame().read_r1(lst_path2)
-                potency = count / total_unique
+                potency = unique / total_unique
                 self.data_dict['th'].append(th)
                 self.data_dict['ph'].append(ph)
                 self.data_dict['cplt'].append(potency)
                 self.data_dict['r1'].append(r1)
-                self.data_dict['weight'].append(self.orientation_weight(th, ph))
+                self.data_dict['weight'].append(weight)
                 lst.write(f'{th:8.0f}{ph:8.0f}{r1:8.5}{potency:8.5f}\n')
                 r1_mesh[i][j] = r1
             lst.write('\n')
