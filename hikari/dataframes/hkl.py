@@ -1285,4 +1285,3 @@ class HklToResConverter:
 
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
-    # TODO import problems - PG / SG must be imported first???

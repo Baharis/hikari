@@ -86,8 +86,8 @@ class AngularPropertyExplorer:
         self.fix_scale = False
         self.histogram = False
         self.output_quality = 1
-        self.data_dict = {'th': [], 'ph': [], 'cplt': [], 'reflns': [],
-                          'r1': [], 'weight': []}
+        self.data_dict = {'th': [], 'ph': [], 'potency': [], 'reflns': [],
+                          'R1': [], 'weight': []}
 
     def set_up(self, a, b, c, al, be, ga, space_group, wavelength, axis,
                opening_angle, orientation, resolution,
@@ -306,7 +306,7 @@ class AngularPropertyExplorer:
 
         avg_p = np.average(self.data_dict[self.property_name],
                            weights=self.data_dict['weight'])
-        q1, q2, q3 = weighted_quantile(values=self.data_dict['cplt'],
+        q1, q2, q3 = weighted_quantile(self.data_dict[self.property_name],
                                        quantiles=[0.25, 0.50, 0.75],
                                        weights=self.data_dict['weight'])
 
@@ -322,16 +322,16 @@ class AngularPropertyExplorer:
 
 class AngularPotencyExplorer(AngularPropertyExplorer):
     hkl_is_read_not_generated = False
-    property_name = 'cplt'
+    property_name = 'potency'
     property_theoretical_limits = Interval(0, 1)
 
     def explore(self):
         dat_path = self.path + self.MESH_EXTENSION
         lst_path = self.path + self.LISTING_EXTENSION
 
-        cplt_mesh = np.zeros_like(self.th_mesh, dtype=float)
+        potency_mesh = np.zeros_like(self.th_mesh, dtype=float)
         lst = open(lst_path, 'w+')
-        lst.write('#     th      ph    cplt  reflns\n')
+        lst.write('#     th      ph potency  reflns\n')
         vectors = sph2cart(r=np.ones_like(self.th_comb),
                            p=np.deg2rad(self.th_comb),
                            a=np.deg2rad(self.ph_comb)).T
@@ -346,15 +346,15 @@ class AngularPotencyExplorer(AngularPropertyExplorer):
                 potency = unique / total_unique
                 self.data_dict['th'].append(th)
                 self.data_dict['ph'].append(ph)
-                self.data_dict['cplt'].append(potency)
+                self.data_dict['potency'].append(potency)
                 self.data_dict['reflns'].append(unique)
                 self.data_dict['weight'].append(weight)
                 lst.write(f'{th:8.0f}{ph:8.0f}{potency:8.5f}{unique:8d}\n')
-                cplt_mesh[j][i] = potency
+                potency_mesh[j][i] = potency
             lst.write('\n')
 
         # noinspection PyTypeChecker
-        np.savetxt(dat_path, cplt_mesh)
+        np.savetxt(dat_path, potency_mesh)
         lst.write(self.descriptive_statistics_string)
         lst.close()
 
@@ -362,7 +362,7 @@ class AngularPotencyExplorer(AngularPropertyExplorer):
 class AngularR1Explorer(AngularPropertyExplorer):
 
     hkl_is_read_not_generated = True
-    property_name = 'r1'
+    property_name = 'R1'
     property_theoretical_limits = Interval(0, 1)
 
     def explore(self):
@@ -372,7 +372,7 @@ class AngularR1Explorer(AngularPropertyExplorer):
 
         r1_mesh = np.zeros_like(self.th_mesh, dtype=float)
         lst = open(lst_path, 'w+')
-        lst.write('#     th      ph    cplt  reflns\n')
+        lst.write('#     th      ph      R1  reflns\n')
 
         weights = self.orientation_weights(th=self.th_comb, ph=self.ph_comb)
         total_unique = self.hkl_frame.table['equiv'].nunique()
@@ -397,11 +397,11 @@ class AngularR1Explorer(AngularPropertyExplorer):
                 potency = unique / total_unique
                 self.data_dict['th'].append(th)
                 self.data_dict['ph'].append(ph)
-                self.data_dict['cplt'].append(potency)
-                self.data_dict['r1'].append(r1)
+                self.data_dict['potency'].append(potency)
+                self.data_dict['R1'].append(r1)
                 self.data_dict['weight'].append(weight)
                 lst.write(f'{th:8.0f}{ph:8.0f}{r1:8.5}{potency:8.5f}\n')
-                r1_mesh[i][j] = r1
+                r1_mesh[j][i] = r1
             lst.write('\n')
 
         # noinspection PyTypeChecker

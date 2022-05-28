@@ -227,5 +227,3 @@ def weighted_quantile(values, quantiles, weights=None):
     results_0to1 = np.interp(quantiles, weighted_cumsum_0to1, values)
     results_1to0 = np.interp(1-quantiles, weighted_cumsum_1to0, np.flip(values))
     return (results_0to1 + results_1to0) / 2.0
-
-# TODO later check scipy.spatial.transform.Rotation.from_rotvec as substitute
