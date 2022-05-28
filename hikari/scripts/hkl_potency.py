@@ -158,18 +158,18 @@ def potency_vs_dac_opening_angle(output_path='~/output.txt',
         side = 10 * precision**(1/3) / res  # adapt to res&la
         hkl_frame.edit_cell(a=side, b=side, c=side, al=90, be=90, ga=90)
         hkl_frame.fill(radius=res)
+        hkl_frame.find_equivalents()
         return hkl_frame
 
     p = _make_reference_ball()
     v = fibonacci_sphere(100)
     total = len(p)
     angles = np.linspace(start=90, stop=0, num=precision)
-    out = open(make_abspath(output_path), 'w')
-    out.write('#oa      cplt\n')
-    for a in angles:  # for one random vector v
-        c = p.dacs_count(opening_angle=a, vectors=v)
-        out.write(f' {a:7.4f} {np.mean(c)/total:7.5f}\n')
-    out.close()
+    with open(make_abspath(output_path), 'w', buffering=1) as out:
+        out.write('#     oa potency\n')
+        for a in angles:  # for one random vector v
+            c = p.dacs_count(opening_angle=a, vectors=v)
+            out.write(f' {a:7.4f} {np.mean(c)/total:7.5f}\n')
 
 
 laue_space_groups = 'P-1', 'P2/m', 'Pmmm', 'P4/m', 'P4/mmm', 'P-3', 'P-3m1',\
