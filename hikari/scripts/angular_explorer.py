@@ -93,7 +93,8 @@ class AngularPropertyExplorer:
                opening_angle, orientation, resolution,
                path, fix_scale, histogram, output_quality):
         self.opening_angle = opening_angle
-        self.orientation = orientation
+        self.orientation = None if orientation is None \
+            else np.array(orientation)
         self.resolution = resolution
         self.path = path
         self.fix_scale = fix_scale
@@ -243,11 +244,14 @@ class AngularPropertyExplorer:
 
     @property
     def focus(self):
-        if self.orientation is None:
-            return []
-        else:
-            _focus = []
-            a = lin.inv(self.orientation) @ np.array((1, 0, 0))
+        _focus = []
+        if self.orientation is not None:
+            if len(self.orientation.shape) == 1:
+                a = self.orientation
+            elif len(self.orientation.shape) == 2:
+                a = lin.inv(self.orientation) @ np.array((1, 0, 0))
+            else:
+                raise ValueError(f'Unknown orientation: {self.orientation}')
             for op in self.lg.operations:
                 v = self.hkl_frame.A_r.T @ op.tf @ a
                 c = np.rad2deg(cart2sph(*v))

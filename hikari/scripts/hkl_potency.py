@@ -102,7 +102,8 @@ def potency_map(a, b, c, al, be, ga,
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
-    :param orientation: 3x3 matrix of crystal orientation to be marked on a map
+    :param orientation: either a cif-style 3x3 matrix of crystal orientation or
+        a 3-length array with a diamond-perpendicular face to be marked on a map
     :type orientation: np.ndarray
     :param path: Path to a file where script is to be run. Extension is ignored,
         but file name will and must be the same for all input and output files.
