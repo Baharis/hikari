@@ -15,7 +15,7 @@ import numpy as np
 def completeness_statistics(a, b, c, al, be, ga,
                             space_group='P-1',
                             input_path='shelx.hkl',
-                            input_format=4,
+                            input_format='shelx_4',
                             input_wavelength='CuKa'):
     """
     For a given experimental .hkl file calculate basic completeness statistics
@@ -40,7 +40,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     :type input_path: str
     :param input_format: Format of the .hkl file. For reference see
         :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
-    :type input_format: int or str or dict
+    :type input_format: str or dict
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str
     :return: None
@@ -50,7 +50,7 @@ def completeness_statistics(a, b, c, al, be, ga,
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
     p.la = input_wavelength
     p.read(make_abspath(input_path), input_format)
-    p.stats(space_group=SG[space_group])
+    print(p.stats(space_group=SG[space_group]))
 
 
 def dac_statistics(a, b, c, al, be, ga,
@@ -212,24 +212,6 @@ def simulate_dac(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    # from os import system
-    # sg = {'P-1': 'P-1',
-    #       'P2/m': 'P2om',
-    #       'Pmmm': 'Pmmm',
-    #       'P4/m': 'P4om',
-    #       'P4/mmm': 'P4ommm',
-    #       'Pm-3': 'Pm-3',
-    #       'Pm-3m': 'Pm-3m',
-    #       'P-3': 'P-3',
-    #       'P-3m1': 'P-3m1',
-    #       'P6/m': 'P6om',
-    #       'P6/mmm': 'P6ommm'}
-    # kwargs = {'a': 20, 'b': 20, 'c': 20, 'al': 90, 'be': 90,
-    #           'fix_scale': True, 'opening_angle': 45,
-    #           'output_quality': 5, 'wavelength': 0.42, 'resolution': 2.0}
-    # for k, v in sg.items():
-    #     name = 'CpltMap_la42oa45res50_{}'.format(v)
-    #     ga = 120 if v in {'P-3', 'P-3m1', 'P6om', 'P6ommm'} else 90
-    #     completeness_map(space_group=SG[k], ga=ga,
-    #                      output_name=name, **kwargs)
-    pass
+    completeness_statistics(5.641087, 5.641087, 5.641087, 90, 90, 90,
+                            space_group='Fm-3m', input_path='~/_/NaCl/NaCl.hkl',
+                            input_format='shelx_4', input_wavelength='CuKa')
