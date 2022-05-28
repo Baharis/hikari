@@ -26,7 +26,7 @@ def potency_map(a, b, c, al, be, ga,
     (DAC) with a given opening angle, as a function of crystal orientation.
     For details see `this paper <https://doi.org/10.1107/S2052252521009532>`_.
 
-    The script accepts unit cell & space group information, and predicts the
+    The script accepts unit cell & space group information, and predicts max
     completeness of fully merged data for investigated crystal in said group.
     Results are logged into text files and drawn with gnuplot or matplotlib.
 
@@ -39,7 +39,7 @@ def potency_map(a, b, c, al, be, ga,
     symmetry, only a representative part of sphere (usually an octant) is shown.
 
     As an example, let's assume a orthorhombic cell with *a* = *b* = *c* = 10
-    and laue group "mmm". Running the script and generating completeness the map
+    and laue group "mmm". Running the script and generating the potency the map
     yields the lowest values close to **X\***, **Y\*** and **Z\*** vector,
     while the highest values are observed between those vectors.
     Placing the crystal on its [100] face inside the dac will cause the
@@ -133,7 +133,7 @@ def potency_vs_dac_opening_angle(output_path='~/output.txt',
                                  wavelength='MoKa',
                                  theta=None):
     """
-    Calculate completeness in P1 as a function of DAC opening angle,
+    Calculate potency in P1 space group as a function of DAC opening angle,
     assuming certain resolution and wavelength used.
 
     :param output_path: Path of created file containing calculated data.
@@ -305,10 +305,10 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
                             opening_angle=35.0,
                             wavelength='MoKa',
                             vector=(1, 0, 0),
-                            topple=5):
+                            topple_angle=5):
     """
-    For a given simulated .hkl file calculate average completeness of data
-    obtained by toppling the crystal by "topple" degrees from the axis.
+    For a given crystal, opening angle, and wavelength calculate average potency
+    obtained by toppling the crystal by "topple_angle"° from the "vector" axis.
 
     :param a: Unit cell parameter *a* in Angstrom.
     :type a: float
@@ -330,15 +330,15 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     :param opening_angle: Value of single opening angle as defined in
         :meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
-    :param vector: Direction around which completeness will be calculated.
+    :param vector: Direction from which a theoretical crystal will be toppled.
     :type vector: tuple
-    :param topple: Angle by which vector will be toppled in varous directions.
-    :type topple: float
+    :param topple_angle: Angle by which theoretical crystal will be toppled.
+    :type topple_angle: float
     :return: None
     """
 
     sg = SG[space_group]
-    pg = sg.reciprocate()  # .lauefy()
+    pg = sg.reciprocate()  # .lauefy()  # uncomment if hkl and -h-k-l are equiv.
 
     p = HklFrame()
     p.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
@@ -361,21 +361,21 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
         return _v @ rotation_around(_k, by=np.deg2rad(angle))
 
     # generate 360 toppled vectors
-    toppled = rotate(v, perp, topple)
-    toppleds = [rotate(toppled, v, i) for i in range(360)]
+    toppled_vector = rotate(v, perp, topple_angle)
+    toppled_vectors = [rotate(toppled_vector, v, i) for i in range(360)]
 
-    # calculate the completeness for toppleds
+    # calculate the potency for toppleds
     rads = [2.00, 1/0.7, 1.20, 1.00, 1/1.5]
     cplt = [0] * len(rads)
     p.trim(max(rads))
-    for t in toppleds:
+    for t in toppled_vectors:
         q = p.copy()
         q.dac_trim(opening_angle=opening_angle, vector=t)
         for cplt_bin, rad in enumerate(rads, start=1):
             q.trim(rad)
             cplt[-cplt_bin] += q.table['equiv'].nunique()
 
-    # divide lists of completeness by total and return from sums to individuals
+    # divide lists of potency by total and return from sums to individuals
     full = [0] * len(rads)
     for cplt_bin, rad in enumerate(rads, start=1):
         p.trim(rad)
@@ -386,9 +386,9 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     full = [f2 - f1 for f1, f2 in zip([0] + full[:-1], full)]
     cplt = [c / (360 * f) for c, f in zip(cplt, full)]
 
-    print('Resolution limits (in distance to reflection, twice reciprocal:')
+    print('Resolution limits in distance to reflection, twice sin(θ/λ):')
     print(np.array(list(reversed(rads))))
-    print('Average shell completeness with {}degree topple'.format(topple))
+    print(f'Average shell potency with {topple_angle} degree topple')
     print(np.array(cplt))
 
 
