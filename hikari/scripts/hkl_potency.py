@@ -28,8 +28,7 @@ def potency_map(a, b, c, al, be, ga,
 
     The script accepts unit cell & space group information, and predicts the
     completeness of fully merged data for investigated crystal in said group.
-    Results are logged into text files and drawn with gnuplot or matplotlib,
-    depending on settings.
+    Results are logged into text files and drawn with gnuplot or matplotlib.
 
     Potency is calculated and visualised on a unit-sphere orientation heatmap.
     Each point **p** is associated with a certain crystal orientation in DAC,
@@ -395,17 +394,5 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
 
 
 if __name__ == '__main__':
-    # potency_map(10, 10, 10, 90, 90, 90, space_group='Pmmm',
-    #             resolution=1.2, output_directory='~/_/', output_name='_')
-    ori2 = np.array(((-0.0763491000, -0.0083505000, 0.0385930000),
-              (-0.0182458000, -0.0367852000, -0.0315399000),
-              (0.0609273000, -0.0215065000, 0.0389391000)))
-    # potency_map(a=10, b=10, c=10, al=90, be=100, ga=90, space_group='P21/c',
-    #              fix_scale=False,
-    #              output_directory='~/Documents/python_stubs/histogram_on_potency_map/hikari-0.1.4/', output_name='dev2_free',
-    #              output_quality=5, histogram=True, orientation=ori2)
-    potency_map(a=10, b=10, c=10, al=90, be=90, ga=120, space_group='P63/mcm',
-                fix_scale=True, resolution=2.0,
-                path='~/Documents/python_stubs/histogram_on_potency_map/hikari-0.1.4/dev2_fixed',
-                output_quality=5, histogram=True, orientation=ori2)
-    pass
+    potency_map(a=10, b=10, c=10, al=90, be=90, ga=120, space_group='P21/c',
+                path='~/_/potency.hkl', output_quality=5, wavelength='MoKa')
