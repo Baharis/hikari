@@ -143,7 +143,7 @@ def rotation_from(from_, to):
     :type from_: np.ndarray
     :param to: A 3D vector onto which `from` will have been rotated.
     :type to: np.ndarray
-    :return: Matrix associated with rotation of `from` onto `to.
+    :return: Matrix associated with rotation of `from` onto `to`.
     :rtype: np.ndarray
     """
     if from_.size != 3:

@@ -4,10 +4,26 @@ hikari.utility package
 Submodules
 ----------
 
+hikari.utility.artists module
+-----------------------------
+
+.. automodule:: hikari.utility.artists
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 hikari.utility.chem\_tools module
 ---------------------------------
 
 .. automodule:: hikari.utility.chem_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+hikari.utility.interval module
+------------------------------
+
+.. automodule:: hikari.utility.interval
    :members:
    :undoc-members:
    :show-inheritance:

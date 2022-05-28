@@ -235,11 +235,10 @@ class SymmOp:
             return '?'
 
     @property
-    def fold(self):
+    def fold(self) -> int:
         """
-        :return: number of times operation must be repeated to become inversion
-        or translation: n for n-fold axes, 2 for reflections, 1 for other (max6)
-        :rtype: int
+        Number of times operation must be repeated to become identity, inversion
+        or translation: n for n-fold axes, 2 for reflections, 1 for other (max 6)
         """
         op = SymmOp(self.tf) if self.det > 0 else SymmOp(-self.tf)
         for f in (1, 2, 3, 4, 5, 6):
@@ -248,11 +247,10 @@ class SymmOp:
         raise NotImplementedError('fold is not in range 1 to 6')
 
     @property
-    def order(self):
+    def order(self) -> int:
         """
-        :return: number of times operation has to be repeated to become
-        translation, eg.: n for all n-fold axes, 2 for other (max 6)
-        :rtype: int
+        Number of times operation has to be repeated to become
+        a translation, eg.: n for all n-fold axes, 2 for other (max 6)
         """
         for f in (1, 2, 3, 4, 5, 6):
             if pow(self, f, 1).typ is self.Type.identity:
@@ -260,28 +258,24 @@ class SymmOp:
         raise NotImplementedError('order is not in range 1 to 6')
 
     @property
-    def glide(self):
+    def glide(self) -> np.ndarray:
         """
-        :return: part of the translation vector stemming from operations' glide
-        :rtype: np.ndarray
+        Part of the translation vector stemming from operations' glide
         """
         return (self ** 24).__tl24 / 576 % 1
 
     @property
-    def glide_fold(self):
+    def glide_fold(self) -> int:
         """
-        :return: number of types glide component of the operation must be
-        repeated to contain only integer values, eg.: 3 for "6_2", 4 for "d"
-        :rtype:
+        Number of types glide component of the operation must be repeated
+        in order to contain only integer values, eg.: 3 for "6_2", 4 for "d"
         """
-
         return max([24 // t for t in [*self.__tl24, 24] if t != 0])
 
     @property
-    def origin(self):
+    def origin(self) -> np.ndarray:
         """
-        :return: selected point belonging to symmetry element of the operation
-        :rtype: np.ndarray
+        Selected point invariant to the symmetry operation
         """
         return (self.tl - self.glide) * 1 / 2
 
@@ -352,6 +346,7 @@ class SymmOp:
         """
         Transform operation as little as possible so that its symmetry element
         contains "point". To be used after "into" if used together.
+
         :param point: Target coordinates of point which should lie in element
         :type point: np.array
         :return: New symmetry operation which contains "point" in its element
@@ -366,7 +361,8 @@ class SymmOp:
         """
         Rotate operation so that its orientation changes to "direction", while
         preserving fractional glide. To be used before respective "at" method.
-        Might not work correctly for rhombohedral unit cell #TODO
+        Will most likely not work for unimplemented rhombohedral unit cells.
+
         :param direction: Target orientation for element of symmetry operation
         :type direction: np.ndarray
         :param hexagonal: True if operation is defined in hexagonal coordinates
@@ -411,6 +407,7 @@ class SymmOp:
     def transform(self, other):
         """
         Transform a column containing rows of coordinate points
+
         :param other: A vertical numpy array of coordinate triplets kept in rows
         :type other: np.ndarray
         :return: Same-shaped array of coordinate triplets transformed by self
@@ -424,6 +421,8 @@ class SymmOp:
 
     def extincts(self, hkl):
         """
+        Return boolean array with truth whenever reflection should be extinct
+
         :param hkl: An array containing one hkl or multiple hkls in columns
         :type hkl: np.ndarray
         :return: array of booleans, where extinct reflections are marked as True

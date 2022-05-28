@@ -191,6 +191,7 @@ def fcf_descriptors(input_path='shelx.fcf', input_format='shelx_fcf'):
 def calculate_sample_form_factors(a, b, c, al, be, ga, space_group, res_path):
     """
     Estimate and print selected IAM XRD form factors for given crystal structure
+
     :param a: Unit cell parameter *a* in Angstrom.
     :type a: float
     :param b: Unit cell parameter *b* in Angstrom.

@@ -5,3 +5,4 @@ hikari
    :maxdepth: 4
 
    hikari
+   setup

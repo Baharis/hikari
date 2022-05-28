@@ -38,8 +38,8 @@ def completeness_statistics(a, b, c, al, be, ga,
     :type space_group: str or int
     :param input_path: Path to the input .hkl file.
     :type input_path: str
-    :param input_format: Format of the .hkl file. For reference see
-        :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
+    :param input_format: Format of the .hkl file. For reference
+        see :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
     :type input_format: str or dict
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str
@@ -80,21 +80,21 @@ def dac_statistics(a, b, c, al, be, ga,
     :param space_group: Short Hermann-Mauguin name or index of space group.
         For details see table in hikari.symmetry.space_groups.
     :type space_group: str or int
-    :param opening_angle: Value of single opening angle as defined in
-        :meth:`hikari.dataframes.HklFrame.dac`.
+    :param opening_angle: Value of single opening angle as defined
+        in :py:meth:`hikari.dataframes.HklFrame.dac`.
     :type opening_angle: float
-    :param orientation: Crystal orientation as defined in
-        :class:`hikari.dataframes.BaseFrame`
+    :param orientation: Crystal orientation as defined
+        in :py:class:`hikari.dataframes.BaseFrame`
     :type orientation: tuple or numpy.array
     :param input_path: Path to the input .hkl file.
     :type input_path: str
-    :param input_format: Format of the .hkl file. For reference see
-        :meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
+    :param input_format: Format of the .hkl file. For reference
+        see :py:meth:`hikari.dataframes.HklFrame.interpret_hkl_format`.
     :type input_format: int or str or dict
     :param input_wavelength: Wavelength of radiation utilised in experiment.
     :type input_wavelength: float or str
     :param resolution: If given, calculate statistics only up to this value.
-    Please provide it as a distance in rec. space (twice the resolution in A-1).
+        Please provide it as a distance in rec. space (twice the resolution in A-1).
     :type resolution: float
     :return: None
     """
