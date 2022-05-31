@@ -13,6 +13,17 @@ def ustrip(ufloat):
     return new
 
 
+def common_prefix(loop_elements):
+    prefix = ''
+    for char_index in range(len(loop_elements[0])):
+        chars = [loop_element[char_index] for loop_element in loop_elements]
+        if len(set(chars)) == 1:
+            prefix += chars[0]
+        else:
+            break
+    return prefix.rstrip('_')
+
+
 class CifFrame:
     """
 
@@ -79,10 +90,11 @@ class CifFrame:
             elif key == 'loop_':
                 index += 1
                 subkeys, subvalues, subvalues_lines = [], [], []
-                while lines[index][:1] == '_':
+                while lines[index].strip()[:1] == '_':
                     subkeys.append(lines[index])
                     index += 1
-                while len(lines[index].split()) == len(subkeys):
+                # TODO text in quotation marks eg.: 'x, y, z' shouldn't be split
+                while len(lines[index].strip().split()) == len(subkeys):
                     subvalues_lines.append(list(lines[index].split()))
                     index += 1
                     try:
