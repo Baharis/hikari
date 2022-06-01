@@ -1,4 +1,7 @@
+import re
 from collections import OrderedDict
+from enum import Enum
+from hikari.utility import make_abspath
 
 
 def ustrip(ufloat):
@@ -28,29 +31,27 @@ class CifFrame:
     """
 
     """
-    def __init__(self, file_path=None, file_data_block='I'):
+    def __init__(self):
         self.data = OrderedDict()
         self.meta = dict()
-        if file_path is not None:
-            self.read(path=file_path, datablock=file_data_block)
 
-    def read(self, path, datablock='I'):
+    def read(self, path, block='I'):
         """Read data from specified ins/res file and return an OrderedDict"""
 
         # SPECIFY SOME META
-        self.meta['name'] = datablock
+        self.meta['name'] = block
         self.meta['comment'] = str()
 
         # READ THE FILE, FIND RELEVANT DATA BLOCK, DELETE REST
         lines = [line.strip() for line in open(path, 'r')]
         lines_to_delete = []
-        correct_datablock = False
+        is_correct_block = False
         for index, line in enumerate(lines):
-            if line[:5 + len(datablock)] == 'data_' + datablock:
-                correct_datablock = True
+            if line[:5 + len(block)] == 'data_' + block:
+                is_correct_block = True
             elif line[:5] == 'data_':
-                correct_datablock = False
-            if not correct_datablock:
+                is_correct_block = False
+            if not is_correct_block:
                 lines_to_delete.append(index)
         for index in reversed(lines_to_delete):
             del(lines[index])
@@ -109,11 +110,160 @@ class CifFrame:
             index += 1
 
 
+class CifIO:
+    """
+    A helper class supporting CifFrame.
+    Menages reading and writing cif files
+    into and out of CifFrame's dataframe.
+    Based on the IUCr File Syntax version 1.1 Working specification available
+    [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
+    """
+    WHITESPACE_SUBSTITUTES = {' ': '█'}
+
+    def __init__(self, cif_file_path, cif_block_header):
+        self.file_path = make_abspath(cif_file_path)
+        self.file_lines = []
+        self.data_block_header = cif_block_header
+        self.data = OrderedDict()
+
+    class ReadingState(Enum):
+        default = 0
+        loop = 1
+        multiline = 2
+
+    def substitute_whitespace_in_quotes(self, string, reverse=False):
+        # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
+        split_string = []
+        matching_quotes_regex = r"""(["'])((?:\\\1|(?:(?!\1)).)*)(\1)"""
+        print(re.split(matching_quotes_regex, string))
+
+        for m in re.split(matching_quotes_regex, string)[2::4]:
+            if m.startswith("'") or m.startswith('"'):
+                for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
+                    m = m.replace(sub, ws) if reverse else m.replace(ws, sub)
+            split_string.append(m)
+        print('hi?: ', ''.join(split_string))
+        return ''.join(split_string)
+
+    @staticmethod
+    def remove_outer_quotes(s):
+        left = s[0]
+        right = s[-1]
+        return s.strip(left) if left == right and left in ('"', "'") else s
+
+    def locate_block(self, block_header=''):
+        data_block_string = 'data_' + block_header
+        data_block_start = 1
+        data_block_end = None
+        for line_number, line in enumerate(self.file_lines):
+            if data_block_string in line:
+                data_block_start = line_number + 1
+                break
+        for line_number, line in enumerate(self.file_lines[data_block_start:]):
+            if 'data_' in line:
+                data_block_end = line_number
+                break
+        return data_block_start, data_block_end
+
+    def read(self):
+        def load_file_to_lines():
+            list_of_lines = []
+            with open(self.file_path, 'r') as cif_file:
+                for line in cif_file.read().splitlines():
+                    list_of_lines.append(line)
+            return list_of_lines
+        self.file_lines = load_file_to_lines()
+        block_start, block_end = self.locate_block(self.data_block_header)
+        self.parse_lines(start=block_start, end=block_end)
+
+    class CifDataBuffer:
+        """
+        This class stores a chunk of cif until it is parsed completely.
+        After the chunk is complete, calling flush() cleans it.
+        """
+        def __init__(self, target):
+            self.names = []
+            self.values = []
+            self.target = target
+
+        def parse(self, word):
+            if word.startswith('_'):
+                self.names.append(word)
+            else:
+                self.values.append(word)
+
+        def append_to_multiline(self, string):
+            if self.values:
+                self.values[-1] = self.values[-1] + '\n' + string
+            else:
+                self.values.append(string)
+
+        def flush(self):
+            d = OrderedDict()
+            if len(self.values) == len(self.names):
+                d.update({n: v for n, v in zip(self.names, self.values)})
+            elif len(self.values) % len(self.names) == 0:
+                d.update({n: self.values[i::len(self.names)]
+                          for i, n in enumerate(self.names)})
+            else:
+                raise IndexError(f'len(values) == {len(self.values)}) must be '
+                                 f'multiple of len(names) == {len(self.names)}')
+            self.target.update(d)
+            self.names = []
+            self.values = []
+
+    def split_line(self, line):
+        substituted_line = self.substitute_whitespace_in_quotes(line)
+        if 'C' in substituted_line:
+            print(repr(substituted_line))
+            assert False
+        words = []
+        for word in substituted_line.strip().split():
+            word = self.substitute_whitespace_in_quotes(word, reverse=True)
+            words.append(self.remove_outer_quotes(word))
+        return words
+
+    def parse_lines(self, start, end):
+        buffer = self.CifDataBuffer(target=self.data)
+        state = self.ReadingState.default
+        for line in self.file_lines[start:end]:
+            if line.startswith('#'):
+                continue
+            if state is self.ReadingState.multiline and line.startswith(';'):
+                buffer.flush()
+                state = self.ReadingState.default
+                line = line[1:]
+            elif state is self.ReadingState.multiline:
+                buffer.append_to_multiline(line)
+                continue
+            elif line.startswith(';'):
+                state = self.ReadingState.multiline
+                line = line[1:]
+            elif line.startswith('loop_'):
+                state = self.ReadingState.loop
+                line = line[5:]
+            words = self.split_line(line)
+            if not words:
+                if state is self.ReadingState.loop:
+                    buffer.flush()
+                    state = self.ReadingState.default
+                elif state is self.ReadingState.multiline:
+                    buffer.append_to_multiline('')
+                continue
+            if words[0].startswith('_') and state is not self.ReadingState.loop:
+                buffer.flush()
+            for word in words:
+                buffer.parse(word)
+            if not words and state is self.ReadingState.loop:
+                pass
+        buffer.flush()
+
+
 if __name__ == '__main__':
-    cif = CifFrame(file_path='//test_data/exp_353.cif',
-                   file_data_block='exp_353')
-    print(len(cif.data.items()))
-    for key, value in cif.data.items():
-        print(key, '::', value)
+    cifio = CifIO(cif_file_path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
+                  cif_block_header='rfpirazB_100K_SXD')
+    cifio.read()
+    for k, v in cifio.data.items():
+        print(f'{k}:: {repr(v)}')
 
 # TODO Try using pyCIFrw package to read and write cif information.
