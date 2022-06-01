@@ -129,20 +129,18 @@ class CifIO:
     class ReadingState(Enum):
         default = 0
         loop = 1
-        multiline = 2
+        loop_header = 2
+        multiline = 3
 
     def substitute_whitespace_in_quotes(self, string, reverse=False):
         # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
         split_string = []
         matching_quotes_regex = r"""(["'])((?:\\\1|(?:(?!\1)).)*)(\1)"""
-        print(re.split(matching_quotes_regex, string))
-
-        for m in re.split(matching_quotes_regex, string)[2::4]:
-            if m.startswith("'") or m.startswith('"'):
+        for i, m in enumerate(re.split(matching_quotes_regex, string)):
+            if i % 4 == 2:
                 for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
                     m = m.replace(sub, ws) if reverse else m.replace(ws, sub)
             split_string.append(m)
-        print('hi?: ', ''.join(split_string))
         return ''.join(split_string)
 
     @staticmethod
@@ -200,23 +198,22 @@ class CifIO:
 
         def flush(self):
             d = OrderedDict()
-            if len(self.values) == len(self.names):
+            lv = len(self.values)
+            ln = len(self.names)
+            if lv == ln:
                 d.update({n: v for n, v in zip(self.names, self.values)})
-            elif len(self.values) % len(self.names) == 0:
-                d.update({n: self.values[i::len(self.names)]
+            elif lv % ln == 0 and lv > 0:
+                d.update({n: self.values[i::ln]
                           for i, n in enumerate(self.names)})
             else:
-                raise IndexError(f'len(values) == {len(self.values)}) must be '
-                                 f'multiple of len(names) == {len(self.names)}')
+                raise IndexError(f'len(values) == {lv} must be a positive '
+                                 f'multiple of len(names) == {ln}')
             self.target.update(d)
             self.names = []
             self.values = []
 
     def split_line(self, line):
         substituted_line = self.substitute_whitespace_in_quotes(line)
-        if 'C' in substituted_line:
-            print(repr(substituted_line))
-            assert False
         words = []
         for word in substituted_line.strip().split():
             word = self.substitute_whitespace_in_quotes(word, reverse=True)
@@ -227,6 +224,8 @@ class CifIO:
         buffer = self.CifDataBuffer(target=self.data)
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
+            if state is self.ReadingState.loop_header:
+                state = self.ReadingState.loop
             if line.startswith('#'):
                 continue
             if state is self.ReadingState.multiline and line.startswith(';'):
@@ -240,17 +239,17 @@ class CifIO:
                 state = self.ReadingState.multiline
                 line = line[1:]
             elif line.startswith('loop_'):
-                state = self.ReadingState.loop
+                state = self.ReadingState.loop_header
                 line = line[5:]
             words = self.split_line(line)
             if not words:
-                if state is self.ReadingState.loop:
+                if state in {self.ReadingState.loop, self.ReadingState.default}:
                     buffer.flush()
                     state = self.ReadingState.default
                 elif state is self.ReadingState.multiline:
                     buffer.append_to_multiline('')
                 continue
-            if words[0].startswith('_') and state is not self.ReadingState.loop:
+            if words[0].startswith('_') and state is self.ReadingState.default:
                 buffer.flush()
             for word in words:
                 buffer.parse(word)
@@ -264,6 +263,6 @@ if __name__ == '__main__':
                   cif_block_header='rfpirazB_100K_SXD')
     cifio.read()
     for k, v in cifio.data.items():
-        print(f'{k}:: {repr(v)}')
+        print(f'{k} :: {repr(v)}')
 
 # TODO Try using pyCIFrw package to read and write cif information.
