@@ -158,7 +158,7 @@ class CifIO:
                 data_block_start = line_number + 1
                 break
         for line_number, line in enumerate(self.file_lines[data_block_start:]):
-            if 'data_' in line:
+            if line.startswith('data_'):
                 data_block_end = line_number
                 break
         return data_block_start, data_block_end
