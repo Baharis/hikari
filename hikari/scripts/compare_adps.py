@@ -1,9 +1,9 @@
 import numpy as np
-from hikari.dataframes import BaseFrame
+from hikari.dataframes import BaseFrame, CifFrame
+from hikari.utility import make_abspath
 
 
 def compare_adp(a, b, c, al, be, ga, adp1, adp2):
-
     # read the unit cell
     f = BaseFrame()
     f.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
@@ -31,6 +31,15 @@ def compare_adp(a, b, c, al, be, ga, adp1, adp2):
     return 100 * (1 - r12_num / r12_den)
 
 
+# def compare_adps(cif1_path, cif1_block, cif2_path, cif2_block):
+#     c1 = CifFrame()
+#     c1.read(make_abspath(cif1_path), datablock=cif1_block)
+#     c2 = CifFrame()
+#     c2.read(make_abspath(cif2_path), datablock=cif2_block)
+#     print(c1.data['_atom_site_fract_x'])
+#     print(c1.data['_refine_ls_weighting_details'])
+
+
 if __name__ == '__main__':
     u1 = [0.050, 0.021, 0.042, -0.006, -0.008, 0.005]
     # loop_
@@ -49,6 +58,10 @@ if __name__ == '__main__':
     # _atom_site_Cryst_ADP2_U_23_esu
     #  H18  0.050514  0.019578  0.030408  -0.011912  -0.010335   0.006249
     #       0.007746  0.005374  0.006059   0.005030   0.005525   0.004431
-    # u2 = [0.051, 0.02, 0.03, 0.006, -0.01, -0.012]  # a
+    u2 = [0.051, 0.02, 0.03, 0.006, -0.01, -0.012]  # a
     u2 = [0.050514, 0.019578, 0.030408, 0.006249, -0.011912, -0.010335]  # b
     print(compare_adp(9.135, 8.814, 21.397, 90, 93.010, 90, u1, u2))
+    # compare_adps('~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
+    #              'rfpirazB_100K_SXD',
+    #              '~/x/HiPHAR/anders_script/RFpirazB_cplt100.fractional.cif1',
+    #              'RFpirazB_cplt100')
