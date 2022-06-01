@@ -333,8 +333,8 @@ class HklKeys:
 
 class HklFrame(BaseFrame):
     """
-    A master object which menages single-crystal diffraction files.
-    It utilises other "Hkl" classes to import, store, manipulate and output
+    A master object which manages single-crystal diffraction files.
+    It utilises other `Hkl*` classes to import, store, manipulate and output
     information about single-crystal diffraction patterns.
 
     HklFrame acts as an container which stores

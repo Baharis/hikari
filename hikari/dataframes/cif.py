@@ -29,85 +29,33 @@ def common_prefix(loop_elements):
 
 class CifFrame:
     """
+    A master object which manages cif files. It utilises other `Cif*`
+    classes to import and export crystallographic information.
 
+    CifFrame stores all information under `data` attribute inside an ordered
+    dictionary. Similarly to other `Frame`s, it is designed to work in-place,
+    meaning a `CifFrame` should be first created, and then modified using
+    methods such as :func:`read` or :func:`write`, but not chain assignments.
+
+    The `CifFrame` always initiates empty and does not accept any arguments.
     """
     def __init__(self):
         self.data = OrderedDict()
-        self.meta = dict()
+        self.block = ''
 
     def read(self, path, block='I'):
-        """Read data from specified ins/res file and return an OrderedDict"""
+        """
+        Read the contents of .cif file as specified by `path` and data `block`
+        and store them in the ordered dictionary in `self.data`.
 
-        # SPECIFY SOME META
-        self.meta['name'] = block
-        self.meta['comment'] = str()
-
-        # READ THE FILE, FIND RELEVANT DATA BLOCK, DELETE REST
-        lines = [line.strip() for line in open(path, 'r')]
-        lines_to_delete = []
-        is_correct_block = False
-        for index, line in enumerate(lines):
-            if line[:5 + len(block)] == 'data_' + block:
-                is_correct_block = True
-            elif line[:5] == 'data_':
-                is_correct_block = False
-            if not is_correct_block:
-                lines_to_delete.append(index)
-        for index in reversed(lines_to_delete):
-            del(lines[index])
-
-        # DELETE BLOCK DEFINITION, ITERATE OVER FILE, TRY TO READ KEY AND VALUE
-        try:
-            del(lines[0])
-        except IndexError:
-            pass
-        index = 0
-        while index in range(len(lines)):
-            line = lines[index]
-            try:
-                key = line.split(maxsplit=1)[0]
-                value = line[len(key):].strip()
-            except IndexError:
-                key, value = '', ''
-
-            # IF IT'S ALREADY SHELX FILE, STOP LOOP
-            if key == '_shelx_hkl_file':
-                break
-
-            # IF DEALING WITH STANDARD ENTRY
-            if key != 'loop_' and len(value) > 0:
-                self.data[key] = ustrip(value)
-
-            # IF DEALING WITH MULTI-LINE ENTRY
-            elif key != 'loop_' and len(key) > 1 and len(value) == 0:
-                index += 1
-                value = []
-                while ';' not in lines[index][:1]:
-                    value.append(lines[index])
-                    index += 1
-                self.data[key] = value
-
-            # IF DEALING WITH LOOP
-            elif key == 'loop_':
-                index += 1
-                subkeys, subvalues, subvalues_lines = [], [], []
-                while lines[index].strip()[:1] == '_':
-                    subkeys.append(lines[index])
-                    index += 1
-                # TODO text in quotation marks eg.: 'x, y, z' shouldn't be split
-                while len(lines[index].strip().split()) == len(subkeys):
-                    subvalues_lines.append(list(lines[index].split()))
-                    index += 1
-                    try:
-                        _ = lines[index]
-                    except IndexError:
-                        break
-                subvalues = list(map(list, zip(*subvalues_lines)))
-                if not len(subvalues):
-                    for i in range(len(subkeys)):
-                        subvalues.append([])
-                self.data.update(OrderedDict(zip(subkeys, subvalues)))
-            index += 1
+        :param path: Absolute or relative path to the .cif file.
+        :type path: str
+        :param block: Name of the cif block to be read (without "data_").
+        :type block: str
+        """
+        reader = CifIO(cif_file_path=path, cif_block_header=block)
+        self.data = reader.read()
+        self.block = block
 
 
 class CifIO:
@@ -164,15 +112,11 @@ class CifIO:
         return data_block_start, data_block_end
 
     def read(self):
-        def load_file_to_lines():
-            list_of_lines = []
-            with open(self.file_path, 'r') as cif_file:
-                for line in cif_file.read().splitlines():
-                    list_of_lines.append(line)
-            return list_of_lines
-        self.file_lines = load_file_to_lines()
+        with open(self.file_path, 'r') as cif_file:
+            self.file_lines = cif_file.readlines()
         block_start, block_end = self.locate_block(self.data_block_header)
         self.parse_lines(start=block_start, end=block_end)
+        return self.data
 
     class CifDataBuffer:
         """
