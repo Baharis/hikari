@@ -260,5 +260,3 @@ if __name__ == '__main__':
     c.read(path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
     for k, v in c['rfpirazB_100K_SXD'].items():
         print(f'{k} :: {repr(v)}')
-
-# TODO Try using pyCIFrw package to read and write cif information.
