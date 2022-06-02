@@ -72,7 +72,8 @@ class CifIO:
     base on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
-    MATCHING_QUOTES_REGEX = re.compile(r"""(["'])((?:\\\1|(?!\1).)*.)(\1)""")
+    MATCHING_QUOTES_REGEX = re.compile(
+        r"""(?<!\b)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)""")
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
     def __init__(self, cif_file_path):
