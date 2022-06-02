@@ -171,6 +171,7 @@ class CifReader(CifIO):
                 state = self.ReadingState.multiline
                 line = line[1:]
             elif line.startswith('loop_'):
+                buffer.flush()
                 state = self.ReadingState.loop_header
                 line = line[5:]
             words = self.split_line(line)
