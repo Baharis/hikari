@@ -91,7 +91,7 @@ class CifReader(CifIO):
             self.values = []
             self.target = target
 
-        def parse(self, word):
+        def add_word(self, word):
             """Append the word to names or values based on its first char"""
             if word.startswith('_'):
                 self.names.append(word)
@@ -185,7 +185,7 @@ class CifReader(CifIO):
             if words[0].startswith('_') and state is self.ReadingState.default:
                 buffer.flush()
             for word in words:
-                buffer.parse(word)
+                buffer.add_word(word)
             if not words and state is self.ReadingState.loop:
                 pass
         buffer.flush()
