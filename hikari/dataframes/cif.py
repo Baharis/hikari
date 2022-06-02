@@ -29,46 +29,46 @@ def common_prefix(loop_elements):
 
 class CifBlock(OrderedDict):
     """
-    This object handles all data inside an individual block of Cif file.
+    CifBlock object handles all data inside an individual block of Cif file.
     It is a subclass of an `OrderedDict` and, as such, features a lot
     of similarities with python dictionary while preserving item order.
-    Individual Cif items can be accessed of assigned using a dict-like syntax.
-    CifBlock requires a `name` of the represented data block to be initiated.
+    Individual Cif items can be accessed or assigned using a dict-like syntax.
+
+    Unlike OrderedDict, CifBlock does not accept items at creation, but rather
+    requires a `name` of the represented data block to be initiated.
     """
     def __init__(self, name):
         super().__init__()
         self.name = name
 
 
-class CifFrame:
+class CifFrame(OrderedDict):
     """
-    A master object which manages cif files. It utilises other `Cif*`
-    classes to import and export crystallographic information.
+    A master object which manages cif files. It utilises other `Cif*` classes
+    to manage multiple :class:`CifBlock`s with crystallographic information.
+    It is a subclass of an `OrderedDict` and, as such, features a lot
+    of similarities with python dictionary while preserving item order.
+    Individual Cif blocks and items within them can be accessed or assigned
+    using a single- or nested- dict-like syntax.
 
-    CifFrame stores all information under `data` attribute inside an ordered
-    dictionary. Similarly to other `Frame`s, it is designed to work in-place,
-    meaning a `CifFrame` should be first created, and then modified using
+    Similarly to other `Frame`s, `CifFrame` is designed to work in-place,
+    meaning it should be first created, and only then accessed using
     methods such as :func:`read` or :func:`write`, but not chain assignments.
 
-    The `CifFrame` always initiates empty and does not accept any arguments.
+    Unlike OrderedDict, CifBlock always initiates empty and does not accept
+    any parameters at creation.
     """
-    def __init__(self):
-        self.data = OrderedDict()
-        self.block = ''
 
-    def read(self, path, block='I'):
+    def read(self, path):
         """
-        Read the contents of .cif file as specified by `path` and data `block`
-        and store them in the ordered dictionary in `self.data`.
+        Read the contents of .cif file specified by the `path` parameter.
+        Store each found block as a {block_name: CifBlock} pair.
 
         :param path: Absolute or relative path to the .cif file.
         :type path: str
-        :param block: Name of the cif block to be read (without "data_").
-        :type block: str
         """
-        reader = CifIO(cif_file_path=path, cif_block_header=block)
-        self.data = reader.read()
-        self.block = block
+        reader = CifIO(cif_file_path=path)
+        self.update(reader.read())
 
 
 class CifIO:
@@ -261,18 +261,10 @@ class CifIO:
 
 
 if __name__ == '__main__':
-    cb = CifBlock(name='test')
-    print(type(cb))
-    cb['a'] = 'b'
-    cb.update({1: 2})
-    print(cb['a'])
-    print(type(cb))
-
-
-    # cifio = CifIO(cif_file_path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
-    #               cif_block_header='rfpirazB_100K_SXD')
-    # cifio.read()
-    # for k, v in cifio.data.items():
-    #     print(f'{k} :: {repr(v)}')
+    cifio = CifIO(cif_file_path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
+                  cif_block_header='rfpirazB_100K_SXD')
+    cifio.read()
+    for k, v in cifio.data.items():
+        print(f'{k} :: {repr(v)}')
 
 # TODO Try using pyCIFrw package to read and write cif information.
