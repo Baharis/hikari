@@ -6,18 +6,6 @@ from functools import lru_cache
 from hikari.utility import make_abspath
 
 
-def ustrip(ufloat):
-    """Strip uncertainty out of float: 1.23(4) --> 1.23"""
-    string = str(ufloat)
-    new = ''
-    for letter in string:
-        if letter is not '(':
-            new += letter
-        else:
-            break
-    return new
-
-
 def common_prefix(loop_elements):
     prefix = ''
     for char_index in range(len(loop_elements[0])):
