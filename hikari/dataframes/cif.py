@@ -27,6 +27,19 @@ def common_prefix(loop_elements):
     return prefix.rstrip('_')
 
 
+class CifBlock(OrderedDict):
+    """
+    This object handles all data inside an individual block of Cif file.
+    It is a subclass of an `OrderedDict` and, as such, features a lot
+    of similarities with python dictionary while preserving item order.
+    Individual Cif items can be accessed of assigned using a dict-like syntax.
+    CifBlock requires a `name` of the represented data block to be initiated.
+    """
+    def __init__(self, name):
+        super().__init__()
+        self.name = name
+
+
 class CifFrame:
     """
     A master object which manages cif files. It utilises other `Cif*`
@@ -248,10 +261,18 @@ class CifIO:
 
 
 if __name__ == '__main__':
-    cifio = CifIO(cif_file_path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
-                  cif_block_header='rfpirazB_100K_SXD')
-    cifio.read()
-    for k, v in cifio.data.items():
-        print(f'{k} :: {repr(v)}')
+    cb = CifBlock(name='test')
+    print(type(cb))
+    cb['a'] = 'b'
+    cb.update({1: 2})
+    print(cb['a'])
+    print(type(cb))
+
+
+    # cifio = CifIO(cif_file_path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
+    #               cif_block_header='rfpirazB_100K_SXD')
+    # cifio.read()
+    # for k, v in cifio.data.items():
+    #     print(f'{k} :: {repr(v)}')
 
 # TODO Try using pyCIFrw package to read and write cif information.
