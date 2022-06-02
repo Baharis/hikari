@@ -39,6 +39,25 @@ class CifBlock(OrderedDict):
     def __init__(self, *args):
         super().__init__(*args)
 
+    def get_as_type(self, key, typ):
+        """
+        Get `self[key]` and convert it (element-wise for lists) to `typ`
+        :param key: key associated with accessed element
+        :type key: str
+        :param typ: type/method applied to value or every element of value
+        :return: converted value of `self[key]` or `default`
+        :rtype: Union[list, str]
+        """
+        value = self[key]
+        if value and typ:
+            if isinstance(value, str):
+                value = typ(value)
+            elif isinstance(value, list):
+                value = map(typ, value)
+            else:
+                raise TypeError(f'Unknown value type of {value}: {type(value)}')
+        return value
+
 
 class CifFrame(OrderedDict):
     """
@@ -258,5 +277,11 @@ class CifIO:
 if __name__ == '__main__':
     c = CifFrame()
     c.read(path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
-    for k, v in c['rfpirazB_100K_SXD'].items():
-        print(f'{k} :: {repr(v)}')
+    # for k, v in c['rfpirazB_100K_SXD'].items():
+    #     print(f'{k} :: {repr(v)}')
+    b = c.get('rfpirazB_100K_SXD')
+    print(type(b))
+    print(b.get_as_type('_diffrn_reflns_theta_min', str))
+    print(b.get_as_type('_diffrn_reflns_theta_min', float))
+    print(b.get_as_type('_diffrn_reflns_theta_min', bool))
+
