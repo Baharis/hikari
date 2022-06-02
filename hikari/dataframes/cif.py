@@ -113,14 +113,14 @@ class CifReader(CifIO):
             if lv == ln:
                 d.update({n: v for n, v in zip(self.names, self.values)})
             elif ln == 0:
-                raise IndexError(f'Orphan values found while flushing: '
-                                 f'{self.values}')
+                raise IndexError(f'Orphan values found while '
+                                 f'flushing buffer: {self.values}')
             elif lv % ln == 0 and lv > 0:
                 d.update({n: self.values[i::ln]
                           for i, n in enumerate(self.names)})
             else:
-                raise IndexError(f'len(values) == {lv} must be a positive '
-                                 f'multiple of len(names) == {ln}')
+                raise IndexError(f'Buffer len(values) == {lv} must be a '
+                                 f'positive multiple of len(names) == {ln}')
             self.target.update(d)
             self.__init__(target=self.target)
 
@@ -243,12 +243,13 @@ class CifReader(CifIO):
         """
         # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
         split_by_quotes = self.MATCHING_QUOTES_REGEX.split(string)[::2]
-        quoted = split_by_quotes[::2]
-        unquoted = split_by_quotes[1::2]
+        quoted = split_by_quotes[1::2]
+        unquoted = split_by_quotes[::2]
         for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
-            unquoted = [w.replace(ws, sub) for w in unquoted]
-        split_by_quotes = chain.from_iterable(zip_longest(unquoted, quoted))
-        return ''.join([w for w in split_by_quotes if w is not None])
+            quoted = [w.replace(ws, sub) for w in quoted]
+        split_by_quotes = [w for w in chain.from_iterable(
+            zip_longest(unquoted, quoted)) if w is not None]
+        return ''.join(split_by_quotes)
 
 
 if __name__ == '__main__':
