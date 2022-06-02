@@ -79,7 +79,7 @@ class CifIO:
     Based on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
-    WHITESPACE_SUBSTITUTES = {' ': '█'}
+    WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
     def __init__(self, cif_file_path, cif_block_header):
         self.file_path = make_abspath(cif_file_path)
@@ -122,8 +122,7 @@ class CifIO:
                 raise IndexError(f'len(values) == {lv} must be a positive '
                                  f'multiple of len(names) == {ln}')
             self.target.update(d)
-            self.names = []
-            self.values = []
+            self.__init__(target=self.target)
 
     class ReadingState(Enum):
         """This class stores current cif reading state (eg. inside loop etc.)"""
