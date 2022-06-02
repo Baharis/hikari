@@ -2,6 +2,7 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from functools import lru_cache
+from itertools import chain, zip_longest
 
 from hikari.utility import make_abspath
 
@@ -67,12 +68,12 @@ class CifFrame(OrderedDict):
 
 class CifIO:
     """
-    A helper class supporting CifFrame.
-    Menages reading and writing cif files
+    A helper class supporting CifFrame. Manages reading and writing cif files
     into and out of CifFrame's dataframe.
     Based on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
+    MATCHING_QUOTES_REGEX = re.compile(r"""(["'])((?:\\\1|(?!\1).)*)(\1)""")
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
     def __init__(self, cif_file_path):
@@ -226,39 +227,38 @@ class CifIO:
         substituted_line = self.substitute_whitespace_in_quotes(line)
         words = []
         for word in substituted_line.strip().split():
-            word = self.substitute_whitespace_in_quotes(word, reverse=True)
             words.append(self.remove_outer_quotes(word))
+        self.revert_whitespace()
         return words
 
-    def substitute_whitespace_in_quotes(self, string, reverse=False):
+    def substitute_whitespace_in_quotes(self, string):
         """
-        Substitute whitespace between matching quotation marks with substitutes.
+        Substitute whitespace between matching quotation marks with substitutes
+        and remove the outer quotation marks
         :param string: text in which whitespace will be substituted
         :type string: str
-        :param reverse: if True, change the substitutes back to whitespace
-        :type reverse: bool
         :return: string where whitespace/substitutes inside quotes were changed
         :rtype: str
         """
         # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
-        split_string = []
-        matching_quotes_regex = r"""(["'])((?:\\\1|(?:(?!\1)).)*)(\1)"""
-        for i, m in enumerate(re.split(matching_quotes_regex, string)):
-            if i % 4 == 2:
-                for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
-                    m = m.replace(sub, ws) if reverse else m.replace(ws, sub)
-            split_string.append(m)
-        return ''.join(split_string)
+        split_by_quotes = self.MATCHING_QUOTES_REGEX.split(string)[::2]
+        quoted = split_by_quotes[::2]
+        unquoted = split_by_quotes[1::2]
+        for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
+            unquoted = [w.replace(ws, sub) for w in unquoted]
+        split_by_quotes = chain.from_iterable(zip_longest(unquoted, quoted))
+        return ''.join([w for w in split_by_quotes if w is not None])
+
+    def revert_whitespace(self):
+        """Change the substitute characters in self.data back to whitespace"""
+        for k, v in self.data.items():
+            for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
+                v.replace(sub, ws)
 
 
 if __name__ == '__main__':
     c = CifFrame()
     c.read(path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
-    # for k, v in c['rfpirazB_100K_SXD'].items():
-    #     print(f'{k} :: {repr(v)}')
-    b = c.get('rfpirazB_100K_SXD')
-    print(type(b))
-    print(b.get_as_type('_diffrn_reflns_theta_min', str))
-    print(b.get_as_type('_diffrn_reflns_theta_min', float))
-    print(b.get_as_type('_diffrn_reflns_theta_min', bool))
+    for k, v in c['rfpirazB_100K_SXD'].items():
+        pass # print(f'{k} :: {repr(v)}')
 
