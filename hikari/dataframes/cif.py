@@ -6,17 +6,6 @@ from functools import lru_cache
 from hikari.utility import make_abspath
 
 
-def common_prefix(loop_elements):
-    prefix = ''
-    for char_index in range(len(loop_elements[0])):
-        chars = [loop_element[char_index] for loop_element in loop_elements]
-        if len(set(chars)) == 1:
-            prefix += chars[0]
-        else:
-            break
-    return prefix.rstrip('_')
-
-
 class CifBlock(OrderedDict):
     """
     CifBlock object handles all data inside an individual block of Cif file.
