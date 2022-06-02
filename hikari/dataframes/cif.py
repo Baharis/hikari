@@ -144,6 +144,12 @@ class CifIO:
         right = s[-1]
         return s.strip(left) if left == right and left in ('"', "'") else s
 
+    @property
+    def blocks(self):
+        """A dictionary of all blocks and their first lines in cif file."""
+        return OrderedDict({l[5:]: i for i, l in enumerate(self.file_lines)
+                            if l.startswith('data_')})
+
     def locate_block(self, block_header=''):
         """
         Determine the numbers of first lines of the seeked and next cif block
