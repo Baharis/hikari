@@ -1194,9 +1194,6 @@ class HklWriter(HklIo):
             hkl_file.write(self._format_dict['suffix'])
 
 
-# TODO get all fixed files to templates
-
-
 class HklToResConverter:
     """A class responsible for representing hkl data using using .res format"""
 
