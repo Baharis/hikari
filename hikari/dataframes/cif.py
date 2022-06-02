@@ -35,13 +35,9 @@ class CifBlock(OrderedDict):
     It is a subclass of an `OrderedDict` and, as such, features a lot
     of similarities with python dictionary while preserving item order.
     Individual Cif items can be accessed or assigned using a dict-like syntax.
-
-    Unlike OrderedDict, CifBlock does not accept items at creation, but rather
-    requires a `name` of the represented data block to be initiated.
     """
-    def __init__(self, name):
-        super().__init__()
-        self.name = name
+    def __init__(self, *args):
+        super().__init__(*args)
 
 
 class CifFrame(OrderedDict):
@@ -220,7 +216,7 @@ class CifIO:
         block_starts = [v + 1 for v in self.blocks.values()]
         block_ends = list(block_starts)[1:] + [None]
         for n, s, e in zip(block_names, block_starts, block_ends):
-            self.data[n] = self.parse_lines(s, e)
+            self.data[n] = CifBlock(self.parse_lines(s, e))
         return self.data
 
     def split_line(self, line):
@@ -260,9 +256,9 @@ class CifIO:
 
 
 if __name__ == '__main__':
-    cifio = CifIO(cif_file_path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
-    cifio.read()  # 'rfpirazB_100K_SXD'
-    for k, v in cifio.data.items():
+    c = CifFrame()
+    c.read(path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
+    for k, v in c['rfpirazB_100K_SXD'].items():
         print(f'{k} :: {repr(v)}')
 
 # TODO Try using pyCIFrw package to read and write cif information.
