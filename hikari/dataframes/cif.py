@@ -1,6 +1,8 @@
 import re
 from collections import OrderedDict
 from enum import Enum
+from functools import lru_cache
+
 from hikari.utility import make_abspath
 
 
@@ -81,10 +83,9 @@ class CifIO:
     """
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
-    def __init__(self, cif_file_path, cif_block_header):
+    def __init__(self, cif_file_path):
         self.file_path = make_abspath(cif_file_path)
         self.file_lines = []
-        self.data_block_header = cif_block_header
         self.data = OrderedDict()
 
     class DataBuffer:
@@ -115,6 +116,9 @@ class CifIO:
             ln = len(self.names)
             if lv == ln:
                 d.update({n: v for n, v in zip(self.names, self.values)})
+            elif ln == 0:
+                raise IndexError(f'Orphan values found while flushing: '
+                                 f'{self.values}')
             elif lv % ln == 0 and lv > 0:
                 d.update({n: self.values[i::ln]
                           for i, n in enumerate(self.names)})
@@ -147,40 +151,26 @@ class CifIO:
     @property
     def blocks(self):
         """A dictionary of all blocks and their first lines in cif file."""
+        return self._blocks(lines=tuple(self.file_lines))
+
+    @lru_cache(maxsize=1)
+    def _blocks(self, lines):
         return OrderedDict({l[5:]: i for i, l in enumerate(self.file_lines)
                             if l.startswith('data_')})
-
-    def locate_block(self, block_header=''):
-        """
-        Determine the numbers of first lines of the seeked and next cif block
-        :param block_header: name of the cif block which should be localised
-        :type block_header: str
-        :return: tuple with numbers of 1st-line-to-read and 1st-line-not-to-read
-        :rtype: tuple
-        """
-        data_block_string = 'data_' + block_header
-        data_block_start = 1
-        data_block_end = None
-        for line_number, line in enumerate(self.file_lines):
-            if data_block_string in line:
-                data_block_start = line_number + 1
-                break
-        for line_number, line in enumerate(self.file_lines[data_block_start:]):
-            if line.startswith('data_'):
-                data_block_end = line_number
-                break
-        return data_block_start, data_block_end
 
     def parse_lines(self, start, end):
         """
         Read the data from :attr:`~.CifIO.lines` numbered `start` to `end`,
-        interpret it, and store it in :attr:`~.CifIO.data` dictionary.
+        interpret it, and return it as an instance of an `OrderedDict`.
         :param start: number of the first line which data should be read from
         :type start: int
         :param end: number of the first line which should not be read anymore
         :type end: int
+        :return: ordered dictionary with name: value pairs for all parsed lines
+        :rtype: OrderedDict
         """
-        buffer = self.DataBuffer(target=self.data)
+        parsed_data = OrderedDict()
+        buffer = self.DataBuffer(target=parsed_data)
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
             if state is self.ReadingState.loop_header:
@@ -215,6 +205,7 @@ class CifIO:
             if not words and state is self.ReadingState.loop:
                 pass
         buffer.flush()
+        return parsed_data
 
     def read(self):
         """
@@ -225,8 +216,11 @@ class CifIO:
         """
         with open(self.file_path, 'r') as cif_file:
             self.file_lines = cif_file.read().splitlines()
-        block_start, block_end = self.locate_block(self.data_block_header)
-        self.parse_lines(start=block_start, end=block_end)
+        block_names = self.blocks.keys()
+        block_starts = [v + 1 for v in self.blocks.values()]
+        block_ends = list(block_starts)[1:] + [None]
+        for n, s, e in zip(block_names, block_starts, block_ends):
+            self.data[n] = self.parse_lines(s, e)
         return self.data
 
     def split_line(self, line):
@@ -266,9 +260,8 @@ class CifIO:
 
 
 if __name__ == '__main__':
-    cifio = CifIO(cif_file_path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
-                  cif_block_header='rfpirazB_100K_SXD')
-    cifio.read()
+    cifio = CifIO(cif_file_path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
+    cifio.read()  # 'rfpirazB_100K_SXD'
     for k, v in cifio.data.items():
         print(f'{k} :: {repr(v)}')
 
