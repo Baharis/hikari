@@ -68,9 +68,8 @@ class CifFrame(OrderedDict):
 
 class CifIO:
     """
-    A helper class supporting CifFrame. Manages reading and writing cif files
-    into and out of CifFrame's dataframe.
-    Based on the IUCr File Syntax version 1.1 Working specification available
+    A base class for `CifRead` and `CifWrite`. This class and its inheritors
+    base on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
     MATCHING_QUOTES_REGEX = re.compile(r"""(["'])((?:\\\1|(?!\1).)*)(\1)""")
@@ -80,6 +79,10 @@ class CifIO:
         self.file_path = make_abspath(cif_file_path)
         self.file_lines = []
         self.data = OrderedDict()
+
+
+class CifReader(CifIO):
+    """A helper class managing reading cif files into a `CifFrame`."""
 
     class DataBuffer:
         """This class buffers data in temporary dict until flush() is called."""
@@ -123,59 +126,14 @@ class CifIO:
 
     @property
     def blocks(self):
-        """A dictionary of all blocks and their first lines in cif file."""
+        """A dictionary of all blocks names and their positions in cif file."""
         return self._blocks(lines=tuple(self.file_lines))
 
     @lru_cache(maxsize=1)
     def _blocks(self, lines):
-        return OrderedDict({l[5:]: i for i, l in enumerate(self.file_lines)
+        return OrderedDict({l[5:]: i for i, l in enumerate(lines)
                             if l.startswith('data_')})
 
-    def split_line(self, line):
-        """
-        Split line into words, keeping words inside quotation marks together.
-        :param line: line to be split based on whitespace into words
-        :type line: str
-        :return: list of words obtained from splitting
-        :rtype: list
-        """
-        substituted_line = self.substitute_whitespace_in_quotes(line)
-        return [self.revert_whitespace(word) for word
-                in substituted_line.strip().split()]
-
-    def substitute_whitespace_in_quotes(self, string):
-        """
-        Substitute whitespace between matching quotation marks with substitutes
-        and remove the outer quotation marks
-        :param string: text in which whitespace will be substituted
-        :type string: str
-        :return: string where whitespace inside quotes were substituted
-        :rtype: str
-        """
-        # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
-        split_by_quotes = self.MATCHING_QUOTES_REGEX.split(string)[::2]
-        quoted = split_by_quotes[::2]
-        unquoted = split_by_quotes[1::2]
-        for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
-            unquoted = [w.replace(ws, sub) for w in unquoted]
-        split_by_quotes = chain.from_iterable(zip_longest(unquoted, quoted))
-        return ''.join([w for w in split_by_quotes if w is not None])
-
-    def revert_whitespace(self, string):
-        """
-        Change the substitute characters in supplied `string` back to whitespace
-        :param string: text in which whitespace will be reverted
-        :type string: str
-        :return: string where substitutes were changed back to whitespace
-        :rtype: str
-        """
-        new_string = string
-        for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
-            new_string = new_string.replace(sub, ws)
-        return new_string
-
-
-class CifReader(CifIO):
     class ReadingState(Enum):
         """This class stores current cif reading state (eg. inside loop etc.)"""
         default = 0
@@ -232,6 +190,18 @@ class CifReader(CifIO):
         buffer.flush()
         return parsed_data
 
+    def split_line(self, line):
+        """
+        Split line into words, keeping words inside quotation marks together.
+        :param line: line to be split based on whitespace into words
+        :type line: str
+        :return: list of words obtained from splitting
+        :rtype: list
+        """
+        substituted_line = self.substitute_quoted_whitespace(line)
+        return [self.revert_whitespace(word) for word
+                in substituted_line.strip().split()]
+
     def read(self):
         """
         Read the contents of cif currently pointed by :attr:`~.CifIO.file_path`
@@ -247,6 +217,37 @@ class CifReader(CifIO):
         for n, s, e in zip(block_names, block_starts, block_ends):
             self.data[n] = CifBlock(self.parse_lines(s, e))
         return self.data
+
+    def revert_whitespace(self, string):
+        """
+        Change the substitute characters in supplied `string` back to whitespace
+        :param string: text in which whitespace will be reverted
+        :type string: str
+        :return: string where substitutes were changed back to whitespace
+        :rtype: str
+        """
+        new_string = string
+        for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
+            new_string = new_string.replace(sub, ws)
+        return new_string
+
+    def substitute_quoted_whitespace(self, string):
+        """
+        Substitute whitespace between matching quotation marks with substitutes
+        and remove the outer quotation marks
+        :param string: text in which whitespace will be substituted
+        :type string: str
+        :return: string where whitespace inside quotes were substituted
+        :rtype: str
+        """
+        # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
+        split_by_quotes = self.MATCHING_QUOTES_REGEX.split(string)[::2]
+        quoted = split_by_quotes[::2]
+        unquoted = split_by_quotes[1::2]
+        for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
+            unquoted = [w.replace(ws, sub) for w in unquoted]
+        split_by_quotes = chain.from_iterable(zip_longest(unquoted, quoted))
+        return ''.join([w for w in split_by_quotes if w is not None])
 
 
 if __name__ == '__main__':
