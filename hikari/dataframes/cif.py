@@ -74,6 +74,8 @@ class CifIO:
     """
     MATCHING_QUOTES_REGEX = re.compile(
         r"""(?<!\b)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)""")
+    MATCHING_OUTER_QUOTES_REGEX = re.compile(
+        r"""(?<=^)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?=$)""")
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
     def __init__(self, cif_file_path):
@@ -91,20 +93,26 @@ class CifReader(CifIO):
             self.names = []
             self.values = []
             self.target = target
+            self.multilines = []
 
         def add_word(self, word):
             """Append the word to names or values based on its first char"""
             if word.startswith('_'):
+                if self.values:
+                    self.flush()
                 self.names.append(word)
             else:
                 self.values.append(word)
 
+        def initiate_multiline(self):
+            self.multilines = []
+
         def append_to_multiline(self, string):
             """Add the word to values if they're empty, concatenate otherwise"""
-            if self.values:
-                self.values[-1] = self.values[-1] + '\n' + string
-            else:
-                self.values.append(string)
+            self.multilines.append(string)
+
+        def terminate_multiline(self):
+            self.values.append('\n'.join(self.multilines))
 
         def flush(self):
             """Update the target dict with names and values stored hitherto"""
@@ -120,8 +128,8 @@ class CifReader(CifIO):
                 d.update({n: self.values[i::ln]
                           for i, n in enumerate(self.names)})
             else:
-                raise IndexError(f'Buffer len(values) == {lv} must be a '
-                                 f'positive multiple of len(names) == {ln}')
+                raise IndexError(f'len(values) == {lv} % len(names) == {ln} mus'
+                                 f't be zero: {self.values} % {self.names}')
             self.target.update(d)
             self.__init__(target=self.target)
 
@@ -161,27 +169,24 @@ class CifReader(CifIO):
                 state = self.ReadingState.loop
             if line.startswith('#'):
                 continue
-            if state is self.ReadingState.multiline and line.startswith(';'):
-                buffer.flush()
-                state = self.ReadingState.default
-                line = line[1:]
-            elif state is self.ReadingState.multiline:
-                buffer.append_to_multiline(line)
-                continue
-            elif line.startswith(';'):
+            if line.startswith(';') and state != self.ReadingState.multiline:
+                buffer.initiate_multiline()
                 state = self.ReadingState.multiline
                 line = line[1:]
-            elif line.startswith('loop_'):
+            elif line.startswith(';') and state is self.ReadingState.multiline:
+                buffer.terminate_multiline()
+                state = self.ReadingState.default
+                continue
+            if state is self.ReadingState.multiline:
+                buffer.append_to_multiline(line)
+                continue
+            elif line.lstrip().startswith('loop_'):
                 buffer.flush()
                 state = self.ReadingState.loop_header
-                line = line[5:]
+                line = line.lstrip()[5:]
             words = self.split_line(line)
-            if not words:
-                if state in {self.ReadingState.loop, self.ReadingState.default}:
-                    buffer.flush()
-                    state = self.ReadingState.default
-                elif state is self.ReadingState.multiline:
-                    buffer.append_to_multiline('')
+            if not words and self.ReadingState.multiline:
+                buffer.append_to_multiline(line)
                 continue
             if words[0].startswith('_') and state is self.ReadingState.default:
                 buffer.flush()
@@ -201,8 +206,18 @@ class CifReader(CifIO):
         :rtype: list
         """
         substituted_line = self.substitute_quoted_whitespace(line)
-        return [self.revert_whitespace(word) for word
-                in substituted_line.strip().split()]
+        print(substituted_line)
+        return [word for word in substituted_line.strip().split()]
+
+    def strip_quotes(self, string):
+        """
+        Strip outer matching quotation marks from the string and return it
+        :param string: word or line to be stripped
+        :type string: str
+        :return: string without matching outer quotation marks
+        :rtype: str
+        """
+        return self.MATCHING_OUTER_QUOTES_REGEX.split(string)[2]
 
     def read(self):
         """
@@ -214,10 +229,10 @@ class CifReader(CifIO):
         with open(self.file_path, 'r') as cif_file:
             self.file_lines = cif_file.read().splitlines()
         block_names = self.blocks.keys()
-        block_starts = [v + 1 for v in self.blocks.values()]
+        block_starts = self.blocks.values()
         block_ends = list(block_starts)[1:] + [None]
         for n, s, e in zip(block_names, block_starts, block_ends):
-            self.data[n] = CifBlock(self.parse_lines(s, e))
+            self.data[n] = CifBlock(self.parse_lines(s + 1, e))
         return self.data
 
     def revert_whitespace(self, string):
@@ -243,18 +258,16 @@ class CifReader(CifIO):
         :rtype: str
         """
         # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
-        split_by_quotes = self.MATCHING_QUOTES_REGEX.split(string)[::2]
-        quoted = split_by_quotes[1::2]
-        unquoted = split_by_quotes[::2]
+        split_by_quotes = self.MATCHING_QUOTES_REGEX.split(string)
+        quoted = split_by_quotes[2::4]
         for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
             quoted = [w.replace(ws, sub) for w in quoted]
-        split_by_quotes = [w for w in chain.from_iterable(
-            zip_longest(unquoted, quoted)) if w is not None]
+        split_by_quotes[2::4] = quoted
         return ''.join(split_by_quotes)
 
 
 if __name__ == '__main__':
     c = CifFrame()
-    c.read(path='~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
-    for k, v in c['rfpirazB_100K_SXD'].items():
+    c.read(path='~/git/hikari/hikari/resources/cif_core_2.4.5.dic')
+    for k, v in c['atom_site_adp_type'].items():
         print(f'{k} :: {repr(v)}')
