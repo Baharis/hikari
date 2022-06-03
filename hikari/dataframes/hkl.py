@@ -333,8 +333,8 @@ class HklKeys:
 
 class HklFrame(BaseFrame):
     """
-    A master object which menages single-crystal diffraction files.
-    It utilises other "Hkl" classes to import, store, manipulate and output
+    A master object which manages single-crystal diffraction files.
+    It utilises other `Hkl*` classes to import, store, manipulate and output
     information about single-crystal diffraction patterns.
 
     HklFrame acts as an container which stores
@@ -1192,9 +1192,6 @@ class HklWriter(HklIo):
                 row_dict = dict(zip(self._format_dict['labels'], row_tuple))
                 hkl_file.write(self._line_formatter.format(**row_dict))
             hkl_file.write(self._format_dict['suffix'])
-
-
-# TODO get all fixed files to templates
 
 
 class HklToResConverter:
