@@ -72,10 +72,12 @@ class CifIO:
     base on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
-    MATCHING_QUOTES_REGEX = re.compile(
-        r"""(?<!\b)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)""")
-    MATCHING_OUTER_QUOTES_REGEX = re.compile(
-        r"""(?<=^)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?=$)""")
+    COMMENT_REGEX = \
+        re.compile(r"""(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)""")
+    MATCHING_QUOTES_REGEX = \
+        re.compile(r"""(?<!\b)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)""")
+    MATCHING_OUTER_QUOTES_REGEX = \
+        re.compile(r"""(?<=^)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?=$)""")
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
     def __init__(self, cif_file_path):
@@ -165,10 +167,9 @@ class CifReader(CifIO):
         buffer = self.DataBuffer(target=parsed_data)
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
+            line = self.strip_comments(line)
             if state is self.ReadingState.loop_header:
                 state = self.ReadingState.loop
-            if line.startswith('#'):
-                continue
             if line.startswith(';') and state != self.ReadingState.multiline:
                 buffer.initiate_multiline()
                 state = self.ReadingState.multiline
@@ -224,21 +225,6 @@ class CifReader(CifIO):
         return self.data
 
     @classmethod
-    def release_quote(cls, string):
-        """
-        Change the substitute characters in supplied `string` back
-        to whitespace, remove matching outer quotation marks, and return string
-        :param string: text where whitespace will be reverted and quotes removed
-        :type string: str
-        :return: modified output string
-        :rtype: str
-        """
-        new_str = ''.join(cls.MATCHING_OUTER_QUOTES_REGEX.split(string)[::2])
-        for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
-            new_str = new_str.replace(sub, ws)
-        return new_str
-
-    @classmethod
     def protect_quotes(cls, string):
         """
         Substitute whitespace between matching quotation marks with substitutes
@@ -256,9 +242,34 @@ class CifReader(CifIO):
         split_by_quotes[2::4] = quoted
         return ''.join(split_by_quotes)
 
+    @classmethod
+    def release_quote(cls, string):
+        """
+        Change the substitute characters in supplied `string` back
+        to whitespace, remove matching outer quotation marks, and return string
+        :param string: text where whitespace will be reverted and quotes removed
+        :type string: str
+        :return: modified output string
+        :rtype: str
+        """
+        new_str = ''.join(cls.MATCHING_OUTER_QUOTES_REGEX.split(string)[::2])
+        for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
+            new_str = new_str.replace(sub, ws)
+        return new_str
+
+    @classmethod
+    def strip_comments(cls, string):
+        """
+        Remove everything following "#" at the start of line or after whitespace
+        :param string: string where comments should be removed
+        :type string: str
+        :return: string with comments removed
+        :rtype: str
+        """
+        return cls.COMMENT_REGEX.split(string)[0]
+
 
 if __name__ == '__main__':
     c = CifFrame()
     c.read(path='~/git/hikari/hikari/resources/cif_core_2.4.5.dic')
-    for k, v in c['atom_site_adp_type'].items():
-        print(f'{k} :: {repr(v)}')
+
