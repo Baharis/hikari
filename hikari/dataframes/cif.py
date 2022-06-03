@@ -17,23 +17,30 @@ class CifBlock(OrderedDict):
     def __init__(self, *args):
         super().__init__(*args)
 
-    def get_as_type(self, key, typ):
+    def get_as_type(self, key, typ, default):
         """
-        Get `self[key]` and convert it (element-wise for lists) to `typ`
+        Get value of `self[key]` converted to `typ`. If value is a list,
+        convert its contents element-wise.
         :param key: key associated with accessed element
         :type key: str
-        :param typ: type/method applied to value or every element of value
+        :param typ: type/function applied to a value or its every element
+        :param default: if given, return it on KeyError
         :return: converted value of `self[key]` or `default`
         :rtype: Union[list, str]
         """
-        value = self[key]
-        if value and typ:
-            if isinstance(value, str):
-                value = typ(value)
-            elif isinstance(value, list):
-                value = map(typ, value)
-            else:
-                raise TypeError(f'Unknown value type of {value}: {type(value)}')
+        try:
+            value = self[key]
+        except KeyError:
+            value = default
+        else:
+            if value and typ:
+                if isinstance(value, str):
+                    value = typ(value)
+                elif isinstance(value, list):
+                    value = map(typ, value)
+                else:
+                    raise TypeError(f'Unknown value type'
+                                    f'of {value}: {type(value)}')
         return value
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from hikari.utility import angle2rad
+from hikari.utility import angle2rad, cfloat
 
 
 class BaseFrame:
@@ -53,6 +53,31 @@ class BaseFrame:
     +----------+------------+------------------+------------------+------------+
     """
 
+    class ImportedFromCif:
+        """Data class handling item imported when `from_cif_block() is called"""
+        def __init__(self, local_name, cif_name, typ, default):
+            self.name: str = local_name
+            self.cif_name: str = cif_name
+            self.typ = typ
+            self.default = default
+
+    IMPORTED_FROM_CIF = [
+        ImportedFromCif('a', '_cell_length_a', cfloat, 1.0),
+        ImportedFromCif('b', '_cell_length_b', cfloat, 1.0),
+        ImportedFromCif('c', '_cell_length_c', cfloat, 1.0),
+        ImportedFromCif('al', '_cell_length_alpha', cfloat, 90),
+        ImportedFromCif('be', '_cell_length_beta', cfloat, 90),
+        ImportedFromCif('ga', '_cell_length_gamma', cfloat, 90),
+        ImportedFromCif('ub11', '_diffrn_orient_matrix_UB_11', float, 1.0),
+        ImportedFromCif('ub12', '_diffrn_orient_matrix_UB_12', float, 0.0),
+        ImportedFromCif('ub13', '_diffrn_orient_matrix_UB_13', float, 0.0),
+        ImportedFromCif('ub21', '_diffrn_orient_matrix_UB_21', float, 0.0),
+        ImportedFromCif('ub22', '_diffrn_orient_matrix_UB_22', float, 1.0),
+        ImportedFromCif('ub23', '_diffrn_orient_matrix_UB_23', float, 0.0),
+        ImportedFromCif('ub31', '_diffrn_orient_matrix_UB_31', float, 0.0),
+        ImportedFromCif('ub32', '_diffrn_orient_matrix_UB_32', float, 0.0),
+        ImportedFromCif('ub33', '_diffrn_orient_matrix_UB_33', float, 1.0)]
+
     def __init__(self):
         self.__a_d = self.__b_d = self.__c_d = 1.0
         self.__a_r = self.__b_r = self.__c_r = 1.0
@@ -99,44 +124,32 @@ class BaseFrame:
             setattr(self, f'{key}_d', value)
         self._refresh_cell()
 
-    def from_cif_frame(self, frame):
+    def fill_from_cif_block(self, block, fragile=False):
         """
-        Attempt importing unit cell parameters and orientation matrix
-        from provided :class:`hikari.dataframes.cif.CifFrame` object.
+        Import all data specified in :attr:`~.BaseFrame.IMPORTED_FROM_CIF`
+        such as unit cell parameters and orientation matrix from provided
+        instance of :class:`hikari.dataframes.cif.CifBlock` called `block`.
+        Unless `fragile` is `True`, use defaults instead of rising KeyError.
 
-        This method requires at least cell parameters to be defined
-        in CifFrame object. It also attempts to import the orientation matrix,
-        but passes if unsuccessful.
-
-        :param frame: CifFrame containing cell parameters and,
-            optionally, crystal orientation matrix.
-        :type frame: hikari.dataframes.CifFrame
+        :param block: CifBlock containing imported information.
+        :type block: hikari.dataframes.CifBlock
+        :param fragile: If True, raise Error when any imported info is missing
+        :type fragile: bool
         """
-
-        # IMPORT AND CHANGE LATTICE PARAMETERS
-        new_parameters = {
-            'a': float(frame.data['_cell_length_a']),
-            'b': float(frame.data['_cell_length_b']),
-            'c': float(frame.data['_cell_length_c']),
-            'al': float(frame.data['_cell_angle_alpha']),
-            'be': float(frame.data['_cell_angle_beta']),
-            'ga': float(frame.data['_cell_angle_gamma'])}
+        imp = {}
+        for i in self.IMPORTED_FROM_CIF:
+            if fragile:
+                imp[i.name] = block.get_as_type(i.cif_name, i.typ)
+            else:
+                imp[i.name] = block.get_as_type(i.cif_name, i.typ, i.default)
+        cell_par_names = {'a', 'b', 'c', 'al', 'be', 'ga'}
+        new_parameters = {k: v for k, v in imp.items() if k in cell_par_names}
         self.edit_cell(**new_parameters)
-
-        # IMPORT AND CHANGE ORIENTATION MATRIX
-        try:
-            self.orientation = \
-                np.array(((float(frame.data['_diffrn_orient_matrix_UB_11']),
-                           float(frame.data['_diffrn_orient_matrix_UB_12']),
-                           float(frame.data['_diffrn_orient_matrix_UB_13'])),
-                          (float(frame.data['_diffrn_orient_matrix_UB_21']),
-                           float(frame.data['_diffrn_orient_matrix_UB_22']),
-                           float(frame.data['_diffrn_orient_matrix_UB_23'])),
-                          (float(frame.data['_diffrn_orient_matrix_UB_31']),
-                           float(frame.data['_diffrn_orient_matrix_UB_32']),
-                           float(frame.data['_diffrn_orient_matrix_UB_33']))))
-        except KeyError:
-            pass
+        orientation_value_names = ('ub11', 'ub12', 'ub13',
+                                   'ub21', 'ub22', 'ub23',
+                                   'ub31', 'ub32', 'ub33')
+        orientation_values = [imp[n] for n in orientation_value_names]
+        self.orientation = np.array(orientation_values).reshape(3, 3)
 
     def _refresh_cell(self):
         """
