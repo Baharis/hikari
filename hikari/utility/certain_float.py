@@ -10,4 +10,4 @@ def cfloat(string):
     :return: float with no uncertainty
     :rtype: float
     """
-    return uncertainties.ufloat_fromstr(representation=string)
+    return uncertainties.ufloat_fromstr(representation=string).n
