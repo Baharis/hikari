@@ -102,7 +102,7 @@ class CifReader(CifIO):
                     self.flush()
                 self.names.append(word)
             else:
-                self.values.append(word)
+                self.values.append(CifReader.release_quote(word))
 
         def initiate_multiline(self):
             self.multilines = []
@@ -205,19 +205,7 @@ class CifReader(CifIO):
         :return: list of words obtained from splitting
         :rtype: list
         """
-        substituted_line = self.substitute_quoted_whitespace(line)
-        print(substituted_line)
-        return [word for word in substituted_line.strip().split()]
-
-    def strip_quotes(self, string):
-        """
-        Strip outer matching quotation marks from the string and return it
-        :param string: word or line to be stripped
-        :type string: str
-        :return: string without matching outer quotation marks
-        :rtype: str
-        """
-        return self.MATCHING_OUTER_QUOTES_REGEX.split(string)[2]
+        return self.protect_quotes(line).strip().split()
 
     def read(self):
         """
@@ -235,20 +223,23 @@ class CifReader(CifIO):
             self.data[n] = CifBlock(self.parse_lines(s + 1, e))
         return self.data
 
-    def revert_whitespace(self, string):
+    @classmethod
+    def release_quote(cls, string):
         """
-        Change the substitute characters in supplied `string` back to whitespace
-        :param string: text in which whitespace will be reverted
+        Change the substitute characters in supplied `string` back
+        to whitespace, remove matching outer quotation marks, and return string
+        :param string: text where whitespace will be reverted and quotes removed
         :type string: str
-        :return: string where substitutes were changed back to whitespace
+        :return: modified output string
         :rtype: str
         """
-        new_string = string
-        for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
-            new_string = new_string.replace(sub, ws)
-        return new_string
+        new_str = ''.join(cls.MATCHING_OUTER_QUOTES_REGEX.split(string)[::2])
+        for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
+            new_str = new_str.replace(sub, ws)
+        return new_str
 
-    def substitute_quoted_whitespace(self, string):
+    @classmethod
+    def protect_quotes(cls, string):
         """
         Substitute whitespace between matching quotation marks with substitutes
         and remove the outer quotation marks
@@ -258,9 +249,9 @@ class CifReader(CifIO):
         :rtype: str
         """
         # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
-        split_by_quotes = self.MATCHING_QUOTES_REGEX.split(string)
+        split_by_quotes = cls.MATCHING_QUOTES_REGEX.split(string)
         quoted = split_by_quotes[2::4]
-        for ws, sub in self.WHITESPACE_SUBSTITUTES.items():
+        for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
             quoted = [w.replace(ws, sub) for w in quoted]
         split_by_quotes[2::4] = quoted
         return ''.join(split_by_quotes)
