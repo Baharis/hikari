@@ -55,28 +55,27 @@ class BaseFrame:
 
     class ImportedFromCif:
         """Data class handling item imported when `from_cif_block() is called"""
-        def __init__(self, local_name, cif_name, typ, default):
-            self.name: str = local_name
+        def __init__(self, cif_name, typ, default):
             self.cif_name: str = cif_name
             self.typ = typ
             self.default = default
 
-    IMPORTED_FROM_CIF = [
-        ImportedFromCif('a', '_cell_length_a', cfloat, 1.0),
-        ImportedFromCif('b', '_cell_length_b', cfloat, 1.0),
-        ImportedFromCif('c', '_cell_length_c', cfloat, 1.0),
-        ImportedFromCif('al', '_cell_length_alpha', cfloat, 90),
-        ImportedFromCif('be', '_cell_length_beta', cfloat, 90),
-        ImportedFromCif('ga', '_cell_length_gamma', cfloat, 90),
-        ImportedFromCif('ub11', '_diffrn_orient_matrix_UB_11', float, 1.0),
-        ImportedFromCif('ub12', '_diffrn_orient_matrix_UB_12', float, 0.0),
-        ImportedFromCif('ub13', '_diffrn_orient_matrix_UB_13', float, 0.0),
-        ImportedFromCif('ub21', '_diffrn_orient_matrix_UB_21', float, 0.0),
-        ImportedFromCif('ub22', '_diffrn_orient_matrix_UB_22', float, 1.0),
-        ImportedFromCif('ub23', '_diffrn_orient_matrix_UB_23', float, 0.0),
-        ImportedFromCif('ub31', '_diffrn_orient_matrix_UB_31', float, 0.0),
-        ImportedFromCif('ub32', '_diffrn_orient_matrix_UB_32', float, 0.0),
-        ImportedFromCif('ub33', '_diffrn_orient_matrix_UB_33', float, 1.0)]
+    IMPORTED_FROM_CIF = {
+        'a': ImportedFromCif('_cell_length_a', cfloat, 1.0),
+        'b': ImportedFromCif('_cell_length_b', cfloat, 1.0),
+        'c': ImportedFromCif('_cell_length_c', cfloat, 1.0),
+        'al': ImportedFromCif('_cell_length_alpha', cfloat, 90),
+        'be': ImportedFromCif('_cell_length_beta', cfloat, 90),
+        'ga': ImportedFromCif('_cell_length_gamma', cfloat, 90),
+        'ub11': ImportedFromCif('_diffrn_orient_matrix_UB_11', float, 1.0),
+        'ub12': ImportedFromCif('_diffrn_orient_matrix_UB_12', float, 0.0),
+        'ub13': ImportedFromCif('_diffrn_orient_matrix_UB_13', float, 0.0),
+        'ub21': ImportedFromCif('_diffrn_orient_matrix_UB_21', float, 0.0),
+        'ub22': ImportedFromCif('_diffrn_orient_matrix_UB_22', float, 1.0),
+        'ub23': ImportedFromCif('_diffrn_orient_matrix_UB_23', float, 0.0),
+        'ub31': ImportedFromCif('_diffrn_orient_matrix_UB_31', float, 0.0),
+        'ub32': ImportedFromCif('_diffrn_orient_matrix_UB_32', float, 0.0),
+        'ub33': ImportedFromCif('_diffrn_orient_matrix_UB_33', float, 1.0)}
 
     def __init__(self):
         self.__a_d = self.__b_d = self.__c_d = 1.0
@@ -137,11 +136,11 @@ class BaseFrame:
         :type fragile: bool
         """
         imp = {}
-        for i in self.IMPORTED_FROM_CIF:
+        for k, v in self.IMPORTED_FROM_CIF.items():
             if fragile:
-                imp[i.name] = block.get_as_type(i.cif_name, i.typ)
+                imp[k] = block.get_as_type(v.cif_name, v.typ)
             else:
-                imp[i.name] = block.get_as_type(i.cif_name, i.typ, i.default)
+                imp[k] = block.get_as_type(v.cif_name, v.typ, v.default)
         cell_par_names = {'a', 'b', 'c', 'al', 'be', 'ga'}
         new_parameters = {k: v for k, v in imp.items() if k in cell_par_names}
         self.edit_cell(**new_parameters)
