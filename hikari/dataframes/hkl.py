@@ -873,6 +873,7 @@ class HklFrame(BaseFrame):
     def trim(self, limit):
         """
         Remove reflections further than *limit* from reciprocal space origin.
+
         :param limit: Radius of the trimming sphere in reciprocal Angstrom
         :type limit: float
         """

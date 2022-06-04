@@ -34,13 +34,14 @@ def angle2rad(value):
     :return: Angle value expressed in radians
     :rtype: float
     """
-    return value if -3.15 < value < 3.15 else np.deg2rad(value)
+    return value if -3.15 < value < 3.15 else value * np.pi / 180
 
 
 def cart2sph(x, y, z):
     """
     Convert Cartesian coordinates x, y, z
     to conventional spherical coordinates r, p, a
+
     :param x: Cartesian coordinate or vector x
     :type x: float or np.ndarray
     :param y: Cartesian coordinate or vector y
@@ -60,6 +61,7 @@ def sph2cart(r, p, a):
     """
     Convert conventional spherical coordinates r, p, a
     to Cartesian coordinates x, y, z
+
     :param r: Spherical coordinate or vector radius
     :type r: float or np.ndarray
     :param p: Spherical coordinate or vector polar angle

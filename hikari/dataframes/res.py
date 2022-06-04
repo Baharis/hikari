@@ -23,6 +23,7 @@ class ResFrame(BaseFrame):
     def atomic_form_factor(self, atom, hkl):
         """
         Calculate X-ray atomic form factors for a single atom and a hkl array
+
         :param atom: Atom/ion name/identifier interpreted by form factor table
         :type atom: str
         :param hkl: A 2D array listing all hkls to consider
@@ -41,6 +42,7 @@ class ResFrame(BaseFrame):
     def temperature_factor(self, hkl, u):
         """
         Calculate temperature factor for single u matrix and a hkl array
+
         :param hkl: A 2D array listing all hkls to consider
         :type hkl: np.array
         :param u: A classical anisotropic displacement parameters matrix
@@ -55,6 +57,7 @@ class ResFrame(BaseFrame):
     def form_factor(self, hkl, space_group):
         """
         Calculate form factors based on current structure, hkls, and space group
+
         :param hkl: A 2D array listing all hkls to consider
         :type hkl: np.array
         :param space_group: Space group describing the internal crystal symmetry
@@ -82,6 +85,7 @@ class ResFrame(BaseFrame):
     def read(self, path):
         """
         Read data from specified ins/res file and return an OrderedDict
+
         :param path: Relative or absolute path to the res file to be read
         :type path: str
         :return: None

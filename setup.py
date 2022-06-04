@@ -61,6 +61,7 @@ setup(
         'numpy>=1.18.1',
         'pandas>=1.0.1',
         'seaborn>=0.11.0',
-        'scipy>=1.5.1'
+        'scipy>=1.5.1',
+        'uncertainties>=3.*',
     ]
 )

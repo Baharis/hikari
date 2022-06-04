@@ -53,39 +53,31 @@ class BaseFrame:
     +----------+------------+------------------+------------------+------------+
     """
 
-    class ImportedFromCif:
-        """Data class handling item imported when `from_cif_block() is called"""
-        def __init__(self, local_name, cif_name, typ, default):
-            self.name: str = local_name
-            self.cif_name: str = cif_name
-            self.typ = typ
-            self.default = default
-
-    IMPORTED_FROM_CIF = [
-        ImportedFromCif('a', '_cell_length_a', cfloat, 1.0),
-        ImportedFromCif('b', '_cell_length_b', cfloat, 1.0),
-        ImportedFromCif('c', '_cell_length_c', cfloat, 1.0),
-        ImportedFromCif('al', '_cell_length_alpha', cfloat, 90),
-        ImportedFromCif('be', '_cell_length_beta', cfloat, 90),
-        ImportedFromCif('ga', '_cell_length_gamma', cfloat, 90),
-        ImportedFromCif('ub11', '_diffrn_orient_matrix_UB_11', float, 1.0),
-        ImportedFromCif('ub12', '_diffrn_orient_matrix_UB_12', float, 0.0),
-        ImportedFromCif('ub13', '_diffrn_orient_matrix_UB_13', float, 0.0),
-        ImportedFromCif('ub21', '_diffrn_orient_matrix_UB_21', float, 0.0),
-        ImportedFromCif('ub22', '_diffrn_orient_matrix_UB_22', float, 1.0),
-        ImportedFromCif('ub23', '_diffrn_orient_matrix_UB_23', float, 0.0),
-        ImportedFromCif('ub31', '_diffrn_orient_matrix_UB_31', float, 0.0),
-        ImportedFromCif('ub32', '_diffrn_orient_matrix_UB_32', float, 0.0),
-        ImportedFromCif('ub33', '_diffrn_orient_matrix_UB_33', float, 1.0)]
+    IMPORTED_FROM_CIF = {
+        'a': ['_cell_length_a', cfloat, 1.0],
+        'b': ['_cell_length_b', cfloat, 1.0],
+        'c': ['_cell_length_c', cfloat, 1.0],
+        'al': ['_cell_length_alpha', cfloat, 90],
+        'be': ['_cell_length_beta', cfloat, 90],
+        'ga': ['_cell_length_gamma', cfloat, 90],
+        'ub11': ['_diffrn_orient_matrix_UB_11', float, 1.0],
+        'ub12': ['_diffrn_orient_matrix_UB_12', float, 0.0],
+        'ub13': ['_diffrn_orient_matrix_UB_13', float, 0.0],
+        'ub21': ['_diffrn_orient_matrix_UB_21', float, 0.0],
+        'ub22': ['_diffrn_orient_matrix_UB_22', float, 1.0],
+        'ub23': ['_diffrn_orient_matrix_UB_23', float, 0.0],
+        'ub31': ['_diffrn_orient_matrix_UB_31', float, 0.0],
+        'ub32': ['_diffrn_orient_matrix_UB_32', float, 0.0],
+        'ub33': ['_diffrn_orient_matrix_UB_33', float, 1.0]}
 
     def __init__(self):
-        self.__a_d = self.__b_d = self.__c_d = 1.0
-        self.__a_r = self.__b_r = self.__c_r = 1.0
-        self.__al_d = self.__be_d = self.__ga_d = np.pi / 2
-        self.__al_r = self.__be_r = self.__ga_r = np.pi / 2
-        self.__a_v, self.__b_v, self.__c_v = np.eye(3)
-        self.__a_w, self.__b_w, self.__c_w = np.eye(3)
-        self.edit_cell(a=1.0, b=1.0, c=1.0, al=90.0, be=90.0, ga=90.0)
+        self._a_d = self._b_d = self._c_d = 1.0
+        self._a_r = self._b_r = self._c_r = 1.0
+        self._al_d = self._be_d = self._ga_d = np.pi / 2
+        self._al_r = self._be_r = self._ga_r = np.pi / 2
+        self._a_v, self._b_v, self._c_v = np.eye(3)
+        self._a_w, self._b_w, self._c_w = np.eye(3)
+        self._refresh_cell()
         self.orientation = np.array(((1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0)))
         """3x3 matrix describing orientation of crystal during experiment."""
 
@@ -119,9 +111,12 @@ class BaseFrame:
         :type parameters: float
         """
         for key, value in parameters.items():
-            if key not in ('a', 'b', 'c', 'al', 'be', 'ga'):
+            if key not in {'a', 'b', 'c', 'al', 'be', 'ga'}:
                 raise KeyError(f'Unknown unit cell parameter: {key}')
-            setattr(self, f'{key}_d', value)
+            elif key in {'a', 'b', 'c'}:
+                setattr(self, f'_{key}_d', value)
+            elif key in {'al', 'be', 'ga'}:
+                setattr(self, f'_{key}_d', angle2rad(value))
         self._refresh_cell()
 
     def fill_from_cif_block(self, block, fragile=False):
@@ -137,11 +132,11 @@ class BaseFrame:
         :type fragile: bool
         """
         imp = {}
-        for i in self.IMPORTED_FROM_CIF:
+        for k, v in self.IMPORTED_FROM_CIF.items():
             if fragile:
-                imp[i.name] = block.get_as_type(i.cif_name, i.typ)
+                imp[k] = block.get_as_type(v[0], v[1])
             else:
-                imp[i.name] = block.get_as_type(i.cif_name, i.typ, i.default)
+                imp[k] = block.get_as_type(v[0], v[1], v[2])
         cell_par_names = {'a', 'b', 'c', 'al', 'be', 'ga'}
         new_parameters = {k: v for k, v in imp.items() if k in cell_par_names}
         self.edit_cell(**new_parameters)
@@ -162,20 +157,20 @@ class BaseFrame:
         ca, cb, cg = np.cos(self.al_d), np.cos(self.be_d), np.cos(self.ga_d)
         v = a * b * c * np.sqrt(1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg)
 
-        self.__a_v = np.array([a, 0, 0])
-        self.__b_v = np.array([b * cg, b * sg, 0])
-        self.__c_v = np.array([c * cb, c * (ca - cb * cg)/sg, v/(a * b * sg)])
+        self._a_v = np.array([a, 0, 0])
+        self._b_v = np.array([b * cg, b * sg, 0])
+        self._c_v = np.array([c * cb, c * (ca - cb * cg) / sg, v / (a * b * sg)])
 
-        self.a_r = b * c * sa / v
-        self.b_r = c * a * sb / v
-        self.c_r = a * b * sg / v
-        self.al_r = np.arccos((cb * cg - ca) / (sb * sg))
-        self.be_r = np.arccos((cg * ca - cb) / (sg * sa))
-        self.ga_r = np.arccos((ca * cb - cg) / (sa * sb))
+        self._a_r = b * c * sa / v
+        self._b_r = c * a * sb / v
+        self._c_r = a * b * sg / v
+        self._al_r = np.arccos((cb * cg - ca) / (sb * sg))
+        self._be_r = np.arccos((cg * ca - cb) / (sg * sa))
+        self._ga_r = np.arccos((ca * cb - cg) / (sa * sb))
 
-        self.__a_w = np.cross(self.b_v, self.c_v) / v
-        self.__b_w = np.cross(self.c_v, self.a_v) / v
-        self.__c_w = np.cross(self.a_v, self.b_v) / v
+        self._a_w = np.cross(self.b_v, self.c_v) / v
+        self._b_w = np.cross(self.c_v, self.a_v) / v
+        self._c_w = np.cross(self.a_v, self.b_v) / v
 
     @property
     def a_d(self):
@@ -183,11 +178,7 @@ class BaseFrame:
         :return: Length of unit cell vector **a** in direct space.
         :rtype: float
         """
-        return self.__a_d
-
-    @a_d.setter
-    def a_d(self, value):
-        self.__a_d = value
+        return self._a_d
 
     @property
     def b_d(self):
@@ -195,11 +186,7 @@ class BaseFrame:
         :return: Length of unit cell vector **b** in direct space.
         :rtype: float
         """
-        return self.__b_d
-
-    @b_d.setter
-    def b_d(self, value):
-        self.__b_d = value
+        return self._b_d
 
     @property
     def c_d(self):
@@ -207,11 +194,7 @@ class BaseFrame:
         :return: Length of unit cell vector **c** in direct space.
         :rtype: float
         """
-        return self.__c_d
-
-    @c_d.setter
-    def c_d(self, value):
-        self.__c_d = value
+        return self._c_d
 
     @property
     def al_d(self):
@@ -219,11 +202,7 @@ class BaseFrame:
         :return: Angle between vectors **b** and **c** in degrees.
         :rtype: float
         """
-        return self.__al_d
-
-    @al_d.setter
-    def al_d(self, value):
-        self.__al_d = angle2rad(value)
+        return self._al_d
 
     @property
     def be_d(self):
@@ -231,11 +210,7 @@ class BaseFrame:
         :return: Angle between vectors **c** and **a** in degrees.
         :rtype: float
         """
-        return self.__be_d
-
-    @be_d.setter
-    def be_d(self, value):
-        self.__be_d = angle2rad(value)
+        return self._be_d
 
     @property
     def ga_d(self):
@@ -243,11 +218,7 @@ class BaseFrame:
         :return: Angle between vectors **a** and **b** in degrees.
         :rtype: float
         """
-        return self.__ga_d
-
-    @ga_d.setter
-    def ga_d(self, value):
-        self.__ga_d = angle2rad(value)
+        return self._ga_d
 
     @property
     def v_d(self):
@@ -263,7 +234,7 @@ class BaseFrame:
         :return: Unit cell vector **a** in direct space.
         :rtype: numpy.array
         """
-        return self.__a_v
+        return self._a_v
 
     @property
     def b_v(self):
@@ -271,7 +242,7 @@ class BaseFrame:
         :return: Unit cell vector **b** in direct space.
         :rtype: numpy.array
         """
-        return self.__b_v
+        return self._b_v
 
     @property
     def c_v(self):
@@ -279,7 +250,7 @@ class BaseFrame:
         :return: Unit cell vector **c** in direct space.
         :rtype: numpy.array
         """
-        return self.__c_v
+        return self._c_v
 
     @property
     def A_d(self):
@@ -287,7 +258,7 @@ class BaseFrame:
         :return: Matrix A with vertically stacked direct space vectors.
         :rtype: np.array
         """
-        return np.vstack([self.__a_v, self.__b_v, self.__c_v])
+        return np.vstack([self._a_v, self._b_v, self._c_v])
 
     @property
     def G_d(self):
@@ -303,11 +274,7 @@ class BaseFrame:
         :return: Length of unit cell vector **a\*** in reciprocal space.
         :rtype: float
         """
-        return self.__a_r
-
-    @a_r.setter
-    def a_r(self, value):
-        self.__a_r = value
+        return self._a_r
 
     @property
     def b_r(self):
@@ -315,11 +282,7 @@ class BaseFrame:
         :return: Length of unit cell vector **b\*** in reciprocal space.
         :rtype: float
         """
-        return self.__b_r
-
-    @b_r.setter
-    def b_r(self, value):
-        self.__b_r = value
+        return self._b_r
 
     @property
     def c_r(self):
@@ -327,11 +290,7 @@ class BaseFrame:
         :return: Length of unit cell vector **c\*** in reciprocal space.
         :rtype: float
         """
-        return self.__c_r
-
-    @c_r.setter
-    def c_r(self, value):
-        self.__c_r = value
+        return self._c_r
 
     @property
     def al_r(self):
@@ -339,11 +298,7 @@ class BaseFrame:
         :return: Angle between vectors **b\*** and **c\*** in degrees.
         :rtype: float
         """
-        return self.__al_r
-
-    @al_r.setter
-    def al_r(self, value):
-        self.__al_r = angle2rad(value)
+        return self._al_r
 
     @property
     def be_r(self):
@@ -351,11 +306,7 @@ class BaseFrame:
         :return: Angle between vectors **c\*** and **a\*** in degrees.
         :rtype: float
         """
-        return self.__be_r
-
-    @be_r.setter
-    def be_r(self, value):
-        self.__be_r = angle2rad(value)
+        return self._be_r
 
     @property
     def ga_r(self):
@@ -363,11 +314,7 @@ class BaseFrame:
         :return: Angle between vectors **a\*** and **b\*** in degrees.
         :rtype: float
         """
-        return self.__ga_r
-
-    @ga_r.setter
-    def ga_r(self, value):
-        self.__ga_r = angle2rad(value)
+        return self._ga_r
 
     @property
     def v_r(self):
@@ -383,7 +330,7 @@ class BaseFrame:
         :return: Unit cell vector **a\*** in reciprocal space.
         :rtype: numpy.array
         """
-        return self.__a_w
+        return self._a_w
 
     @property
     def b_w(self):
@@ -391,7 +338,7 @@ class BaseFrame:
         :return: Unit cell vector **b\*** in reciprocal space.
         :rtype: numpy.array
         """
-        return self.__b_w
+        return self._b_w
 
     @property
     def c_w(self):
@@ -399,7 +346,7 @@ class BaseFrame:
         :return: Unit cell vector **c\*** in reciprocal space.
         :rtype: numpy.array
         """
-        return self.__c_w
+        return self._c_w
 
     @property
     def A_r(self):
@@ -407,7 +354,7 @@ class BaseFrame:
         :return: Matrix A\* with vertically stacked reciprocal space vectors.
         :rtype: np.array
         """
-        return np.vstack([self.__a_w, self.__b_w, self.__c_w])
+        return np.vstack([self._a_w, self._b_w, self._c_w])
 
     @property
     def G_r(self):

@@ -14,6 +14,7 @@ Other frames are in an early stage of development.
 
 from .cif import CifFrame
 from .base import BaseFrame
+from .ubase import UBaseFrame
 from .hkl import HklFrame
 from .res import ResFrame
 from .lst import LstFrame
