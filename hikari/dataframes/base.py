@@ -80,7 +80,7 @@ class BaseFrame:
         self._al_r = self._be_r = self._ga_r = np.pi / 2
         self._a_v, self._b_v, self._c_v = np.eye(3)
         self._a_w, self._b_w, self._c_w = np.eye(3)
-        self.edit_cell(a=1.0, b=1.0, c=1.0, al=90.0, be=90.0, ga=90.0)
+        self._refresh_cell()
         self.orientation = np.array(((1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0)))
         """3x3 matrix describing orientation of crystal during experiment."""
 
@@ -439,18 +439,15 @@ class UBaseFrame(BaseFrame):
 
     def __init__(self):
         super(UBaseFrame, self).__init__()
-        u0, u1 = ufloat(0., 0), ufloat(1., 0)
-        upi, u90 = ufloat(np.pi / 2, 0), ufloat(90., 0)
+        u0, u1, upi = ufloat(0., 0), ufloat(1., 0), ufloat(np.pi / 2, 0)
+        u_eye = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
         self._a_d = self._b_d = self._c_d = u1
         self._a_r = self._b_r = self._c_r = u1
         self._al_d = self._be_d = self._ga_d = upi
         self._al_r = self._be_r = self._ga_r = upi
-        self._a_v, self._b_v, self._c_v = \
-            unumpy.uarray(np.eye(3), np.zeros([3, 3]))
-        self._a_w, self._b_w, self._c_w = \
-            unumpy.uarray(np.eye(3), np.zeros([3, 3]))
-        self._c_w = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
-        self.edit_cell(a=u1, b=u1, c=u1, al=u90, be=u90, ga=u90)
+        self._a_v, self._b_v, self._c_v = u_eye
+        self._a_w, self._b_w, self._c_w = u_eye
+        self._refresh_cell()
         self.orientation = np.array(((1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0)))
         """3x3 matrix describing orientation of crystal during experiment."""
 
