@@ -7,6 +7,8 @@ from numpy import power, linspace, sign, abs
 
 def find_best(strings, criteria):
     """
+    Parse a list of `strings` and return the "best" element based on `criteria`.
+
     :param strings: List of string where best will be found based on `criteria`.
     :type strings: List[str]
     :param criteria: '>'-separated substrings sought in descending order.

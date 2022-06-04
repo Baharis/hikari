@@ -2,7 +2,6 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from functools import lru_cache
-from itertools import chain, zip_longest
 
 from hikari.utility import make_abspath
 
@@ -21,6 +20,7 @@ class CifBlock(OrderedDict):
         """
         Get value of `self[key]` converted to `typ`. If value is a list,
         convert its contents element-wise.
+
         :param key: key associated with accessed element
         :type key: str
         :param typ: type/function applied to a value or its every element
@@ -163,6 +163,7 @@ class CifReader(CifIO):
         """
         Read the data from :attr:`~.CifIO.lines` numbered `start` to `end`,
         interpret it, and return it as an instance of an `OrderedDict`.
+
         :param start: number of the first line which data should be read from
         :type start: int
         :param end: number of the first line which should not be read anymore
@@ -208,6 +209,7 @@ class CifReader(CifIO):
     def split_line(self, line):
         """
         Split line into words, keeping words inside quotation marks together.
+
         :param line: line to be split based on whitespace into words
         :type line: str
         :return: list of words obtained from splitting
@@ -219,6 +221,7 @@ class CifReader(CifIO):
         """
         Read the contents of cif currently pointed by :attr:`~.CifIO.file_path`
         and block :attr:`~.CifIO.data_block_header` and return them to a dict.
+
         :return: A dictionary containing information read from .cif file.
         :rtype: dict
         """
@@ -236,6 +239,7 @@ class CifReader(CifIO):
         """
         Substitute whitespace between matching quotation marks with substitutes
         and remove the outer quotation marks
+
         :param string: text in which whitespace will be substituted
         :type string: str
         :return: string where whitespace inside quotes were substituted
@@ -254,6 +258,7 @@ class CifReader(CifIO):
         """
         Change the substitute characters in supplied `string` back
         to whitespace, remove matching outer quotation marks, and return string
+
         :param string: text where whitespace will be reverted and quotes removed
         :type string: str
         :return: modified output string
@@ -268,6 +273,7 @@ class CifReader(CifIO):
     def strip_comments(cls, string):
         """
         Remove everything following "#" at the start of line or after whitespace
+
         :param string: string where comments should be removed
         :type string: str
         :return: string with comments removed
