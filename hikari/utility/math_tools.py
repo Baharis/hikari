@@ -82,14 +82,14 @@ def det3x3(matrix):
     Calculate a determinant of a 3x3 matrix. Should be usually substituted
     by `numpy.linalg.det`, but is indispensable for matrices with uncertainties.
 
-    :param matrix: 3x3 object which allows for 2d slicing
-    :type matrix: numpy.ndarray or  uncertainties.unumpy.matrix
+    :param matrix: 3x3 array/matrix which allows for 2d indexing
+    :type matrix: numpy.ndarray or uncertainties.unumpy.matrix
     :return: Determinant of the matrix
     :rtype: int or float or uncertainties.core.Variable
     """
-    m11, m12, m13 = matrix[:, 0]
-    m21, m22, m23 = matrix[:, 1]
-    m31, m32, m33 = matrix[:, 2]
+    m11, m12, m13 = matrix[0, 0], matrix[1, 0], matrix[2, 0]
+    m21, m22, m23 = matrix[0, 1], matrix[1, 1], matrix[2, 1]
+    m31, m32, m33 = matrix[0, 2], matrix[1, 2], matrix[2, 2]
     return m11 * m22 * m33 + m12 * m23 * m31 + m13 * m21 * m32 \
         - m13 * m22 * m31 - m12 * m21 * m33 - m11 * m23 * m32
 
