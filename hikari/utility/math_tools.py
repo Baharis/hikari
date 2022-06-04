@@ -77,6 +77,23 @@ def sph2cart(r, p, a):
     return np.array([x, y, z])
 
 
+def det3x3(matrix):
+    """
+    Calculate a determinant of a 3x3 matrix. Should be usually substituted
+    by `numpy.linalg.det`, but is indispensable for matrices with uncertainties.
+
+    :param matrix: 3x3 object which allows for 2d slicing
+    :type matrix: numpy.ndarray or  uncertainties.unumpy.matrix
+    :return: Determinant of the matrix
+    :rtype: int or float or uncertainties.core.Variable
+    """
+    m11, m12, m13 = matrix[:, 0]
+    m21, m22, m23 = matrix[:, 1]
+    m31, m32, m33 = matrix[:, 2]
+    return m11 * m22 * m33 + m12 * m23 * m31 + m13 * m21 * m32 \
+        - m13 * m22 * m31 - m12 * m21 * m33 - m11 * m23 * m32
+
+
 def fibonacci_sphere(samples=1, seed=1337):
     """
     Return a 3D cartesian coordinates of *samples* number of points

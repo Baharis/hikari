@@ -1,5 +1,5 @@
 import numpy as np
-from hikari.utility import angle2rad, cfloat
+from hikari.utility import angle2rad, cfloat, det3x3
 
 
 class BaseFrame:
@@ -226,7 +226,7 @@ class BaseFrame:
         :return: Unit cell volume in direct space.
         :rtype: float
         """
-        return np.linalg.det(self.A_d)
+        return det3x3(self.A_d)
 
     @property
     def a_v(self):
@@ -322,7 +322,7 @@ class BaseFrame:
         :return: Unit cell volume in reciprocal space.
         :rtype: float
         """
-        return np.linalg.det(self.A_r)
+        return det3x3(self.A_r)
 
     @property
     def a_w(self):
