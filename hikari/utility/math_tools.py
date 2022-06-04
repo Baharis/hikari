@@ -34,7 +34,7 @@ def angle2rad(value):
     :return: Angle value expressed in radians
     :rtype: float
     """
-    return value if -3.15 < value < 3.15 else np.deg2rad(value)
+    return value if -3.15 < value < 3.15 else value * 180. / np.pi
 
 
 def cart2sph(x, y, z):
