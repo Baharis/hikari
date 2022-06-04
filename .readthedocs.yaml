@@ -16,6 +16,11 @@ sphinx:
   configuration: docs/conf.py
   fail_on_warning: true
 
+# formats:
+#   - pdf
+#   - epub
+# TODO: try re-adding later and solving resulting LaTeX / _static errors
+
 python:
    install:
    - requirements: docs/requirements.txt
