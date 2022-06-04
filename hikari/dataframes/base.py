@@ -460,8 +460,9 @@ class UBaseFrame(BaseFrame):
         ca, cb, cg = ucos(self.al_d), ucos(self.be_d), ucos(self.ga_d)
         v = a * b * c * usqrt(1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg)
 
-        self._a_v = np.array([a, 0, 0])
-        self._b_v = np.array([b * cg, b * sg, 0])
+        u0 = ufloat(0., 0)
+        self._a_v = np.array([a, u0, u0])
+        self._b_v = np.array([b * cg, b * sg, u0])
         self._c_v = np.array([c * cb, c * (ca - cb * cg)/sg, v/(a * b * sg)])
 
         self.a_r = b * c * sa / v
