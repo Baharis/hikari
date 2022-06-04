@@ -452,13 +452,3 @@ class UBaseFrame(BaseFrame):
         :rtype: float
         """
         return self._udet(self.A_r)
-
-
-if __name__ == '__main__':
-    b = BaseFrame()
-    u = UBaseFrame()
-    b.edit_cell(a=7, b=8, c=9)
-    u.edit_cell(a=ufloat(7, 1), b=ufloat(8, 1), c=ufloat(9, 1))
-    print(b.a_v)
-    print(u.a_v)
-
