@@ -14,12 +14,12 @@ class UBaseFrame(BaseFrame):
     """
 
     IMPORTED_FROM_CIF = {
-        'a':    ['_cell_length_a', ufloat_fromstr, 1.0],
-        'b':    ['_cell_length_b', ufloat_fromstr, 1.0],
-        'c':    ['_cell_length_c', ufloat_fromstr, 1.0],
-        'al':   ['_cell_length_alpha', ufloat_fromstr, 90],
-        'be':   ['_cell_length_beta',  ufloat_fromstr, 90],
-        'ga':   ['_cell_length_gamma', ufloat_fromstr, 90],
+        'a': ['_cell_length_a', ufloat_fromstr, 1.0],
+        'b': ['_cell_length_b', ufloat_fromstr, 1.0],
+        'c': ['_cell_length_c', ufloat_fromstr, 1.0],
+        'al': ['_cell_length_alpha', ufloat_fromstr, 90],
+        'be': ['_cell_length_beta',  ufloat_fromstr, 90],
+        'ga': ['_cell_length_gamma', ufloat_fromstr, 90],
         'ub11': ['_diffrn_orient_matrix_UB_11', float, 1.0],
         'ub12': ['_diffrn_orient_matrix_UB_12', float, 0.0],
         'ub13': ['_diffrn_orient_matrix_UB_13', float, 0.0],
