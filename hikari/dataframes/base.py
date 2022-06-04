@@ -58,7 +58,7 @@ class BaseFrame:
         'b': ['_cell_length_b', cfloat, 1.0],
         'c': ['_cell_length_c', cfloat, 1.0],
         'al': ['_cell_length_alpha', cfloat, 90],
-        'be': ['_cell_length_beta',  cfloat, 90],
+        'be': ['_cell_length_beta', cfloat, 90],
         'ga': ['_cell_length_gamma', cfloat, 90],
         'ub11': ['_diffrn_orient_matrix_UB_11', float, 1.0],
         'ub12': ['_diffrn_orient_matrix_UB_12', float, 0.0],
