@@ -74,12 +74,12 @@ class BaseFrame:
         'ub33': ['_diffrn_orient_matrix_UB_33', float, 1.0]}
 
     def __init__(self):
-        self.__a_d = self.__b_d = self.__c_d = 1.0
-        self.__a_r = self.__b_r = self.__c_r = 1.0
-        self.__al_d = self.__be_d = self.__ga_d = np.pi / 2
-        self.__al_r = self.__be_r = self.__ga_r = np.pi / 2
-        self.__a_v, self.__b_v, self.__c_v = np.eye(3)
-        self.__a_w, self.__b_w, self.__c_w = np.eye(3)
+        self._a_d = self._b_d = self._c_d = 1.0
+        self._a_r = self._b_r = self._c_r = 1.0
+        self._al_d = self._be_d = self._ga_d = np.pi / 2
+        self._al_r = self._be_r = self._ga_r = np.pi / 2
+        self._a_v, self._b_v, self._c_v = np.eye(3)
+        self._a_w, self._b_w, self._c_w = np.eye(3)
         self.edit_cell(a=1.0, b=1.0, c=1.0, al=90.0, be=90.0, ga=90.0)
         self.orientation = np.array(((1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0)))
         """3x3 matrix describing orientation of crystal during experiment."""
@@ -157,9 +157,9 @@ class BaseFrame:
         ca, cb, cg = np.cos(self.al_d), np.cos(self.be_d), np.cos(self.ga_d)
         v = a * b * c * np.sqrt(1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg)
 
-        self.__a_v = np.array([a, 0, 0])
-        self.__b_v = np.array([b * cg, b * sg, 0])
-        self.__c_v = np.array([c * cb, c * (ca - cb * cg)/sg, v/(a * b * sg)])
+        self._a_v = np.array([a, 0, 0])
+        self._b_v = np.array([b * cg, b * sg, 0])
+        self._c_v = np.array([c * cb, c * (ca - cb * cg) / sg, v / (a * b * sg)])
 
         self.a_r = b * c * sa / v
         self.b_r = c * a * sb / v
@@ -168,9 +168,9 @@ class BaseFrame:
         self.be_r = np.arccos((cg * ca - cb) / (sg * sa))
         self.ga_r = np.arccos((ca * cb - cg) / (sa * sb))
 
-        self.__a_w = np.cross(self.b_v, self.c_v) / v
-        self.__b_w = np.cross(self.c_v, self.a_v) / v
-        self.__c_w = np.cross(self.a_v, self.b_v) / v
+        self._a_w = np.cross(self.b_v, self.c_v) / v
+        self._b_w = np.cross(self.c_v, self.a_v) / v
+        self._c_w = np.cross(self.a_v, self.b_v) / v
 
     @property
     def a_d(self):
@@ -178,11 +178,11 @@ class BaseFrame:
         :return: Length of unit cell vector **a** in direct space.
         :rtype: float
         """
-        return self.__a_d
+        return self._a_d
 
     @a_d.setter
     def a_d(self, value):
-        self.__a_d = value
+        self._a_d = value
 
     @property
     def b_d(self):
@@ -190,11 +190,11 @@ class BaseFrame:
         :return: Length of unit cell vector **b** in direct space.
         :rtype: float
         """
-        return self.__b_d
+        return self._b_d
 
     @b_d.setter
     def b_d(self, value):
-        self.__b_d = value
+        self._b_d = value
 
     @property
     def c_d(self):
@@ -202,11 +202,11 @@ class BaseFrame:
         :return: Length of unit cell vector **c** in direct space.
         :rtype: float
         """
-        return self.__c_d
+        return self._c_d
 
     @c_d.setter
     def c_d(self, value):
-        self.__c_d = value
+        self._c_d = value
 
     @property
     def al_d(self):
@@ -214,11 +214,11 @@ class BaseFrame:
         :return: Angle between vectors **b** and **c** in degrees.
         :rtype: float
         """
-        return self.__al_d
+        return self._al_d
 
     @al_d.setter
     def al_d(self, value):
-        self.__al_d = angle2rad(value)
+        self._al_d = angle2rad(value)
 
     @property
     def be_d(self):
@@ -226,11 +226,11 @@ class BaseFrame:
         :return: Angle between vectors **c** and **a** in degrees.
         :rtype: float
         """
-        return self.__be_d
+        return self._be_d
 
     @be_d.setter
     def be_d(self, value):
-        self.__be_d = angle2rad(value)
+        self._be_d = angle2rad(value)
 
     @property
     def ga_d(self):
@@ -238,11 +238,11 @@ class BaseFrame:
         :return: Angle between vectors **a** and **b** in degrees.
         :rtype: float
         """
-        return self.__ga_d
+        return self._ga_d
 
     @ga_d.setter
     def ga_d(self, value):
-        self.__ga_d = angle2rad(value)
+        self._ga_d = angle2rad(value)
 
     @property
     def v_d(self):
@@ -258,7 +258,7 @@ class BaseFrame:
         :return: Unit cell vector **a** in direct space.
         :rtype: numpy.array
         """
-        return self.__a_v
+        return self._a_v
 
     @property
     def b_v(self):
@@ -266,7 +266,7 @@ class BaseFrame:
         :return: Unit cell vector **b** in direct space.
         :rtype: numpy.array
         """
-        return self.__b_v
+        return self._b_v
 
     @property
     def c_v(self):
@@ -274,7 +274,7 @@ class BaseFrame:
         :return: Unit cell vector **c** in direct space.
         :rtype: numpy.array
         """
-        return self.__c_v
+        return self._c_v
 
     @property
     def A_d(self):
@@ -282,7 +282,7 @@ class BaseFrame:
         :return: Matrix A with vertically stacked direct space vectors.
         :rtype: np.array
         """
-        return np.vstack([self.__a_v, self.__b_v, self.__c_v])
+        return np.vstack([self._a_v, self._b_v, self._c_v])
 
     @property
     def G_d(self):
@@ -298,11 +298,11 @@ class BaseFrame:
         :return: Length of unit cell vector **a\*** in reciprocal space.
         :rtype: float
         """
-        return self.__a_r
+        return self._a_r
 
     @a_r.setter
     def a_r(self, value):
-        self.__a_r = value
+        self._a_r = value
 
     @property
     def b_r(self):
@@ -310,11 +310,11 @@ class BaseFrame:
         :return: Length of unit cell vector **b\*** in reciprocal space.
         :rtype: float
         """
-        return self.__b_r
+        return self._b_r
 
     @b_r.setter
     def b_r(self, value):
-        self.__b_r = value
+        self._b_r = value
 
     @property
     def c_r(self):
@@ -322,11 +322,11 @@ class BaseFrame:
         :return: Length of unit cell vector **c\*** in reciprocal space.
         :rtype: float
         """
-        return self.__c_r
+        return self._c_r
 
     @c_r.setter
     def c_r(self, value):
-        self.__c_r = value
+        self._c_r = value
 
     @property
     def al_r(self):
@@ -334,11 +334,11 @@ class BaseFrame:
         :return: Angle between vectors **b\*** and **c\*** in degrees.
         :rtype: float
         """
-        return self.__al_r
+        return self._al_r
 
     @al_r.setter
     def al_r(self, value):
-        self.__al_r = angle2rad(value)
+        self._al_r = angle2rad(value)
 
     @property
     def be_r(self):
@@ -346,11 +346,11 @@ class BaseFrame:
         :return: Angle between vectors **c\*** and **a\*** in degrees.
         :rtype: float
         """
-        return self.__be_r
+        return self._be_r
 
     @be_r.setter
     def be_r(self, value):
-        self.__be_r = angle2rad(value)
+        self._be_r = angle2rad(value)
 
     @property
     def ga_r(self):
@@ -358,11 +358,11 @@ class BaseFrame:
         :return: Angle between vectors **a\*** and **b\*** in degrees.
         :rtype: float
         """
-        return self.__ga_r
+        return self._ga_r
 
     @ga_r.setter
     def ga_r(self, value):
-        self.__ga_r = angle2rad(value)
+        self._ga_r = angle2rad(value)
 
     @property
     def v_r(self):
@@ -378,7 +378,7 @@ class BaseFrame:
         :return: Unit cell vector **a\*** in reciprocal space.
         :rtype: numpy.array
         """
-        return self.__a_w
+        return self._a_w
 
     @property
     def b_w(self):
@@ -386,7 +386,7 @@ class BaseFrame:
         :return: Unit cell vector **b\*** in reciprocal space.
         :rtype: numpy.array
         """
-        return self.__b_w
+        return self._b_w
 
     @property
     def c_w(self):
@@ -394,7 +394,7 @@ class BaseFrame:
         :return: Unit cell vector **c\*** in reciprocal space.
         :rtype: numpy.array
         """
-        return self.__c_w
+        return self._c_w
 
     @property
     def A_r(self):
@@ -402,7 +402,7 @@ class BaseFrame:
         :return: Matrix A\* with vertically stacked reciprocal space vectors.
         :rtype: np.array
         """
-        return np.vstack([self.__a_w, self.__b_w, self.__c_w])
+        return np.vstack([self._a_w, self._b_w, self._c_w])
 
     @property
     def G_r(self):
@@ -441,13 +441,15 @@ class UBaseFrame(BaseFrame):
         super(UBaseFrame, self).__init__()
         u0, u1 = ufloat(0., 0), ufloat(1., 0)
         upi, u90 = ufloat(np.pi / 2, 0), ufloat(90., 0)
-        self.__a_d = self.__b_d = self.__c_d = u1
-        self.__a_r = self.__b_r = self.__c_r = u1
-        self.__al_d = self.__be_d = self.__ga_d = upi
-        self.__al_r = self.__be_r = self.__ga_r = upi
-        self.__a_v, self.__b_v = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
-        self.__a_w, self.__b_w = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
-        self.__c_v, self.__c_w = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
+        self._a_d = self._b_d = self._c_d = u1
+        self._a_r = self._b_r = self._c_r = u1
+        self._al_d = self._be_d = self._ga_d = upi
+        self._al_r = self._be_r = self._ga_r = upi
+        self._a_v, self._b_v, self._c_v = \
+            unumpy.uarray(np.eye(3), np.zeros([3, 3]))
+        self._a_w, self._b_w, self._c_w = \
+            unumpy.uarray(np.eye(3), np.zeros([3, 3]))
+        self._c_w = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
         self.edit_cell(a=u1, b=u1, c=u1, al=u90, be=u90, ga=u90)
         self.orientation = np.array(((1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0)))
         """3x3 matrix describing orientation of crystal during experiment."""
@@ -458,9 +460,9 @@ class UBaseFrame(BaseFrame):
         ca, cb, cg = ucos(self.al_d), ucos(self.be_d), ucos(self.ga_d)
         v = a * b * c * usqrt(1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg)
 
-        self.__a_v = np.array([a, 0, 0])
-        self.__b_v = np.array([b * cg, b * sg, 0])
-        self.__c_v = np.array([c * cb, c * (ca - cb * cg)/sg, v/(a * b * sg)])
+        self._a_v = np.array([a, 0, 0])
+        self._b_v = np.array([b * cg, b * sg, 0])
+        self._c_v = np.array([c * cb, c * (ca - cb * cg)/sg, v/(a * b * sg)])
 
         self.a_r = b * c * sa / v
         self.b_r = c * a * sb / v
@@ -469,9 +471,9 @@ class UBaseFrame(BaseFrame):
         self.be_r = uacos((cg * ca - cb) / (sg * sa))
         self.ga_r = uacos((ca * cb - cg) / (sa * sb))
 
-        self.__a_w = np.cross(self.b_v, self.c_v) / v
-        self.__b_w = np.cross(self.c_v, self.a_v) / v
-        self.__c_w = np.cross(self.a_v, self.b_v) / v
+        self._a_w = np.cross(self.b_v, self.c_v) / v
+        self._b_w = np.cross(self.c_v, self.a_v) / v
+        self._c_w = np.cross(self.a_v, self.b_v) / v
 
     @staticmethod
     def _udet(matrix):
@@ -497,4 +499,13 @@ class UBaseFrame(BaseFrame):
         :rtype: float
         """
         return self._udet(self.A_r)
+
+
+if __name__ == '__main__':
+    b = BaseFrame()
+    u = UBaseFrame()
+    b.edit_cell(a=7, b=8, c=9)
+    u.edit_cell(a=ufloat(7, 1), b=ufloat(8, 1), c=ufloat(9, 1))
+    print(b.a_v)
+    print(u.a_v)
 
