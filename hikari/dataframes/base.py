@@ -1,5 +1,8 @@
 import numpy as np
 from hikari.utility import angle2rad, cfloat
+from uncertainties import ufloat, ufloat_fromstr, unumpy
+from uncertainties.umath import sin as usin, cos as ucos
+from uncertainties.umath import acos as uacos, sqrt as usqrt
 
 
 class BaseFrame:
@@ -53,29 +56,22 @@ class BaseFrame:
     +----------+------------+------------------+------------------+------------+
     """
 
-    class ImportedFromCif:
-        """Data class handling item imported when `from_cif_block() is called"""
-        def __init__(self, cif_name, typ, default):
-            self.cif_name: str = cif_name
-            self.typ = typ
-            self.default = default
-
     IMPORTED_FROM_CIF = {
-        'a': ImportedFromCif('_cell_length_a', cfloat, 1.0),
-        'b': ImportedFromCif('_cell_length_b', cfloat, 1.0),
-        'c': ImportedFromCif('_cell_length_c', cfloat, 1.0),
-        'al': ImportedFromCif('_cell_length_alpha', cfloat, 90),
-        'be': ImportedFromCif('_cell_length_beta', cfloat, 90),
-        'ga': ImportedFromCif('_cell_length_gamma', cfloat, 90),
-        'ub11': ImportedFromCif('_diffrn_orient_matrix_UB_11', float, 1.0),
-        'ub12': ImportedFromCif('_diffrn_orient_matrix_UB_12', float, 0.0),
-        'ub13': ImportedFromCif('_diffrn_orient_matrix_UB_13', float, 0.0),
-        'ub21': ImportedFromCif('_diffrn_orient_matrix_UB_21', float, 0.0),
-        'ub22': ImportedFromCif('_diffrn_orient_matrix_UB_22', float, 1.0),
-        'ub23': ImportedFromCif('_diffrn_orient_matrix_UB_23', float, 0.0),
-        'ub31': ImportedFromCif('_diffrn_orient_matrix_UB_31', float, 0.0),
-        'ub32': ImportedFromCif('_diffrn_orient_matrix_UB_32', float, 0.0),
-        'ub33': ImportedFromCif('_diffrn_orient_matrix_UB_33', float, 1.0)}
+        'a':    ['_cell_length_a', cfloat, 1.0],
+        'b':    ['_cell_length_b', cfloat, 1.0],
+        'c':    ['_cell_length_c', cfloat, 1.0],
+        'al':   ['_cell_length_alpha', cfloat, 90],
+        'be':   ['_cell_length_beta',  cfloat, 90],
+        'ga':   ['_cell_length_gamma', cfloat, 90],
+        'ub11': ['_diffrn_orient_matrix_UB_11', float, 1.0],
+        'ub12': ['_diffrn_orient_matrix_UB_12', float, 0.0],
+        'ub13': ['_diffrn_orient_matrix_UB_13', float, 0.0],
+        'ub21': ['_diffrn_orient_matrix_UB_21', float, 0.0],
+        'ub22': ['_diffrn_orient_matrix_UB_22', float, 1.0],
+        'ub23': ['_diffrn_orient_matrix_UB_23', float, 0.0],
+        'ub31': ['_diffrn_orient_matrix_UB_31', float, 0.0],
+        'ub32': ['_diffrn_orient_matrix_UB_32', float, 0.0],
+        'ub33': ['_diffrn_orient_matrix_UB_33', float, 1.0]}
 
     def __init__(self):
         self.__a_d = self.__b_d = self.__c_d = 1.0
@@ -138,9 +134,9 @@ class BaseFrame:
         imp = {}
         for k, v in self.IMPORTED_FROM_CIF.items():
             if fragile:
-                imp[k] = block.get_as_type(v.cif_name, v.typ)
+                imp[k] = block.get_as_type(v[0], v[1])
             else:
-                imp[k] = block.get_as_type(v.cif_name, v.typ, v.default)
+                imp[k] = block.get_as_type(v[0], v[1], v[2])
         cell_par_names = {'a', 'b', 'c', 'al', 'be', 'ga'}
         new_parameters = {k: v for k, v in imp.items() if k in cell_par_names}
         self.edit_cell(**new_parameters)
@@ -415,3 +411,90 @@ class BaseFrame:
         :rtype: np.array
         """
         return self.A_r @ self.A_r.T
+
+
+class UBaseFrame(BaseFrame):
+    """
+    A sub-class of :class:`hikari.dataframes.BaseFrame` capable of the same
+    operation as its parent, but using `uncertainty.ufloats` instead of floats.
+    For doc of each element, please see the respective section for `BaseClass`.
+    """
+
+    IMPORTED_FROM_CIF = {
+        'a':    ['_cell_length_a', ufloat_fromstr, 1.0],
+        'b':    ['_cell_length_b', ufloat_fromstr, 1.0],
+        'c':    ['_cell_length_c', ufloat_fromstr, 1.0],
+        'al':   ['_cell_length_alpha', ufloat_fromstr, 90],
+        'be':   ['_cell_length_beta',  ufloat_fromstr, 90],
+        'ga':   ['_cell_length_gamma', ufloat_fromstr, 90],
+        'ub11': ['_diffrn_orient_matrix_UB_11', float, 1.0],
+        'ub12': ['_diffrn_orient_matrix_UB_12', float, 0.0],
+        'ub13': ['_diffrn_orient_matrix_UB_13', float, 0.0],
+        'ub21': ['_diffrn_orient_matrix_UB_21', float, 0.0],
+        'ub22': ['_diffrn_orient_matrix_UB_22', float, 1.0],
+        'ub23': ['_diffrn_orient_matrix_UB_23', float, 0.0],
+        'ub31': ['_diffrn_orient_matrix_UB_31', float, 0.0],
+        'ub32': ['_diffrn_orient_matrix_UB_32', float, 0.0],
+        'ub33': ['_diffrn_orient_matrix_UB_33', float, 1.0]}
+
+    def __init__(self):
+        super(UBaseFrame, self).__init__()
+        u0, u1 = ufloat(0., 0), ufloat(1., 0)
+        upi, u90 = ufloat(np.pi / 2, 0), ufloat(90., 0)
+        self.__a_d = self.__b_d = self.__c_d = u1
+        self.__a_r = self.__b_r = self.__c_r = u1
+        self.__al_d = self.__be_d = self.__ga_d = upi
+        self.__al_r = self.__be_r = self.__ga_r = upi
+        self.__a_v, self.__b_v = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
+        self.__a_w, self.__b_w = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
+        self.__c_v, self.__c_w = unumpy.uarray(np.eye(3), np.zeros([3, 3]))
+        self.edit_cell(a=u1, b=u1, c=u1, al=u90, be=u90, ga=u90)
+        self.orientation = np.array(((1.0, 0, 0), (0, 1.0, 0), (0, 0, 1.0)))
+        """3x3 matrix describing orientation of crystal during experiment."""
+
+    def _refresh_cell(self):
+        a, b, c = self.a_d, self.b_d, self.c_d
+        sa, sb, sg = usin(self.al_d), usin(self.be_d), usin(self.ga_d)
+        ca, cb, cg = ucos(self.al_d), ucos(self.be_d), ucos(self.ga_d)
+        v = a * b * c * usqrt(1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg)
+
+        self.__a_v = np.array([a, 0, 0])
+        self.__b_v = np.array([b * cg, b * sg, 0])
+        self.__c_v = np.array([c * cb, c * (ca - cb * cg)/sg, v/(a * b * sg)])
+
+        self.a_r = b * c * sa / v
+        self.b_r = c * a * sb / v
+        self.c_r = a * b * sg / v
+        self.al_r = uacos((cb * cg - ca) / (sb * sg))
+        self.be_r = uacos((cg * ca - cb) / (sg * sa))
+        self.ga_r = uacos((ca * cb - cg) / (sa * sb))
+
+        self.__a_w = np.cross(self.b_v, self.c_v) / v
+        self.__b_w = np.cross(self.c_v, self.a_v) / v
+        self.__c_w = np.cross(self.a_v, self.b_v) / v
+
+    @staticmethod
+    def _udet(matrix):
+        """Calculate determinant of a 3x3 matrix"""
+        m11, m12, m13 = matrix[:, 0]
+        m21, m22, m23 = matrix[:, 1]
+        m31, m32, m33 = matrix[:, 2]
+        return m11 * m22 * m33 + m12 * m23 * m31 + m13 * m21 * m32 \
+            - m13 * m22 * m31 - m12 * m21 * m33 - m11 * m23 * m32
+
+    @property
+    def v_d(self):
+        """
+        :return: Unit cell volume in direct space.
+        :rtype: float
+        """
+        return self._udet(self.A_d)
+
+    @property
+    def v_r(self):
+        """
+        :return: Unit cell volume in reciprocal space.
+        :rtype: float
+        """
+        return self._udet(self.A_r)
+
