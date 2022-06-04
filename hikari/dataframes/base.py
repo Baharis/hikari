@@ -114,9 +114,12 @@ class BaseFrame:
         :type parameters: float
         """
         for key, value in parameters.items():
-            if key not in ('a', 'b', 'c', 'al', 'be', 'ga'):
+            if key not in {'a', 'b', 'c', 'al', 'be', 'ga'}:
                 raise KeyError(f'Unknown unit cell parameter: {key}')
-            setattr(self, f'{key}_d', value)
+            elif key in {'a', 'b', 'c'}:
+                setattr(self, f'_{key}_d', value)
+            elif key in {'al', 'be', 'ga'}:
+                setattr(self, f'_{key}_d', angle2rad(value))
         self._refresh_cell()
 
     def fill_from_cif_block(self, block, fragile=False):
@@ -161,12 +164,12 @@ class BaseFrame:
         self._b_v = np.array([b * cg, b * sg, 0])
         self._c_v = np.array([c * cb, c * (ca - cb * cg) / sg, v / (a * b * sg)])
 
-        self.a_r = b * c * sa / v
-        self.b_r = c * a * sb / v
-        self.c_r = a * b * sg / v
-        self.al_r = np.arccos((cb * cg - ca) / (sb * sg))
-        self.be_r = np.arccos((cg * ca - cb) / (sg * sa))
-        self.ga_r = np.arccos((ca * cb - cg) / (sa * sb))
+        self._a_r = b * c * sa / v
+        self._b_r = c * a * sb / v
+        self._c_r = a * b * sg / v
+        self._al_r = np.arccos((cb * cg - ca) / (sb * sg))
+        self._be_r = np.arccos((cg * ca - cb) / (sg * sa))
+        self._ga_r = np.arccos((ca * cb - cg) / (sa * sb))
 
         self._a_w = np.cross(self.b_v, self.c_v) / v
         self._b_w = np.cross(self.c_v, self.a_v) / v
@@ -180,10 +183,6 @@ class BaseFrame:
         """
         return self._a_d
 
-    @a_d.setter
-    def a_d(self, value):
-        self._a_d = value
-
     @property
     def b_d(self):
         """
@@ -191,10 +190,6 @@ class BaseFrame:
         :rtype: float
         """
         return self._b_d
-
-    @b_d.setter
-    def b_d(self, value):
-        self._b_d = value
 
     @property
     def c_d(self):
@@ -204,10 +199,6 @@ class BaseFrame:
         """
         return self._c_d
 
-    @c_d.setter
-    def c_d(self, value):
-        self._c_d = value
-
     @property
     def al_d(self):
         """
@@ -215,10 +206,6 @@ class BaseFrame:
         :rtype: float
         """
         return self._al_d
-
-    @al_d.setter
-    def al_d(self, value):
-        self._al_d = angle2rad(value)
 
     @property
     def be_d(self):
@@ -228,10 +215,6 @@ class BaseFrame:
         """
         return self._be_d
 
-    @be_d.setter
-    def be_d(self, value):
-        self._be_d = angle2rad(value)
-
     @property
     def ga_d(self):
         """
@@ -239,10 +222,6 @@ class BaseFrame:
         :rtype: float
         """
         return self._ga_d
-
-    @ga_d.setter
-    def ga_d(self, value):
-        self._ga_d = angle2rad(value)
 
     @property
     def v_d(self):
@@ -300,10 +279,6 @@ class BaseFrame:
         """
         return self._a_r
 
-    @a_r.setter
-    def a_r(self, value):
-        self._a_r = value
-
     @property
     def b_r(self):
         """
@@ -311,10 +286,6 @@ class BaseFrame:
         :rtype: float
         """
         return self._b_r
-
-    @b_r.setter
-    def b_r(self, value):
-        self._b_r = value
 
     @property
     def c_r(self):
@@ -324,10 +295,6 @@ class BaseFrame:
         """
         return self._c_r
 
-    @c_r.setter
-    def c_r(self, value):
-        self._c_r = value
-
     @property
     def al_r(self):
         """
@@ -335,10 +302,6 @@ class BaseFrame:
         :rtype: float
         """
         return self._al_r
-
-    @al_r.setter
-    def al_r(self, value):
-        self._al_r = angle2rad(value)
 
     @property
     def be_r(self):
@@ -348,10 +311,6 @@ class BaseFrame:
         """
         return self._be_r
 
-    @be_r.setter
-    def be_r(self, value):
-        self._be_r = angle2rad(value)
-
     @property
     def ga_r(self):
         """
@@ -359,10 +318,6 @@ class BaseFrame:
         :rtype: float
         """
         return self._ga_r
-
-    @ga_r.setter
-    def ga_r(self, value):
-        self._ga_r = angle2rad(value)
 
     @property
     def v_r(self):
@@ -462,12 +417,12 @@ class UBaseFrame(BaseFrame):
         self._b_v = np.array([b * cg, b * sg, u0])
         self._c_v = np.array([c * cb, c * (ca - cb * cg)/sg, v/(a * b * sg)])
 
-        self.a_r = b * c * sa / v
-        self.b_r = c * a * sb / v
-        self.c_r = a * b * sg / v
-        self.al_r = uacos((cb * cg - ca) / (sb * sg))
-        self.be_r = uacos((cg * ca - cb) / (sg * sa))
-        self.ga_r = uacos((ca * cb - cg) / (sa * sb))
+        self._a_r = b * c * sa / v
+        self._b_r = c * a * sb / v
+        self._c_r = a * b * sg / v
+        self._al_r = uacos((cb * cg - ca) / (sb * sg))
+        self._be_r = uacos((cg * ca - cb) / (sg * sa))
+        self._ga_r = uacos((ca * cb - cg) / (sa * sb))
 
         self._a_w = np.cross(self.b_v, self.c_v) / v
         self._b_w = np.cross(self.c_v, self.a_v) / v
