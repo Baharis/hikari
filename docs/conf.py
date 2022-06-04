@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'hikari'
-copyright = '2022, Daniel Tchoń'
-author = 'Daniel Tchoń'
+copyright = u'2022, Daniel Tchoń'
+author = u'Daniel Tchoń'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1.5'
