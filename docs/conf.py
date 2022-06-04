@@ -22,7 +22,7 @@ copyright = u'2022, Daniel Tchoń'
 author = u'Daniel Tchoń'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.5'
+release = '0.2.0-alpha'
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,6 +41,8 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+# Mock imports to handle potential import error with uncertainties
+autodoc_mock_imports = ['uncertainties']
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -52,4 +54,4 @@ html_theme = 'bizstyle'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = []

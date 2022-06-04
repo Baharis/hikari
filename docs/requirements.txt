@@ -1,0 +1,7 @@
+sphinx==5.0.1
+matplotlib>=3.0.0,!=3.3.*
+numpy>=1.18.1
+pandas>=1.0.1
+seaborn>=0.11.0
+scipy>=1.5.1
+uncertainties>=3.*
