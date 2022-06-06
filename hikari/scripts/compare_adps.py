@@ -1,5 +1,7 @@
+from typing import Dict, Any
+
 import numpy as np
-from uncertainties import ufloat_fromstr, unumpy
+from uncertainties import ufloat_fromstr, unumpy, UFloat
 
 from hikari.dataframes import BaseFrame, CifFrame
 from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements
@@ -38,13 +40,13 @@ def calculate_similarity_indices(cif1_path,
     >>> calculate_similarity_indices('glycine.cif', 'glycine.cif')
     >>> calculate_similarity_indices('glycine.cif', 'glycine.cif', '100K', 'RT')
 
-    For two cif files 'X-rays.cif' and 'neutrons.cif', both with only one data
-    block named 'RT', the two following commands will have the same effect:
+    For two cif files 'X-rays.cif' and 'neutrons.cif' with data block named 'RT'
+    and '100K' (one each), the two following commands will have the same effect:
 
     :Example:
 
     >>> calculate_similarity_indices('X-rays.cif', 'neutrons.cif')
-    >>> calculate_similarity_indices('X-rays.cif', 'neutrons.cif', 'RT', 'RT')
+    >>> calculate_similarity_indices('X-rays.cif', 'neutrons.cif', 'RT', '100K')
 
     The behaviour of script can be further altered via other parameters.
     If `output_file` is set True, the results will be written there instead of
@@ -94,11 +96,13 @@ def calculate_similarity_indices(cif1_path,
         cif1p = make_abspath(cif1_path)
         cif2p = None if cif2_path is None else make_abspath(cif2_path)
         cif1b = 0 if cif1_block is None else cif1_block
-        cif2b = 1 if cif1b is 0 else cif1b if cif2_block is None else cif2_block
+        cif2b = 1 if cif1b is 0 and cif1p is cif2p \
+            else 0 if cif2_block is None else cif2_block
         return cif1p, cif2p, cif1b, cif2b
     cif1_path, cif2_path, cif1_block, cif2_block = interpret_paths()
 
-    print(f"# Hikari will calculate SIs using the following blocks:", file=f)
+    print(f"# Hikari will calculate similarity indices for atoms "
+          f"in the following blocks:", file=f)
     print(f"# - Block {cif1_block} of file {cif1_path}", file=f)
     print(f"# - Block {cif2_block} of file {cif2_path}", file=f)
     print(f"# with the following settings:", file=f)
@@ -108,7 +112,7 @@ def calculate_similarity_indices(cif1_path,
     def read_cif_block(path, block):
         c = CifFrame()
         c.read(path)
-        block = list(c.keys())[block] if isinstance(int, block) else block
+        block = list(c.keys())[block] if isinstance(block, int) else block
         return c[block]
     cif_block_1 = read_cif_block(cif1_path, cif1_block)
     cif_block_2 = read_cif_block(cif2_path, cif2_block)
@@ -121,6 +125,7 @@ def calculate_similarity_indices(cif1_path,
         label_list2 = block2['_atom_site_aniso_label']
         return [label for label in label_list1 if label in label_list2]
     common_labels = find_common_labels(cif_block_1, cif_block_2)
+    print(f"# Number of matching atoms found: {len(common_labels)}", file=f)
 
     def make_adp_fractional_arrays(block):
         labels = block['_atom_site_aniso_label']
@@ -136,7 +141,7 @@ def calculate_similarity_indices(cif1_path,
     adp_frac_dict_1 = make_adp_fractional_arrays(cif_block_1)
     adp_frac_dict_2 = make_adp_fractional_arrays(cif_block_2)
 
-    def calculate_similarity_index(adp_frac_1, adp_frac_2):
+    def calculate_similarity_index(adp_frac_1, adp_frac_2) -> float or UFloat:
         def adp_frac2cart(adp_frac):
             n = np.diag([b.a_r, b.b_r, b.c_r])
             return b.A_d.T @ n @ adp_frac @ n @ b.A_d
@@ -155,23 +160,27 @@ def calculate_similarity_indices(cif1_path,
         r12_den = det3x3(adp_inv_1 + adp_inv_2) ** (1 / 2)
         return 100 * (1 - r12_num / r12_den)
 
+    def si_string(si: float or UFloat) -> str:
+        return f'{si:8.4f}' if isinstance(si, float) \
+            else f'{si.n:8.4f} +/- {si.s:8.4f}'
+
     def calculate_and_print_similarity_indices():
-        sis = {}
+        sis: Dict[Any, float or UFloat] = {}
         for k in common_labels:
             sis[k] = calculate_similarity_index(adp_frac_dict_1[k],
                                                 adp_frac_dict_2[k])
-            print(f'{k:>8}: {sis[k]:8f}', file=f)
+            print(f'{k:>8}: {si_string(sis[k])}', file=f)
         sis_all = [v for k, v in sis.items()]
         sis_h = [v for k, v in sis.items()
                  if k[0] is 'H' and k[:2] not in chemical_elements]
         if sis_all:
             avg_si_all = sum(sis_all) / len(sis_all)
-            print(f'# Average SI for all atoms: {avg_si_all}', file=f)
+            print(f'# avg(*): {si_string(avg_si_all)}', file=f)
         else:
             print(f'# No atoms with matching names found', file=f)
         if sis_h:
             avg_si_h = sum(sis_h) / len(sis_h)
-            print(f'# Average SI for hydrogen atoms: {avg_si_h}', file=f)
+            print(f'# avg(H): {si_string(avg_si_h)}', file=f)
     calculate_and_print_similarity_indices()
 
     def terminate_output():
