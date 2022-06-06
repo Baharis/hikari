@@ -24,16 +24,17 @@ def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
     - If `cif1_path`, `cif2_path`, `cif1_block`, and `cif2_block` are given,
       `cif1_block` in `cif1_path` and `cif2_block` in `cif2_path` will be used.
 
-    For a cif file 'glycine.cif' with two data blocks, '100K' and 'RT',
-    the three following commands will all yield the same results.
+    For a single cif file 'glycine.cif' with two data blocks named '100K' and
+    'RT', the three following commands will have the same effect:
 
     :Example:
 
     >>> compare_adps('glycine.cif')
-    >>> compare_adps('glycine.cif', 'glycine.cif', '100K', '100K')
+    >>> compare_adps('glycine.cif', 'glycine.cif')
+    >>> compare_adps('glycine.cif', 'glycine.cif', '100K', 'RT')
 
-    Similarily, for two files 'X-rays.cif' and 'neutrons.cif', both with only
-    one data block '100K', the two following commands will have the same effect:
+    For two cif files 'X-rays.cif' and 'neutrons.cif', both with only one data
+    block named '100K', the two following commands will have the same effect:
 
     :Example:
 
@@ -76,10 +77,34 @@ def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
 
     u_type = ufloat_fromstr if uncertainties else cfloat
 
-    def read_cif_block(cif_path, cif_block):
+    def initialise_output():
+        if output_path is None:
+            f_ = None
+        else:
+            f_ = open(make_abspath(output_path), 'w+')
+        return f_
+    f = initialise_output()
+
+    def interpret_paths():
+        cif1p = make_abspath(cif1_path)
+        cif2p = None if cif2_path is None else make_abspath(cif2_path)
+        cif1b = 0 if cif1_block is None else cif1_block
+        cif2b = 1 if cif1b is 0 else cif1b if cif2_block is None else cif2_block
+        return cif1p, cif2p, cif1b, cif2b
+    cif1_path, cif2_path, cif1_block, cif2_block = interpret_paths()
+
+    print(f"# Hikari will calculate SIs using the following blocks:", file=f)
+    print(f"# - Block {cif1_block} of file {cif1_path}", file=f)
+    print(f"# - Block {cif2_block} of file {cif2_path}", file=f)
+    print(f"# using the following options:", file=f)
+    print(f"# - normalize={normalize}", file=f)
+    print(f"# - uncertainties={uncertainties}", file=f)
+
+    def read_cif_block(path, block):
         c = CifFrame()
-        c.read(make_abspath(cif_path))
-        return c[cif_block]
+        c.read(path)
+        block = list(c.keys())[block] if isinstance(int, block) else block
+        return c[block]
     cif_block_1 = read_cif_block(cif1_path, cif1_block)
     cif_block_2 = read_cif_block(cif2_path, cif2_block)
 
@@ -112,6 +137,9 @@ def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
             return b.A_d.T @ n @ adp_frac @ n @ b.A_d
         adp_cart_1 = adp_frac2cart(adp_frac_1)
         adp_cart_2 = adp_frac2cart(adp_frac_2)
+        if normalize:
+            adp_cart_1 /= det3x3(adp_cart_1)
+            adp_cart_2 /= det3x3(adp_cart_2)
         if uncertainties:
             adp_inv_1 = unumpy.matrix(adp_cart_1).I
             adp_inv_2 = unumpy.matrix(adp_cart_2).I
@@ -121,14 +149,30 @@ def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
         r12_num = 2 ** (3 / 2) * det3x3(adp_inv_1 @ adp_inv_2) ** (1 / 4)
         r12_den = det3x3(adp_inv_1 + adp_inv_2) ** (1 / 2)
         return 100 * (1 - r12_num / r12_den)
-    sis = []
-    for k in common_labels:
-        si = calculate_similarity_index(adp_frac_dict_1[k], adp_frac_dict_2[k])
-        if 'H' in k:
-            sis.append(si)
-        print(f'{k:>4}: {si}')
-    avg_si = sum(sis) / len(sis)
-    print(avg_si)
+
+    def calculate_and_print_similarity_indices():
+        sis = {}
+        for k in common_labels:
+            sis[k] = calculate_similarity_index(adp_frac_dict_1[k],
+                                                adp_frac_dict_2[k])
+            print(f'{k:>8}: {sis[k]:8f}', file=f)
+        sis_all = [v for k, v in sis.items()]
+        sis_h = [v for k, v in sis.items()
+                 if k[0] is 'H' and k[:2] not in chemical_elements]
+        if sis_all:
+            avg_si_all = sum(sis_all) / len(sis_all)
+            print(f'# Average SI for all atoms: {avg_si_all}', file=f)
+        else:
+            print(f'# No atoms with matching names found', file=f)
+        if sis_h:
+            avg_si_h = sum(sis_h) / len(sis_h)
+            print(f'# Average SI for hydrogen atoms: {avg_si_h}', file=f)
+    calculate_and_print_similarity_indices()
+
+    def terminate_output():
+        if output_path is not None:
+            f.close()
+    terminate_output()
 
 
 if __name__ == '__main__':
