@@ -2,33 +2,7 @@ import numpy as np
 from uncertainties import ufloat_fromstr, unumpy
 
 from hikari.dataframes import BaseFrame, CifFrame
-from hikari.utility import make_abspath, cfloat, det3x3
-
-
-def compare_adp(a, b, c, al, be, ga, adp1, adp2):
-    # read the unit cell
-    f = BaseFrame()
-    f.edit_cell(a=a, b=b, c=c, al=al, be=be, ga=ga)
-
-    # read matrices from input
-    u1_frac = np.array([[adp1[0], adp1[5], adp1[4]],
-                        [adp1[5], adp1[1], adp1[3]],
-                        [adp1[4], adp1[3], adp1[2]]], dtype=float)
-    u2_frac = np.array([[adp2[0], adp2[5], adp2[4]],
-                        [adp2[5], adp2[1], adp2[3]],
-                        [adp2[4], adp2[3], adp2[2]]], dtype=float)
-
-    # orthogonalise matrices and calculate inverse of cartesian adps
-    def adp_frac2cart(f_, u_):
-        n = np.diag([f_.a_r, f_.b_r, f_.c_r])
-        return f_.A_d.T @ n @ u_ @ n @ f_.A_d
-    u1_cart_inv = np.linalg.inv(adp_frac2cart(f, u1_frac))
-    u2_cart_inv = np.linalg.inv(adp_frac2cart(f, u2_frac))
-
-    # calculate the similarity index itself
-    r12_num = 2 ** (3 / 2) * np.linalg.det(u1_cart_inv @ u2_cart_inv) ** (1 / 4)
-    r12_den = np.linalg.det(u1_cart_inv + u2_cart_inv) ** (1 / 2)
-    return 100 * (1 - r12_num / r12_den)
+from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements
 
 
 def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
