@@ -95,9 +95,9 @@ def calculate_similarity_indices(cif1_path,
     def interpret_paths():
         cif1p = make_abspath(cif1_path)
         cif2p = None if cif2_path is None else make_abspath(cif2_path)
-        cif1b = 0 if cif1_block is None else cif1_block
-        cif2b = 1 if cif1b is 0 and cif1p is cif2p \
-            else 0 if cif2_block is None else cif2_block
+        cif1b = 1 if cif1_block is None else cif1_block
+        cif2b = 2 if cif1b is 1 and cif1p is cif2p \
+            else 1 if cif2_block is None else cif2_block
         return cif1p, cif2p, cif1b, cif2b
     cif1_path, cif2_path, cif1_block, cif2_block = interpret_paths()
 
@@ -112,7 +112,7 @@ def calculate_similarity_indices(cif1_path,
     def read_cif_block(path, block):
         c = CifFrame()
         c.read(path)
-        block = list(c.keys())[block] if isinstance(block, int) else block
+        block = list(c.keys())[block - 1] if isinstance(block, int) else block
         return c[block]
     cif_block_1 = read_cif_block(cif1_path, cif1_block)
     cif_block_2 = read_cif_block(cif2_path, cif2_block)
@@ -164,23 +164,28 @@ def calculate_similarity_indices(cif1_path,
         return f'{si:8.4f}' if isinstance(si, float) \
             else f'{si.n:8.4f} +/- {si.s:8.4f}'
 
+    def si_header():
+        return '#  label     SI.n +/-     SI.s' \
+            if uncertainties else '#  label       SI'
+    print(si_header(), file=f)
+
     def calculate_and_print_similarity_indices():
         sis: Dict[Any, float or UFloat] = {}
         for k in common_labels:
             sis[k] = calculate_similarity_index(adp_frac_dict_1[k],
                                                 adp_frac_dict_2[k])
-            print(f'{k:>8}: {si_string(sis[k])}', file=f)
+            print(f'{k:>8} {si_string(sis[k])}', file=f)
         sis_all = [v for k, v in sis.items()]
         sis_h = [v for k, v in sis.items()
                  if k[0] is 'H' and k[:2] not in chemical_elements]
         if sis_all:
             avg_si_all = sum(sis_all) / len(sis_all)
-            print(f'# avg(*): {si_string(avg_si_all)}', file=f)
+            print(f'# avg(*) {si_string(avg_si_all)}', file=f)
         else:
             print(f'# No atoms with matching names found', file=f)
         if sis_h:
             avg_si_h = sum(sis_h) / len(sis_h)
-            print(f'# avg(H): {si_string(avg_si_h)}', file=f)
+            print(f'# avg(H) {si_string(avg_si_h)}', file=f)
     calculate_and_print_similarity_indices()
 
     def terminate_output():
@@ -211,6 +216,6 @@ if __name__ == '__main__':
     # u2 = [0.050514, 0.019578, 0.030408, 0.006249, -0.011912, -0.010335]  # b
     # print(compare_adp(9.135, 8.814, 21.397, 90, 93.010, 90, u1, u2))
     calculate_similarity_indices('~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
-                 'rfpirazB_100K_SXD',
-                 '~/x/HiPHAR/anders_script/RFpirazB_cplt100.fractional.cif1',
-                 'RFpirazB_cplt100')
+                                 '~/x/HiPHAR/anders_script/RFpirazB_cplt100.fractional.cif1',
+                                 output_path='~/_/si1.lst',
+                                 uncertainties=False)
