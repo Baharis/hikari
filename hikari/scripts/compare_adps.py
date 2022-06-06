@@ -5,8 +5,13 @@ from hikari.dataframes import BaseFrame, CifFrame
 from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements
 
 
-def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
-                 output_path=None, uncertainties=True, normalize=False):
+def calculate_similarity_indices(cif1_path,
+                                 cif2_path=None,
+                                 cif1_block=None,
+                                 cif2_block=None,
+                                 normalize=False,
+                                 output_path=None,
+                                 uncertainties=True):
     """
     Compare Anisotropic Displacement Parameters of all atoms in two cif blocks
     and return a Similarity Index (SI) for these pairs of atoms that exist
@@ -29,17 +34,17 @@ def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
 
     :Example:
 
-    >>> compare_adps('glycine.cif')
-    >>> compare_adps('glycine.cif', 'glycine.cif')
-    >>> compare_adps('glycine.cif', 'glycine.cif', '100K', 'RT')
+    >>> calculate_similarity_indices('glycine.cif')
+    >>> calculate_similarity_indices('glycine.cif', 'glycine.cif')
+    >>> calculate_similarity_indices('glycine.cif', 'glycine.cif', '100K', 'RT')
 
     For two cif files 'X-rays.cif' and 'neutrons.cif', both with only one data
-    block named '100K', the two following commands will have the same effect:
+    block named 'RT', the two following commands will have the same effect:
 
     :Example:
 
-    >>> compare_adps('X-rays.cif', 'neutrons.cif')
-    >>> compare_adps('X-rays.cif', 'neutrons.cif', '100K', '100K')
+    >>> calculate_similarity_indices('X-rays.cif', 'neutrons.cif')
+    >>> calculate_similarity_indices('X-rays.cif', 'neutrons.cif', 'RT', 'RT')
 
     The behaviour of script can be further altered via other parameters.
     If `output_file` is set True, the results will be written there instead of
@@ -96,7 +101,7 @@ def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
     print(f"# Hikari will calculate SIs using the following blocks:", file=f)
     print(f"# - Block {cif1_block} of file {cif1_path}", file=f)
     print(f"# - Block {cif2_block} of file {cif2_path}", file=f)
-    print(f"# using the following options:", file=f)
+    print(f"# with the following settings:", file=f)
     print(f"# - normalize={normalize}", file=f)
     print(f"# - uncertainties={uncertainties}", file=f)
 
@@ -196,7 +201,7 @@ if __name__ == '__main__':
     # u2 = [0.051, 0.02, 0.03, 0.006, -0.01, -0.012]  # a
     # u2 = [0.050514, 0.019578, 0.030408, 0.006249, -0.011912, -0.010335]  # b
     # print(compare_adp(9.135, 8.814, 21.397, 90, 93.010, 90, u1, u2))
-    compare_adps('~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
+    calculate_similarity_indices('~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
                  'rfpirazB_100K_SXD',
                  '~/x/HiPHAR/anders_script/RFpirazB_cplt100.fractional.cif1',
                  'RFpirazB_cplt100')
