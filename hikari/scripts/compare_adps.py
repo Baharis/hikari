@@ -31,10 +31,76 @@ def compare_adp(a, b, c, al, be, ga, adp1, adp2):
     return 100 * (1 - r12_num / r12_den)
 
 
-def compare_adps(cif1_path, cif1_block, cif2_path, cif2_block,
-                 deviations=True):
+def compare_adps(cif1_path, cif2_path=None, cif1_block=None, cif2_block=None,
+                 output_path=None, uncertainties=True, normalize=False):
+    """
+    Compare Anisotropic Displacement Parameters of all atoms in two cif blocks
+    and return a Similarity Index (SI) for these pairs of atoms that exist
+    and are defined anisotropic (via "_atom_site_aniso_U_**") in both files.
 
-    u_type = ufloat_fromstr if deviations else cfloat
+    This script requires two independent cif blocks to run,
+    but the location of both blocks can be specified in multiple ways:
+
+    - If only `cif1_path` is given, the first and second data block from
+      cif1 file will be used in SI evaluation;
+    - If `cif1_path` and `cif2_path` are given, the first data block from
+      each cif file will be used instead;
+    - If `cif1_path`, `cif2_path`, and `cif1_block` are given,
+      `cif1_block` from each `cif1_path` and `cif2_path` cif files will be used.
+    - If `cif1_path`, `cif2_path`, `cif1_block`, and `cif2_block` are given,
+      `cif1_block` in `cif1_path` and `cif2_block` in `cif2_path` will be used.
+
+    For a cif file 'glycine.cif' with two data blocks, '100K' and 'RT',
+    the three following commands will all yield the same results.
+
+    :Example:
+
+    >>> compare_adps('glycine.cif')
+    >>> compare_adps('glycine.cif', 'glycine.cif', '100K', '100K')
+
+    Similarily, for two files 'X-rays.cif' and 'neutrons.cif', both with only
+    one data block '100K', the two following commands will have the same effect:
+
+    :Example:
+
+    >>> compare_adps('X-rays.cif', 'neutrons.cif')
+    >>> compare_adps('X-rays.cif', 'neutrons.cif', '100K', '100K')
+
+    The behaviour of script can be further altered via other parameters.
+    If `output_file` is set True, the results will be written there instead of
+    console. If `uncertainties` is set True, standard deviations of all ADPs
+    as well as the unit cell parameters from 1st cif file will be assumed
+    uncorrelated and used to estimate the uncertainty of every SI determination.
+
+    For more information about Similarity Index (SI) itself, please consult
+    Whitten and Spackman, Acta Cryst B **62**, 875 (2006)
+    https://doi.org/10.1107/S0108768106020787.
+
+    :param cif1_path: Absolute or relative path to the first cif file.
+    :type cif1_path: str
+    :param cif2_path: Absolute or relative path to the second cif file.
+        If not specified, it is assumed equal to `cif1_path`.
+    :type cif2_path: str
+    :param cif1_block: Name of the first data block used in SI determination.
+        It points to the data block inside the file specified by `cif1_path`.
+        If not specified, the first block found in said file will be used.
+    :type cif1_block: str
+    :param cif2_block: Name of the second data block used in SI determination.
+        It points to the data block inside the file specified by `cif2_path`.
+        If not specified, the first unused block in said file will be used.
+    :type cif2_block: str
+    :param output_path: Path where the output of the program should be written.
+    :type output_path: str
+    :param uncertainties: If True, propagate the standard deviations of
+        individual ADPs' and cif1's unit cell to estimate SI's uncertainties.
+    :type uncertainties: bool
+    :param normalize: If True, equalize the volume of displacement ellipsoids
+        by normalizing ADP matrices' determinants to a common determinant before
+        calculating the SI. Please mind that this invalidates the uncertainties.
+    :type normalize: bool
+    """
+
+    u_type = ufloat_fromstr if uncertainties else cfloat
 
     def read_cif_block(cif_path, cif_block):
         c = CifFrame()
@@ -72,7 +138,7 @@ def compare_adps(cif1_path, cif1_block, cif2_path, cif2_block,
             return b.A_d.T @ n @ adp_frac @ n @ b.A_d
         adp_cart_1 = adp_frac2cart(adp_frac_1)
         adp_cart_2 = adp_frac2cart(adp_frac_2)
-        if deviations:
+        if uncertainties:
             adp_inv_1 = unumpy.matrix(adp_cart_1).I
             adp_inv_2 = unumpy.matrix(adp_cart_2).I
         else:
