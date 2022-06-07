@@ -236,7 +236,6 @@ class TestMathTools(unittest.TestCase):
             _ = weighted_quantile(values=v, quantiles=[-0.1, 0.5, 1.1])
 
 
-
 class TestOsTools(unittest.TestCase):
     def test_make_abspath(self):
         self.assertIsInstance(make_abspath(), str)
