@@ -9,8 +9,14 @@ from hikari.utility import *
 class TestChemTools(unittest.TestCase):
     def test_chemical_elements(self):
         self.assertEqual(str(chemical_elements[0]), 'H')
-        self.assertEqual(str(chemical_elements[49]), 'Sn')
         self.assertEqual(str(chemical_elements[99]), 'Fm')
+        self.assertEqual(chemical_elements.index('Sn'), 49)
+        self.assertEqual(chemical_elements.index('Og'), 117)
+
+    def test_split_atom_label(self):
+        self.assertEqual(split_atom_label('C12A'), ('C', '12', 'A'))
+        self.assertEqual(split_atom_label('Fe1'), ('Fe', '1', ''))
+        self.assertEqual(split_atom_label('H1O1'), ('H', '1', 'O1'))
 
 
 class TestCertainFloat(unittest.TestCase):
