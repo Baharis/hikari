@@ -148,8 +148,8 @@ def calculate_similarity_indices(cif1_path,
         adp_cart_1 = adp_frac2cart(adp_frac_1)
         adp_cart_2 = adp_frac2cart(adp_frac_2)
         if normalize:
-            adp_cart_1 /= det3x3(adp_cart_1)
-            adp_cart_2 /= det3x3(adp_cart_2)
+            adp_cart_1 /= det3x3(adp_cart_1) ** (1 / 3)
+            adp_cart_2 /= det3x3(adp_cart_2) ** (1 / 3)
         if uncertainties:
             adp_inv_1 = unumpy.matrix(adp_cart_1).I
             adp_inv_2 = unumpy.matrix(adp_cart_2).I
@@ -195,27 +195,5 @@ def calculate_similarity_indices(cif1_path,
 
 
 if __name__ == '__main__':
-    # u1 = [0.050, 0.021, 0.042, -0.006, -0.008, 0.005]
-    # loop_
-    # _atom_site_Cryst_ADP2_U_label
-    # _atom_site_Cryst_ADP2_U_11
-    # _atom_site_Cryst_ADP2_U_22
-    # _atom_site_Cryst_ADP2_U_33
-    # _atom_site_Cryst_ADP2_U_12
-    # _atom_site_Cryst_ADP2_U_13
-    # _atom_site_Cryst_ADP2_U_23
-    # _atom_site_Cryst_ADP2_U_11_esu
-    # _atom_site_Cryst_ADP2_U_22_esu
-    # _atom_site_Cryst_ADP2_U_33_esu
-    # _atom_site_Cryst_ADP2_U_12_esu
-    # _atom_site_Cryst_ADP2_U_13_esu
-    # _atom_site_Cryst_ADP2_U_23_esu
-    #  H18  0.050514  0.019578  0.030408  -0.011912  -0.010335   0.006249
-    #       0.007746  0.005374  0.006059   0.005030   0.005525   0.004431
-    # u2 = [0.051, 0.02, 0.03, 0.006, -0.01, -0.012]  # a
-    # u2 = [0.050514, 0.019578, 0.030408, 0.006249, -0.011912, -0.010335]  # b
-    # print(compare_adp(9.135, 8.814, 21.397, 90, 93.010, 90, u1, u2))
-    calculate_similarity_indices('~/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif',
-                                 '~/x/HiPHAR/anders_script/RFpirazB_cplt100.fractional.cif1',
-                                 output_path='~/_/si1.lst',
-                                 uncertainties=False)
+    calculate_similarity_indices('~/_/si/1.cif',
+                                 '~/_/si/2.cif', normalize=True)
