@@ -13,7 +13,7 @@ hikari.scripts.angular\_explorer module
    :show-inheritance:
 
 hikari.scripts.compare\_adps module
----------------------------------------
+-----------------------------------
 
 .. automodule:: hikari.scripts.compare_adps
    :members:

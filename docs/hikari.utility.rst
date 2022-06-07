@@ -13,7 +13,7 @@ hikari.utility.artists module
    :show-inheritance:
 
 hikari.utility.certain\_float module
----------------------------------
+------------------------------------
 
 .. automodule:: hikari.utility.certain_float
    :members:

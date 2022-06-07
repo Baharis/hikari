@@ -45,7 +45,7 @@ hikari.dataframes.res module
    :show-inheritance:
 
 hikari.dataframes.ubase module
------------------------------
+------------------------------
 
 .. automodule:: hikari.dataframes.ubase
    :members:
