@@ -1,22 +1,6 @@
 import numpy as np
 
 
-def _min(*args):
-    """Recursively returns minimum of args if possible, otherwise args"""
-    try:
-        return min(args)
-    except TypeError:
-        return args
-
-
-def _max(*args):
-    """Recursively returns maximum of args if possible, otherwise args"""
-    try:
-        return max(args)
-    except TypeError:
-        return args
-
-
 class Interval:
     """
     A class handling [A, B] line segments and numpy operations on them.
@@ -83,26 +67,34 @@ class Interval:
         yield self.right
 
     def __getitem__(self, key):
-        if key is 0:
-            return self.left
-        elif key is 1:
-            return self.right
-        else:
-            raise IndexError('Interval index out of range')
+        return [self.left, self.right][key]
 
     def __setitem__(self, key, value):
-        if key is 0:
-            self.left = value
-        elif key is 1:
-            self.right = value
-        else:
-            raise IndexError('Interval index out of range')
+        new_limits = [self.left, self.right]
+        new_limits[key] = value
+        self.left, self.right = new_limits
 
     def __contains__(self, item):
-        return self.left <= _min(item) and _max(item) <= self.right
+        return self.left <= self._min(item) and self._max(item) <= self.right
 
     def __len__(self):
         return 2
+
+    @staticmethod
+    def _min(item):
+        """Recursively returns minimum of args if possible, otherwise args"""
+        try:
+            return min(item)
+        except TypeError:
+            return item
+
+    @staticmethod
+    def _max(item):
+        """Recursively returns maximum of args if possible, otherwise args"""
+        try:
+            return max(item)
+        except TypeError:
+            return item
 
     def arange(self, step=1):
         """

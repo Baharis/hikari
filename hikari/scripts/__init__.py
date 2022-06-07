@@ -16,4 +16,5 @@ from .hkl_potency import potency_map, potency_vs_dac_opening_angle, \
     potency_violin_plot, dac_potency_around_axis
 from .hkl_completeness import completeness_statistics, dac_statistics, \
     simulate_dac
+from .compare_adps import calculate_similarity_indices
 from .r1_map import r1_map

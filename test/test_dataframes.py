@@ -1,6 +1,11 @@
-import copy, tempfile, unittest
+import copy
+import tempfile
+import unittest
+
 import numpy as np
-from hikari.dataframes import BaseFrame, HklFrame
+import uncertainties
+
+from hikari.dataframes import BaseFrame, HklFrame, UBaseFrame
 from hikari.resources import nacl_hkl
 from hikari.symmetry import PG
 
@@ -9,26 +14,40 @@ rad70 = 1.2217304763960306
 rad80 = 1.3962634015954636
 rad90 = 1.5707963267948966
 
+u1 = uncertainties.ufloat(1.0, 0)
+upi = uncertainties.ufloat(np.pi, 0)
+u6 = uncertainties.ufloat(6.0, 0.1)
+u7 = uncertainties.ufloat(7.0, 0.1)
+u8 = uncertainties.ufloat(8.0, 0.1)
+u60 = uncertainties.ufloat(60.0, 1.0)
+u70 = uncertainties.ufloat(70.0, 1.0)
+u80 = uncertainties.ufloat(80.0, 1.0)
+
 
 class TestBaseFrame(unittest.TestCase):
-    b = BaseFrame()
+
+    def setUp(self) -> None:
+        self.b = BaseFrame()
+        self.b.edit_cell(a=6, b=7, c=8, al=60, be=70, ga=80)
 
     def test_init(self):
-        self.assertAlmostEqual(BaseFrame().a_d, 1.)
-        self.assertAlmostEqual(BaseFrame().b_d, 1.)
-        self.assertAlmostEqual(BaseFrame().c_d, 1.)
-        self.assertAlmostEqual(BaseFrame().al_d, rad90)
-        self.assertAlmostEqual(BaseFrame().be_d, rad90)
-        self.assertAlmostEqual(BaseFrame().ga_d, rad90)
+        b = BaseFrame()
+        self.assertAlmostEqual(b.a_d, 1.)
+        self.assertAlmostEqual(b.b_d, 1.)
+        self.assertAlmostEqual(b.c_d, 1.)
+        self.assertAlmostEqual(b.al_d, rad90)
+        self.assertAlmostEqual(b.be_d, rad90)
+        self.assertAlmostEqual(b.ga_d, rad90)
 
     def test_edit_cell(self):
-        self.b.edit_cell(a=6, b=7, c=8, al=60, be=70, ga=80)
         self.assertAlmostEqual(self.b.a_d, 6.)
         self.assertAlmostEqual(self.b.b_d, 7.)
         self.assertAlmostEqual(self.b.c_d, 8.)
         self.assertAlmostEqual(self.b.al_d, rad60)
         self.assertAlmostEqual(self.b.be_d, rad70)
         self.assertAlmostEqual(self.b.ga_d, rad80)
+        with self.assertRaises(KeyError):
+            BaseFrame().edit_cell(alpha=0.0)
 
     def test_reciprocal_cell(self):
         self.assertAlmostEqual(self.b.a_r, 0.1773638940193107)
@@ -70,6 +89,83 @@ class TestBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(v @ self.b.G_r @ v, 0.2238961843294296)
         self.assertAlmostEqual(sum(sum(self.b.G_d@self.b.A_r - self.b.A_d)), 0.)
         self.assertAlmostEqual(sum(sum(self.b.G_r@self.b.A_d - self.b.A_r)), 0.)
+
+    def test_volumes(self):
+        self.assertAlmostEqual(self.b.v_d, 273.4345841924758)
+        self.assertAlmostEqual(self.b.v_r, 0.003657181855591761)
+
+
+class TestUBaseFrame(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.b = UBaseFrame()
+        self.b.edit_cell(a=u6, b=u7, c=u8, al=u60, be=u70, ga=u80)
+
+    def test_init(self):
+        b = UBaseFrame()
+        self.assertAlmostEqual(b.a_d.n, 1)
+        self.assertAlmostEqual(b.b_d.n, 1)
+        self.assertAlmostEqual(b.c_d.n, 1)
+        self.assertAlmostEqual(b.al_d.n, np.pi / 2)
+        self.assertAlmostEqual(b.be_d.n, np.pi / 2)
+        self.assertAlmostEqual(b.ga_d.n, np.pi / 2)
+
+    def test_edit_cell(self):
+        self.assertAlmostEqual(self.b.a_d.n, 6)
+        self.assertAlmostEqual(self.b.b_d.n, 7)
+        self.assertAlmostEqual(self.b.c_d.n, 8)
+        self.assertAlmostEqual(self.b.al_d.n, rad60)
+        self.assertAlmostEqual(self.b.be_d.n, rad70)
+        self.assertAlmostEqual(self.b.ga_d.n, rad80)
+        with self.assertRaises(KeyError):
+            BaseFrame().edit_cell(alpha=0.0)
+
+    def test_reciprocal_cell(self):
+        self.assertAlmostEqual(self.b.a_r.n, 0.1773638940193107)
+        self.assertAlmostEqual(self.b.b_r.n, 0.1649580865234412)
+        self.assertAlmostEqual(self.b.c_r.n, 0.1512680839136182)
+        self.assertAlmostEqual(self.b.al_r.n, 2.067032910195549)
+        self.assertAlmostEqual(self.b.be_r.n, 1.874672323582712)
+        self.assertAlmostEqual(self.b.ga_r.n, 1.574038054665492)
+
+    def test_vectors(self):
+        expected_a_v = np.array([6.00000000,  0.00000000,  0.00000000])
+        expected_b_v = np.array([1.21553724,  6.89365427,  0.00000000])
+        expected_c_v = np.array([2.73616115,  3.57924741,  6.61077984])
+        expected_a_w = np.array([0.16666667, -0.02938783, -0.05307098])
+        expected_b_w = np.array([0.00000000,  0.14506094, -0.07853975])
+        expected_c_w = np.array([0.00000000,  0.00000000,  0.15126808])
+        self.assertAlmostEqual(sum(self.b.a_v - expected_a_v).n, 0.)
+        self.assertAlmostEqual(sum(self.b.b_v - expected_b_v).n, 0.)
+        self.assertAlmostEqual(sum(self.b.c_v - expected_c_v).n, 0.)
+        self.assertAlmostEqual(sum(self.b.a_w - expected_a_w).n, 0.)
+        self.assertAlmostEqual(sum(self.b.b_w - expected_b_w).n, 0.)
+        self.assertAlmostEqual(sum(self.b.c_w - expected_c_w).n, 0.)
+
+    def test_perpendicular(self):
+        def norm(v):
+            return v / (v.dot(v) ** (1/2))
+        av, bv, cv = self.b.a_v, self.b.b_v, self.b.c_v
+        aw, bw, cw = self.b.a_w, self.b.b_w, self.b.c_w
+        self.assertAlmostEqual(sum(norm(np.cross(av, bv)) - norm(cw)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(bv, cv)) - norm(aw)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(cv, av)) - norm(bw)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(aw, bw)) - norm(cv)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(bw, cw)) - norm(av)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(cw, aw)) - norm(bv)).n, 0.)
+
+    def test_matrices(self):
+        v = np.array([1.6180339887, 2.7182818285, 3.1415926536])
+        self.assertAlmostEqual((v @ self.b.G_d @ v).n, 1797.2495106787824)
+        self.assertAlmostEqual((v @ self.b.G_r @ v).n, 0.2238961843294296)
+        self.assertAlmostEqual(sum(sum(self.b.G_d @ self.b.A_r - self.b.A_d)).n,
+                               0.)
+        self.assertAlmostEqual(sum(sum(self.b.G_r @ self.b.A_d - self.b.A_r)).n,
+                               0.)
+
+    def test_volumes(self):
+        self.assertAlmostEqual(self.b.v_d.n, 273.4345841924758)
+        self.assertAlmostEqual(self.b.v_r.n, 0.003657181855591761)
 
 
 class TestHklFrame(unittest.TestCase):
