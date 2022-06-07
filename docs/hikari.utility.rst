@@ -12,6 +12,14 @@ hikari.utility.artists module
    :undoc-members:
    :show-inheritance:
 
+hikari.utility.certain\_float module
+---------------------------------
+
+.. automodule:: hikari.utility.certain_float
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 hikari.utility.chem\_tools module
 ---------------------------------
 
