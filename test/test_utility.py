@@ -1,8 +1,5 @@
 import unittest
-
 import numpy as np
-import uncertainties
-
 from hikari.utility import *
 
 
@@ -40,19 +37,13 @@ class TestCertainFloat(unittest.TestCase):
 
 
 class TestInterval(unittest.TestCase):
-    def test_creation_and_access(self):
+    def test_creation(self):
         a = Interval(4, 8)
         self.assertIsInstance(a, Interval)
-        self.assertEqual(a[0], a.left)
-        self.assertEqual(a[1], a.right)
-        with self.assertRaises(IndexError):
-            _ = a[2]
-        self.assertIn(5, a)
-        self.assertIn(4, a)
-        self.assertNotIn(3, a)
 
     def test_comparison_operations(self):
         a = Interval(4, 8)
+        self.assertEqual(a, Interval(4, 8))
         self.assertTrue(a > 3)
         self.assertFalse(a > 6.5)
         self.assertTrue(a < 8.5)
@@ -64,6 +55,7 @@ class TestInterval(unittest.TestCase):
 
     def test_unary_and_arithmetic(self):
         a = Interval(4, 8)
+        self.assertEqual(+a, Interval(4, 8))
         self.assertEqual(-a, Interval(-8, -4))
         self.assertNotEqual(a, -a)
         self.assertEqual(a + 1, Interval(5, 9))
@@ -71,6 +63,50 @@ class TestInterval(unittest.TestCase):
         self.assertEqual(a * 2, Interval(8, 16))
         self.assertAlmostEqual((a / 2).left, Interval(2, 4).left)
         self.assertAlmostEqual((a / 2).right, Interval(2, 4).right)
+
+    def test_str_and_repr(self):
+        a = Interval(4, 8)
+        self.assertEqual(str(a), '[4, 8]')
+        self.assertEqual(repr(a), 'Interval(4, 8)')
+
+    def test_iter_and_length(self):
+        self.assertEqual([_ for _ in Interval(4, 8)], [4, 8])
+        self.assertEqual(len(Interval(4, 8)), 2)
+
+    def test_getitem(self):
+        a = Interval(4, 8)
+        self.assertEqual(a[0], 4)
+        self.assertEqual(a[1], 8)
+        self.assertEqual(a[0], a.left)
+        self.assertEqual(a[1], a.right)
+        self.assertEqual(a[:], [4, 8])
+        with self.assertRaises(IndexError):
+            _ = a[2]
+
+    def test_setitem(self):
+        a = Interval(4, 8)
+        a[0], a[1] = 3, 7
+        self.assertEqual(a, Interval(3, 7))
+        a[:] = 2, 6
+        self.assertEqual(a, Interval(2, 6))
+        a.left, a.right = 1, 5
+        self.assertEqual(a, Interval(1, 5))
+        with self.assertRaises(IndexError):
+            a[2] = 0
+
+    def test_contains(self):
+        a = Interval(4, 8)
+        c = Interval(6, 6)
+        self.assertIn(5, a)
+        self.assertNotIn(3, a)
+        self.assertIn(c, a)
+        self.assertNotIn(a, c)
+        self.assertIn([5, 7], a)
+
+    def test_min_and_max(self):
+        a = Interval(4, 8)
+        self.assertEqual(min(a), 4)
+        self.assertEqual(max(a), 8)
 
     def test_arange(self):
         a = Interval(1, 3)
