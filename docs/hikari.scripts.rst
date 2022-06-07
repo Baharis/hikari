@@ -12,6 +12,14 @@ hikari.scripts.angular\_explorer module
    :undoc-members:
    :show-inheritance:
 
+hikari.scripts.compare\_adps module
+-----------------------------------
+
+.. automodule:: hikari.scripts.compare_adps
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 hikari.scripts.fcf module
 -------------------------
 

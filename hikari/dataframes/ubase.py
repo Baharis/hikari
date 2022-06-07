@@ -65,28 +65,3 @@ class UBaseFrame(BaseFrame):
         self._a_w = np.cross(self.b_v, self.c_v) / v
         self._b_w = np.cross(self.c_v, self.a_v) / v
         self._c_w = np.cross(self.a_v, self.b_v) / v
-
-    @staticmethod
-    def _udet(matrix):
-        """Calculate determinant of a 3x3 matrix (necessary for ufloats)"""
-        m11, m12, m13 = matrix[:, 0]
-        m21, m22, m23 = matrix[:, 1]
-        m31, m32, m33 = matrix[:, 2]
-        return m11 * m22 * m33 + m12 * m23 * m31 + m13 * m21 * m32 \
-            - m13 * m22 * m31 - m12 * m21 * m33 - m11 * m23 * m32
-
-    @property
-    def v_d(self):
-        """
-        :return: Unit cell volume in direct space.
-        :rtype: float
-        """
-        return self._udet(self.A_d)
-
-    @property
-    def v_r(self):
-        """
-        :return: Unit cell volume in reciprocal space.
-        :rtype: float
-        """
-        return self._udet(self.A_r)

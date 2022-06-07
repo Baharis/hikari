@@ -44,6 +44,14 @@ hikari.dataframes.res module
    :undoc-members:
    :show-inheritance:
 
+hikari.dataframes.ubase module
+------------------------------
+
+.. automodule:: hikari.dataframes.ubase
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

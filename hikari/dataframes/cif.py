@@ -16,7 +16,7 @@ class CifBlock(OrderedDict):
     def __init__(self, *args):
         super().__init__(*args)
 
-    def get_as_type(self, key, typ, default):
+    def get_as_type(self, key, typ, default=None):
         """
         Get value of `self[key]` converted to `typ`. If value is a list,
         convert its contents element-wise.
@@ -30,8 +30,11 @@ class CifBlock(OrderedDict):
         """
         try:
             value = self[key]
-        except KeyError:
-            value = default
+        except KeyError as e:
+            if default is not None:
+                value = default
+            else:
+                raise e
         else:
             if value and typ:
                 if isinstance(value, str):
