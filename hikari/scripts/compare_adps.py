@@ -3,7 +3,7 @@ from typing import Dict, Any
 import numpy as np
 from uncertainties import ufloat_fromstr, unumpy, UFloat
 
-from hikari.dataframes import BaseFrame, CifFrame
+from hikari.dataframes import BaseFrame, CifFrame, UBaseFrame
 from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements
 
 
@@ -77,8 +77,8 @@ def calculate_similarity_indices(cif1_path,
         individual ADPs' and cif1's unit cell to estimate SI's uncertainties.
     :type uncertainties: bool
     :param normalize: If True, equalize the volume of displacement ellipsoids
-        by normalizing ADP matrices' determinants to a common determinant before
-        calculating the SI. Please mind that this invalidates the uncertainties.
+        by normalizing the determinants of ADP matrices expressed in cartesian
+        coordinates. As a result, SI is a function of displacement "shape" only.
     :type normalize: bool
     """
 
@@ -117,9 +117,6 @@ def calculate_similarity_indices(cif1_path,
     cif_block_1 = read_cif_block(cif1_path, cif1_block)
     cif_block_2 = read_cif_block(cif2_path, cif2_block)
 
-    b = BaseFrame()
-    b.fill_from_cif_block(cif_block_1)
-
     def find_common_labels(block1, block2):
         label_list1 = block1['_atom_site_aniso_label']
         label_list2 = block2['_atom_site_aniso_label']
@@ -141,12 +138,17 @@ def calculate_similarity_indices(cif1_path,
     adp_frac_dict_1 = make_adp_fractional_arrays(cif_block_1)
     adp_frac_dict_2 = make_adp_fractional_arrays(cif_block_2)
 
+    base_frame1 = UBaseFrame() if uncertainties else BaseFrame()
+    base_frame2 = UBaseFrame() if uncertainties else BaseFrame()
+    base_frame1.fill_from_cif_block(cif_block_1)
+    base_frame2.fill_from_cif_block(cif_block_2)
+
     def calculate_similarity_index(adp_frac_1, adp_frac_2) -> float or UFloat:
-        def adp_frac2cart(adp_frac):
-            n = np.diag([b.a_r, b.b_r, b.c_r])
-            return b.A_d.T @ n @ adp_frac @ n @ b.A_d
-        adp_cart_1 = adp_frac2cart(adp_frac_1)
-        adp_cart_2 = adp_frac2cart(adp_frac_2)
+        def adp_frac2cart(adp_frac, base_frame):
+            n = np.diag([base_frame.a_r, base_frame.b_r, base_frame.c_r])
+            return base_frame.A_d.T @ n @ adp_frac @ n @ base_frame.A_d
+        adp_cart_1 = adp_frac2cart(adp_frac_1, base_frame1)
+        adp_cart_2 = adp_frac2cart(adp_frac_2, base_frame2)
         if normalize:
             adp_cart_1 /= det3x3(adp_cart_1) ** (1 / 3)
             adp_cart_2 /= det3x3(adp_cart_2) ** (1 / 3)
@@ -196,4 +198,4 @@ def calculate_similarity_indices(cif1_path,
 
 if __name__ == '__main__':
     calculate_similarity_indices('~/_/si/1.cif',
-                                 '~/_/si/2.cif', normalize=True)
+                                 '~/_/si/2.cif')
