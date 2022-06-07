@@ -177,8 +177,9 @@ def rotation_from(from_, to):
             return np.eye(3)
         else:
             e1, e2 = np.array([1, 0, 0]), np.array([0, 1, 0])
-            e = e2 if np.isclose(sum(np.cross(e1, f)), 0.) else e1
-            return rotation_from(f, to=e) @ rotation_from(e, to=t)
+            e = np.cross(e2, f) if np.isclose(sum(np.cross(e1, f)), 0.) \
+                else np.cross(e1, f)
+            return rotation_around(e, by=np.pi)
     else:
         axis = axis / np.linalg.norm(axis)
         angle = np.arcsin(np.linalg.norm(np.cross(f, t)))
@@ -234,8 +235,8 @@ def weighted_quantile(values, quantiles, weights=None):
     values = np.array(values)
     quantiles = np.array(quantiles)
     w = np.ones_like(values) if weights is None else np.array(weights)
-    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
-        'quantiles should be in [0, 1]'
+    if np.any(quantiles < 0) or np.any(quantiles > 1):
+        raise ValueError(f'quantiles ({quantiles}) should be in range 0 to 1')
 
     sorter = np.argsort(values)
     values = values[sorter]

@@ -161,8 +161,33 @@ class TestListTools(unittest.TestCase):
 
 class TestMathTools(unittest.TestCase):
     def test_angle2rad(self):
+        self.assertEqual(angle2rad(-5), -0.08726646259971647)
+        self.assertEqual(angle2rad(-2.0), -2.0)
         self.assertEqual(angle2rad(3.14), 3.14)
         self.assertAlmostEqual(angle2rad(4), 0.06981317007977318)
+        self.assertEqual(angle2rad(180), 3.141592653589793)
+
+    def test_cart2sph(self):
+        s = np.sqrt(2)
+        self.assertTrue(np.allclose(cart2sph(1, 0, 0), [1, np.pi/2, 0]))
+        self.assertTrue(np.allclose(cart2sph(0, 1, 0), [1, np.pi/2, np.pi/2]))
+        self.assertTrue(np.allclose(cart2sph(0, 0, 1), [1, 0, 0]))
+        self.assertTrue(np.allclose(cart2sph(0, -1, 1), [s, np.pi/4, -np.pi/2]))
+        self.assertTrue(np.allclose(cart2sph(1, 0, -1), [s, 3*np.pi/4, 0]))
+
+    def test_sph2cart(self):
+        s = np.sqrt(2)
+        self.assertTrue(np.allclose(sph2cart(1, np.pi/2, 0), [1, 0, 0]))
+        self.assertTrue(np.allclose(sph2cart(1, np.pi/2, np.pi/2), [0, 1, 0]))
+        self.assertTrue(np.allclose(sph2cart(1, 0, 0), [0, 0, 1]))
+        self.assertTrue(np.allclose(sph2cart(s, np.pi/4, -np.pi/2), [0, -1, 1]))
+        self.assertTrue(np.allclose(sph2cart(s, 3*np.pi/4, 0), [1, 0, -1]))
+
+    def test_det3x3(self):
+        a = np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)])
+        self.assertEqual(det3x3(np.eye(3)), 1)
+        self.assertEqual(det3x3(a), 0)
+        self.assertEqual(det3x3(a ** 2), -216)
 
     def test_fibonacci_sphere(self):
         self.assertEqual(len(fibonacci_sphere(100)), 100)
@@ -173,6 +198,43 @@ class TestMathTools(unittest.TestCase):
         self.assertNotAlmostEqual(
             (fibonacci_sphere(9)-fibonacci_sphere(9, seed=123)).max().max(), 0)
         self.assertTrue(abs(fibonacci_sphere(99999).sum().sum() < 1.0))
+
+    def test_rotation_from(self):
+        a, b, z = np.array([1, 2, 3]), np.array([1, 2]), np.array([0, 0, 1])
+        len_a = np.sqrt(14)
+        self.assertTrue(np.allclose(rotation_from(a, to=a), np.eye(3)))
+        self.assertTrue(np.allclose(rotation_from(a, to=z) @ a, z * len_a))
+        self.assertTrue(np.allclose(rotation_from(a, to=-a) @ a, -a))
+        self.assertTrue(np.allclose(
+            rotation_from(np.array([1, 0, 0]), to=np.array([0, 1, 0])),
+            np.array([(0, -1, 0), (1, 0, 0), (0, 0, 1)])))
+        with self.assertRaises(IndexError):
+            _ = rotation_from(from_=a, to=b)
+        with self.assertRaises(IndexError):
+            _ = rotation_from(from_=b, to=a)
+
+    def test_rotation_around(self):
+        x = np.array([1, 0, 0])
+        z = np.array([0, 0, 1])
+        self.assertTrue(np.allclose(rotation_around(z, by=0), np.eye(3)))
+        self.assertTrue(np.allclose(rotation_around(z, by=np.pi) @ x, -x))
+        self.assertTrue(np.allclose(
+            rotation_around(z, by=np.pi/2),
+            np.array([(0, -1, 0), (1, 0, 0), (0, 0, 1)])))
+        with self.assertRaises(IndexError):
+            _ = rotation_around(np.array([1, 2, 3, 4]), by=0)
+
+    def test_weighted_quantile(self):
+        v = [1, 2, 3, 4, 5]
+        o = [1, 1, 1, 1, 1]
+        self.assertEqual(weighted_quantile(values=v, quantiles=[0.5])[0], 3)
+        self.assertEqual(weighted_quantile(v, [1.0])[0], 5)
+        self.assertEqual(weighted_quantile(v, [0.5], weights=o)[0], 3)
+        self.assertGreater(weighted_quantile(v, [0.5], weights=v)[0], 3)
+        self.assertLess(weighted_quantile(v, [0.5], weights=v)[0], 4)
+        with self.assertRaises(ValueError):
+            _ = weighted_quantile(values=v, quantiles=[-0.1, 0.5, 1.1])
+
 
 
 class TestOsTools(unittest.TestCase):
