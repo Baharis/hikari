@@ -1,5 +1,8 @@
-import numpy as np
 import unittest
+
+import numpy as np
+import uncertainties
+
 from hikari.utility import *
 
 
@@ -8,6 +11,87 @@ class TestChemTools(unittest.TestCase):
         self.assertEqual(str(chemical_elements[0]), 'H')
         self.assertEqual(str(chemical_elements[49]), 'Sn')
         self.assertEqual(str(chemical_elements[99]), 'Fm')
+
+
+class TestCertainFloat(unittest.TestCase):
+    def test_on_float(self):
+        self.assertEqual(cfloat('12.34'), 12.34)
+
+    def test_on_shorthand_ufloat(self):
+        self.assertEqual(cfloat('12.34(567)'), 12.34)
+
+    def test_on_plus_minus_ufloat(self):
+        self.assertEqual(cfloat('12.34+/-5.67'), 12.34)
+
+    def test_on_plus_minus_spaced_ufloat(self):
+        self.assertEqual(cfloat('12.34 +/- 5.67'), 12.34)
+
+    def test_on_factored_exponent_ufloat(self):
+        self.assertEqual(cfloat('1.234(567)e1'), 12.34)
+
+    def test_on_pretty_print_ufloat(self):
+        self.assertEqual(cfloat(u'12.34±5.67'), 12.34)
+
+
+class TestInterval(unittest.TestCase):
+    def test_creation_and_access(self):
+        a = Interval(4, 8)
+        self.assertIsInstance(a, Interval)
+        self.assertEqual(a[0], a.left)
+        self.assertEqual(a[1], a.right)
+        with self.assertRaises(IndexError):
+            _ = a[2]
+        self.assertIn(5, a)
+        self.assertIn(4, a)
+        self.assertNotIn(3, a)
+
+    def test_comparison_operations(self):
+        a = Interval(4, 8)
+        self.assertTrue(a > 3)
+        self.assertFalse(a > 6.5)
+        self.assertTrue(a < 8.5)
+        self.assertFalse(a < 7.5)
+        self.assertTrue(a >= 4)
+        self.assertFalse(a >= 6.5)
+        self.assertTrue(a <= 8.1)
+        self.assertFalse(a <= 7.9)
+
+    def test_unary_and_arithmetic(self):
+        a = Interval(4, 8)
+        self.assertEqual(-a, Interval(-8, -4))
+        self.assertNotEqual(a, -a)
+        self.assertEqual(a + 1, Interval(5, 9))
+        self.assertEqual(a - 1, Interval(3, 7))
+        self.assertEqual(a * 2, Interval(8, 16))
+        self.assertAlmostEqual((a / 2).left, Interval(2, 4).left)
+        self.assertAlmostEqual((a / 2).right, Interval(2, 4).right)
+
+    def test_arange(self):
+        a = Interval(1, 3)
+        self.assertTrue(np.array_equal(a.arange(), np.array([1, 2, 3])))
+        self.assertTrue(np.array_equal(a.arange(step=2), np.array([1, 3])))
+        self.assertTrue(np.allclose(a.arange(step=0.5), np.arange(1, 3.1, 0.5)))
+
+    def test_comb_with(self):
+        a = Interval(1, 3)
+        b = Interval(4, 5)
+        c = Interval(6, 6)
+        self.assertTrue(np.array_equal(a.comb_with(b)[0],
+                                       np.array([1, 2, 3] * 2)))
+        self.assertTrue(np.allclose(a.comb_with(b, step=2)[1], [4, 4]))
+        self.assertTrue(np.allclose(a.comb_with(b, step=0.9)[1],
+                                    np.array([4.0] * 3 + [4.9] * 3)))
+        self.assertTrue(np.array_equal(a.comb_with(b, c)[:2],
+                                       a.comb_with(b, c, c, c, c, c)[:2]))
+
+    def test_mesh_with(self):
+        a = Interval(1, 3)
+        b = Interval(4, 5)
+        self.assertTrue(np.array_equal(a.mesh_with(b)[0],
+                                       np.array([[1, 2, 3], [1, 2, 3]])))
+        self.assertTrue(np.allclose(a.mesh_with(b, step=0.8)[1],
+                                    np.array([[4., 4., 4.], [4.8, 4.8, 4.8]])))
+        self.assertTrue(np.array_equal(a.mesh_with(b)[0], b.mesh_with(a)[1].T))
 
 
 class TestListTools(unittest.TestCase):
@@ -76,67 +160,6 @@ class TestPalettes(unittest.TestCase):
             _ = iter(mpl_map_palette['hl'])
         except TypeError:
             self.fail('mpl_map_palette is not iterable, but it should')
-
-
-class TestInterval(unittest.TestCase):
-    def test_creation_and_access(self):
-        a = Interval(4, 8)
-        self.assertIsInstance(a, Interval)
-        self.assertEqual(a[0], a.left)
-        self.assertEqual(a[1], a.right)
-        with self.assertRaises(IndexError):
-            _ = a[2]
-        self.assertIn(5, a)
-        self.assertIn(4, a)
-        self.assertNotIn(3, a)
-
-    def test_comparison_operations(self):
-        a = Interval(4, 8)
-        self.assertTrue(a > 3)
-        self.assertFalse(a > 6.5)
-        self.assertTrue(a < 8.5)
-        self.assertFalse(a < 7.5)
-        self.assertTrue(a >= 4)
-        self.assertFalse(a >= 6.5)
-        self.assertTrue(a <= 8.1)
-        self.assertFalse(a <= 7.9)
-
-    def test_unary_and_arithmetic(self):
-        a = Interval(4, 8)
-        self.assertEqual(-a, Interval(-8, -4))
-        self.assertNotEqual(a, -a)
-        self.assertEqual(a + 1, Interval(5, 9))
-        self.assertEqual(a - 1, Interval(3, 7))
-        self.assertEqual(a * 2, Interval(8, 16))
-        self.assertAlmostEqual((a / 2).left, Interval(2, 4).left)
-        self.assertAlmostEqual((a / 2).right, Interval(2, 4).right)
-
-    def test_arange(self):
-        a = Interval(1, 3)
-        self.assertTrue(np.array_equal(a.arange(), np.array([1, 2, 3])))
-        self.assertTrue(np.array_equal(a.arange(step=2), np.array([1, 3])))
-        self.assertTrue(np.allclose(a.arange(step=0.5), np.arange(1, 3.1, 0.5)))
-
-    def test_comb_with(self):
-        a = Interval(1, 3)
-        b = Interval(4, 5)
-        c = Interval(6, 6)
-        self.assertTrue(np.array_equal(a.comb_with(b)[0],
-                                       np.array([1, 2, 3] * 2)))
-        self.assertTrue(np.allclose(a.comb_with(b, step=2)[1], [4, 4]))
-        self.assertTrue(np.allclose(a.comb_with(b, step=0.9)[1],
-                                    np.array([4.0] * 3 + [4.9] * 3)))
-        self.assertTrue(np.array_equal(a.comb_with(b, c)[:2],
-                                       a.comb_with(b, c, c, c, c, c)[:2]))
-
-    def test_mesh_with(self):
-        a = Interval(1, 3)
-        b = Interval(4, 5)
-        self.assertTrue(np.array_equal(a.mesh_with(b)[0],
-                                       np.array([[1, 2, 3], [1, 2, 3]])))
-        self.assertTrue(np.allclose(a.mesh_with(b, step=0.8)[1],
-                                    np.array([[4., 4., 4.], [4.8, 4.8, 4.8]])))
-        self.assertTrue(np.array_equal(a.mesh_with(b)[0], b.mesh_with(a)[1].T))
 
 
 if __name__ == '__main__':
