@@ -201,7 +201,6 @@ class TestCifFrame(unittest.TestCase):
         self.assertIsInstance(self.c_fcf['NaCl'], CifBlock)
 
 
-
 class TestHklFrame(unittest.TestCase):
     h1 = HklFrame()
     h2 = HklFrame()

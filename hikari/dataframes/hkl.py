@@ -1281,6 +1281,5 @@ class HklToResConverter:
         with open(make_abspath(path, '../hkl.msd'), 'w') as style:
             style.write(hkl_mercury_style)
 
-
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
