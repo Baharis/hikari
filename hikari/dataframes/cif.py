@@ -109,7 +109,7 @@ class CifValidator(OrderedDict):
         temp_dic_path = str(pathlib.Path(temp_dir.name) / 'cif_core.dic')
         with open(temp_dic_path, 'w+') as f:
             f.write(cif_core_dict)
-        reader = CifReader(cif_file_path=temp_dic_path)
+        reader = CifReader(cif_file_path=temp_dic_path, validate=False)
         self.update(reader.read(prepend='_'))
 
 
@@ -127,10 +127,11 @@ class CifIO:
         re.compile(r"""(?<=^)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?=$)""")
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
-    def __init__(self, cif_file_path):
+    def __init__(self, cif_file_path, validate=True):
         self.file_path = make_abspath(cif_file_path)
         self.file_lines = []
         self.data = OrderedDict()
+        self.validator = CifValidator() if validate else None
 
 
 class CifReader(CifIO):
