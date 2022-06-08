@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/Baharis/hikari/branch/master/graph/badge.svg?token=SWKKW0LSKQ)](https://codecov.io/gh/Baharis/hikari)
 [![CodeFactor](https://www.codefactor.io/repository/github/baharis/hikari/badge)](https://www.codefactor.io/repository/github/baharis/hikari)
 [![Documentation Status](https://readthedocs.org/projects/hikari/badge/?version=stable)](https://hikari.readthedocs.io/en/stable/?badge=stable)
+[![tests](https://github.com/Baharis/hikari/actions/workflows/codecov.yml/badge.svg?branch=master)](https://github.com/Baharis/hikari/actions/workflows/codecov.yml)
 
 hikari is a simple Python3.6+ package for manipulating basic crystallographic
 files: mainly .hkl, but also .res, .cif and, by extension, .fcf.
