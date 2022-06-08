@@ -333,12 +333,12 @@ class TestUBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(self.b.ga_r.n, 1.574038054665492)
 
     def test_vectors(self):
-        expected_a_v = np.array([6.00000000,  0.00000000,  0.00000000])
-        expected_b_v = np.array([1.21553724,  6.89365427,  0.00000000])
-        expected_c_v = np.array([2.73616115,  3.57924741,  6.61077984])
+        expected_a_v = np.array([6.00000000, 0.00000000, 0.00000000])
+        expected_b_v = np.array([1.21553724, 6.89365427, 0.00000000])
+        expected_c_v = np.array([2.73616115, 3.57924741, 6.61077984])
         expected_a_w = np.array([0.16666667, -0.02938783, -0.05307098])
-        expected_b_w = np.array([0.00000000,  0.14506094, -0.07853975])
-        expected_c_w = np.array([0.00000000,  0.00000000,  0.15126808])
+        expected_b_w = np.array([0.00000000, 0.14506094, -0.07853975])
+        expected_c_w = np.array([0.00000000, 0.00000000, 0.15126808])
         self.assertAlmostEqual(sum(self.b.a_v - expected_a_v).n, 0.)
         self.assertAlmostEqual(sum(self.b.b_v - expected_b_v).n, 0.)
         self.assertAlmostEqual(sum(self.b.c_v - expected_c_v).n, 0.)

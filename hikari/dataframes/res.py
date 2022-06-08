@@ -101,26 +101,26 @@ class ResFrame(BaseFrame):
 
         # SPECIFY SUPPORTED KEYS AND THEIR TYPES
         key_types = OrderedDict([
-            ('TITL',	'multiline'),
-            ('CELL',	'listing'),
-            ('ZERR',	'listing'),
-            ('LATT',	'listing'),
-            ('SYMM',	'multiline'),
-            ('SFAC',	'listing'),
-            ('UNIT',	'listing'),
-            ('L.S.',	'listing'),
-            ('PLAN',	'listing'),
-            ('SIZE',    'listing'),
-            ('MORE',	'listing'),
-            ('BOND',	'listing'),
-            ('CONF',	'listing'),
-            ('FMAP',	'listing'),
-            ('ACTA',	'listing'),
-            ('WGHT',	'listing'),
-            ('FVAR',	'listing'),
-            ('HKLF',	'listing'),
-            ('REM',		'special'),
-            ('END',		'special')
+            ('TITL', 'multiline'),
+            ('CELL', 'listing'),
+            ('ZERR', 'listing'),
+            ('LATT', 'listing'),
+            ('SYMM', 'multiline'),
+            ('SFAC', 'listing'),
+            ('UNIT', 'listing'),
+            ('L.S.', 'listing'),
+            ('PLAN', 'listing'),
+            ('SIZE', 'listing'),
+            ('MORE', 'listing'),
+            ('BOND', 'listing'),
+            ('CONF', 'listing'),
+            ('FMAP', 'listing'),
+            ('ACTA', 'listing'),
+            ('WGHT', 'listing'),
+            ('FVAR', 'listing'),
+            ('HKLF', 'listing'),
+            ('REM',	'special'),
+            ('END',	'special')
         ])
 
         # READ THE FILE AND JOIN LINES SEPARATED BY '=' SIGN

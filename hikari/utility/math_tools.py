@@ -149,9 +149,9 @@ def fibonacci_sphere(samples=1, seed=1337):
 def euler_rodrigues_matrix(a, b, c, d):
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2 * (bc + ad),     2 * (bd - ac)],
-                     [2 * (bc - ad),     aa + cc - bb - dd, 2 * (cd + ab)],
-                     [2 * (bd + ac),     2 * (cd - ab),     aa + dd - bb - cc]])
+    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+                     [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
 
 def rotation_from(from_, to):
