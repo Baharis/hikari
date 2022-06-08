@@ -299,9 +299,3 @@ class CifReader(CifIO):
         :rtype: str
         """
         return cls.COMMENT_REGEX.split(string)[0]
-
-
-if __name__ == '__main__':
-    c = CifFrame()
-    c.read(path='~/git/hikari/hikari/resources/cif_core_2.4.5.dic')
-
