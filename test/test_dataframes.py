@@ -1,7 +1,13 @@
-import copy, tempfile, unittest
+import copy
+import tempfile
+import unittest
+
 import numpy as np
-from hikari.dataframes import BaseFrame, HklFrame
-from hikari.resources import nacl_hkl
+import uncertainties
+
+from hikari.dataframes import BaseFrame, CifBlock, CifFrame, HklFrame, \
+    UBaseFrame
+from hikari.resources import nacl_fcf, nacl_hkl, nacl_cif, cif_core_dict
 from hikari.symmetry import PG
 
 rad60 = 1.0471975511965976
@@ -9,26 +15,55 @@ rad70 = 1.2217304763960306
 rad80 = 1.3962634015954636
 rad90 = 1.5707963267948966
 
+u1 = uncertainties.ufloat(1, 1)
+upi = uncertainties.ufloat(np.pi, 0)
+u6 = uncertainties.ufloat(6.0, 0.1)
+u7 = uncertainties.ufloat(7.0, 0.1)
+u8 = uncertainties.ufloat(8.0, 0.1)
+u60 = uncertainties.ufloat(60.0, 1.0)
+u70 = uncertainties.ufloat(70.0, 1.0)
+u80 = uncertainties.ufloat(80.0, 1.0)
+u90 = uncertainties.ufloat(90.0, 1.0)
+
+
+class ParentTestCases:
+    class TestCifBlock(unittest.TestCase):
+        b = CifBlock()
+        b_file = tempfile.TemporaryFile()
+
+        @classmethod
+        def setUpClass(cls) -> None:
+            cls.b_file = tempfile.NamedTemporaryFile('w+')
+            cls.b_file.write(nacl_cif)
+
+        @classmethod
+        def tearDownClass(cls) -> None:
+            cls.b_file.close()
+
 
 class TestBaseFrame(unittest.TestCase):
-    b = BaseFrame()
+    def setUp(self) -> None:
+        self.b = BaseFrame()
+        self.b.edit_cell(a=6, b=7, c=8, al=60, be=70, ga=80)
 
     def test_init(self):
-        self.assertAlmostEqual(BaseFrame().a_d, 1.)
-        self.assertAlmostEqual(BaseFrame().b_d, 1.)
-        self.assertAlmostEqual(BaseFrame().c_d, 1.)
-        self.assertAlmostEqual(BaseFrame().al_d, rad90)
-        self.assertAlmostEqual(BaseFrame().be_d, rad90)
-        self.assertAlmostEqual(BaseFrame().ga_d, rad90)
+        b = BaseFrame()
+        self.assertAlmostEqual(b.a_d, 1.)
+        self.assertAlmostEqual(b.b_d, 1.)
+        self.assertAlmostEqual(b.c_d, 1.)
+        self.assertAlmostEqual(b.al_d, rad90)
+        self.assertAlmostEqual(b.be_d, rad90)
+        self.assertAlmostEqual(b.ga_d, rad90)
 
     def test_edit_cell(self):
-        self.b.edit_cell(a=6, b=7, c=8, al=60, be=70, ga=80)
         self.assertAlmostEqual(self.b.a_d, 6.)
         self.assertAlmostEqual(self.b.b_d, 7.)
         self.assertAlmostEqual(self.b.c_d, 8.)
         self.assertAlmostEqual(self.b.al_d, rad60)
         self.assertAlmostEqual(self.b.be_d, rad70)
         self.assertAlmostEqual(self.b.ga_d, rad80)
+        with self.assertRaises(KeyError):
+            BaseFrame().edit_cell(alpha=0.0)
 
     def test_reciprocal_cell(self):
         self.assertAlmostEqual(self.b.a_r, 0.1773638940193107)
@@ -70,6 +105,109 @@ class TestBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(v @ self.b.G_r @ v, 0.2238961843294296)
         self.assertAlmostEqual(sum(sum(self.b.G_d@self.b.A_r - self.b.A_d)), 0.)
         self.assertAlmostEqual(sum(sum(self.b.G_r@self.b.A_d - self.b.A_r)), 0.)
+
+    def test_volumes(self):
+        self.assertAlmostEqual(self.b.v_d, 273.4345841924758)
+        self.assertAlmostEqual(self.b.v_r, 0.003657181855591761)
+
+
+class TestCifBlockRead(ParentTestCases.TestCifBlock):
+    def test_read(self):
+        self.b.read(path=self.b_file.name, block='NaCl')
+
+
+class TestCifBlockGeneral(ParentTestCases.TestCifBlock):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.b.read(path=cls.b_file.name, block='NaCl')
+
+    def test_access(self):
+        self.assertIn('_cell_length_a', self.b)
+        self.assertEqual(self.b['_cell_length_a'], '5.64109(5)')
+        self.assertEqual(len(self.b['_diffrn_refln_index_h']), 8578)
+
+    def test_assign(self):
+        self.b['_cell_angle_beta'] = '120'
+        self.assertEqual(self.b['_cell_angle_beta'], '120')
+
+    def test_get_as_type_single(self):
+        k = '_cell_angle_alpha'
+        self.assertEqual(self.b.get_as_type(k, typ=str), '90')
+        self.assertEqual(self.b.get_as_type(k, typ=int), 90)
+        u_typ = uncertainties.ufloat_fromstr
+        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr(u90))
+
+    def test_get_as_type_list(self):
+        k = '_atom_site_occupancy'
+        self.assertEqual(self.b.get_as_type(k, typ=str), ['1', '1'])
+        self.assertEqual(self.b.get_as_type(k, typ=int), [1, 1])
+        u_typ = uncertainties.ufloat_fromstr
+        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr([u1, u1]))
+
+    def test_get_as_type_exceptions(self):
+        with self.assertRaises(KeyError):
+            _ = self.b.get_as_type('_nonexistent_key', str)
+        self.b['_cell_angle_beta'] = u90
+        with self.assertRaises(TypeError):
+            _ = self.b.get_as_type('_cell_angle_beta', str)
+
+    def test_get_as_type_defaults(self):
+        self.assertEqual(
+            self.b.get_as_type('_nonexistent_key_with_default', str, 'default'),
+            'default'
+        )
+
+
+class TestCifBlockInterface(ParentTestCases.TestCifBlock):
+    def test_base_frame_fill_from_cif_block_robust(self):
+        self.b.read(path=self.b_file.name, block='NaCl')
+        base = BaseFrame()
+        base.fill_from_cif_block(self.b, fragile=False)
+        self.assertAlmostEqual(base.v_d, 179.51018149594705)
+        self.assertAlmostEqual(base.orientation[0, 0], -0.0617076000)
+
+    def test_base_frame_fill_from_cif_block_fragile(self):
+        self.b.read(path=self.b_file.name, block='NaCl_olex2_C2/m')
+        base = BaseFrame()
+        with self.assertRaises(KeyError):
+            base.fill_from_cif_block(self.b, fragile=True)
+
+
+class TestCifFrame(unittest.TestCase):
+    c_cif = CifFrame()
+    c_dic = CifFrame()
+    c_fcf = CifFrame()
+    c_cif_file = tempfile.NamedTemporaryFile('w+')
+    c_dic_file = tempfile.NamedTemporaryFile('w+')
+    c_fcf_file = tempfile.NamedTemporaryFile('w+')
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.c_cif_file.write(nacl_cif)
+        cls.c_dic_file.write(cif_core_dict)
+        cls.c_fcf_file.write(nacl_fcf)
+
+    def test_read_cif_file(self):
+        self.c_cif.read(self.c_cif_file.name)
+        self.assertIn('NaCl', self.c_cif)
+        self.assertIsInstance(self.c_cif['NaCl'], CifBlock)
+
+    def test_read_dic_file(self):
+        self.c_dic.read(self.c_dic_file.name)
+        self.assertIn('atom_site_label', self.c_dic)
+        self.assertIsInstance(self.c_dic['atom_site_label'], CifBlock)
+
+    def test_read_fcf_file(self):
+        self.c_fcf.read(self.c_fcf_file.name)
+        self.assertIn('NaCl', self.c_fcf)
+        self.assertIsInstance(self.c_fcf['NaCl'], CifBlock)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.c_cif_file.close()
+        cls.c_dic_file.close()
+        cls.c_fcf_file.close()
 
 
 class TestHklFrame(unittest.TestCase):
@@ -159,6 +297,79 @@ class TestHklFrame(unittest.TestCase):
         self.assertEqual(len(self.h2.table), 159)
         self.h2.merge(point_group=PG['m-3m'])
         self.assertEqual(len(self.h2.table), 111)
+
+
+class TestUBaseFrame(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.b = UBaseFrame()
+        self.b.edit_cell(a=u6, b=u7, c=u8, al=u60, be=u70, ga=u80)
+
+    def test_init(self):
+        b = UBaseFrame()
+        self.assertAlmostEqual(b.a_d.n, 1)
+        self.assertAlmostEqual(b.b_d.n, 1)
+        self.assertAlmostEqual(b.c_d.n, 1)
+        self.assertAlmostEqual(b.al_d.n, np.pi / 2)
+        self.assertAlmostEqual(b.be_d.n, np.pi / 2)
+        self.assertAlmostEqual(b.ga_d.n, np.pi / 2)
+
+    def test_edit_cell(self):
+        self.assertAlmostEqual(self.b.a_d.n, 6)
+        self.assertAlmostEqual(self.b.b_d.n, 7)
+        self.assertAlmostEqual(self.b.c_d.n, 8)
+        self.assertAlmostEqual(self.b.al_d.n, rad60)
+        self.assertAlmostEqual(self.b.be_d.n, rad70)
+        self.assertAlmostEqual(self.b.ga_d.n, rad80)
+        with self.assertRaises(KeyError):
+            BaseFrame().edit_cell(alpha=0.0)
+
+    def test_reciprocal_cell(self):
+        self.assertAlmostEqual(self.b.a_r.n, 0.1773638940193107)
+        self.assertAlmostEqual(self.b.b_r.n, 0.1649580865234412)
+        self.assertAlmostEqual(self.b.c_r.n, 0.1512680839136182)
+        self.assertAlmostEqual(self.b.al_r.n, 2.067032910195549)
+        self.assertAlmostEqual(self.b.be_r.n, 1.874672323582712)
+        self.assertAlmostEqual(self.b.ga_r.n, 1.574038054665492)
+
+    def test_vectors(self):
+        expected_a_v = np.array([6.00000000, 0.00000000, 0.00000000])
+        expected_b_v = np.array([1.21553724, 6.89365427, 0.00000000])
+        expected_c_v = np.array([2.73616115, 3.57924741, 6.61077984])
+        expected_a_w = np.array([0.16666667, -0.02938783, -0.05307098])
+        expected_b_w = np.array([0.00000000, 0.14506094, -0.07853975])
+        expected_c_w = np.array([0.00000000, 0.00000000, 0.15126808])
+        self.assertAlmostEqual(sum(self.b.a_v - expected_a_v).n, 0.)
+        self.assertAlmostEqual(sum(self.b.b_v - expected_b_v).n, 0.)
+        self.assertAlmostEqual(sum(self.b.c_v - expected_c_v).n, 0.)
+        self.assertAlmostEqual(sum(self.b.a_w - expected_a_w).n, 0.)
+        self.assertAlmostEqual(sum(self.b.b_w - expected_b_w).n, 0.)
+        self.assertAlmostEqual(sum(self.b.c_w - expected_c_w).n, 0.)
+
+    def test_perpendicular(self):
+        def norm(v):
+            return v / (v.dot(v) ** (1/2))
+        av, bv, cv = self.b.a_v, self.b.b_v, self.b.c_v
+        aw, bw, cw = self.b.a_w, self.b.b_w, self.b.c_w
+        self.assertAlmostEqual(sum(norm(np.cross(av, bv)) - norm(cw)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(bv, cv)) - norm(aw)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(cv, av)) - norm(bw)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(aw, bw)) - norm(cv)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(bw, cw)) - norm(av)).n, 0.)
+        self.assertAlmostEqual(sum(norm(np.cross(cw, aw)) - norm(bv)).n, 0.)
+
+    def test_matrices(self):
+        v = np.array([1.6180339887, 2.7182818285, 3.1415926536])
+        self.assertAlmostEqual((v @ self.b.G_d @ v).n, 1797.2495106787824)
+        self.assertAlmostEqual((v @ self.b.G_r @ v).n, 0.2238961843294296)
+        self.assertAlmostEqual(sum(sum(self.b.G_d @ self.b.A_r - self.b.A_d)).n,
+                               0.)
+        self.assertAlmostEqual(sum(sum(self.b.G_r @ self.b.A_d - self.b.A_r)).n,
+                               0.)
+
+    def test_volumes(self):
+        self.assertAlmostEqual(self.b.v_d.n, 273.4345841924758)
+        self.assertAlmostEqual(self.b.v_r.n, 0.003657181855591761)
 
 
 if __name__ == '__main__':

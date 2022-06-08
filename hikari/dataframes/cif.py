@@ -2,6 +2,7 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from functools import lru_cache
+from typing import Callable, List, Type, Union
 
 from hikari.utility import make_abspath
 
@@ -24,9 +25,11 @@ class CifBlock(OrderedDict):
         :param key: key associated with accessed element
         :type key: str
         :param typ: type/function applied to a value or its every element
+        :type typ: Callable
         :param default: if given, return it on KeyError
+        :type default: Any
         :return: converted value of `self[key]` or `default`
-        :rtype: Union[list, str]
+        :rtype: Union[List, str]
         """
         try:
             value = self[key]
@@ -40,11 +43,24 @@ class CifBlock(OrderedDict):
                 if isinstance(value, str):
                     value = typ(value)
                 elif isinstance(value, list):
-                    value = map(typ, value)
+                    value = list(map(typ, value))
                 else:
                     raise TypeError(f'Unknown value type'
                                     f'of {value}: {type(value)}')
         return value
+
+    def read(self, path, block):
+        """
+        Read the contents of .cif file specified by the `path` parameter, but
+        access and store only the `block` data block in self.
+
+        :param path: Absolute or relative path to the .cif file.
+        :type path: str
+        :param block: Name of the cif data block to be accessed
+        :type block: str
+        """
+        reader = CifReader(cif_file_path=path)
+        self.update(reader.read()[block])
 
 
 class CifFrame(OrderedDict):
@@ -283,9 +299,3 @@ class CifReader(CifIO):
         :rtype: str
         """
         return cls.COMMENT_REGEX.split(string)[0]
-
-
-if __name__ == '__main__':
-    c = CifFrame()
-    c.read(path='~/git/hikari/hikari/resources/cif_core_2.4.5.dic')
-

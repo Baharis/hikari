@@ -5,6 +5,8 @@ information / methods used in the package.
 
 import numpy as np
 import random
+import uncertainties
+from typing import Union
 
 
 def angle2rad(value):
@@ -146,12 +148,26 @@ def fibonacci_sphere(samples=1, seed=1337):
     return np.vstack([x, y, z]).T
 
 
-def euler_rodrigues_matrix(a, b, c, d):
+def euler_rodrigues_matrix(
+        a: Union[int, float, uncertainties.UFloat],
+        b: Union[int, float, uncertainties.UFloat],
+        c: Union[int, float, uncertainties.UFloat],
+        d: Union[int, float, uncertainties.UFloat]) -> np.ndarray:
+    """
+    Return a rotation matrix based on a Euler-Rodrigues parametrisation. For
+    details, see https://en.wikipedia.org/wiki/Euler%E2%80%93Rodrigues_formula.
+
+    :param a: Euler-Rodrigues parameter *a*
+    :param b: Euler-Rodrigues parameter *b*
+    :param c: Euler-Rodrigues parameter *c*
+    :param d: Euler-Rodrigues parameter *d*
+    :return: 3x3 matrix describing rotation
+    """
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2 * (bc + ad),     2 * (bd - ac)],
-                     [2 * (bc - ad),     aa + cc - bb - dd, 2 * (cd + ab)],
-                     [2 * (bd + ac),     2 * (cd - ab),     aa + dd - bb - cc]])
+    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+                     [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
 
 def rotation_from(from_, to):
@@ -177,8 +193,9 @@ def rotation_from(from_, to):
             return np.eye(3)
         else:
             e1, e2 = np.array([1, 0, 0]), np.array([0, 1, 0])
-            e = e2 if np.isclose(sum(np.cross(e1, f)), 0.) else e1
-            return rotation_from(f, to=e) @ rotation_from(e, to=t)
+            e = np.cross(e2, f) if np.isclose(sum(np.cross(e1, f)), 0.) \
+                else np.cross(e1, f)
+            return rotation_around(e, by=np.pi)
     else:
         axis = axis / np.linalg.norm(axis)
         angle = np.arcsin(np.linalg.norm(np.cross(f, t)))
@@ -234,8 +251,8 @@ def weighted_quantile(values, quantiles, weights=None):
     values = np.array(values)
     quantiles = np.array(quantiles)
     w = np.ones_like(values) if weights is None else np.array(weights)
-    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
-        'quantiles should be in [0, 1]'
+    if np.any(quantiles < 0) or np.any(quantiles > 1):
+        raise ValueError(f'quantiles ({quantiles}) should be in range 0 to 1')
 
     sorter = np.argsort(values)
     values = values[sorter]

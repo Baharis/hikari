@@ -272,7 +272,7 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
             xf, yf, zf = np.array(self.focus).T
             ax.plot(xf, yf, zf, linestyle='none', marker='D', markersize=10,
                     markerfacecolor='none', markeredgewidth=2,
-                    markeredgecolor='k',  zorder=8)
+                    markeredgecolor='k', zorder=8)
 
         # prepare smaller heat mesh for polygon centers and plot the heatmap
         face_heat_mesh = (heat_mesh[1:, 1:] + heat_mesh[1:, :-1] +
