@@ -110,7 +110,7 @@ class CifValidator(OrderedDict):
         with open(temp_dic_path, 'w+') as f:
             f.write(cif_core_dict)
         reader = CifReader(cif_file_path=temp_dic_path)
-        self.update(reader.read())
+        self.update(reader.read(prepend='_'))
 
 
 class CifIO:
@@ -257,11 +257,13 @@ class CifReader(CifIO):
         """
         return self.protect_quotes(line).strip().split()
 
-    def read(self):
+    def read(self, prepend=''):
         """
         Read the contents of cif currently pointed by :attr:`~.CifIO.file_path`
         and block :attr:`~.CifIO.data_block_header` and return them to a dict.
 
+        :param prepend: string prepended to the start of each data block
+        :type prepend: str
         :return: A dictionary containing information read from .cif file.
         :rtype: dict
         """
@@ -271,7 +273,7 @@ class CifReader(CifIO):
         block_starts = self.blocks.values()
         block_ends = list(block_starts)[1:] + [None]
         for n, s, e in zip(block_names, block_starts, block_ends):
-            self.data[n] = CifBlock(self.parse_lines(s + 1, e))
+            self.data[prepend + n] = CifBlock(self.parse_lines(s + 1, e))
         return self.data
 
     @classmethod
