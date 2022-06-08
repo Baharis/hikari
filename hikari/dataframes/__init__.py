@@ -12,7 +12,7 @@ Please mind that the `hkl` frame, HklFrame is the most developed.
 Other frames are in an early stage of development.
 """
 
-from .cif import CifFrame
+from .cif import CifFrame, CifBlock
 from .base import BaseFrame
 from .ubase import UBaseFrame
 from .hkl import HklFrame
