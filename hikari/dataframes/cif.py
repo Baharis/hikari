@@ -110,7 +110,23 @@ class CifValidator(OrderedDict):
             with open(temp_dic_path, 'w+') as f:
                 f.write(cif_core_dict)
             reader = CifReader(cif_file_path=temp_dic_path, validate=False)
-            self.update(reader.read())
+            core_dict_raw = reader.read()
+            core_dict_expanded = self._expand_names(core_dict_raw)
+            self.update(core_dict_expanded)
+
+    @staticmethod
+    def _expand_names(dict_):
+        expanded_items = CifBlock()
+        for data_block_name, data_block in dict_.items():
+            names = data_block.get('_name', None)
+            if names:
+                data_block_without_name_item = OrderedDict()
+                for data_name, data_value in data_block.items():
+                    if data_name is not '_name':
+                        data_block_without_name_item[data_name] = data_value
+                for name in names:
+                    expanded_items[name] = data_block_without_name_item
+        return expanded_items
 
 
 class CifIO:
@@ -211,7 +227,8 @@ class CifReader(CifIO):
 
         def item_value_should_be_a_list(k_, v_):
             data_entry = self.validator.get(k_, {}) if self.validator else {}
-            return data_entry.get('_list', '') == 'yes' or len(v_) > 1
+            return data_entry.get('_list', '') == 'yes' or len(v_) > 1 \
+                   or (not self.validator and k_ == '_name')
 
         new_dict = OrderedDict()
         for k, v in parsed_dict_.items():
