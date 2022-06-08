@@ -1,9 +1,13 @@
 import re
+import pathlib
+import tempfile
+
 from collections import OrderedDict
 from enum import Enum
 from functools import lru_cache
 from typing import Callable, List, Type, Union
 
+from hikari.resources import cif_core_dict
 from hikari.utility import make_abspath
 
 
@@ -14,6 +18,7 @@ class CifBlock(OrderedDict):
     of similarities with python dictionary while preserving item order.
     Individual Cif items can be accessed or assigned using a dict-like syntax.
     """
+
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -89,6 +94,22 @@ class CifFrame(OrderedDict):
         :type path: str
         """
         reader = CifReader(cif_file_path=path)
+        self.update(reader.read())
+
+
+class CifValidator(OrderedDict):
+    """
+    This object reads an appropriate cif core dictionary and uses it in order to
+    format or validate all entries passing through it.
+    """
+
+    def __init__(self):
+        super().__init__()
+        temp_dir = tempfile.TemporaryDirectory()
+        temp_dic_path = str(pathlib.Path(temp_dir.name) / 'cif_core.dic')
+        with open(temp_dic_path, 'w+') as f:
+            f.write(cif_core_dict)
+        reader = CifReader(cif_file_path=temp_dic_path)
         self.update(reader.read())
 
 
