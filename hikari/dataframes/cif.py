@@ -46,6 +46,19 @@ class CifBlock(OrderedDict):
                                     f'of {value}: {type(value)}')
         return value
 
+    def read(self, path, block):
+        """
+        Read the contents of .cif file specified by the `path` parameter, but
+        access and store only the `block` data block in self.
+
+        :param path: Absolute or relative path to the .cif file.
+        :type path: str
+        :param block: Name of the cif data block to be accessed
+        :type block: str
+        """
+        reader = CifReader(cif_file_path=path)
+        self.update(reader.read()[block])
+
 
 class CifFrame(OrderedDict):
     """
