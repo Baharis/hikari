@@ -1,6 +1,7 @@
 # hikari
 
 [![PyPI version](https://badge.fury.io/py/hikari-toolkit.svg)](https://badge.fury.io/py/hikari-toolkit)
+[![codecov](https://codecov.io/gh/Baharis/hikari/branch/master/graph/badge.svg?token=SWKKW0LSKQ)](https://codecov.io/gh/Baharis/hikari)
 [![CodeFactor](https://www.codefactor.io/repository/github/baharis/hikari/badge)](https://www.codefactor.io/repository/github/baharis/hikari)
 [![Documentation Status](https://readthedocs.org/projects/hikari/badge/?version=stable)](https://hikari.readthedocs.io/en/stable/?badge=stable)
 
