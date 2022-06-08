@@ -26,8 +26,22 @@ u80 = uncertainties.ufloat(80.0, 1.0)
 u90 = uncertainties.ufloat(90.0, 1.0)
 
 
-class TestBaseFrame(unittest.TestCase):
+class ParentTestCases:
+    class TestCifBlock(unittest.TestCase):
+        b = CifBlock()
+        b_file = tempfile.TemporaryFile()
 
+        @classmethod
+        def setUpClass(cls) -> None:
+            cls.b_file = tempfile.NamedTemporaryFile('w+')
+            cls.b_file.write(nacl_cif)
+
+        @classmethod
+        def tearDownClass(cls) -> None:
+            cls.b_file.close()
+
+
+class TestBaseFrame(unittest.TestCase):
     def setUp(self) -> None:
         self.b = BaseFrame()
         self.b.edit_cell(a=6, b=7, c=8, al=60, be=70, ga=80)
@@ -97,22 +111,27 @@ class TestBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(self.b.v_r, 0.003657181855591761)
 
 
-class TestCifBlock(unittest.TestCase):
-    b = CifBlock()
-    b_file = tempfile.NamedTemporaryFile('w+')
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.b_file.write(nacl_cif)
-
+class TestCifBlockRead(ParentTestCases.TestCifBlock):
     def test_read(self):
         self.b.read(path=self.b_file.name, block='NaCl')
+
+
+class TestCifBlockGeneral(ParentTestCases.TestCifBlock):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.b.read(path=cls.b_file.name, block='NaCl')
+
+    def test_access(self):
         self.assertIn('_cell_length_a', self.b)
         self.assertEqual(self.b['_cell_length_a'], '5.64109(5)')
         self.assertEqual(len(self.b['_diffrn_refln_index_h']), 8578)
 
+    def test_assign(self):
+        self.b['_cell_angle_beta'] = '120'
+        self.assertEqual(self.b['_cell_angle_beta'], '120')
+
     def test_get_as_type_single(self):
-        self.b.read(path=self.b_file.name, block='NaCl')
         k = '_cell_angle_alpha'
         self.assertEqual(self.b.get_as_type(k, typ=str), '90')
         self.assertEqual(self.b.get_as_type(k, typ=int), 90)
@@ -120,16 +139,39 @@ class TestCifBlock(unittest.TestCase):
         self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr(u90))
 
     def test_get_as_type_list(self):
-        self.b.read(path=self.b_file.name, block='NaCl')
         k = '_atom_site_occupancy'
         self.assertEqual(self.b.get_as_type(k, typ=str), ['1', '1'])
         self.assertEqual(self.b.get_as_type(k, typ=int), [1, 1])
         u_typ = uncertainties.ufloat_fromstr
         self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr([u1, u1]))
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.b_file.close()
+    def test_get_as_type_exceptions(self):
+        with self.assertRaises(KeyError):
+            _ = self.b.get_as_type('_nonexistent_key', str)
+        self.b['_cell_angle_beta'] = u90
+        with self.assertRaises(TypeError):
+            _ = self.b.get_as_type('_cell_angle_beta', str)
+
+    def test_get_as_type_defaults(self):
+        self.assertEqual(
+            self.b.get_as_type('_nonexistent_key_with_default', str, 'default'),
+            'default'
+        )
+
+
+class TestCifBlockInterface(ParentTestCases.TestCifBlock):
+    def test_base_frame_fill_from_cif_block_robust(self):
+        self.b.read(path=self.b_file.name, block='NaCl')
+        base = BaseFrame()
+        base.fill_from_cif_block(self.b, fragile=False)
+        self.assertAlmostEqual(base.v_d, 179.51018149594705)
+        self.assertAlmostEqual(base.orientation[0, 0], -0.0617076000)
+
+    def test_base_frame_fill_from_cif_block_fragile(self):
+        self.b.read(path=self.b_file.name, block='NaCl_olex2_C2/m')
+        base = BaseFrame()
+        with self.assertRaises(KeyError):
+            base.fill_from_cif_block(self.b, fragile=True)
 
 
 class TestCifFrame(unittest.TestCase):
