@@ -2,6 +2,7 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from functools import lru_cache
+from typing import Callable, List, Type, Union
 
 from hikari.utility import make_abspath
 
@@ -24,9 +25,11 @@ class CifBlock(OrderedDict):
         :param key: key associated with accessed element
         :type key: str
         :param typ: type/function applied to a value or its every element
+        :type typ: Callable
         :param default: if given, return it on KeyError
+        :type default: Any
         :return: converted value of `self[key]` or `default`
-        :rtype: Union[list, str]
+        :rtype: Union[List, str]
         """
         try:
             value = self[key]
@@ -40,7 +43,7 @@ class CifBlock(OrderedDict):
                 if isinstance(value, str):
                     value = typ(value)
                 elif isinstance(value, list):
-                    value = map(typ, value)
+                    value = list(map(typ, value))
                 else:
                     raise TypeError(f'Unknown value type'
                                     f'of {value}: {type(value)}')
