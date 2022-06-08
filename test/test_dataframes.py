@@ -1,4 +1,5 @@
 import copy
+import pathlib
 import tempfile
 import unittest
 
@@ -26,19 +27,20 @@ u80 = uncertainties.ufloat(80.0, 1.0)
 u90 = uncertainties.ufloat(90.0, 1.0)
 
 
-class ParentTestCases:
-    class TestCifBlock(unittest.TestCase):
-        b = CifBlock()
-        b_file = tempfile.TemporaryFile()
+class TempFile:
+    temp_dir = tempfile.TemporaryDirectory()
 
-        @classmethod
-        def setUpClass(cls) -> None:
-            cls.b_file = tempfile.NamedTemporaryFile('w+')
-            cls.b_file.write(nacl_cif)
+    def __init__(self, name, content):
+        self.name = name
+        self.path = str(pathlib.Path(self.temp_dir.name) / name)
+        self.file = open(self.path, 'w+')
+        self.file.write(content)
 
-        @classmethod
-        def tearDownClass(cls) -> None:
-            cls.b_file.close()
+
+nacl_cif_file = TempFile('nacl.cif', nacl_cif)
+nacl_fcf_file = TempFile('nacl.fcf', nacl_fcf)
+nacl_hkl_file = TempFile('nacl.hkl', nacl_hkl)
+cif_core_dict_file = TempFile('core.cif', cif_core_dict)
 
 
 class TestBaseFrame(unittest.TestCase):
@@ -111,16 +113,18 @@ class TestBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(self.b.v_r, 0.003657181855591761)
 
 
-class TestCifBlockRead(ParentTestCases.TestCifBlock):
+class TestCifBlockRead(unittest.TestCase):
     def test_read(self):
-        self.b.read(path=self.b_file.name, block='NaCl')
+        CifBlock().read(path=nacl_cif_file.path, block='NaCl')
 
 
-class TestCifBlockGeneral(ParentTestCases.TestCifBlock):
+class TestCifBlockGeneral(unittest.TestCase):
+    b = CifBlock()
+
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        cls.b.read(path=cls.b_file.name, block='NaCl')
+        cls.b.read(path=nacl_cif_file.path, block='NaCl')
 
     def test_access(self):
         self.assertIn('_cell_length_a', self.b)
@@ -159,16 +163,18 @@ class TestCifBlockGeneral(ParentTestCases.TestCifBlock):
         )
 
 
-class TestCifBlockInterface(ParentTestCases.TestCifBlock):
+class TestCifBlockInterface(unittest.TestCase):
+    b = CifBlock()
+
     def test_base_frame_fill_from_cif_block_robust(self):
-        self.b.read(path=self.b_file.name, block='NaCl')
+        self.b.read(path=nacl_cif_file.path, block='NaCl')
         base = BaseFrame()
         base.fill_from_cif_block(self.b, fragile=False)
         self.assertAlmostEqual(base.v_d, 179.51018149594705)
         self.assertAlmostEqual(base.orientation[0, 0], -0.0617076000)
 
     def test_base_frame_fill_from_cif_block_fragile(self):
-        self.b.read(path=self.b_file.name, block='NaCl_olex2_C2/m')
+        self.b.read(path=nacl_cif_file.path, block='NaCl_olex2_C2/m')
         base = BaseFrame()
         with self.assertRaises(KeyError):
             base.fill_from_cif_block(self.b, fragile=True)
@@ -178,52 +184,31 @@ class TestCifFrame(unittest.TestCase):
     c_cif = CifFrame()
     c_dic = CifFrame()
     c_fcf = CifFrame()
-    c_cif_file = tempfile.NamedTemporaryFile('w+')
-    c_dic_file = tempfile.NamedTemporaryFile('w+')
-    c_fcf_file = tempfile.NamedTemporaryFile('w+')
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.c_cif_file.write(nacl_cif)
-        cls.c_dic_file.write(cif_core_dict)
-        cls.c_fcf_file.write(nacl_fcf)
 
     def test_read_cif_file(self):
-        self.c_cif.read(self.c_cif_file.name)
+        self.c_cif.read(nacl_fcf_file.path)
         self.assertIn('NaCl', self.c_cif)
         self.assertIsInstance(self.c_cif['NaCl'], CifBlock)
 
     def test_read_dic_file(self):
-        self.c_dic.read(self.c_dic_file.name)
+        self.c_dic.read(cif_core_dict_file.path)
         self.assertIn('atom_site_label', self.c_dic)
         self.assertIsInstance(self.c_dic['atom_site_label'], CifBlock)
 
     def test_read_fcf_file(self):
-        self.c_fcf.read(self.c_fcf_file.name)
+        self.c_fcf.read(nacl_fcf_file.path)
         self.assertIn('NaCl', self.c_fcf)
         self.assertIsInstance(self.c_fcf['NaCl'], CifBlock)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.c_cif_file.close()
-        cls.c_dic_file.close()
-        cls.c_fcf_file.close()
 
 
 class TestHklFrame(unittest.TestCase):
     h1 = HklFrame()
     h2 = HklFrame()
-    temporary_hkl_file = tempfile.NamedTemporaryFile('w+')
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temporary_hkl_file.write(nacl_hkl)
-        cls.h1.read(cls.temporary_hkl_file.name, hkl_format='shelx_4')
+        cls.h1.read(nacl_hkl_file.path, hkl_format='shelx_4')
         cls.h1.edit_cell(a=5.64109, b=5.64109, c=5.64109)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.temporary_hkl_file.close()
 
     def setUp(self) -> None:
         self.h2 = copy.deepcopy(self.h1)
@@ -243,7 +228,7 @@ class TestHklFrame(unittest.TestCase):
         self.assertIn('419.465', str_h[-300:])
 
     def test_read(self):
-        self.h2.read(self.temporary_hkl_file.name, hkl_format='free_4')
+        self.h2.read(nacl_hkl_file.path, hkl_format='free_4')
         self.assertEqual(self.h2.table.__len__(), 8578)
 
     def test_la_and_r_lim(self):
