@@ -5,7 +5,7 @@ import tempfile
 from collections import OrderedDict
 from enum import Enum
 from functools import lru_cache
-from typing import Callable, List, Type, Union
+from typing import List, Union, Dict
 
 from hikari.resources import cif_core_dict
 from hikari.utility import make_abspath
@@ -105,12 +105,12 @@ class CifValidator(OrderedDict):
 
     def __init__(self):
         super().__init__()
-        temp_dir = tempfile.TemporaryDirectory()
-        temp_dic_path = str(pathlib.Path(temp_dir.name) / 'cif_core.dic')
-        with open(temp_dic_path, 'w+') as f:
-            f.write(cif_core_dict)
-        reader = CifReader(cif_file_path=temp_dic_path, validate=False)
-        self.update(reader.read(prepend='_'))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dic_path = str(pathlib.Path(temp_dir) / 'cif_core.dic')
+            with open(temp_dic_path, 'w+') as f:
+                f.write(cif_core_dict)
+            reader = CifReader(cif_file_path=temp_dic_path, validate=False)
+            self.update(reader.read(prepend='_'))
 
 
 class CifIO:
@@ -169,14 +169,13 @@ class CifReader(CifIO):
             d = OrderedDict()
             lv = len(self.values)
             ln = len(self.names)
-            if lv == ln:
-                d.update({n: v for n, v in zip(self.names, self.values)})
+            if lv == ln == 0:
+                pass
             elif ln == 0:
                 raise IndexError(f'Orphan values found while '
                                  f'flushing buffer: {self.values}')
-            elif lv % ln == 0 and lv > 0:
-                d.update({n: self.values[i::ln]
-                          for i, n in enumerate(self.names)})
+            elif lv % ln == 0:
+                d.update({n: self.values[i::ln] for i, n in enumerate(self.names)})
             else:
                 raise IndexError(f'len(values) == {lv} % len(names) == {ln} mus'
                                  f't be zero: {self.values} % {self.names}')
@@ -199,6 +198,28 @@ class CifReader(CifIO):
         loop = 1
         loop_header = 2
         multiline = 3
+
+    def format_dictionary(self, parsed_dict_: Dict[str, List[str]]) \
+            -> Dict[str, Union[str, List[str]]]:
+        """
+        Reformat a dictionary of parsed data so that the format of every name
+        and value agrees with the cif core dictionary stored in `CifValidator`.
+
+        :param parsed_dict_: Dictionary with data pairs
+        :return: Data dictionary with correctly formatted data names and values
+        """
+
+        def item_value_should_be_a_list(k_, v_):
+            data_entry = self.validator.get(k_, {}) if self.validator else {}
+            return data_entry.get('_list', '') == 'yes' or len(v_) > 1
+
+        new_dict = OrderedDict()
+        for k, v in parsed_dict_.items():
+            if item_value_should_be_a_list(k, v):
+                new_dict[k] = v
+            else:
+                new_dict[k] = v[0]
+        return new_dict
 
     def parse_lines(self, start, end):
         """
@@ -245,7 +266,8 @@ class CifReader(CifIO):
             if not words and state is self.ReadingState.loop:
                 pass
         buffer.flush()
-        return parsed_data
+        formatted_data = self.format_dictionary(parsed_data)
+        return formatted_data
 
     def split_line(self, line):
         """
