@@ -5,6 +5,8 @@ information / methods used in the package.
 
 import numpy as np
 import random
+import uncertainties
+from typing import Union
 
 
 def angle2rad(value):
@@ -146,7 +148,21 @@ def fibonacci_sphere(samples=1, seed=1337):
     return np.vstack([x, y, z]).T
 
 
-def euler_rodrigues_matrix(a, b, c, d):
+def euler_rodrigues_matrix(
+        a: Union[int, float, uncertainties.UFloat],
+        b: Union[int, float, uncertainties.UFloat],
+        c: Union[int, float, uncertainties.UFloat],
+        d: Union[int, float, uncertainties.UFloat]) -> np.ndarray:
+    """
+    Return a rotation matrix based on a Euler-Rodrigues parametrisation. For
+    details, see https://en.wikipedia.org/wiki/Euler%E2%80%93Rodrigues_formula.
+
+    :param a: Euler-Rodrigues parameter *a*
+    :param b: Euler-Rodrigues parameter *b*
+    :param c: Euler-Rodrigues parameter *c*
+    :param d: Euler-Rodrigues parameter *d*
+    :return: 3x3 matrix describing rotation
+    """
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
     return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
