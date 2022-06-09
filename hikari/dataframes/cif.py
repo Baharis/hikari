@@ -116,11 +116,11 @@ class CifValidator(OrderedDict):
 
     @staticmethod
     def _expand_names(dict_):
-        expanded_items = CifBlock()
+        expanded_items = OrderedDict()
         for data_block_name, data_block in dict_.items():
             names = data_block.get('_name', None)
             if names:
-                data_block_without_name_item = OrderedDict()
+                data_block_without_name_item = CifBlock()
                 for data_name, data_value in data_block.items():
                     if data_name is not '_name':
                         data_block_without_name_item[data_name] = data_value

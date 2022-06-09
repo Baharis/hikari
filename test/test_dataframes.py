@@ -8,7 +8,7 @@ import uncertainties
 
 from hikari.dataframes import BaseFrame, CifBlock, CifFrame, HklFrame, \
     UBaseFrame
-from hikari.resources import nacl_fcf, nacl_hkl, nacl_cif, cif_core_dict
+from hikari.dataframes.cif import CifValidator
 from hikari.symmetry import PG
 
 rad60 = 1.0471975511965976
@@ -37,10 +37,9 @@ class TempFile:
         self.file.write(content)
 
 
-nacl_cif_file = TempFile('nacl.cif', nacl_cif)
-nacl_fcf_file = TempFile('nacl.fcf', nacl_fcf)
-nacl_hkl_file = TempFile('nacl.hkl', nacl_hkl)
-cif_core_dict_file = TempFile('core.cif', cif_core_dict)
+nacl_cif_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.cif'))
+nacl_fcf_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.fcf'))
+nacl_hkl_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.hkl'))
 
 
 class TestBaseFrame(unittest.TestCase):
@@ -115,7 +114,7 @@ class TestBaseFrame(unittest.TestCase):
 
 class TestCifBlockRead(unittest.TestCase):
     def test_read(self):
-        CifBlock().read(path=nacl_cif_file.path, block='NaCl')
+        CifBlock().read(path=nacl_cif_path, block='NaCl')
 
 
 class TestCifBlockGeneral(unittest.TestCase):
@@ -124,7 +123,7 @@ class TestCifBlockGeneral(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        cls.b.read(path=nacl_cif_file.path, block='NaCl')
+        cls.b.read(path=nacl_cif_path, block='NaCl')
 
     def test_access(self):
         self.assertIn('_cell_length_a', self.b)
@@ -167,36 +166,37 @@ class TestCifBlockInterface(unittest.TestCase):
     b = CifBlock()
 
     def test_base_frame_fill_from_cif_block_robust(self):
-        self.b.read(path=nacl_cif_file.path, block='NaCl')
+        self.b.read(path=nacl_cif_path, block='NaCl')
         base = BaseFrame()
         base.fill_from_cif_block(self.b, fragile=False)
         self.assertAlmostEqual(base.v_d, 179.51018149594705)
         self.assertAlmostEqual(base.orientation[0, 0], -0.0617076000)
 
     def test_base_frame_fill_from_cif_block_fragile(self):
-        self.b.read(path=nacl_cif_file.path, block='NaCl_olex2_C2/m')
+        self.b.read(path=nacl_cif_path, block='NaCl_olex2_C2/m')
         base = BaseFrame()
         with self.assertRaises(KeyError):
             base.fill_from_cif_block(self.b, fragile=True)
 
 
+class TestCifValidator(unittest.TestCase):
+    def test_validator(self):
+        c = CifValidator()
+        self.assertIn('_atom_site_label', c)
+        self.assertIsInstance(c['_atom_site_label'], CifBlock)
+
+
 class TestCifFrame(unittest.TestCase):
     c_cif = CifFrame()
-    c_dic = CifFrame()
     c_fcf = CifFrame()
 
     def test_read_cif_file(self):
-        self.c_cif.read(nacl_fcf_file.path)
+        self.c_cif.read(nacl_cif_path)
         self.assertIn('NaCl', self.c_cif)
         self.assertIsInstance(self.c_cif['NaCl'], CifBlock)
 
-    def test_read_dic_file(self):
-        self.c_dic.read(cif_core_dict_file.path)
-        self.assertIn('atom_site_label', self.c_dic)
-        self.assertIsInstance(self.c_dic['atom_site_label'], CifBlock)
-
     def test_read_fcf_file(self):
-        self.c_fcf.read(nacl_fcf_file.path)
+        self.c_fcf.read(nacl_fcf_path)
         self.assertIn('NaCl', self.c_fcf)
         self.assertIsInstance(self.c_fcf['NaCl'], CifBlock)
 
@@ -207,7 +207,7 @@ class TestHklFrame(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.h1.read(nacl_hkl_file.path, hkl_format='shelx_4')
+        cls.h1.read(nacl_hkl_path, hkl_format='shelx_4')
         cls.h1.edit_cell(a=5.64109, b=5.64109, c=5.64109)
 
     def setUp(self) -> None:
@@ -228,7 +228,7 @@ class TestHklFrame(unittest.TestCase):
         self.assertIn('419.465', str_h[-300:])
 
     def test_read(self):
-        self.h2.read(nacl_hkl_file.path, hkl_format='free_4')
+        self.h2.read(nacl_hkl_path, hkl_format='free_4')
         self.assertEqual(self.h2.table.__len__(), 8578)
 
     def test_la_and_r_lim(self):
