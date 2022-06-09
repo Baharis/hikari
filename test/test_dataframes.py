@@ -11,20 +11,19 @@ from hikari.dataframes import BaseFrame, CifBlock, CifFrame, HklFrame, \
 from hikari.dataframes.cif import CifValidator
 from hikari.symmetry import PG
 
-rad60 = 1.0471975511965976
-rad70 = 1.2217304763960306
-rad80 = 1.3962634015954636
-rad90 = 1.5707963267948966
+RAD60 = 1.0471975511965976
+RAD70 = 1.2217304763960306
+RAD80 = 1.3962634015954636
+RAD90 = 1.5707963267948966
 
-u1 = uncertainties.ufloat(1, 1)
-upi = uncertainties.ufloat(np.pi, 0)
-u6 = uncertainties.ufloat(6.0, 0.1)
-u7 = uncertainties.ufloat(7.0, 0.1)
-u8 = uncertainties.ufloat(8.0, 0.1)
-u60 = uncertainties.ufloat(60.0, 1.0)
-u70 = uncertainties.ufloat(70.0, 1.0)
-u80 = uncertainties.ufloat(80.0, 1.0)
-u90 = uncertainties.ufloat(90.0, 1.0)
+U1 = uncertainties.ufloat(1, 1)
+U6 = uncertainties.ufloat(6.0, 0.1)
+U7 = uncertainties.ufloat(7.0, 0.1)
+U8 = uncertainties.ufloat(8.0, 0.1)
+U60 = uncertainties.ufloat(60.0, 1.0)
+U70 = uncertainties.ufloat(70.0, 1.0)
+U80 = uncertainties.ufloat(80.0, 1.0)
+U90 = uncertainties.ufloat(90.0, 1.0)
 
 
 class TempFile:
@@ -52,17 +51,17 @@ class TestBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(b.a_d, 1.)
         self.assertAlmostEqual(b.b_d, 1.)
         self.assertAlmostEqual(b.c_d, 1.)
-        self.assertAlmostEqual(b.al_d, rad90)
-        self.assertAlmostEqual(b.be_d, rad90)
-        self.assertAlmostEqual(b.ga_d, rad90)
+        self.assertAlmostEqual(b.al_d, RAD90)
+        self.assertAlmostEqual(b.be_d, RAD90)
+        self.assertAlmostEqual(b.ga_d, RAD90)
 
     def test_edit_cell(self):
         self.assertAlmostEqual(self.b.a_d, 6.)
         self.assertAlmostEqual(self.b.b_d, 7.)
         self.assertAlmostEqual(self.b.c_d, 8.)
-        self.assertAlmostEqual(self.b.al_d, rad60)
-        self.assertAlmostEqual(self.b.be_d, rad70)
-        self.assertAlmostEqual(self.b.ga_d, rad80)
+        self.assertAlmostEqual(self.b.al_d, RAD60)
+        self.assertAlmostEqual(self.b.be_d, RAD70)
+        self.assertAlmostEqual(self.b.ga_d, RAD80)
         with self.assertRaises(KeyError):
             BaseFrame().edit_cell(alpha=0.0)
 
@@ -139,19 +138,19 @@ class TestCifBlockGeneral(unittest.TestCase):
         self.assertEqual(self.b.get_as_type(k, typ=str), '90')
         self.assertEqual(self.b.get_as_type(k, typ=int), 90)
         u_typ = uncertainties.ufloat_fromstr
-        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr(u90))
+        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr(U90))
 
     def test_get_as_type_list(self):
         k = '_atom_site_occupancy'
         self.assertEqual(self.b.get_as_type(k, typ=str), ['1', '1'])
         self.assertEqual(self.b.get_as_type(k, typ=int), [1, 1])
         u_typ = uncertainties.ufloat_fromstr
-        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr([u1, u1]))
+        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr([U1, U1]))
 
     def test_get_as_type_exceptions(self):
         with self.assertRaises(KeyError):
             _ = self.b.get_as_type('_nonexistent_key', str)
-        self.b['_cell_angle_beta'] = u90
+        self.b['_cell_angle_beta'] = U90
         with self.assertRaises(TypeError):
             _ = self.b.get_as_type('_cell_angle_beta', str)
 
@@ -288,7 +287,7 @@ class TestUBaseFrame(unittest.TestCase):
 
     def setUp(self) -> None:
         self.b = UBaseFrame()
-        self.b.edit_cell(a=u6, b=u7, c=u8, al=u60, be=u70, ga=u80)
+        self.b.edit_cell(a=U6, b=U7, c=U8, al=U60, be=U70, ga=U80)
 
     def test_init(self):
         b = UBaseFrame()
@@ -303,9 +302,9 @@ class TestUBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(self.b.a_d.n, 6)
         self.assertAlmostEqual(self.b.b_d.n, 7)
         self.assertAlmostEqual(self.b.c_d.n, 8)
-        self.assertAlmostEqual(self.b.al_d.n, rad60)
-        self.assertAlmostEqual(self.b.be_d.n, rad70)
-        self.assertAlmostEqual(self.b.ga_d.n, rad80)
+        self.assertAlmostEqual(self.b.al_d.n, RAD60)
+        self.assertAlmostEqual(self.b.be_d.n, RAD70)
+        self.assertAlmostEqual(self.b.ga_d.n, RAD80)
         with self.assertRaises(KeyError):
             BaseFrame().edit_cell(alpha=0.0)
 
