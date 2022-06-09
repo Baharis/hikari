@@ -8,23 +8,22 @@ import uncertainties
 
 from hikari.dataframes import BaseFrame, CifBlock, CifFrame, HklFrame, \
     UBaseFrame
-from hikari.resources import nacl_fcf, nacl_hkl, nacl_cif, cif_core_dict
+from hikari.dataframes.cif import CifValidator
 from hikari.symmetry import PG
 
-rad60 = 1.0471975511965976
-rad70 = 1.2217304763960306
-rad80 = 1.3962634015954636
-rad90 = 1.5707963267948966
+RAD60 = 1.0471975511965976
+RAD70 = 1.2217304763960306
+RAD80 = 1.3962634015954636
+RAD90 = 1.5707963267948966
 
-u1 = uncertainties.ufloat(1, 1)
-upi = uncertainties.ufloat(np.pi, 0)
-u6 = uncertainties.ufloat(6.0, 0.1)
-u7 = uncertainties.ufloat(7.0, 0.1)
-u8 = uncertainties.ufloat(8.0, 0.1)
-u60 = uncertainties.ufloat(60.0, 1.0)
-u70 = uncertainties.ufloat(70.0, 1.0)
-u80 = uncertainties.ufloat(80.0, 1.0)
-u90 = uncertainties.ufloat(90.0, 1.0)
+U1 = uncertainties.ufloat(1, 1)
+U6 = uncertainties.ufloat(6.0, 0.1)
+U7 = uncertainties.ufloat(7.0, 0.1)
+U8 = uncertainties.ufloat(8.0, 0.1)
+U60 = uncertainties.ufloat(60.0, 1.0)
+U70 = uncertainties.ufloat(70.0, 1.0)
+U80 = uncertainties.ufloat(80.0, 1.0)
+U90 = uncertainties.ufloat(90.0, 1.0)
 
 
 class TempFile:
@@ -37,10 +36,9 @@ class TempFile:
         self.file.write(content)
 
 
-nacl_cif_file = TempFile('nacl.cif', nacl_cif)
-nacl_fcf_file = TempFile('nacl.fcf', nacl_fcf)
-nacl_hkl_file = TempFile('nacl.hkl', nacl_hkl)
-cif_core_dict_file = TempFile('core.cif', cif_core_dict)
+nacl_cif_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.cif'))
+nacl_fcf_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.fcf'))
+nacl_hkl_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.hkl'))
 
 
 class TestBaseFrame(unittest.TestCase):
@@ -53,17 +51,17 @@ class TestBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(b.a_d, 1.)
         self.assertAlmostEqual(b.b_d, 1.)
         self.assertAlmostEqual(b.c_d, 1.)
-        self.assertAlmostEqual(b.al_d, rad90)
-        self.assertAlmostEqual(b.be_d, rad90)
-        self.assertAlmostEqual(b.ga_d, rad90)
+        self.assertAlmostEqual(b.al_d, RAD90)
+        self.assertAlmostEqual(b.be_d, RAD90)
+        self.assertAlmostEqual(b.ga_d, RAD90)
 
     def test_edit_cell(self):
         self.assertAlmostEqual(self.b.a_d, 6.)
         self.assertAlmostEqual(self.b.b_d, 7.)
         self.assertAlmostEqual(self.b.c_d, 8.)
-        self.assertAlmostEqual(self.b.al_d, rad60)
-        self.assertAlmostEqual(self.b.be_d, rad70)
-        self.assertAlmostEqual(self.b.ga_d, rad80)
+        self.assertAlmostEqual(self.b.al_d, RAD60)
+        self.assertAlmostEqual(self.b.be_d, RAD70)
+        self.assertAlmostEqual(self.b.ga_d, RAD80)
         with self.assertRaises(KeyError):
             BaseFrame().edit_cell(alpha=0.0)
 
@@ -115,7 +113,7 @@ class TestBaseFrame(unittest.TestCase):
 
 class TestCifBlockRead(unittest.TestCase):
     def test_read(self):
-        CifBlock().read(path=nacl_cif_file.path, block='NaCl')
+        CifBlock().read(path=nacl_cif_path, block='NaCl')
 
 
 class TestCifBlockGeneral(unittest.TestCase):
@@ -124,7 +122,7 @@ class TestCifBlockGeneral(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        cls.b.read(path=nacl_cif_file.path, block='NaCl')
+        cls.b.read(path=nacl_cif_path, block='NaCl')
 
     def test_access(self):
         self.assertIn('_cell_length_a', self.b)
@@ -140,19 +138,19 @@ class TestCifBlockGeneral(unittest.TestCase):
         self.assertEqual(self.b.get_as_type(k, typ=str), '90')
         self.assertEqual(self.b.get_as_type(k, typ=int), 90)
         u_typ = uncertainties.ufloat_fromstr
-        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr(u90))
+        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr(U90))
 
     def test_get_as_type_list(self):
         k = '_atom_site_occupancy'
         self.assertEqual(self.b.get_as_type(k, typ=str), ['1', '1'])
         self.assertEqual(self.b.get_as_type(k, typ=int), [1, 1])
         u_typ = uncertainties.ufloat_fromstr
-        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr([u1, u1]))
+        self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr([U1, U1]))
 
     def test_get_as_type_exceptions(self):
         with self.assertRaises(KeyError):
             _ = self.b.get_as_type('_nonexistent_key', str)
-        self.b['_cell_angle_beta'] = u90
+        self.b['_cell_angle_beta'] = U90
         with self.assertRaises(TypeError):
             _ = self.b.get_as_type('_cell_angle_beta', str)
 
@@ -167,36 +165,37 @@ class TestCifBlockInterface(unittest.TestCase):
     b = CifBlock()
 
     def test_base_frame_fill_from_cif_block_robust(self):
-        self.b.read(path=nacl_cif_file.path, block='NaCl')
+        self.b.read(path=nacl_cif_path, block='NaCl')
         base = BaseFrame()
         base.fill_from_cif_block(self.b, fragile=False)
         self.assertAlmostEqual(base.v_d, 179.51018149594705)
         self.assertAlmostEqual(base.orientation[0, 0], -0.0617076000)
 
     def test_base_frame_fill_from_cif_block_fragile(self):
-        self.b.read(path=nacl_cif_file.path, block='NaCl_olex2_C2/m')
+        self.b.read(path=nacl_cif_path, block='NaCl_olex2_C2/m')
         base = BaseFrame()
         with self.assertRaises(KeyError):
             base.fill_from_cif_block(self.b, fragile=True)
 
 
+class TestCifValidator(unittest.TestCase):
+    def test_validator(self):
+        c = CifValidator()
+        self.assertIn('_atom_site_label', c)
+        self.assertIsInstance(c['_atom_site_label'], CifBlock)
+
+
 class TestCifFrame(unittest.TestCase):
     c_cif = CifFrame()
-    c_dic = CifFrame()
     c_fcf = CifFrame()
 
     def test_read_cif_file(self):
-        self.c_cif.read(nacl_fcf_file.path)
+        self.c_cif.read(nacl_cif_path)
         self.assertIn('NaCl', self.c_cif)
         self.assertIsInstance(self.c_cif['NaCl'], CifBlock)
 
-    def test_read_dic_file(self):
-        self.c_dic.read(cif_core_dict_file.path)
-        self.assertIn('atom_site_label', self.c_dic)
-        self.assertIsInstance(self.c_dic['atom_site_label'], CifBlock)
-
     def test_read_fcf_file(self):
-        self.c_fcf.read(nacl_fcf_file.path)
+        self.c_fcf.read(nacl_fcf_path)
         self.assertIn('NaCl', self.c_fcf)
         self.assertIsInstance(self.c_fcf['NaCl'], CifBlock)
 
@@ -207,7 +206,7 @@ class TestHklFrame(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.h1.read(nacl_hkl_file.path, hkl_format='shelx_4')
+        cls.h1.read(nacl_hkl_path, hkl_format='shelx_4')
         cls.h1.edit_cell(a=5.64109, b=5.64109, c=5.64109)
 
     def setUp(self) -> None:
@@ -228,7 +227,7 @@ class TestHklFrame(unittest.TestCase):
         self.assertIn('419.465', str_h[-300:])
 
     def test_read(self):
-        self.h2.read(nacl_hkl_file.path, hkl_format='free_4')
+        self.h2.read(nacl_hkl_path, hkl_format='free_4')
         self.assertEqual(self.h2.table.__len__(), 8578)
 
     def test_la_and_r_lim(self):
@@ -288,7 +287,7 @@ class TestUBaseFrame(unittest.TestCase):
 
     def setUp(self) -> None:
         self.b = UBaseFrame()
-        self.b.edit_cell(a=u6, b=u7, c=u8, al=u60, be=u70, ga=u80)
+        self.b.edit_cell(a=U6, b=U7, c=U8, al=U60, be=U70, ga=U80)
 
     def test_init(self):
         b = UBaseFrame()
@@ -303,9 +302,9 @@ class TestUBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(self.b.a_d.n, 6)
         self.assertAlmostEqual(self.b.b_d.n, 7)
         self.assertAlmostEqual(self.b.c_d.n, 8)
-        self.assertAlmostEqual(self.b.al_d.n, rad60)
-        self.assertAlmostEqual(self.b.be_d.n, rad70)
-        self.assertAlmostEqual(self.b.ga_d.n, rad80)
+        self.assertAlmostEqual(self.b.al_d.n, RAD60)
+        self.assertAlmostEqual(self.b.be_d.n, RAD70)
+        self.assertAlmostEqual(self.b.ga_d.n, RAD80)
         with self.assertRaises(KeyError):
             BaseFrame().edit_cell(alpha=0.0)
 

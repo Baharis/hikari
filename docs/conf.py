@@ -22,7 +22,7 @@ copyright = u'2022, Daniel Tchoń'
 author = u'Daniel Tchoń'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.0-alpha'
+release = '0.2.0'
 
 
 # -- General configuration ---------------------------------------------------
