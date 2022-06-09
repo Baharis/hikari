@@ -146,6 +146,27 @@ def dac_statistics(a, b, c, al, be, ga,
               ' {:9f}'.format(p_eq / q_eq) + ' {:9f}'.format(p_eq / b_eq))
 
 
+def reformat_hkl(input_path: str,
+                 input_format: str,
+                 output_path: str,
+                 output_format: str):
+    """
+    :param input_path: Relative or absolute path to the input .hkl file.
+    :param input_format: Format of the .hkl file. For reference
+        see :attr:`hikari.dataframes.HklIo.format`.
+    :param output_path: Relative or absolute path to the output .hkl file.
+    :param output_format: Format of the .hkl file. For reference
+        see :attr:`hikari.dataframes.HklIo.format`.
+    :return:
+    :rtype:
+    """
+    h = HklFrame()
+    absolute_input_path = make_abspath(input_path)
+    absolute_output_path = make_abspath(output_path)
+    h.read(hkl_path=absolute_input_path, hkl_format=input_format)
+    h.write(hkl_path=absolute_output_path, hkl_format=output_format)
+
+
 def simulate_dac(a, b, c, al, be, ga,
                  opening_angle=35,
                  orientation=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
