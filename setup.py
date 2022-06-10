@@ -25,12 +25,13 @@ with io.open(os.path.join(HERE, "README.md"), encoding="utf-8") as f:
 
 setup(
     name='hikari-toolkit',
-    version='0.2.0',
+    version='0.2.1',
     author='Daniel Tchoń',
     author_email='dtchon@chem.uw.edu.pl',
     packages=find_packages(exclude=('legacy', )),
-    package_data={'': ['*.gnu', 'NaCl.hkl', '*.json',
-                       '*.msd', '*.pickle', '*.csv']},
+    package_data={'': ['*.csv', '*.dic', '*.gnu', 'hkl.msd', '*.json',
+                       '*.pickle', 'NaCl.cif', 'NaCl.fcf', 'NaCl.hkl',
+                       'NaCl.lst', 'NaCl.res']},
     url='https://github.com/Baharis/hikari',
     license='MIT',
     description=SHORT_DESCRIPTION,
