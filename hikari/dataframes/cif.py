@@ -477,7 +477,7 @@ class CifWriterBuffer(CifIOBuffer):
     def format_line(self, k, v):
         name_string = f'{k:<{self.MAX_NAME_LENGTH}}'
         step_string = ' ' * self.MIN_STEP_LENGTH
-        value_string = self.quote_text(v)
+        value_string = self.enquote(v)
         if len(name_string + step_string + value_string) > self.MAX_LINE_LENGTH:
             step_string = '\n '
         if value_string.startswith(';'):
@@ -489,13 +489,14 @@ class CifWriterBuffer(CifIOBuffer):
         if sum(column_widths) + len(column_widths) >= self.MAX_LINE_LENGTH:
             pass  # TODO: break long loop tables rows into multiple
         formatted_string = '_loop\n'
-        for name in keys:
+        for name in self.names:
             formatted_string += f' {name}\n'
-        for value_row in zip(self.values):
-            formatted_string += f' {" ".join(value_row)}\n'
+        for value_row in list(map(list, zip(*self.values))):
+            enquoted_value_row = map(self.enquote, value_row)
+            formatted_string += f' {" ".join(enquoted_value_row)}\n'
         return formatted_string
 
-    def quote_text(self, text):
+    def enquote(self, text):
         if any(whitespace in text for whitespace in self.WHITESPACE):
             if '\n' in text or len(text) >= self.MAX_LINE_LENGTH:
                 quoted = f';{text}\n;'
@@ -518,8 +519,8 @@ class CifWriter(CifIO):
     def write(self, cif_frame):
         with open(self.file_path, 'w') as cif_file:
             buffer = CifWriterBuffer(target=cif_file)
-            for block_name, block in cif_frame:
-                cif_file.write(f'data_{block_name}\n')
+            for block_name, block in cif_frame.items():
+                cif_file.write(f'data_{block_name}')
                 for data in block.items():
                     buffer.add(data)
 
@@ -529,7 +530,8 @@ cif_core_validator = CifValidator()
 
 
 if __name__ == '__main__':
-    keys = [k for k in CifValidator().keys()]
-    print(max(map(len, keys)))
+    c = CifFrame()
+    c.read('/home/dtchon/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
+    c.write('/home/dtchon/x/HiPHAR/anders_script/rfpirazB_100K_SXD2.cif')
 
 
