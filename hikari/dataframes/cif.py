@@ -102,6 +102,9 @@ class CifValidator(OrderedDict):
     """
     This object reads an appropriate cif core dictionary and uses it in order to
     format or validate all entries passing through it.
+
+    The `CifValidator` contains all keys from core cif dictionary. In order
+    to access individual values, use `.get()` instead of bracket notation.
     """
 
     def __init__(self):
@@ -112,6 +115,14 @@ class CifValidator(OrderedDict):
                 f.write(cif_core_dict)
             reader = CifReader(cif_file_path=temp_dic_path, validate=False)
             self.update(reader.read())
+
+    def __contains__(self, item):
+        try:
+            _ = self.get(item)
+        except KeyError:
+            return False
+        else:
+            return True
 
     def get(self, key, default=None):
         key, _key = (key[1:], key) if key.startswith('_') else (key, '_' + key)

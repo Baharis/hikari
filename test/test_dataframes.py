@@ -181,8 +181,9 @@ class TestCifBlockInterface(unittest.TestCase):
 class TestCifValidator(unittest.TestCase):
     def test_validator(self):
         c = CifValidator()
+        self.assertTrue('_atom_site_label' in c)
         self.assertIn('_atom_site_label', c)
-        self.assertIsInstance(c['_atom_site_label'], CifBlock)
+        self.assertIsInstance(c.get('_atom_site_label'), CifBlock)
 
 
 class TestCifFrame(unittest.TestCase):
