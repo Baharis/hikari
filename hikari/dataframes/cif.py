@@ -113,6 +113,23 @@ class CifValidator(OrderedDict):
             reader = CifReader(cif_file_path=temp_dic_path, validate=False)
             self.update(reader.read())
 
+    def get(self, key, default=None):
+        key, _key = (key[1:], key) if key.startswith('_') else (key, '_' + key)
+        value = OrderedDict()
+        try:
+            value = self[key]
+        except KeyError as e:
+            for self_key, self_value in self.items():
+                if key.startswith(self_key):
+                    if _key in self_value.get('_name', []):
+                        value = self_value
+            if not value:
+                if default is not None:
+                    value = default
+                else:
+                    raise e
+        return value
+
 
 class CifIOBuffer(abc.ABC):
     def __init__(self, target):
@@ -384,5 +401,8 @@ class CifWriter(CifIO):
     """A helper class managing writing `CifFrame`s into cif files"""
 
 
+if __name__ == '__main__':
+    v = CifValidator()
+    print(v.get('_atom_site_aniso_B_11'))
 
 
