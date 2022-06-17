@@ -37,22 +37,14 @@ class CifBlock(OrderedDict):
         :return: converted value of `self[key]` or `default`
         :rtype: Union[List, str]
         """
-        try:
-            value = self[key]
-        except KeyError as e:
-            if default is not None:
-                value = default
+        value = self.get(key, default)
+        if value is not None:
+            if isinstance(value, str):
+                value = typ(value)
+            elif isinstance(value, list):
+                value = list(map(typ, value))
             else:
-                raise e
-        else:
-            if value and typ:
-                if isinstance(value, str):
-                    value = typ(value)
-                elif isinstance(value, list):
-                    value = list(map(typ, value))
-                else:
-                    raise TypeError(f'Unknown value type'
-                                    f'of {value}: {type(value)}')
+                raise TypeError(f'Unknown value type of {value}: {type(value)}')
         return value
 
     def read(self, path: str, block: str) -> None:
