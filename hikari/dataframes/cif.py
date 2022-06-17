@@ -163,10 +163,10 @@ class CifIO(abc.ABC):
 
 
 class CifReader(CifIO):
-    """A helper class managing reading cif files into a `CifFrame`."""
+    """A helper class managing reading cif files into `CifFrame`s."""
 
     class ReaderBuffer(CifIO.IOBuffer):
-        """Buffer for reading data from cif file to CifReader"""
+        """Buffer for reading data from cif file into `CifReader`"""
 
         def __init__(self, target):
             super().__init__(target=target)
@@ -378,3 +378,19 @@ class CifReader(CifIO):
         return cls.COMMENT_REGEX.split(string)[0]
 
 # TODO: Looks like reader has some problems with reading olex2 files. check
+
+
+class CifWriter(CifIO):
+    """A helper class managing writing `CifFrame`s into cif files"""
+
+    class WriterBuffer(CifIO.IOBuffer):
+        """Buffer for writing data from `CifReader` into cif file """
+
+        def __init__(self, target):
+            super().__init__(target=target)
+            self.data = OrderedDict()
+
+        def add(self, data):
+            pass
+
+
