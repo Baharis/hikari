@@ -135,16 +135,25 @@ class CifValidator(OrderedDict):
                     if _key in self_value.get('_name', []):
                         value = self_value
             if not value:
-                if default is not None:
-                    value = default
-                else:
-                    raise e
+                value = default
         return value
 
+    def get__category(self, key, default=None):
+        value = self.get(key)
+        if value is not None:
+            _category = value.get('_category', default)
+        else:
+            _category = default
+        return _category
+
     def get__list(self, key, default=None):
-        value = self.get(key, None)
-        _list = value.get('_list', 'no') if value is not None else None
-        return True if _list == 'yes' else False if _list == 'no' else default
+        value = self.get(key)
+        if value is not None:
+            got = value.get('_list')
+            _list = True if got == 'yes' else False if got == 'no' else default
+        else:
+            _list = default
+        return _list
 
 
 class CifIOBuffer(abc.ABC):
@@ -407,9 +416,11 @@ class CifWriterBuffer(CifIOBuffer):
     def __init__(self, target):
         super().__init__(target=target)
         self.data = OrderedDict()
+        self.category = ''
 
     def add(self, data: tuple):
         k_, v_ = data
+        category = cif_core_validator.get__category(v_, '')
 
     def flush(self):
         pass
@@ -424,6 +435,7 @@ cif_core_validator = CifValidator()
 
 if __name__ == '__main__':
     v = CifValidator()
-    print(v.get__list('_atom_site_aniso_U_11'))
+    print(v.get__list('_diffrn_reflns_point_group_measured_fraction_max'))
+    print(v.get__category('_diffrn_reflns_point_group_measured_fraction_max'))
 
 
