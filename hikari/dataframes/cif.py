@@ -1,3 +1,4 @@
+import abc
 import re
 import pathlib
 import tempfile
@@ -129,7 +130,7 @@ class CifValidator(OrderedDict):
         return expanded_items
 
 
-class CifIO:
+class CifIO(abc.ABC):
     """
     A base class for `CifRead` and `CifWrite`. This class and its inheritors
     base on the IUCr File Syntax version 1.1 Working specification available
@@ -146,20 +147,15 @@ class CifIO:
     def __init__(self, cif_file_path, validate=True):
         self.file_path = make_abspath(cif_file_path)
         self.file_lines = []
-        self.data = OrderedDict()
         self.validator = CifValidator() if validate else None
 
-
-class CifReader(CifIO):
-    """A helper class managing reading cif files into a `CifFrame`."""
-
-    class DataBuffer:
+    class DataBuffer(abc.ABC):
         """This class buffers data in temporary dict until flush() is called."""
         def __init__(self, target):
+            self.multilines = []
             self.names = []
             self.values = []
             self.target = target
-            self.multilines = []
 
         def add_word(self, word):
             """Append the word to names or values based on its first char"""
@@ -197,6 +193,13 @@ class CifReader(CifIO):
                                  f't be zero: {self.values} % {self.names}')
             self.target.update(d)
             self.__init__(target=self.target)
+
+
+class CifReader(CifIO):
+    """A helper class managing reading cif files into a `CifFrame`."""
+
+    class DataReadBuffer(CifIO.DataBuffer):
+        pass
 
     @property
     def blocks(self):
@@ -251,7 +254,7 @@ class CifReader(CifIO):
         :rtype: OrderedDict
         """
         parsed_data = OrderedDict()
-        buffer = self.DataBuffer(target=parsed_data)
+        buffer = self.DataReadBuffer(target=parsed_data)
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
             line = self.strip_comments(line)
@@ -310,9 +313,10 @@ class CifReader(CifIO):
         block_names = self.blocks.keys()
         block_starts = self.blocks.values()
         block_ends = list(block_starts)[1:] + [None]
+        read_data = OrderedDict()
         for n, s, e in zip(block_names, block_starts, block_ends):
-            self.data[n] = CifBlock(self.parse_lines(s + 1, e))
-        return self.data
+            read_data[n] = CifBlock(self.parse_lines(s + 1, e))
+        return read_data
 
     @classmethod
     def protect_quotes(cls, string):
@@ -360,3 +364,5 @@ class CifReader(CifIO):
         :rtype: str
         """
         return cls.COMMENT_REGEX.split(string)[0]
+
+# TODO: Looks like reader has some problems with reading olex2 files. check
