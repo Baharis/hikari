@@ -197,11 +197,11 @@ class CifIO(abc.ABC):
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
     COMMENT_REGEX = \
-        re.compile(r"""(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)""")
+        re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
     MATCHING_QUOTES_REGEX = \
-        re.compile(r"""(?<!\b)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)""")
+        re.compile(r"(?<!\b)([\"'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)")
     MATCHING_OUTER_QUOTES_REGEX = \
-        re.compile(r"""(?<=^)(["'])((?:\\\1|(?!\1\s).)*.)(\1)(?=$)""")
+        re.compile(r"(?<=^)([\"'])((?:\\\1|(?!\1\s).)*.)(\1)(?=$)")
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
     def __init__(self, cif_file_path, validate=True):
@@ -433,7 +433,7 @@ class CifReader(CifIO):
 class CifWriterBuffer(CifIOBuffer):
     """Buffer for writing data from `CifReader` into cif file """
 
-    MAX_NAME_LENGTH = 38
+    MAX_NAME_LENGTH = 33
     MAX_LINE_LENGTH = 80
     MIN_STEP_LENGTH = 2
     WHITESPACE = {' ', '\t', '\n'}
@@ -499,7 +499,7 @@ class CifWriterBuffer(CifIOBuffer):
 
     def enquote(self, text, force=False):
         if any(whitespace in text for whitespace in self.WHITESPACE) or force:
-            if '\n' in text or len(text) >= self.MAX_LINE_LENGTH:
+            if '\n' in text:
                 quoted = f';{text}\n;'
             elif "'" not in text:
                 quoted = f"'{text}'"
