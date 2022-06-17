@@ -6,7 +6,7 @@ import tempfile
 from collections import OrderedDict
 from enum import Enum
 from functools import lru_cache
-from typing import List, Union, Dict
+from typing import List, Union, Dict, TextIO
 
 from hikari.resources import cif_core_dict
 from hikari.utility import make_abspath
@@ -55,7 +55,7 @@ class CifBlock(OrderedDict):
                                     f'of {value}: {type(value)}')
         return value
 
-    def read(self, path, block):
+    def read(self, path: str, block: str) -> None:
         """
         Read the contents of .cif file specified by the `path` parameter, but
         access and store only the `block` data block in self.
@@ -67,6 +67,17 @@ class CifBlock(OrderedDict):
         """
         reader = CifReader(cif_file_path=path)
         self.update(reader.read()[block])
+
+    def write(self, path: str) -> None:
+        """
+        Write the contents of `CifBlock` to the .cif file specified
+        by the `path` parameter, using 'hikari' as block name.
+
+        :param path: Absolute or relative path to the .cif file.
+
+        """
+        writer = CifWriter(cif_file_path=path)
+        writer.write(cif_frame=CifFrame({'hikari': self}))
 
 
 class CifFrame(OrderedDict):
@@ -86,16 +97,25 @@ class CifFrame(OrderedDict):
     any parameters at creation.
     """
 
-    def read(self, path):
+    def read(self, path: str) -> None:
         """
         Read the contents of .cif file specified by the `path` parameter.
         Store each found block as a {block_name: CifBlock} pair.
 
         :param path: Absolute or relative path to the .cif file.
-        :type path: str
         """
         reader = CifReader(cif_file_path=path)
         self.update(reader.read())
+
+    def write(self, path: str) -> None:
+        """
+        Write the contents of `CifFrame` to the .cif file specified
+        by the `path` parameter.
+
+        :param path: Absolute or relative path to the .cif file.
+        """
+        writer = CifWriter(cif_file_path=path)
+        writer.write(cif_frame=self)
 
 
 class CifValidator(OrderedDict):
@@ -158,7 +178,6 @@ class CifValidator(OrderedDict):
 
 class CifIOBuffer(abc.ABC):
     def __init__(self, target):
-        self.target = target
         self.names = []
         self.values = []
 
@@ -196,6 +215,7 @@ class CifReaderBuffer(CifIOBuffer):
 
     def __init__(self, target):
         super().__init__(target=target)
+        self.target: OrderedDict = target
         self.multilines = []
 
     def add(self, word):
@@ -420,6 +440,7 @@ class CifWriterBuffer(CifIOBuffer):
 
     def __init__(self, target):
         super().__init__(target=target)
+        self.target: TextIO = target
         self.data = OrderedDict()
         self.current__category = ''
         self.current__list = False
@@ -451,7 +472,7 @@ class CifWriterBuffer(CifIOBuffer):
         else:
             for n_, v_ in zip(self.names, self.values):
                 s += self.format_line(n_, v_) + '\n'
-        self.target += s
+        self.target.write(s)
 
     def format_line(self, k, v):
         name_string = f'{k:<{self.MAX_NAME_LENGTH}}'
@@ -493,6 +514,15 @@ class CifWriterBuffer(CifIOBuffer):
 
 class CifWriter(CifIO):
     """A helper class managing writing `CifFrame`s into cif files"""
+
+    def write(self, cif_frame):
+        with open(self.file_path, 'w') as cif_file:
+            buffer = CifWriterBuffer(target=cif_file)
+            for block_name, block in cif_frame:
+                cif_file.write(f'data_{block_name}\n')
+                for data in block.items():
+                    buffer.add(data)
+
 
 
 cif_core_validator = CifValidator()
