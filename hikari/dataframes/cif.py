@@ -480,6 +480,7 @@ class CifWriterBuffer(CifIOBuffer):
         value_string = self.enquote(v)
         if len(name_string + step_string + value_string) > self.MAX_LINE_LENGTH:
             step_string = '\n '
+            value_string = self.enquote(v, force=True)
         if value_string.startswith(';'):
             step_string = '\n'
         return name_string + step_string + value_string
@@ -496,8 +497,8 @@ class CifWriterBuffer(CifIOBuffer):
             formatted_string += f' {" ".join(enquoted_value_row)}\n'
         return formatted_string
 
-    def enquote(self, text):
-        if any(whitespace in text for whitespace in self.WHITESPACE):
+    def enquote(self, text, force=False):
+        if any(whitespace in text for whitespace in self.WHITESPACE) or force:
             if '\n' in text or len(text) >= self.MAX_LINE_LENGTH:
                 quoted = f';{text}\n;'
             elif "'" not in text:
@@ -537,7 +538,7 @@ cif_core_validator = CifValidator()
 
 if __name__ == '__main__':
     c = CifFrame()
-    c.read('/home/dtchon/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
-    c.write('/home/dtchon/x/HiPHAR/anders_script/rfpirazB_100K_SXD2.cif')
+    c.read('/home/dtchon/x/HiPHAR/anders_script/RFpirazB_cplt100.fractional.cif1')
+    c.write('/home/dtchon/x/HiPHAR/anders_script/out.cif')
 
 
