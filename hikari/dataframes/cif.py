@@ -194,6 +194,9 @@ class CifIO(abc.ABC):
         re.compile(r"(?<!\b)([\"'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)")
     MATCHING_OUTER_QUOTES_REGEX = \
         re.compile(r"(?<=^)([\"'])((?:\\\1|(?!\1\s).)*.)(\1)(?=$)")
+    MULTILINE_QUOTE_REGEX = \
+        re.compile(r"(?<=\n)(;)([\S\s]+?)(;)(?=\n)")
+
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
 
     def __init__(self, cif_file_path, validate=True):
@@ -518,8 +521,6 @@ class CifWriter(CifIO):
                 first_block = False
 
 
-
-
 cif_core_validator = CifValidator()
 
 
@@ -527,5 +528,6 @@ if __name__ == '__main__':
     c = CifFrame()
     c.read('/home/dtchon/x/HP/2oAP/CIF/finalCIF/8kbar/2oAPal_8kbar.cif')
     c.write('/home/dtchon/x/HiPHAR/anders_script/out.cif')
+# TODO protect multilines to prevent "\ndata" inside from registering as blocks
 
 
