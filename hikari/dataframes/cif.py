@@ -319,6 +319,7 @@ class CifReader(CifIO):
         buffer = CifReaderBuffer(target=parsed_data)
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
+            line = self.protect_quotes(line)
             line = self.strip_comments(line)
             if state is self.ReadingState.loop_header:
                 state = self.ReadingState.loop
@@ -337,7 +338,7 @@ class CifReader(CifIO):
                 buffer.flush()
                 state = self.ReadingState.loop_header
                 line = line.lstrip()[5:]
-            words = self.split_line(line)
+            words = line.strip().split()
             if not words and self.ReadingState.multiline:
                 buffer.append_to_multiline(line)
                 continue
@@ -350,17 +351,6 @@ class CifReader(CifIO):
         buffer.flush()
         formatted_data = self.format_dictionary(parsed_data)
         return formatted_data
-
-    def split_line(self, line):
-        """
-        Split line into words, keeping words inside quotation marks together.
-
-        :param line: line to be split based on whitespace into words
-        :type line: str
-        :return: list of words obtained from splitting
-        :rtype: list
-        """
-        return self.protect_quotes(line).strip().split()
 
     def read(self):
         """
