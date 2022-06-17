@@ -141,6 +141,11 @@ class CifValidator(OrderedDict):
                     raise e
         return value
 
+    def get__list(self, key, default=None):
+        value = self.get(key, None)
+        _list = value.get('_list', 'no') if value is not None else None
+        return True if _list == 'yes' else False if _list == 'no' else default
+
 
 class CifIOBuffer(abc.ABC):
     def __init__(self, target):
@@ -172,7 +177,7 @@ class CifIO(abc.ABC):
     def __init__(self, cif_file_path, validate=True):
         self.file_path = make_abspath(cif_file_path)
         self.file_lines = []
-        self.validator = CifValidator() if validate else None
+        self.validate = validate
 
 
 class CifReaderBuffer(CifIOBuffer):
@@ -255,9 +260,11 @@ class CifReader(CifIO):
         """
 
         def item_value_should_be_a_list(k_, v_):
-            data_entry = self.validator.get(k_, {}) if self.validator else {}
-            return data_entry.get('_list', '') == 'yes' or len(v_) > 1 \
-                   or (not self.validator and k_ == '_name')
+            is_listable = cif_core_validator.get__list(k_) \
+                if self.validate else False
+            is_long = len(v_) > 1
+            is_a_validator_name_field = not self.validate and k_ == '_name'
+            return is_listable or is_long or is_a_validator_name_field
 
         new_dict = OrderedDict()
         for k, v in parsed_dict_.items():
@@ -401,8 +408,8 @@ class CifWriterBuffer(CifIOBuffer):
         super().__init__(target=target)
         self.data = OrderedDict()
 
-    def add(self, data):
-        pass
+    def add(self, data: tuple):
+        k_, v_ = data
 
     def flush(self):
         pass
@@ -412,8 +419,11 @@ class CifWriter(CifIO):
     """A helper class managing writing `CifFrame`s into cif files"""
 
 
+cif_core_validator = CifValidator()
+
+
 if __name__ == '__main__':
     v = CifValidator()
-    print(v.get('_atom_site_aniso_B_11'))
+    print(v.get__list('_atom_site_aniso_U_11'))
 
 
