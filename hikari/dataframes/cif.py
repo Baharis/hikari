@@ -111,23 +111,20 @@ class CifValidator(OrderedDict):
             with open(temp_dic_path, 'w+') as f:
                 f.write(cif_core_dict)
             reader = CifReader(cif_file_path=temp_dic_path, validate=False)
-            core_dict_raw = reader.read()
-            core_dict_expanded = self._expand_names(core_dict_raw)
-            self.update(core_dict_expanded)
+            self.update(reader.read())
 
-    @staticmethod
-    def _expand_names(dict_):
-        expanded_items = OrderedDict()
-        for data_block_name, data_block in dict_.items():
-            names = data_block.get('_name', None)
-            if names:
-                data_block_without_name_item = CifBlock()
-                for data_name, data_value in data_block.items():
-                    if data_name is not '_name':
-                        data_block_without_name_item[data_name] = data_value
-                for name in names:
-                    expanded_items[name] = data_block_without_name_item
-        return expanded_items
+
+class CifIOBuffer(abc.ABC):
+    def __init__(self, target):
+        self.target = target
+
+    @abc.abstractmethod
+    def add(self, data):
+        pass
+
+    @abc.abstractmethod
+    def flush(self):
+        pass
 
 
 class CifIO(abc.ABC):
@@ -149,69 +146,58 @@ class CifIO(abc.ABC):
         self.file_lines = []
         self.validator = CifValidator() if validate else None
 
-    class IOBuffer(abc.ABC):
-        def __init__(self, target):
-            self.target = target
 
-        @abc.abstractmethod
-        def add(self, data):
-            pass
+class CifReaderBuffer(CifIOBuffer):
+    """Buffer for reading data from cif file into `CifReader`"""
 
-        @abc.abstractmethod
-        def flush(self):
+    def __init__(self, target):
+        super().__init__(target=target)
+        self.multilines = []
+        self.names = []
+        self.values = []
+
+    def add(self, word):
+        """Append the word to names or values based on its first char"""
+        if word.startswith('_'):
+            if self.values:
+                self.flush()
+            self.names.append(word)
+        else:
+            self.values.append(CifReader.release_quote(word))
+
+    def flush(self):
+        """Update the target dict with names and values stored hitherto"""
+        d = OrderedDict()
+        lv = len(self.values)
+        ln = len(self.names)
+        if lv == ln == 0:
             pass
+        elif ln == 0:
+            raise IndexError(f'Orphan values found while '
+                             f'flushing buffer: {self.values}')
+        elif lv % ln == 0:
+            d.update({n: self.values[i::ln] for i, n in
+                      enumerate(self.names)})
+        else:
+            raise IndexError(
+                f'len(values) == {lv} % len(names) == {ln} mus'
+                f't be zero: {self.values} % {self.names}')
+        self.target.update(d)
+        self.__init__(target=self.target)
+
+    def initiate_multiline(self):
+        self.multilines = []
+
+    def append_to_multiline(self, string):
+        """Add the word to values if they're empty, concatenate otherwise"""
+        self.multilines.append(string)
+
+    def terminate_multiline(self):
+        self.values.append('\n'.join(self.multilines))
 
 
 class CifReader(CifIO):
     """A helper class managing reading cif files into `CifFrame`s."""
-
-    class ReaderBuffer(CifIO.IOBuffer):
-        """Buffer for reading data from cif file into `CifReader`"""
-
-        def __init__(self, target):
-            super().__init__(target=target)
-            self.multilines = []
-            self.names = []
-            self.values = []
-
-        def add(self, word):
-            """Append the word to names or values based on its first char"""
-            if word.startswith('_'):
-                if self.values:
-                    self.flush()
-                self.names.append(word)
-            else:
-                self.values.append(CifReader.release_quote(word))
-
-        def flush(self):
-            """Update the target dict with names and values stored hitherto"""
-            d = OrderedDict()
-            lv = len(self.values)
-            ln = len(self.names)
-            if lv == ln == 0:
-                pass
-            elif ln == 0:
-                raise IndexError(f'Orphan values found while '
-                                 f'flushing buffer: {self.values}')
-            elif lv % ln == 0:
-                d.update({n: self.values[i::ln] for i, n in
-                          enumerate(self.names)})
-            else:
-                raise IndexError(
-                    f'len(values) == {lv} % len(names) == {ln} mus'
-                    f't be zero: {self.values} % {self.names}')
-            self.target.update(d)
-            self.__init__(target=self.target)
-
-        def initiate_multiline(self):
-            self.multilines = []
-
-        def append_to_multiline(self, string):
-            """Add the word to values if they're empty, concatenate otherwise"""
-            self.multilines.append(string)
-
-        def terminate_multiline(self):
-            self.values.append('\n'.join(self.multilines))
 
     @property
     def blocks(self):
@@ -266,7 +252,7 @@ class CifReader(CifIO):
         :rtype: OrderedDict
         """
         parsed_data = OrderedDict()
-        buffer = self.ReaderBuffer(target=parsed_data)
+        buffer = CifReaderBuffer(target=parsed_data)
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
             line = self.strip_comments(line)
@@ -380,17 +366,23 @@ class CifReader(CifIO):
 # TODO: Looks like reader has some problems with reading olex2 files. check
 
 
+class CifWriterBuffer(CifIOBuffer):
+    """Buffer for writing data from `CifReader` into cif file """
+
+    def __init__(self, target):
+        super().__init__(target=target)
+        self.data = OrderedDict()
+
+    def add(self, data):
+        pass
+
+    def flush(self):
+        pass
+
+
 class CifWriter(CifIO):
     """A helper class managing writing `CifFrame`s into cif files"""
 
-    class WriterBuffer(CifIO.IOBuffer):
-        """Buffer for writing data from `CifReader` into cif file """
 
-        def __init__(self, target):
-            super().__init__(target=target)
-            self.data = OrderedDict()
-
-        def add(self, data):
-            pass
 
 
