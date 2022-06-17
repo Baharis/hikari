@@ -434,9 +434,14 @@ class CifWriterBuffer(CifIOBuffer):
         k__list = cif_core_validator.get__list(k_) or isinstance(v_, list)
         v_len = len(v_) if isinstance(v_, list) else 0
 
-        if all([self.current__category == k__category,
-                self.current__list == k__list,
-                self.current_len == v_len]):
+        cat_match = self.current__category == k__category
+        lis_match = self.current__list == k__list
+        len_match = self.current_len == v_len
+        start_match = k_[:12] == ['', *self.names][-1][:12]
+        entry_missing = cif_core_validator.get(k_) is None
+
+        if len_match and ((cat_match and lis_match) or
+                          (entry_missing and start_match)):
             self.names.append(k_)
             self.values.append(v_)
         else:
@@ -520,7 +525,7 @@ cif_core_validator = CifValidator()
 
 if __name__ == '__main__':
     c = CifFrame()
-    c.read('/home/dtchon/x/HiPHAR/anders_script/RFpirazB_cplt100.fractional.cif1')
+    c.read('/home/dtchon/x/HP/2oAP/CIF/finalCIF/8kbar/2oAPal_8kbar.cif')
     c.write('/home/dtchon/x/HiPHAR/anders_script/out.cif')
 
 
