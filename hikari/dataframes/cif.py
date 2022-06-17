@@ -519,10 +519,16 @@ class CifWriter(CifIO):
     def write(self, cif_frame):
         with open(self.file_path, 'w') as cif_file:
             buffer = CifWriterBuffer(target=cif_file)
+            first_block = True
             for block_name, block in cif_frame.items():
+                if not first_block:
+                    cif_file.write('\n\n')
                 cif_file.write(f'data_{block_name}')
                 for data in block.items():
                     buffer.add(data)
+                buffer.flush()
+                first_block = False
+
 
 
 
