@@ -149,15 +149,32 @@ class CifIO(abc.ABC):
         self.file_lines = []
         self.validator = CifValidator() if validate else None
 
-    class DataBuffer(abc.ABC):
-        """This class buffers data in temporary dict until flush() is called."""
+    class IOBuffer(abc.ABC):
         def __init__(self, target):
+            self.target = target
+
+        @abc.abstractmethod
+        def add(self, data):
+            pass
+
+        @abc.abstractmethod
+        def flush(self):
+            pass
+
+
+class CifReader(CifIO):
+    """A helper class managing reading cif files into a `CifFrame`."""
+
+    class ReaderBuffer(CifIO.IOBuffer):
+        """Buffer for reading data from cif file to CifReader"""
+
+        def __init__(self, target):
+            super().__init__(target=target)
             self.multilines = []
             self.names = []
             self.values = []
-            self.target = target
 
-        def add_word(self, word):
+        def add(self, word):
             """Append the word to names or values based on its first char"""
             if word.startswith('_'):
                 if self.values:
@@ -165,16 +182,6 @@ class CifIO(abc.ABC):
                 self.names.append(word)
             else:
                 self.values.append(CifReader.release_quote(word))
-
-        def initiate_multiline(self):
-            self.multilines = []
-
-        def append_to_multiline(self, string):
-            """Add the word to values if they're empty, concatenate otherwise"""
-            self.multilines.append(string)
-
-        def terminate_multiline(self):
-            self.values.append('\n'.join(self.multilines))
 
         def flush(self):
             """Update the target dict with names and values stored hitherto"""
@@ -187,19 +194,24 @@ class CifIO(abc.ABC):
                 raise IndexError(f'Orphan values found while '
                                  f'flushing buffer: {self.values}')
             elif lv % ln == 0:
-                d.update({n: self.values[i::ln] for i, n in enumerate(self.names)})
+                d.update({n: self.values[i::ln] for i, n in
+                          enumerate(self.names)})
             else:
-                raise IndexError(f'len(values) == {lv} % len(names) == {ln} mus'
-                                 f't be zero: {self.values} % {self.names}')
+                raise IndexError(
+                    f'len(values) == {lv} % len(names) == {ln} mus'
+                    f't be zero: {self.values} % {self.names}')
             self.target.update(d)
             self.__init__(target=self.target)
 
+        def initiate_multiline(self):
+            self.multilines = []
 
-class CifReader(CifIO):
-    """A helper class managing reading cif files into a `CifFrame`."""
+        def append_to_multiline(self, string):
+            """Add the word to values if they're empty, concatenate otherwise"""
+            self.multilines.append(string)
 
-    class DataReadBuffer(CifIO.DataBuffer):
-        pass
+        def terminate_multiline(self):
+            self.values.append('\n'.join(self.multilines))
 
     @property
     def blocks(self):
@@ -254,7 +266,7 @@ class CifReader(CifIO):
         :rtype: OrderedDict
         """
         parsed_data = OrderedDict()
-        buffer = self.DataReadBuffer(target=parsed_data)
+        buffer = self.ReaderBuffer(target=parsed_data)
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
             line = self.strip_comments(line)
@@ -282,7 +294,7 @@ class CifReader(CifIO):
             if words[0].startswith('_') and state is self.ReadingState.default:
                 buffer.flush()
             for word in words:
-                buffer.add_word(word)
+                buffer.add(word)
             if not words and state is self.ReadingState.loop:
                 pass
         buffer.flush()
