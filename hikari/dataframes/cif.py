@@ -159,6 +159,8 @@ class CifValidator(OrderedDict):
 class CifIOBuffer(abc.ABC):
     def __init__(self, target):
         self.target = target
+        self.names = []
+        self.values = []
 
     @abc.abstractmethod
     def add(self, data):
@@ -195,8 +197,6 @@ class CifReaderBuffer(CifIOBuffer):
     def __init__(self, target):
         super().__init__(target=target)
         self.multilines = []
-        self.names = []
-        self.values = []
 
     def add(self, word):
         """Append the word to names or values based on its first char"""
@@ -413,17 +413,82 @@ class CifReader(CifIO):
 class CifWriterBuffer(CifIOBuffer):
     """Buffer for writing data from `CifReader` into cif file """
 
+    MAX_NAME_LENGTH = 38
+    MAX_LINE_LENGTH = 80
+    MIN_STEP_LENGTH = 2
+    WHITESPACE = {' ', '\t', '\n'}
+
     def __init__(self, target):
         super().__init__(target=target)
         self.data = OrderedDict()
-        self.category = ''
+        self.current__category = ''
+        self.current__list = False
+        self.current_len = 0
 
     def add(self, data: tuple):
         k_, v_ = data
-        category = cif_core_validator.get__category(v_, '')
+        k__category = cif_core_validator.get__category(k_)
+        k__list = cif_core_validator.get__list(k_) or isinstance(v_, list)
+        v_len = len(v_) if isinstance(v_, list) else 0
+
+        if all([self.current__category == k__category,
+                self.current__list == k__list,
+                self.current_len == v_len]):
+            self.names.append(k_)
+            self.values.append(v_)
+        else:
+            self.flush()
+            self.names = [k_]
+            self.values = [v_]
+            self.current__category = k__category
+            self.current__list = k__list
+            self.current_len = v_len
 
     def flush(self):
-        pass
+        s = '\n'
+        if self.current__list is True:
+            s += self.format_table()
+        else:
+            for n_, v_ in zip(self.names, self.values):
+                s += self.format_line(n_, v_) + '\n'
+        self.target += s
+
+    def format_line(self, k, v):
+        name_string = f'{k:<{self.MAX_NAME_LENGTH}}'
+        step_string = ' ' * self.MIN_STEP_LENGTH
+        value_string = self.quote_text(v)
+        if len(name_string + step_string + value_string) > self.MAX_LINE_LENGTH:
+            step_string = '\n '
+        if value_string.startswith(';'):
+            step_string = '\n'
+        return name_string + step_string + value_string
+
+    def format_table(self):
+        column_widths = [max(map(len, v)) for v in self.values]
+        if sum(column_widths) + len(column_widths) >= self.MAX_LINE_LENGTH:
+            pass  # TODO: break long loop tables rows into multiple
+        formatted_string = '_loop\n'
+        for name in keys:
+            formatted_string += f' {name}\n'
+        for value_row in zip(self.values):
+            formatted_string += f' {" ".join(value_row)}\n'
+        return formatted_string
+
+    def quote_text(self, text):
+        if any(whitespace in text for whitespace in self.WHITESPACE):
+            if '\n' in text or len(text) >= self.MAX_LINE_LENGTH:
+                quoted = f';{text}\n;'
+            elif "'" not in text:
+                quoted = f"'{text}'"
+            elif '"' not in text:
+                quoted = f'"{text}"'
+            elif '\n;' not in text:
+                quoted = f';{text}\n;'
+            else:
+                raise ValueError(f'Unable to quote text: {text}')
+        else:
+            quoted = text
+        return quoted
 
 
 class CifWriter(CifIO):
@@ -434,8 +499,7 @@ cif_core_validator = CifValidator()
 
 
 if __name__ == '__main__':
-    v = CifValidator()
-    print(v.get__list('_diffrn_reflns_point_group_measured_fraction_max'))
-    print(v.get__category('_diffrn_reflns_point_group_measured_fraction_max'))
+    keys = [k for k in CifValidator().keys()]
+    print(max(map(len, keys)))
 
 
