@@ -26,16 +26,6 @@ U80 = uncertainties.ufloat(80.0, 1.0)
 U90 = uncertainties.ufloat(90.0, 1.0)
 
 
-class TempFile:
-    temp_dir = tempfile.TemporaryDirectory()
-
-    def __init__(self, name, content):
-        self.name = name
-        self.path = str(pathlib.Path(self.temp_dir.name) / name)
-        self.file = open(self.path, 'w+')
-        self.file.write(content)
-
-
 nacl_cif_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.cif'))
 nacl_fcf_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.fcf'))
 nacl_hkl_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.hkl'))
@@ -187,9 +177,10 @@ class TestCifValidator(unittest.TestCase):
         self.assertIsInstance(c.get('_atom_site_label'), CifBlock)
 
 
-class TestCifFrame(unittest.TestCase):
-    c_cif = CifFrame()
-    c_fcf = CifFrame()
+class TestCifReader(unittest.TestCase):
+    def setUp(self) -> None:
+        self.c_cif = CifFrame()
+        self.c_fcf = CifFrame()
 
     def test_read_cif_file(self):
         self.c_cif.read(nacl_cif_path)
@@ -200,6 +191,32 @@ class TestCifFrame(unittest.TestCase):
         self.c_fcf.read(nacl_fcf_path)
         self.assertIn('NaCl', self.c_fcf)
         self.assertIsInstance(self.c_fcf['NaCl'], CifBlock)
+
+
+class TestCifWriter(unittest.TestCase):
+    temp_dir = tempfile.TemporaryDirectory()
+    temp_path1 = str(pathlib.Path(temp_dir.name) / 'temp1.cif')
+    temp_path2 = str(pathlib.Path(temp_dir.name) / 'temp2.cif')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.temp_dir.cleanup()
+
+    def setUp(self) -> None:
+        self.c_cif1 = CifFrame()
+        self.c_cif2 = CifFrame()
+        self.c_cif1.read(nacl_cif_path)
+
+    def test_write_cif_file(self):
+        self.c_cif1.write(self.temp_path1)
+
+    def test_write_cif_file_is_consistent(self):
+        self.c_cif1.write(self.temp_path1)
+        self.c_cif2.read(self.temp_path1)
+        self.c_cif2.write(self.temp_path2)
+        with open(self.temp_path1, 'r') as cif1_contents:
+            with open(self.temp_path2, 'r') as cif2_contents:
+                self.assertEqual(cif1_contents.read(), cif2_contents.read())
 
 
 class TestHklFrame(unittest.TestCase):
