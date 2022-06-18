@@ -188,8 +188,8 @@ class CifIO(abc.ABC):
     base on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
-    COMMENT_REGEX = \
-        re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
+    DATA_BLOCK_REGEX = re.compile(r"(?<=^)(data[\S\s]+?)(?=(?=\ndata)|\Z)")
+    COMMENT_REGEX = re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
     MATCHING_QUOTES_REGEX = \
         re.compile(r"(?<!\b)([\"'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)")
     MATCHING_OUTER_QUOTES_REGEX = \
@@ -197,7 +197,7 @@ class CifIO(abc.ABC):
     MULTILINE_QUOTE_REGEX = \
         re.compile(r"(?<=\n)(;)([\S\s]+?)(;)(?=\n)")
 
-    WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄'}
+    WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄', '\n': '▀'}
 
     def __init__(self, cif_file_path, validate=True):
         self.file_path = make_abspath(cif_file_path)
@@ -366,23 +366,35 @@ class CifReader(CifIO):
         return read_data
 
     @classmethod
-    def protect_quotes(cls, string):
+    def protect_multiline(self, string: str) -> str:
         """
-        Substitute whitespace between matching quotation marks with substitutes
-        and remove the outer quotation marks
+        Replace whitespace between two "\n;" sequences with substitutes
+        and remove the outer semicolons. This method affects line positions.
 
         :param string: text in which whitespace will be substituted
-        :type string: str
         :return: string where whitespace inside quotes were substituted
-        :rtype: str
         """
-        # see: https://stackoverflow.com/q/46967465/, https://regex101.com/
-        split_by_quotes = cls.MATCHING_QUOTES_REGEX.split(string)
-        quoted = split_by_quotes[2::4]
+        split_string = self.MULTILINE_QUOTE_REGEX.split(string)
+        return self._protect_split(split_string)
+
+    def protect_quotes(self, string: str) -> str:
+        """
+        Replace whitespace between matching quotation marks with substitutes
+        and remove the outer quotation marks. See stack overflow /q/46967465/.
+
+        :param string: text in which whitespace will be substituted
+        :return: string where whitespace inside quotes were substituted
+        """
+        split_string = self.MATCHING_QUOTES_REGEX.split(string)
+        return self._protect_split(split_string)
+
+    @classmethod
+    def _protect_split(cls, split_string: List[str]) -> str:
+        quoted = split_string[2::4]
         for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
             quoted = [w.replace(ws, sub) for w in quoted]
-        split_by_quotes[2::4] = quoted
-        return ''.join(split_by_quotes)
+        split_string[2::4] = quoted
+        return ''.join(split_string)
 
     @classmethod
     def release_quote(cls, string):
