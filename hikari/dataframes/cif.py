@@ -188,7 +188,8 @@ class CifIO(abc.ABC):
     base on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
-    COMMENT_REGEX = re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
+    COMMENT_REGEX = \
+        re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)", flags=re.M)
     MATCHING_QUOTES_REGEX = re.compile(r"(\B[\"'])((?:\\\1|(?!\1\s).)*.)(\1\B)")
     MATCHING_OUTER_DELIMITERS_REGEX = \
         re.compile(r"(?<=^)([\"';])([\S\s]*)(\1)(?=$)")
@@ -253,11 +254,11 @@ class CifReader(CifIO):
         return OrderedDict({l[5:]: i for i, l in enumerate(lines)
                             if l.startswith('data_')})
 
-    class ReadingState(Enum):
+    class State(Enum):
         """This class stores current cif reading state (eg. inside loop etc.)"""
         default = 0
-        loop = 1
-        loop_header = 2
+        loop_keys = 1
+        loop_values = 2
 
     def format_dictionary(self, parsed_dict_: Dict[str, List[str]]) \
             -> Dict[str, Union[str, List[str]]]:
@@ -298,25 +299,30 @@ class CifReader(CifIO):
         """
         parsed_data = OrderedDict()
         buffer = CifReaderBuffer(target=parsed_data)
-        state = self.ReadingState.default
+        state = self.State.default
         for line in self.file_lines[start:end]:
-            if state is self.ReadingState.loop_header:
-                state = self.ReadingState.loop
-            elif line.lstrip().startswith('loop_'):
+            if line.lstrip().startswith('loop_'):
                 buffer.flush()
-                state = self.ReadingState.loop_header
+                state = self.State.loop_keys
                 line = line.lstrip()[5:]
             words = line.strip().split()
             if not words:
-                if state is self.ReadingState.loop:
-                    state = self.ReadingState.default
+                if state is self.State.loop_values:
+                    state = self.State.default
                 continue
-            if words[0].startswith('_') and state is self.ReadingState.default:
+            if words[0].startswith('_') and state is not self.State.loop_keys:
                 buffer.flush()
+            if not words[0].startswith('_') and state is self.State.loop_keys:
+                state = self.State.loop_values
             for word in words:
                 buffer.add(word)
         buffer.flush()
-        formatted_data = self.format_dictionary(parsed_data)
+        try:
+            formatted_data = self.format_dictionary(parsed_data)
+        except IndexError:
+            for k, v in parsed_data.items():
+                print(repr(k), repr(v))
+            assert False
         return formatted_data
 
     def read(self):
@@ -331,6 +337,7 @@ class CifReader(CifIO):
             self.file_contents = cif_file.read()
         self.protect_multilines()
         self.protect_quotes()
+        self.remove_comments()
         self.file_lines = self.file_contents.splitlines()
         block_names = self.blocks.keys()
         block_starts = self.blocks.values()
@@ -345,6 +352,7 @@ class CifReader(CifIO):
         Replace whitespace between every pair of "\n;" sequences with
         substitutes and remove the outer semicolons in `self.file_contents`.
         """
+
         split_string = self.MULTILINE_QUOTE_REGEX.split(self.file_contents)
         self.file_contents = self._protect_split(split_string)
 
@@ -363,6 +371,7 @@ class CifReader(CifIO):
         for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
             quoted = [w.replace(ws, sub) for w in quoted]
         split_string[2::4] = quoted
+        a = ''.join(split_string)
         return ''.join(split_string)
 
     def remove_comments(self) -> None:
