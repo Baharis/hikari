@@ -472,7 +472,7 @@ class CifWriterBuffer(CifIOBuffer):
     def enquote(self, text, force=False):
         if any(whitespace in text for whitespace in self.WHITESPACE) or force:
             if '\n' in text:
-                quoted = f';{text}\n;'
+                quoted = f';{text};'
             elif "'" not in text:
                 quoted = f"'{text}'"
             elif '"' not in text:
