@@ -193,7 +193,7 @@ class CifIO(abc.ABC):
     MATCHING_QUOTES_REGEX = re.compile(r"(\B[\"'])((?:\\\1|(?!\1\s).)*.)(\1\B)")
     MATCHING_OUTER_DELIMITERS_REGEX = \
         re.compile(r"(?<=^)([\"';])([\S\s]*)(\1)(?=$)")
-    MULTILINE_QUOTE_REGEX = re.compile(r"(^;)([\S\s]+?)(\n;)", flags=re.M)
+    MULTILINE_QUOTE_REGEX = re.compile(r"(^;)([\S\s]*?)(\n;)", flags=re.M)
 
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄', '\n': '▀'}
 
@@ -317,12 +317,7 @@ class CifReader(CifIO):
             for word in words:
                 buffer.add(word)
         buffer.flush()
-        try:
-            formatted_data = self.format_dictionary(parsed_data)
-        except IndexError:
-            for k, v in parsed_data.items():
-                print(repr(k), repr(v))
-            assert False
+        formatted_data = self.format_dictionary(parsed_data)
         return formatted_data
 
     def read(self):
@@ -410,7 +405,6 @@ class CifWriterBuffer(CifIOBuffer):
     def __init__(self, target):
         super().__init__(target=target)
         self.target: TextIO = target
-        self.data = OrderedDict()
         self.current__category = ''
         self.current__list = False
         self.current_len = 0
@@ -447,6 +441,8 @@ class CifWriterBuffer(CifIOBuffer):
             for n_, v_ in zip(self.names, self.values):
                 s += self.format_line(n_, v_) + '\n'
         self.target.write(s)
+        self.names = []
+        self.values = []
 
     def format_line(self, k, v):
         name_string = f'{k:<{self.MAX_NAME_LENGTH}}'
@@ -463,7 +459,7 @@ class CifWriterBuffer(CifIOBuffer):
         column_widths = [max(map(len, v)) for v in self.values]
         if sum(column_widths) + len(column_widths) >= self.MAX_LINE_LENGTH:
             pass  # TODO: break long loop tables rows into multiple
-        formatted_string = '_loop\n'
+        formatted_string = 'loop_\n'
         for name in self.names:
             formatted_string += f' {name}\n'
         for value_row in list(map(list, zip(*self.values))):
@@ -472,7 +468,9 @@ class CifWriterBuffer(CifIOBuffer):
         return formatted_string
 
     def enquote(self, text, force=False):
-        if any(whitespace in text for whitespace in self.WHITESPACE) or force:
+        if text == '':
+            quoted = "''"
+        elif any(whitespace in text for whitespace in self.WHITESPACE) or force:
             if '\n' in text:
                 quoted = f';{text}\n;'
             elif "'" not in text:
@@ -510,8 +508,12 @@ cif_core_validator = CifValidator()
 
 if __name__ == '__main__':
     c = CifFrame()
-    c.read('/home/dtchon/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
+    c.read('/home/dtchon/git/hikari/test/NaCl.cif')
     c.write('/home/dtchon/x/HiPHAR/anders_script/out.cif')
+    c = CifFrame()
+    c.read('/home/dtchon/x/HiPHAR/anders_script/out.cif')
+    c.write('/home/dtchon/x/HiPHAR/anders_script/out2.cif')
+
 # TODO protect multilines to prevent "\ndata" inside from registering as blocks
 
 
