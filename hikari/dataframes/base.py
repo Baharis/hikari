@@ -134,9 +134,12 @@ class BaseFrame:
         imp = {}
         for k, v in self.IMPORTED_FROM_CIF.items():
             if fragile:
-                imp[k] = block.get_as_type(v[0], v[1])
+                imp[k] = block.get_as_type(v[0], v[1], None)
             else:
                 imp[k] = block.get_as_type(v[0], v[1], v[2])
+        if None in imp.values():
+            miss = [k for k, v in imp.items() if v is None]
+            raise KeyError(f'Missing values when filling from CifBlock: {miss}')
         cell_par_names = {'a', 'b', 'c', 'al', 'be', 'ga'}
         new_parameters = {k: v for k, v in imp.items() if k in cell_par_names}
         self.edit_cell(**new_parameters)
