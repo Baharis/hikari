@@ -188,12 +188,14 @@ class CifIO(abc.ABC):
     base on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
-    DATA_BLOCK_REGEX = re.compile(r"(?<=^)(data[\S\s]+?)(?=(?=\ndata)|\Z)")
-    COMMENT_REGEX = re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
+    DATA_BLOCK_REGEX = \
+        re.compile(r"(?<=^)(data_)(\S+)([\S\s]*?)(?=(?=\ndata)|\Z)", flags=re.M)
+    COMMENT_REGEX = \
+        re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
     MATCHING_QUOTES_REGEX = \
         re.compile(r"(?<!\b)([\"'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)")
-    MATCHING_OUTER_QUOTES_REGEX = \
-        re.compile(r"(?<=^)([\"'])((?:\\\1|(?!\1\s).)*.)(\1)(?=$)")
+    MATCHING_OUTER_DELIMITERS_REGEX = \
+        re.compile(r"(?<=^)([\"';])([\S\s]*)(\1)(?=$)")
     MULTILINE_QUOTE_REGEX = \
         re.compile(r"(?<=\n)(;)([\S\s]+?)(;)(?=\n)")
 
