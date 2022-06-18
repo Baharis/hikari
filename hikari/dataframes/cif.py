@@ -202,6 +202,7 @@ class CifIO(abc.ABC):
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄', '\n': '▀'}
 
     def __init__(self, cif_file_path, validate=True):
+        self.file_contents = ''
         self.file_path = make_abspath(cif_file_path)
         self.file_lines = []
         self.validate = validate
@@ -222,7 +223,7 @@ class CifReaderBuffer(CifIOBuffer):
                 self.flush()
             self.names.append(word)
         else:
-            self.values.append(CifReader.release_quote(word))
+            self.values.append(CifReader.return_whitespace(word))
 
     def flush(self):
         """Update the target dict with names and values stored hitherto"""
@@ -317,7 +318,7 @@ class CifReader(CifIO):
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
             line = self.protect_quotes(line)
-            line = self.strip_comments(line)
+            line = self.remove_comments(line)
             if state is self.ReadingState.loop_header:
                 state = self.ReadingState.loop
             if line.startswith(';') and state != self.ReadingState.multiline:
@@ -358,7 +359,11 @@ class CifReader(CifIO):
         :rtype: dict
         """
         with open(self.file_path, 'r') as cif_file:
-            self.file_lines = cif_file.read().splitlines()
+            self.file_contents = cif_file.read()
+            self.protect_multilines()
+            self.protect_quotes()
+            file_lines = file_contents.splitlines()
+            self.file_lines = [self.protect_quotes(line) for line in file_lines]
         block_names = self.blocks.keys()
         block_starts = self.blocks.values()
         block_ends = list(block_starts)[1:] + [None]
@@ -367,28 +372,22 @@ class CifReader(CifIO):
             read_data[n] = CifBlock(self.parse_lines(s + 1, e))
         return read_data
 
-    @classmethod
-    def protect_multiline(self, string: str) -> str:
+    def protect_multilines(self) -> None:
         """
-        Replace whitespace between two "\n;" sequences with substitutes
-        and remove the outer semicolons. This method affects line positions.
+        Replace whitespace between every pair of "\n;" sequences with
+        substitutes and remove the outer semicolons in `self.file_contents`.
+        """
+        split_string = self.MULTILINE_QUOTE_REGEX.split(self.file_contents)
+        self.file_contents = self._protect_split(split_string)
 
-        :param string: text in which whitespace will be substituted
-        :return: string where whitespace inside quotes were substituted
+    def protect_quotes(self) -> None:
         """
-        split_string = self.MULTILINE_QUOTE_REGEX.split(string)
-        return self._protect_split(split_string)
-
-    def protect_quotes(self, string: str) -> str:
+        Replace whitespace between every pair of matching quotation marks
+        (single or double) with substitutes and remove the outer quotation
+        marks in `self.contents`. See stack overflow /q/46967465/ for details.
         """
-        Replace whitespace between matching quotation marks with substitutes
-        and remove the outer quotation marks. See stack overflow /q/46967465/.
-
-        :param string: text in which whitespace will be substituted
-        :return: string where whitespace inside quotes were substituted
-        """
-        split_string = self.MATCHING_QUOTES_REGEX.split(string)
-        return self._protect_split(split_string)
+        split_string = self.MATCHING_QUOTES_REGEX.split(self.file_contents)
+        self.file_contents = self._protect_split(split_string)
 
     @classmethod
     def _protect_split(cls, split_string: List[str]) -> str:
@@ -398,33 +397,24 @@ class CifReader(CifIO):
         split_string[2::4] = quoted
         return ''.join(split_string)
 
-    @classmethod
-    def release_quote(cls, string):
+    def remove_comments(self) -> None:
         """
-        Change the substitute characters in supplied `string` back
-        to whitespace, remove matching outer quotation marks, and return string
+        Replace all comment blocks (whitespace or start-of-file followed by "#")
+        within `self.file_contents` with empty strings.
+        """
+        self.file_contents = self.COMMENT_REGEX.sub('', self.file_contents)
 
-        :param string: text where whitespace will be reverted and quotes removed
-        :type string: str
-        :return: modified output string
-        :rtype: str
+    def revert_delimiters_and_whitespace(self, string: str) -> str:
         """
-        new_str = ''.join(cls.MATCHING_OUTER_QUOTES_REGEX.split(string)[::2])
-        for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
-            new_str = new_str.replace(sub, ws)
-        return new_str
+        If present, remove outer delimiters (matching quotes or semicolons) from
+        supplied string, remove `self.WHITESPACE_SUBSTITUTES` and return string.
 
-    @classmethod
-    def strip_comments(cls, string):
+        :return: `string` without outer delimiters nor whitespace substitutes.
         """
-        Remove everything following "#" at the start of line or after whitespace
-
-        :param string: string where comments should be removed
-        :type string: str
-        :return: string with comments removed
-        :rtype: str
-        """
-        return cls.COMMENT_REGEX.split(string)[0]
+        s = ''.join(self.MATCHING_OUTER_DELIMITERS_REGEX.split(string)[::2])
+        for whitespace, substitute in self.WHITESPACE_SUBSTITUTES.items():
+            s = s.replace(substitute, whitespace)
+        return s
 
 # TODO: Looks like reader has some problems with reading olex2 files. check
 
