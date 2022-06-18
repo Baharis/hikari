@@ -188,12 +188,10 @@ class CifIO(abc.ABC):
     base on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
-    DATA_BLOCK_REGEX = \
-        re.compile(r"(?<=^)(data_)(\S+)([\S\s]*?)(?=(?=\ndata)|\Z)", flags=re.M)
     COMMENT_REGEX = \
         re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
     MATCHING_QUOTES_REGEX = \
-        re.compile(r"(?<!\b)([\"'])((?:\\\1|(?!\1\s).)*.)(\1)(?!\b)")
+        re.compile(r"(\B[\"'])((?:\\\1|(?!\1\s).)*.)(\1\B)")
     MATCHING_OUTER_DELIMITERS_REGEX = \
         re.compile(r"(?<=^)([\"';])([\S\s]*)(\1)(?=$)")
     MULTILINE_QUOTE_REGEX = \
@@ -360,10 +358,9 @@ class CifReader(CifIO):
         """
         with open(self.file_path, 'r') as cif_file:
             self.file_contents = cif_file.read()
-            self.protect_multilines()
-            self.protect_quotes()
-            file_lines = file_contents.splitlines()
-            self.file_lines = [self.protect_quotes(line) for line in file_lines]
+        self.protect_multilines()
+        self.protect_quotes()
+        _, block_names, _, blo
         block_names = self.blocks.keys()
         block_starts = self.blocks.values()
         block_ends = list(block_starts)[1:] + [None]
