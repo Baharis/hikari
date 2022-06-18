@@ -188,14 +188,11 @@ class CifIO(abc.ABC):
     base on the IUCr File Syntax version 1.1 Working specification available
     [here](`https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax`)
     """
-    COMMENT_REGEX = \
-        re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
-    MATCHING_QUOTES_REGEX = \
-        re.compile(r"(\B[\"'])((?:\\\1|(?!\1\s).)*.)(\1\B)")
+    COMMENT_REGEX = re.compile(r"(?<=\s)(#.*)(?=$)|(?<=^)(#.*)(?=$)")
+    MATCHING_QUOTES_REGEX = re.compile(r"(\B[\"'])((?:\\\1|(?!\1\s).)*.)(\1\B)")
     MATCHING_OUTER_DELIMITERS_REGEX = \
         re.compile(r"(?<=^)([\"';])([\S\s]*)(\1)(?=$)")
-    MULTILINE_QUOTE_REGEX = \
-        re.compile(r"(?<=\n)(;)([\S\s]+?)(;)(?=\n)")
+    MULTILINE_QUOTE_REGEX = re.compile(r"(^;)([\S\s]+?)(^;)", flags=re.M)
 
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄', '\n': '▀'}
 
@@ -212,7 +209,6 @@ class CifReaderBuffer(CifIOBuffer):
     def __init__(self, target):
         super().__init__(target=target)
         self.target: OrderedDict = target
-        self.multilines = []
 
     def add(self, word):
         """Append the word to names or values based on its first char"""
@@ -221,7 +217,7 @@ class CifReaderBuffer(CifIOBuffer):
                 self.flush()
             self.names.append(word)
         else:
-            self.values.append(CifReader.return_whitespace(word))
+            self.values.append(CifReader.revert_delimiters_and_whitespace(word))
 
     def flush(self):
         """Update the target dict with names and values stored hitherto"""
@@ -243,16 +239,6 @@ class CifReaderBuffer(CifIOBuffer):
         self.target.update(d)
         self.__init__(target=self.target)
 
-    def initiate_multiline(self):
-        self.multilines = []
-
-    def append_to_multiline(self, string):
-        """Add the word to values if they're empty, concatenate otherwise"""
-        self.multilines.append(string)
-
-    def terminate_multiline(self):
-        self.values.append('\n'.join(self.multilines))
-
 
 class CifReader(CifIO):
     """A helper class managing reading cif files into `CifFrame`s."""
@@ -272,7 +258,6 @@ class CifReader(CifIO):
         default = 0
         loop = 1
         loop_header = 2
-        multiline = 3
 
     def format_dictionary(self, parsed_dict_: Dict[str, List[str]]) \
             -> Dict[str, Union[str, List[str]]]:
@@ -315,35 +300,21 @@ class CifReader(CifIO):
         buffer = CifReaderBuffer(target=parsed_data)
         state = self.ReadingState.default
         for line in self.file_lines[start:end]:
-            line = self.protect_quotes(line)
-            line = self.remove_comments(line)
             if state is self.ReadingState.loop_header:
                 state = self.ReadingState.loop
-            if line.startswith(';') and state != self.ReadingState.multiline:
-                buffer.initiate_multiline()
-                state = self.ReadingState.multiline
-                line = line[1:]
-            elif line.startswith(';') and state is self.ReadingState.multiline:
-                buffer.terminate_multiline()
-                state = self.ReadingState.default
-                continue
-            if state is self.ReadingState.multiline:
-                buffer.append_to_multiline(line)
-                continue
             elif line.lstrip().startswith('loop_'):
                 buffer.flush()
                 state = self.ReadingState.loop_header
                 line = line.lstrip()[5:]
             words = line.strip().split()
-            if not words and self.ReadingState.multiline:
-                buffer.append_to_multiline(line)
+            if not words:
+                if state is self.ReadingState.loop:
+                    state = self.ReadingState.default
                 continue
             if words[0].startswith('_') and state is self.ReadingState.default:
                 buffer.flush()
             for word in words:
                 buffer.add(word)
-            if not words and state is self.ReadingState.loop:
-                pass
         buffer.flush()
         formatted_data = self.format_dictionary(parsed_data)
         return formatted_data
@@ -360,7 +331,7 @@ class CifReader(CifIO):
             self.file_contents = cif_file.read()
         self.protect_multilines()
         self.protect_quotes()
-        _, block_names, _, blo
+        self.file_lines = self.file_contents.splitlines()
         block_names = self.blocks.keys()
         block_starts = self.blocks.values()
         block_ends = list(block_starts)[1:] + [None]
@@ -401,15 +372,16 @@ class CifReader(CifIO):
         """
         self.file_contents = self.COMMENT_REGEX.sub('', self.file_contents)
 
-    def revert_delimiters_and_whitespace(self, string: str) -> str:
+    @classmethod
+    def revert_delimiters_and_whitespace(cls, string: str) -> str:
         """
         If present, remove outer delimiters (matching quotes or semicolons) from
         supplied string, remove `self.WHITESPACE_SUBSTITUTES` and return string.
 
         :return: `string` without outer delimiters nor whitespace substitutes.
         """
-        s = ''.join(self.MATCHING_OUTER_DELIMITERS_REGEX.split(string)[::2])
-        for whitespace, substitute in self.WHITESPACE_SUBSTITUTES.items():
+        s = ''.join(cls.MATCHING_OUTER_DELIMITERS_REGEX.split(string)[::2])
+        for whitespace, substitute in cls.WHITESPACE_SUBSTITUTES.items():
             s = s.replace(substitute, whitespace)
         return s
 
@@ -527,7 +499,7 @@ cif_core_validator = CifValidator()
 
 if __name__ == '__main__':
     c = CifFrame()
-    c.read('/home/dtchon/x/HP/2oAP/CIF/finalCIF/8kbar/2oAPal_8kbar.cif')
+    c.read('/home/dtchon/x/HiPHAR/anders_script/rfpirazB_100K_SXD.cif')
     c.write('/home/dtchon/x/HiPHAR/anders_script/out.cif')
 # TODO protect multilines to prevent "\ndata" inside from registering as blocks
 
