@@ -147,10 +147,11 @@ class TestCifBlockGeneral(unittest.TestCase):
         u_typ = uncertainties.ufloat_fromstr
         self.assertEqual(repr(self.b.get_as_type(k, typ=u_typ)), repr([U1, U1]))
 
+    def test_get_as_type_nonexistent(self):
+        self.assertIs(self.b.get_as_type('_nonexistent_key', str), None)
+
     def test_get_as_type_exceptions(self):
-        with self.assertRaises(KeyError):
-            _ = self.b.get_as_type('_nonexistent_key', str)
-        self.b['_cell_angle_beta'] = U90
+        self.b['_cell_angle_beta'] = U90  # CifBlock stores str and list types
         with self.assertRaises(TypeError):
             _ = self.b.get_as_type('_cell_angle_beta', str)
 
