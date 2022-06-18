@@ -193,7 +193,7 @@ class CifIO(abc.ABC):
     MATCHING_QUOTES_REGEX = re.compile(r"(\B[\"'])((?:\\\1|(?!\1\s).)*.)(\1\B)")
     MATCHING_OUTER_DELIMITERS_REGEX = \
         re.compile(r"(?<=^)([\"';])([\S\s]*)(\1)(?=$)")
-    MULTILINE_QUOTE_REGEX = re.compile(r"(^;)([\S\s]+?)(^;)", flags=re.M)
+    MULTILINE_QUOTE_REGEX = re.compile(r"(^;)([\S\s]+?)(\n;)", flags=re.M)
 
     WHITESPACE_SUBSTITUTES = {' ': '█', '\t': '▄', '\n': '▀'}
 
@@ -370,7 +370,9 @@ class CifReader(CifIO):
         quoted = split_string[2::4]
         for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
             quoted = [w.replace(ws, sub) for w in quoted]
+        right_delimiters = [w.strip('\n') for w in split_string[3::4]]
         split_string[2::4] = quoted
+        split_string[3::4] = right_delimiters
         a = ''.join(split_string)
         return ''.join(split_string)
 
@@ -472,7 +474,7 @@ class CifWriterBuffer(CifIOBuffer):
     def enquote(self, text, force=False):
         if any(whitespace in text for whitespace in self.WHITESPACE) or force:
             if '\n' in text:
-                quoted = f';{text};'
+                quoted = f';{text}\n;'
             elif "'" not in text:
                 quoted = f"'{text}'"
             elif '"' not in text:
