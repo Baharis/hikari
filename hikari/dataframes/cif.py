@@ -37,8 +37,10 @@ class CifBlock(OrderedDict):
         :return: converted value of `self[key]` or `default`
         :rtype: Union[List, str]
         """
-        value = self.get(key, default)
-        if value is not None:
+        value = self.get(key)
+        if value is None:
+            value = default
+        else:
             if isinstance(value, str):
                 value = typ(value)
             elif isinstance(value, list):
