@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 from numpy import linalg as lin
+import pandas as pd
 
 from hikari.dataframes import HklFrame, LstFrame
 from hikari.symmetry import SG, Group
@@ -184,7 +185,7 @@ class AngularPropertyExplorer:
         a.x_axis = self.hkl_frame.a_w / lin.norm(self.hkl_frame.a_w)
         a.y_axis = self.hkl_frame.b_w / lin.norm(self.hkl_frame.b_w)
         a.z_axis = self.hkl_frame.c_w / lin.norm(self.hkl_frame.c_w)
-        a.focus = self.focus
+        a.focus = self.focus_cartesian
         a.heat_limits = self.prop_limits
         a.heat_palette = self.axis
         a.histogram = self.histogram
@@ -243,7 +244,7 @@ class AngularPropertyExplorer:
         return self._lg
 
     @property
-    def focus(self):
+    def focus_cartesian(self):
         _focus = []
         if self.orientation is not None:
             if len(self.orientation.shape) == 1:
@@ -258,6 +259,28 @@ class AngularPropertyExplorer:
                 if c[1] in self.th_limits and c[2] in self.ph_limits:
                     _focus.append(v / lin.norm(v))
         return _focus
+
+    @property
+    def focus_spherical_closest(self):
+        _focus = []
+        if self.orientation is not None:
+            for focus_vector in self.focus_cartesian:
+                _, th, ph = np.rad2deg(cart2sph(*focus_vector))
+                th_closest = min(self.th_range, key=lambda x: abs(x - th))
+                ph_closest = min(self.ph_range, key=lambda x: abs(x - ph))
+                _focus.append([1.0, th_closest, ph_closest])
+        return _focus
+
+    @property
+    def prop_at_focus_closest(self):
+        df = pd.DataFrame({'ph': self.data_dict['ph'],
+                           'th': self.data_dict['th'],
+                           'p': self.data_dict[self.property_name]})
+        properties_ = []
+        for _, th, ph in self.focus_spherical_closest:
+            row = df.loc[(df['th'] == th) & (df['ph'] == ph)].iloc[0]
+            properties_.append(row['p'])
+        return properties_
 
     @property
     def th_range(self):
@@ -323,6 +346,15 @@ class AngularPropertyExplorer:
             f'# avg ={avg_p:8.5f}\n'
         return s
 
+    @property
+    def prop_at_focus_string(self):
+        s = f'# value of {self.property_name} at focus points:\n'
+        for focus_, prop_ in zip(self.focus_spherical_closest,
+                                 self.prop_at_focus_closest):
+            _, th, ph = focus_
+            s += f'# val ={prop_:8.5f} at th ={th :6.1f} ph ={ph :6.1f}\n'
+        return s + '\n'
+
 
 class AngularPotencyExplorer(AngularPropertyExplorer):
     hkl_is_read_not_generated = False
@@ -358,6 +390,8 @@ class AngularPotencyExplorer(AngularPropertyExplorer):
             lst.write('\n')
 
         np.savetxt(dat_path, potency_mesh)
+        if self.orientation is not None:
+            lst.write(self.prop_at_focus_string)
         lst.write(self.descriptive_statistics_string)
         lst.close()
 
@@ -408,6 +442,8 @@ class AngularR1Explorer(AngularPropertyExplorer):
             lst.write('\n')
 
         np.savetxt(dat_path, r1_mesh)
+        if self.orientation is not None:
+            lst.write(self.prop_at_focus_string)
         lst.write(self.descriptive_statistics_string)
         lst.close()
 
