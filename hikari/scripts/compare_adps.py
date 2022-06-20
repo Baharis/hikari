@@ -203,4 +203,4 @@ def calculate_similarity_indices(cif1_path,
 if __name__ == '__main__':
     calculate_similarity_indices('~/_/si/1.cif',
                                  '~/_/si/2.cif',
-                                 output_path='~/x/HiPHAR/anders_script/si_compare.txt')
+                                 output_path='~/_/output.txt')
