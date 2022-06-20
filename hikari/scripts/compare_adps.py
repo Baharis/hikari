@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 import numpy as np
-from uncertainties import ufloat_fromstr, unumpy, UFloat
+from uncertainties import ufloat, ufloat_fromstr, unumpy, UFloat
 
 from hikari.dataframes import BaseFrame, CifFrame, UBaseFrame
 from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements
@@ -94,7 +94,7 @@ def calculate_similarity_indices(cif1_path,
 
     def interpret_paths():
         cif1p = make_abspath(cif1_path)
-        cif2p = None if cif2_path is None else make_abspath(cif2_path)
+        cif2p = cif1p if cif2_path is None else make_abspath(cif2_path)
         cif1b = 1 if cif1_block is None else cif1_block
         cif2b = 2 if cif1b is 1 and cif1p is cif2p \
             else 1 if cif2_block is None else cif2_block
@@ -147,19 +147,23 @@ def calculate_similarity_indices(cif1_path,
         def adp_frac2cart(adp_frac, base_frame):
             n = np.diag([base_frame.a_r, base_frame.b_r, base_frame.c_r])
             return base_frame.A_d.T @ n @ adp_frac @ n @ base_frame.A_d
-        adp_cart_1 = adp_frac2cart(adp_frac_1, base_frame1)
-        adp_cart_2 = adp_frac2cart(adp_frac_2, base_frame2)
-        if normalize:
-            adp_cart_1 /= det3x3(adp_cart_1) ** (1 / 3)
-            adp_cart_2 /= det3x3(adp_cart_2) ** (1 / 3)
-        if uncertainties:
-            adp_inv_1 = unumpy.matrix(adp_cart_1).I
-            adp_inv_2 = unumpy.matrix(adp_cart_2).I
-        else:
-            adp_inv_1 = np.linalg.inv(adp_cart_1)
-            adp_inv_2 = np.linalg.inv(adp_cart_2)
-        r12_num = 2 ** (3 / 2) * det3x3(adp_inv_1 @ adp_inv_2) ** (1 / 4)
-        r12_den = det3x3(adp_inv_1 + adp_inv_2) ** (1 / 2)
+        try:
+            adp_cart_1 = adp_frac2cart(adp_frac_1, base_frame1)
+            adp_cart_2 = adp_frac2cart(adp_frac_2, base_frame2)
+            if normalize:
+                adp_cart_1 /= det3x3(adp_cart_1) ** (1 / 3)
+                adp_cart_2 /= det3x3(adp_cart_2) ** (1 / 3)
+            if uncertainties:
+                adp_inv_1 = unumpy.matrix(adp_cart_1).I
+                adp_inv_2 = unumpy.matrix(adp_cart_2).I
+            else:
+                adp_inv_1 = np.linalg.inv(adp_cart_1)
+                adp_inv_2 = np.linalg.inv(adp_cart_2)
+            r12_num = 2 ** (3 / 2) * det3x3(adp_inv_1 @ adp_inv_2) ** (1 / 4)
+            r12_den = det3x3(adp_inv_1 + adp_inv_2) ** (1 / 2)
+        except ValueError:  # if matrix cannot be inverted, return S = 1.0
+            r12_num = ufloat(0.0, 0) if uncertainties else 0.0
+            r12_den = ufloat(1.0, 0) if uncertainties else 1.0
         return 100 * (1 - r12_num / r12_den)
 
     def si_string(si: float or UFloat) -> str:
@@ -198,4 +202,5 @@ def calculate_similarity_indices(cif1_path,
 
 if __name__ == '__main__':
     calculate_similarity_indices('~/_/si/1.cif',
-                                 '~/_/si/2.cif')
+                                 '~/_/si/2.cif',
+                                 output_path='~/x/HiPHAR/anders_script/si_compare.txt')
