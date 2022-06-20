@@ -571,7 +571,7 @@ class HklFrame(BaseFrame):
         def _make_hkl_ball(i=max_index):
             hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
             hkls = np.stack(hkl_grid, -1).reshape(-1, 3)
-            xyz = np.matrix((self.a_w, self.b_w, self.c_w))
+            xyz = np.array((self.a_w, self.b_w, self.c_w))
             return hkls[lin.norm(hkls @ xyz, axis=1) <= radius]
         hkl = _make_hkl_ball()
 

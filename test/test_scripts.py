@@ -2,7 +2,9 @@ import pathlib
 import tempfile
 import unittest
 
-from hikari.scripts import calculate_similarity_indices
+import numpy as np
+
+from hikari.scripts import calculate_similarity_indices, potency_map
 
 
 nacl_cif_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.cif'))
@@ -63,6 +65,23 @@ class TestCompareADPsScripts(unittest.TestCase):
         with open(self.output1_path, 'r') as out:
             last_line_contents = out.readlines()[-1].strip().split()
             self.assertAlmostEqual(float(last_line_contents[-3]), 50.0)
+
+
+class TestHklPotencyScripts(unittest.TestCase):
+    temp_dir = tempfile.TemporaryDirectory()
+    hkl_path = str(pathlib.Path(temp_dir.name) / 'potency.hkl')
+
+    def test_potency_map_simple(self):
+        potency_map(a=10, b=10, c=10, al=90, be=90, ga=90, space_group='P1',
+                    path=self.hkl_path, output_quality=2, wavelength='MoKa')
+
+    def test_potency_map_with_focus(self):
+        ori = np.array([[-0.08263, +0.00536, -0.03667],
+                        [-0.01671, -0.03679, -0.03238],
+                        [+0.06030, +0.02438, -0.04088]])
+        potency_map(a=10, b=10, c=10, al=90, be=90, ga=90, space_group='Pm-3m',
+                    path=self.hkl_path, output_quality=2, wavelength='MoKa',
+                    orientation=ori)
 
 
 if __name__ == '__main__':
