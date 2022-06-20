@@ -101,9 +101,34 @@ class TestBaseFrame(unittest.TestCase):
         self.assertAlmostEqual(self.b.v_r, 0.003657181855591761)
 
 
-class TestCifBlockRead(unittest.TestCase):
+class TestCifFrameReader(unittest.TestCase):
+    def setUp(self) -> None:
+        self.c = CifFrame()
+
+    def test_read_cif_file(self):
+        self.c.read(nacl_cif_path)
+        self.assertIn('NaCl', self.c)
+        self.assertIsInstance(self.c['NaCl'], CifBlock)
+
+    def test_read_fcf_file(self):
+        self.c.read(nacl_fcf_path)
+        self.assertIn('NaCl', self.c)
+        self.assertIsInstance(self.c['NaCl'], CifBlock)
+
+
+class TestCifBlockReader(unittest.TestCase):
+    def setUp(self) -> None:
+        self.b = CifBlock()
+
     def test_read(self):
-        CifBlock().read(path=nacl_cif_path, block='NaCl')
+        self.b.read(path=nacl_cif_path, block='NaCl')
+        self.assertIn('_audit_creation_date', self.b)
+        self.assertIsInstance(self.b, CifBlock)
+
+    def test_read_loop(self):
+        self.b.read(nacl_cif_path, 'NaCl')
+        self.assertEqual(self.b['_atom_type_symbol'], ['Cl', 'Na'])
+        self.assertEqual(len(self.b['_space_group_symop_operation_xyz']), 192)
 
 
 class TestCifBlockGeneral(unittest.TestCase):
@@ -111,17 +136,34 @@ class TestCifBlockGeneral(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        super().setUpClass()
         cls.b.read(path=nacl_cif_path, block='NaCl')
 
-    def test_access(self):
-        self.assertIn('_cell_length_a', self.b)
+    def test_access_existing(self):
         self.assertEqual(self.b['_cell_length_a'], '5.64109(5)')
         self.assertEqual(len(self.b['_diffrn_refln_index_h']), 8578)
+
+    def test_access_nonexistent(self):
+        with self.assertRaises(KeyError):
+            _ = self.b['_nonexistent_key']
 
     def test_assign(self):
         self.b['_cell_angle_beta'] = '120'
         self.assertEqual(self.b['_cell_angle_beta'], '120')
+        self.b['_fictitious_list'] = ['f', 'i', 'c']
+        self.assertEqual(self.b['_fictitious_list'], ['f', 'i', 'c'])
+
+    def test_contains(self):
+        self.assertIn('_cell_length_a', self.b)
+        self.assertNotIn('_nonexistent_key', self.b)
+
+    def test_get(self):
+        self.assertEqual(self.b.get('_cell_length_a'), '5.64109(5)')
+
+    def test_get_nonexistent(self):
+        self.assertIs(self.b.get('_nonexistent_key'), None)
+
+    def test_get_with_default(self):
+        self.assertEqual(self.b.get('_nonexistent_key', 'default'), 'default')
 
     def test_get_as_type_single(self):
         k = '_cell_angle_alpha'
@@ -146,10 +188,8 @@ class TestCifBlockGeneral(unittest.TestCase):
             _ = self.b.get_as_type('_cell_angle_beta', str)
 
     def test_get_as_type_defaults(self):
-        self.assertEqual(
-            self.b.get_as_type('_nonexistent_key_with_default', str, 'default'),
-            'default'
-        )
+        self.assertEqual(self.b.get_as_type('_nonexistent_key', str, 'default'),
+                         'default')
 
 
 class TestCifBlockInterface(unittest.TestCase):
@@ -170,27 +210,36 @@ class TestCifBlockInterface(unittest.TestCase):
 
 
 class TestCifValidator(unittest.TestCase):
-    def test_validator(self):
-        c = CifValidator()
-        self.assertTrue('_atom_site_label' in c)
-        self.assertIn('_atom_site_label', c)
-        self.assertIsInstance(c.get('_atom_site_label'), CifBlock)
+    v = CifValidator()
 
+    def test_creation(self):
+        self.assertTrue('_atom_site_label' in self.v)
+        self.assertIn('_atom_site_label', self.v)
+        self.assertIsInstance(self.v.get('_atom_site_label'), CifBlock)
 
-class TestCifReader(unittest.TestCase):
-    def setUp(self) -> None:
-        self.c_cif = CifFrame()
-        self.c_fcf = CifFrame()
+    def test_contains(self):
+        self.assertIn('atom_site_fract_', self.v)
+        self.assertIn('_atom_site_fract_', self.v)
+        self.assertIn('_atom_site_fract_x', self.v)
 
-    def test_read_cif_file(self):
-        self.c_cif.read(nacl_cif_path)
-        self.assertIn('NaCl', self.c_cif)
-        self.assertIsInstance(self.c_cif['NaCl'], CifBlock)
+    def test_get(self):
+        self.assertEqual(self.v.get('atom_site_fract_')['_type'], 'numb')
+        self.assertEqual(self.v.get('_atom_site_fract_')['_type'], 'numb')
+        self.assertEqual(self.v.get('_atom_site_fract_x')['_type'], 'numb')
+        self.assertIs(self.v.get('nonexistent_key'), None)
 
-    def test_read_fcf_file(self):
-        self.c_fcf.read(nacl_fcf_path)
-        self.assertIn('NaCl', self.c_fcf)
-        self.assertIsInstance(self.c_fcf['NaCl'], CifBlock)
+    def test_get__category(self):
+        cat = 'atom_site'
+        self.assertEqual(self.v.get__category('atom_site_fract_'), cat)
+        self.assertEqual(self.v.get__category('_atom_site_fract_'), cat)
+        self.assertEqual(self.v.get__category('_atom_site_fract_x'), cat)
+        self.assertEqual(self.v.get__category('nonexistent_key', 'def'), 'def')
+
+    def test_get__list(self):
+        self.assertIs(self.v.get__list('atom_site_fract_'), True)
+        self.assertIs(self.v.get__list('refine_ls_number_reflns'), None)
+        self.assertEqual(self.v.get__list('exptl_crystal_colour'), None)
+        self.assertEqual(self.v.get__list('nonexistent_key', 'def'), 'def')
 
 
 class TestCifWriter(unittest.TestCase):

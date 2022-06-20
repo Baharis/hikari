@@ -164,7 +164,7 @@ class CifValidator(OrderedDict):
         value = self.get(key)
         if value is not None:
             got = value.get('_list')
-            _list = True if got == 'yes' else False if got == 'no' else default
+            _list = True if got == 'yes' else False if got == 'no' else None
         else:
             _list = default
         return _list
