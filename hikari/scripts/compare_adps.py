@@ -7,13 +7,13 @@ from hikari.dataframes import BaseFrame, CifFrame, UBaseFrame
 from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements
 
 
-def calculate_similarity_indices(cif1_path,
-                                 cif2_path=None,
-                                 cif1_block=None,
-                                 cif2_block=None,
-                                 normalize=False,
-                                 output_path=None,
-                                 uncertainties=True):
+def calculate_similarity_indices(cif1_path: str,
+                                 cif2_path: str = None,
+                                 cif1_block: str = None,
+                                 cif2_block: str = None,
+                                 output_path: str = None,
+                                 normalize: bool = False,
+                                 uncertainties: bool = True) -> None:
     """
     Compare Anisotropic Displacement Parameters of all atoms in two cif blocks
     and return a Similarity Index (SI) for these pairs of atoms that exist
@@ -59,27 +59,20 @@ def calculate_similarity_indices(cif1_path,
     https://doi.org/10.1107/S0108768106020787.
 
     :param cif1_path: Absolute or relative path to the first cif file.
-    :type cif1_path: str
     :param cif2_path: Absolute or relative path to the second cif file.
         If not specified, it is assumed equal to `cif1_path`.
-    :type cif2_path: str
     :param cif1_block: Name of the first data block used in SI determination.
         It points to the data block inside the file specified by `cif1_path`.
         If not specified, the first block found in said file will be used.
-    :type cif1_block: str
     :param cif2_block: Name of the second data block used in SI determination.
         It points to the data block inside the file specified by `cif2_path`.
         If not specified, the first unused block in said file will be used.
-    :type cif2_block: str
     :param output_path: Path where the output of the program should be written.
-    :type output_path: str
     :param uncertainties: If True, propagate the standard deviations of
         individual ADPs' and cif1's unit cell to estimate SI's uncertainties.
-    :type uncertainties: bool
     :param normalize: If True, equalize the volume of displacement ellipsoids
         by normalizing the determinants of ADP matrices expressed in cartesian
         coordinates. As a result, SI is a function of displacement "shape" only.
-    :type normalize: bool
     """
 
     u_type = ufloat_fromstr if uncertainties else cfloat
