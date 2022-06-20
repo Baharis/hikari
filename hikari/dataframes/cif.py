@@ -509,16 +509,3 @@ class CifWriter(CifIO):
 
 
 cif_core_validator = CifValidator()
-
-
-if __name__ == '__main__':
-    c = CifFrame()
-    c.read('/home/dtchon/git/hikari/test/NaCl.cif')
-    c.write('/home/dtchon/x/HiPHAR/anders_script/out.cif')
-    c = CifFrame()
-    c.read('/home/dtchon/x/HiPHAR/anders_script/out.cif')
-    c.write('/home/dtchon/x/HiPHAR/anders_script/out2.cif')
-
-# TODO protect multilines to prevent "\ndata" inside from registering as blocks
-
-
