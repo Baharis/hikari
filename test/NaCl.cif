@@ -9911,5 +9911,25 @@ loop_
  Na2 Cl1 Na1 90.0 1_554 5_445 ?
  Na2 Cl1 Na2 180.0 1_554 . ?
 
+################################################################################
 
+data_NaCl_negative_ADPs
 
+_symmetry_Int_Tables_number        12
+_cell_length_a                     5.6411(1)
+_cell_length_b                     5.6411(1)
+_cell_length_c                     5.6411(1)
+_cell_angle_alpha                  90
+_cell_angle_beta                   90
+_cell_angle_gamma                  90
+
+loop_
+  _atom_site_aniso_label
+  _atom_site_aniso_U_11
+  _atom_site_aniso_U_22
+  _atom_site_aniso_U_33
+  _atom_site_aniso_U_23
+  _atom_site_aniso_U_13
+  _atom_site_aniso_U_12
+ Cl1 0.01793(4)  0.01793(4) 0.01793(4) 0.000 0.000 0.000
+ Na1 -0.02129(6) 0.02129(6) 0.02129(6) 0.000 0.000 0.000
