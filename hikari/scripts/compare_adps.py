@@ -1,19 +1,19 @@
 from typing import Dict, Any
 
 import numpy as np
-from uncertainties import ufloat_fromstr, unumpy, UFloat
+from uncertainties import ufloat, ufloat_fromstr, unumpy, UFloat
 
 from hikari.dataframes import BaseFrame, CifFrame, UBaseFrame
 from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements
 
 
-def calculate_similarity_indices(cif1_path,
-                                 cif2_path=None,
-                                 cif1_block=None,
-                                 cif2_block=None,
-                                 normalize=False,
-                                 output_path=None,
-                                 uncertainties=True):
+def calculate_similarity_indices(cif1_path: str,
+                                 cif2_path: str = None,
+                                 cif1_block: str = None,
+                                 cif2_block: str = None,
+                                 output_path: str = None,
+                                 normalize: bool = False,
+                                 uncertainties: bool = True) -> None:
     """
     Compare Anisotropic Displacement Parameters of all atoms in two cif blocks
     and return a Similarity Index (SI) for these pairs of atoms that exist
@@ -59,27 +59,20 @@ def calculate_similarity_indices(cif1_path,
     https://doi.org/10.1107/S0108768106020787.
 
     :param cif1_path: Absolute or relative path to the first cif file.
-    :type cif1_path: str
     :param cif2_path: Absolute or relative path to the second cif file.
         If not specified, it is assumed equal to `cif1_path`.
-    :type cif2_path: str
     :param cif1_block: Name of the first data block used in SI determination.
         It points to the data block inside the file specified by `cif1_path`.
         If not specified, the first block found in said file will be used.
-    :type cif1_block: str
     :param cif2_block: Name of the second data block used in SI determination.
         It points to the data block inside the file specified by `cif2_path`.
         If not specified, the first unused block in said file will be used.
-    :type cif2_block: str
     :param output_path: Path where the output of the program should be written.
-    :type output_path: str
     :param uncertainties: If True, propagate the standard deviations of
         individual ADPs' and cif1's unit cell to estimate SI's uncertainties.
-    :type uncertainties: bool
     :param normalize: If True, equalize the volume of displacement ellipsoids
         by normalizing the determinants of ADP matrices expressed in cartesian
         coordinates. As a result, SI is a function of displacement "shape" only.
-    :type normalize: bool
     """
 
     u_type = ufloat_fromstr if uncertainties else cfloat
@@ -94,7 +87,7 @@ def calculate_similarity_indices(cif1_path,
 
     def interpret_paths():
         cif1p = make_abspath(cif1_path)
-        cif2p = None if cif2_path is None else make_abspath(cif2_path)
+        cif2p = cif1p if cif2_path is None else make_abspath(cif2_path)
         cif1b = 1 if cif1_block is None else cif1_block
         cif2b = 2 if cif1b is 1 and cif1p is cif2p \
             else 1 if cif2_block is None else cif2_block
@@ -147,19 +140,23 @@ def calculate_similarity_indices(cif1_path,
         def adp_frac2cart(adp_frac, base_frame):
             n = np.diag([base_frame.a_r, base_frame.b_r, base_frame.c_r])
             return base_frame.A_d.T @ n @ adp_frac @ n @ base_frame.A_d
-        adp_cart_1 = adp_frac2cart(adp_frac_1, base_frame1)
-        adp_cart_2 = adp_frac2cart(adp_frac_2, base_frame2)
-        if normalize:
-            adp_cart_1 /= det3x3(adp_cart_1) ** (1 / 3)
-            adp_cart_2 /= det3x3(adp_cart_2) ** (1 / 3)
-        if uncertainties:
-            adp_inv_1 = unumpy.matrix(adp_cart_1).I
-            adp_inv_2 = unumpy.matrix(adp_cart_2).I
-        else:
-            adp_inv_1 = np.linalg.inv(adp_cart_1)
-            adp_inv_2 = np.linalg.inv(adp_cart_2)
-        r12_num = 2 ** (3 / 2) * det3x3(adp_inv_1 @ adp_inv_2) ** (1 / 4)
-        r12_den = det3x3(adp_inv_1 + adp_inv_2) ** (1 / 2)
+        try:
+            adp_cart_1 = adp_frac2cart(adp_frac_1, base_frame1)
+            adp_cart_2 = adp_frac2cart(adp_frac_2, base_frame2)
+            if normalize:
+                adp_cart_1 /= det3x3(adp_cart_1) ** (1 / 3)
+                adp_cart_2 /= det3x3(adp_cart_2) ** (1 / 3)
+            if uncertainties:
+                adp_inv_1 = unumpy.matrix(adp_cart_1).I
+                adp_inv_2 = unumpy.matrix(adp_cart_2).I
+            else:
+                adp_inv_1 = np.linalg.inv(adp_cart_1)
+                adp_inv_2 = np.linalg.inv(adp_cart_2)
+            r12_num = 2 ** (3 / 2) * det3x3(adp_inv_1 @ adp_inv_2) ** (1 / 4)
+            r12_den = det3x3(adp_inv_1 + adp_inv_2) ** (1 / 2)
+        except ValueError:  # if matrix cannot be inverted, return S = 1.0
+            r12_num = ufloat(0.0, 0) if uncertainties else 0.0
+            r12_den = ufloat(1.0, 0) if uncertainties else 1.0
         return 100 * (1 - r12_num / r12_den)
 
     def si_string(si: float or UFloat) -> str:
@@ -198,4 +195,5 @@ def calculate_similarity_indices(cif1_path,
 
 if __name__ == '__main__':
     calculate_similarity_indices('~/_/si/1.cif',
-                                 '~/_/si/2.cif')
+                                 '~/_/si/2.cif',
+                                 output_path='~/_/output.txt')
