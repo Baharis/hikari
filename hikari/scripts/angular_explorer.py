@@ -357,7 +357,6 @@ class AngularPotencyExplorer(AngularPropertyExplorer):
                 potency_mesh[j][i] = potency
             lst.write('\n')
 
-        # noinspection PyTypeChecker
         np.savetxt(dat_path, potency_mesh)
         lst.write(self.descriptive_statistics_string)
         lst.close()
@@ -408,7 +407,6 @@ class AngularR1Explorer(AngularPropertyExplorer):
                 r1_mesh[j][i] = r1
             lst.write('\n')
 
-        # noinspection PyTypeChecker
         np.savetxt(dat_path, r1_mesh)
         lst.write(self.descriptive_statistics_string)
         lst.close()
