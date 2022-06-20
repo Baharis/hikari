@@ -244,7 +244,10 @@ class CifReaderBuffer(CifIOBuffer):
 
 
 class CifReader(CifIO):
-    """A helper class managing reading cif files into `CifFrame`s."""
+    """
+    A helper class managing reading cif files into
+    :class:`~.CifFrame` or :class:`~.CifBlock`.
+    """
 
     @property
     def blocks(self):
@@ -322,13 +325,12 @@ class CifReader(CifIO):
         formatted_data = self.format_dictionary(parsed_data)
         return formatted_data
 
-    def read(self):
+    def read(self) -> OrderedDict:
         """
         Read the contents of cif currently pointed by :attr:`~.CifIO.file_path`
         and block :attr:`~.CifIO.data_block_header` and return them to a dict.
 
         :return: A dictionary containing information read from .cif file.
-        :rtype: dict
         """
         with open(self.file_path, 'r') as cif_file:
             self.file_contents = cif_file.read()
@@ -346,7 +348,7 @@ class CifReader(CifIO):
 
     def protect_multilines(self) -> None:
         """
-        Replace whitespace between every pair of "\n;" sequences with
+        Replace whitespace between every pair of "\\n;" sequences with
         substitutes and remove the outer semicolons in `self.file_contents`.
         """
 
@@ -392,8 +394,6 @@ class CifReader(CifIO):
         for whitespace, substitute in cls.WHITESPACE_SUBSTITUTES.items():
             s = s.replace(substitute, whitespace)
         return s
-
-# TODO: Looks like reader has some problems with reading olex2 files. check
 
 
 class CifWriterBuffer(CifIOBuffer):
@@ -489,7 +489,10 @@ class CifWriterBuffer(CifIOBuffer):
 
 
 class CifWriter(CifIO):
-    """A helper class managing writing `CifFrame`s into cif files"""
+    """
+    A helper class managing writing :class:`~.CifFrame` or :class:`~.CifBlock`
+    into cif files
+    """
 
     def write(self, cif_frame):
         with open(self.file_path, 'w') as cif_file:
