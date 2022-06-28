@@ -1,5 +1,7 @@
 from typing import Dict, Any
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
 import numpy as np
 from uncertainties import ufloat, ufloat_fromstr, unumpy, UFloat
 
@@ -191,6 +193,39 @@ def calculate_similarity_indices(cif1_path: str,
         if output_path is not None:
             f.close()
     terminate_output()
+
+
+def animate_similarity_index(u_start: np.ndarray,
+                             transformation: np.ndarray,
+                             output_path: str) -> None:
+
+    def plot_ellipsoid():
+        fig = plt.figure(figsize=plt.figaspect(1))  # Square figure
+        ax = fig.add_subplot(111, projection='3d')
+
+        coefs = (1, 2, 2)  # Coefficients in a0 x**2 + a1 y**2 + a2 z**2 = 1
+        rx, ry, rz = 1 / np.sqrt(coefs)  # Radii corresponding to the coeffs:
+
+        # Set of all spherical angles:
+        u = np.linspace(0, 2 * np.pi, 100)
+        v = np.linspace(0, np.pi, 100)
+
+        # Cartesian coordinates that correspond to the spherical angles:
+        # (this is the equation of an ellipsoid):
+        x = rx * np.outer(np.cos(u), np.sin(v))
+        y = ry * np.outer(np.sin(u), np.sin(v))
+        z = rz * np.outer(np.ones_like(u), np.cos(v))
+
+        # Plot:
+        ax.plot_surface(x, y, z, rstride=4, cstride=4, color='b')
+
+        # Adjustment of the axes, so that they all have the same span:
+        max_radius = max(rx, ry, rz)
+        for axis in 'xyz':
+            getattr(ax, 'set_{}lim'.format(axis))((-max_radius, max_radius))
+
+        plt.show()
+    plot_ellipsoid()
 
 
 if __name__ == '__main__':
