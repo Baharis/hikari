@@ -1,12 +1,15 @@
-from typing import Dict, Any
+from typing import Dict, Any, Iterable
 
 import matplotlib.pyplot as plt
+from matplotlib import animation
 from mpl_toolkits.mplot3d import axes3d
 import numpy as np
+import numpy.linalg as lin
 from uncertainties import ufloat, ufloat_fromstr, unumpy, UFloat
 
 from hikari.dataframes import BaseFrame, CifFrame, UBaseFrame
-from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements
+from hikari.utility import make_abspath, cfloat, det3x3, chemical_elements, \
+    rotation_around
 
 
 def calculate_similarity_indices(cif1_path: str,
@@ -195,40 +198,67 @@ def calculate_similarity_indices(cif1_path: str,
     terminate_output()
 
 
-def animate_similarity_index(u_start: np.ndarray,
+def animate_similarity_index(u_diag: Iterable,
                              transformation: np.ndarray,
+                             steps: int,
                              output_path: str) -> None:
+    max_radius = 1.0
 
-    def plot_ellipsoid():
-        fig = plt.figure(figsize=plt.figaspect(1))  # Square figure
-        ax = fig.add_subplot(111, projection='3d')
+    fig = plt.figure(figsize=plt.figaspect(1))  # Square figure
+    ax = fig.add_subplot(111, projection='3d')
 
-        coefs = (1, 2, 2)  # Coefficients in a0 x**2 + a1 y**2 + a2 z**2 = 1
-        rx, ry, rz = 1 / np.sqrt(coefs)  # Radii corresponding to the coeffs:
+    # Coefficients in a0 x**2 + a1 y**2 + a2 z**2 = 1 & corresponding radii
+    rx, ry, rz = 1 / np.sqrt(u_diag)
 
-        # Set of all spherical angles:
-        u = np.linspace(0, 2 * np.pi, 100)
-        v = np.linspace(0, np.pi, 100)
+    # Set of all spherical angles:
+    u = np.linspace(0, 2 * np.pi, 100)
+    v = np.linspace(0, np.pi, 100)
 
-        # Cartesian coordinates that correspond to the spherical angles:
-        # (this is the equation of an ellipsoid):
-        x = rx * np.outer(np.cos(u), np.sin(v))
-        y = ry * np.outer(np.sin(u), np.sin(v))
-        z = rz * np.outer(np.ones_like(u), np.cos(v))
+    # Cartesian coordinates that correspond to the spherical angles:
+    # (this is the equation of an ellipsoid):
+    x = rx * np.outer(np.cos(u), np.sin(v))
+    y = ry * np.outer(np.sin(u), np.sin(v))
+    z = rz * np.outer(np.ones_like(u), np.cos(v))
 
-        # Plot:
-        ax.plot_surface(x, y, z, rstride=4, cstride=4, color='b')
+    # set animation settings
+    fps = 10
+    frame_number = steps
 
-        # Adjustment of the axes, so that they all have the same span:
-        max_radius = max(rx, ry, rz)
+    axes = [ax.plot_surface(x, y, z, rstride=4, cstride=4, color='b')]
+
+    def get_frame(i):
+        for a in fig.axes:
+            a.clear()
+        x_list = x.reshape(10_000)
+        y_list = y.reshape(10_000)
+        z_list = z.reshape(10_000)
+        xyz = np.vstack([x_list, y_list, z_list]).T
+        xyz_trans = xyz @ lin.matrix_power(transformation, i)
+        x_trans = xyz_trans[:, 0].reshape(100, 100)
+        y_trans = xyz_trans[:, 1].reshape(100, 100)
+        z_trans = xyz_trans[:, 2].reshape(100, 100)
+        ax.plot_surface(x_trans, y_trans, z_trans,
+                                rstride=4, cstride=4, color='b')
         for axis in 'xyz':
             getattr(ax, 'set_{}lim'.format(axis))((-max_radius, max_radius))
 
-        plt.show()
-    plot_ellipsoid()
+    plt.tight_layout()
+    ani = animation.FuncAnimation(
+        fig=fig,
+        func=get_frame,
+        frames=frame_number,
+        interval=1000/fps,
+    )
+    ani_path = make_abspath(output_path) + '/S_animation.gif'
+    ani.save(ani_path, writer='imagemagick', fps=fps)
 
 
 if __name__ == '__main__':
-    calculate_similarity_indices('~/_/si/1.cif',
-                                 '~/_/si/2.cif',
-                                 output_path='~/_/output.txt')
+    # calculate_similarity_indices('~/_/si/1.cif',
+    #                              '~/_/si/2.cif',
+    #                              output_path='~/_/output.txt')
+    animate_similarity_index(u_diag=(2, 1, 1),
+                             transformation=rotation_around(np.array([0, 0, 1]),
+                                                            by=np.deg2rad(10)),
+                             steps=36,
+                             output_path='~/_/')
