@@ -1,4 +1,4 @@
-from typing import Dict, Any, Iterable
+from typing import Dict, Any, Iterable, Tuple
 
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -204,52 +204,108 @@ def animate_similarity_index(u_diag: Iterable,
                              output_path: str) -> None:
     max_radius = 1.0
 
-    fig = plt.figure(figsize=plt.figaspect(1))  # Square figure
-    ax = fig.add_subplot(111, projection='3d')
+    fig = plt.figure(figsize=(12, 12))  # Square figure
 
     # Coefficients in a0 x**2 + a1 y**2 + a2 z**2 = 1 & corresponding radii
-    rx, ry, rz = 1 / np.sqrt(u_diag)
+    rx, ry, rz = np.sqrt(u_diag)
+    u = np.diag(u_diag)
 
     # Set of all spherical angles:
-    u = np.linspace(0, 2 * np.pi, 100)
-    v = np.linspace(0, np.pi, 100)
+    v = np.linspace(0, 2 * np.pi, 100)
+    w = np.linspace(0, np.pi, 100)
 
     # Cartesian coordinates that correspond to the spherical angles:
     # (this is the equation of an ellipsoid):
-    x = rx * np.outer(np.cos(u), np.sin(v))
-    y = ry * np.outer(np.sin(u), np.sin(v))
-    z = rz * np.outer(np.ones_like(u), np.cos(v))
+    x = rx * np.outer(np.cos(v), np.sin(w))
+    y = ry * np.outer(np.sin(v), np.sin(w))
+    z = rz * np.outer(np.ones_like(v), np.cos(w))
 
     # set animation settings
     fps = 10
     frame_number = steps
 
-    axes = [ax.plot_surface(x, y, z, rstride=4, cstride=4, color='b')]
+    def calculate_similarity_index(adp_frac_1, adp_frac_2) -> float or UFloat:
+        base_frame = BaseFrame()
 
-    def get_frame(i):
-        for a in fig.axes:
-            a.clear()
+        def adp_frac2cart(adp_frac):
+            n = np.diag([base_frame.a_r, base_frame.b_r, base_frame.c_r])
+            return base_frame.A_d.T @ n @ adp_frac @ n @ base_frame.A_d
+        adp_cart_1 = adp_frac2cart(adp_frac_1)
+        adp_cart_2 = adp_frac2cart(adp_frac_2)
+        adp_inv_1 = np.linalg.inv(adp_cart_1)
+        adp_inv_2 = np.linalg.inv(adp_cart_2)
+        r12_num = 2 ** (3 / 2) * det3x3(adp_inv_1 @ adp_inv_2) ** (1 / 4)
+        r12_den = det3x3(adp_inv_1 + adp_inv_2) ** (1 / 2)
+        return 100 * (1 - r12_num / r12_den)
+
+    def get_xyz(step: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Get positions of x, y, z nodes after `step` steps of animation"""
+        trans_matrix = lin.matrix_power(transformation, step)
         x_list = x.reshape(10_000)
         y_list = y.reshape(10_000)
         z_list = z.reshape(10_000)
         xyz = np.vstack([x_list, y_list, z_list]).T
-        xyz_trans = xyz @ lin.matrix_power(transformation, i)
+        xyz_trans = xyz @ trans_matrix
         x_trans = xyz_trans[:, 0].reshape(100, 100)
         y_trans = xyz_trans[:, 1].reshape(100, 100)
         z_trans = xyz_trans[:, 2].reshape(100, 100)
-        ax.plot_surface(x_trans, y_trans, z_trans,
-                                rstride=4, cstride=4, color='b')
-        for axis in 'xyz':
-            getattr(ax, 'set_{}lim'.format(axis))((-max_radius, max_radius))
+        return x_trans, y_trans, z_trans
 
-    plt.tight_layout()
+    def get_u(step: int) -> np.ndarray:
+        """Get transformed u matrix after `step` steps of animation"""
+        t_matrix = lin.matrix_power(transformation, step)
+        return t_matrix @ u @ np.linalg.inv(t_matrix)
+
+    # prepare list of similarity indices
+    si = [calculate_similarity_index(u, get_u(i)) for i in range(steps)]
+    si.append(si[0])
+
+    def get_frame(step):
+        """Clear previous axes and produce new at `step` step of animation"""
+        for a in fig.axes:
+            a.clear()
+        x_, y_, z_ = get_xyz(step)
+        ax1 = fig.add_subplot(221, projection='3d')
+        ax2 = fig.add_subplot(222)
+        ax3 = fig.add_subplot(223, projection='3d')
+        ax4 = fig.add_subplot(224)
+        ax1.plot_surface(x_, y_, z_, rstride=4, cstride=4, color='b')
+        ax2.plot(range(steps+1), si, 'b')
+        ax2.set_xlabel(step)
+        ax2.set_ylabel('similarity index')
+        ax2.axvline(x=step, color='b')
+        ax2.plot(step, si[step], 'bo')
+        ax2.set_xlim([0, steps])
+        ax2.set_ylim([0, 25])
+        ax3.plot_surface(x, y, z, rstride=4, cstride=4, color='r')
+        u = get_u(step)
+        ax4_font = {'family': 'serif', 'weight': 'normal', 'size': 16}
+        ax4.clear()
+        ax4.axis('off')
+        ax4.text(0.2, 0.5, s='U = [', fontdict=ax4_font, ha='right')
+        ax4.text(0.4, 0.3, s=f'{u[0, 0]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.6, 0.3, s=f'{u[1, 0]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.8, 0.3, s=f'{u[2, 0]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.4, 0.5, s=f'{u[0, 1]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.6, 0.5, s=f'{u[1, 1]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.8, 0.5, s=f'{u[2, 1]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.4, 0.7, s=f'{u[0, 2]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.6, 0.7, s=f'{u[1, 2]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.8, 0.7, s=f'{u[2, 2]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.9, 0.5, s=']', fontdict=ax4_font, ha='right')
+        for axis in 'xyz':
+            getattr(ax1, 'set_{}lim'.format(axis))((-max_radius, max_radius))
+
+    fig.tight_layout()
+    fig.subplots_adjust(left=0.02, bottom=0.02, right=0.98, top=0.98,
+                        wspace=None, hspace=None)
     ani = animation.FuncAnimation(
         fig=fig,
         func=get_frame,
         frames=frame_number,
         interval=1000/fps,
     )
-    ani_path = make_abspath(output_path) + '/S_animation.gif'
+    ani_path = make_abspath(output_path)
     ani.save(ani_path, writer='imagemagick', fps=fps)
 
 
@@ -261,4 +317,4 @@ if __name__ == '__main__':
                              transformation=rotation_around(np.array([0, 0, 1]),
                                                             by=np.deg2rad(10)),
                              steps=36,
-                             output_path='~/_/')
+                             output_path='~/_/S_animation_211_zrot.gif')
