@@ -1,4 +1,4 @@
-from typing import Dict, Any, Iterable, Tuple
+from typing import Dict, Any, Iterable, Tuple, List
 
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -199,8 +199,7 @@ def calculate_similarity_indices(cif1_path: str,
 
 
 def animate_similarity_index(u_diag: Iterable,
-                             transformation: np.ndarray,
-                             steps: int,
+                             transformations: List[np.ndarray],
                              output_path: str) -> None:
     max_radius = 1.0
 
@@ -222,7 +221,7 @@ def animate_similarity_index(u_diag: Iterable,
 
     # set animation settings
     fps = 10
-    frame_number = steps
+    steps = len(transformations)
 
     def calculate_similarity_index(adp_frac_1, adp_frac_2) -> float or UFloat:
         base_frame = BaseFrame()
@@ -240,7 +239,7 @@ def animate_similarity_index(u_diag: Iterable,
 
     def get_xyz(step: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Get positions of x, y, z nodes after `step` steps of animation"""
-        trans_matrix = lin.matrix_power(transformation, step)
+        trans_matrix = transformations[step]
         x_list = x.reshape(10_000)
         y_list = y.reshape(10_000)
         z_list = z.reshape(10_000)
@@ -253,8 +252,8 @@ def animate_similarity_index(u_diag: Iterable,
 
     def get_u(step: int) -> np.ndarray:
         """Get transformed u matrix after `step` steps of animation"""
-        t_matrix = lin.matrix_power(transformation, step)
-        return t_matrix @ u @ np.linalg.inv(t_matrix)
+        trans_matrix = transformations[step]
+        return trans_matrix @ u @ np.linalg.inv(trans_matrix)
 
     # prepare list of similarity indices
     si = [calculate_similarity_index(u, get_u(i)) for i in range(steps)]
@@ -269,7 +268,7 @@ def animate_similarity_index(u_diag: Iterable,
         ax2 = fig.add_subplot(222)
         ax3 = fig.add_subplot(223, projection='3d')
         ax4 = fig.add_subplot(224)
-        ax1.plot_surface(x_, y_, z_, rstride=4, cstride=4, color='b')
+        ax1.plot_surface(x, y, z, rstride=4, cstride=4, color='r')
         ax2.plot(range(steps+1), si, 'b')
         ax2.set_xlabel(step)
         ax2.set_ylabel('similarity index')
@@ -277,7 +276,7 @@ def animate_similarity_index(u_diag: Iterable,
         ax2.plot(step, si[step], 'bo')
         ax2.set_xlim([0, steps])
         ax2.set_ylim([0, 25])
-        ax3.plot_surface(x, y, z, rstride=4, cstride=4, color='r')
+        ax3.plot_surface(x_, y_, z_, rstride=4, cstride=4, color='b')
         u = get_u(step)
         ax4_font = {'family': 'serif', 'weight': 'normal', 'size': 16}
         ax4.clear()
@@ -294,7 +293,7 @@ def animate_similarity_index(u_diag: Iterable,
         ax4.text(0.8, 0.7, s=f'{u[2, 2]:6.3f}', fontdict=ax4_font, ha='right')
         ax4.text(0.9, 0.5, s=']', fontdict=ax4_font, ha='right')
         for axis in 'xyz':
-            getattr(ax1, 'set_{}lim'.format(axis))((-max_radius, max_radius))
+            getattr(ax3, 'set_{}lim'.format(axis))((-max_radius, max_radius))
 
     fig.tight_layout()
     fig.subplots_adjust(left=0.02, bottom=0.02, right=0.98, top=0.98,
@@ -302,7 +301,7 @@ def animate_similarity_index(u_diag: Iterable,
     ani = animation.FuncAnimation(
         fig=fig,
         func=get_frame,
-        frames=frame_number,
+        frames=steps,
         interval=1000/fps,
     )
     ani_path = make_abspath(output_path)
@@ -313,8 +312,8 @@ if __name__ == '__main__':
     # calculate_similarity_indices('~/_/si/1.cif',
     #                              '~/_/si/2.cif',
     #                              output_path='~/_/output.txt')
+    t = [rotation_around(np.array([0, 0, 1]), by=np.deg2rad(10 * i))
+         for i in range(36)]
     animate_similarity_index(u_diag=(2, 1, 1),
-                             transformation=rotation_around(np.array([0, 0, 1]),
-                                                            by=np.deg2rad(10)),
-                             steps=36,
+                             transformations=t,
                              output_path='~/_/S_animation_211_zrot.gif')
