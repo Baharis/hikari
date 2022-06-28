@@ -201,6 +201,15 @@ def calculate_similarity_indices(cif1_path: str,
 def animate_similarity_index(u_diag: Iterable,
                              transformations: List[np.ndarray],
                              output_path: str) -> None:
+    """
+    Make a gif presenting the change of similarity index against some arbitrary
+    series of `transformations`. Initial displacement matrix must be diagonal,
+    values given in `u_diag`, evaluated against a regular unit cell with a = 1.
+
+    :param u_diag: triplet of u matrix diagonal elements
+    :param transformations: list of transformations to be plotted every 0.1 sec
+    :param output_path: path where resulting gif file will be saved
+    """
     max_radius = 1.0
 
     fig = plt.figure(figsize=(12, 12))  # Square figure
@@ -253,7 +262,7 @@ def animate_similarity_index(u_diag: Iterable,
     def get_u(step: int) -> np.ndarray:
         """Get transformed u matrix after `step` steps of animation"""
         trans_matrix = transformations[step]
-        return trans_matrix @ u @ np.linalg.inv(trans_matrix)
+        return trans_matrix.T @ u @ trans_matrix
 
     # prepare list of similarity indices
     si = [calculate_similarity_index(u, get_u(i)) for i in range(steps)]
@@ -277,20 +286,20 @@ def animate_similarity_index(u_diag: Iterable,
         ax2.set_xlim([0, steps])
         ax2.set_ylim([0, 25])
         ax3.plot_surface(x_, y_, z_, rstride=4, cstride=4, color='b')
-        u = get_u(step)
+        u_ = get_u(step)
         ax4_font = {'family': 'serif', 'weight': 'normal', 'size': 16}
         ax4.clear()
         ax4.axis('off')
         ax4.text(0.2, 0.5, s='U = [', fontdict=ax4_font, ha='right')
-        ax4.text(0.4, 0.3, s=f'{u[0, 0]:6.3f}', fontdict=ax4_font, ha='right')
-        ax4.text(0.6, 0.3, s=f'{u[1, 0]:6.3f}', fontdict=ax4_font, ha='right')
-        ax4.text(0.8, 0.3, s=f'{u[2, 0]:6.3f}', fontdict=ax4_font, ha='right')
-        ax4.text(0.4, 0.5, s=f'{u[0, 1]:6.3f}', fontdict=ax4_font, ha='right')
-        ax4.text(0.6, 0.5, s=f'{u[1, 1]:6.3f}', fontdict=ax4_font, ha='right')
-        ax4.text(0.8, 0.5, s=f'{u[2, 1]:6.3f}', fontdict=ax4_font, ha='right')
-        ax4.text(0.4, 0.7, s=f'{u[0, 2]:6.3f}', fontdict=ax4_font, ha='right')
-        ax4.text(0.6, 0.7, s=f'{u[1, 2]:6.3f}', fontdict=ax4_font, ha='right')
-        ax4.text(0.8, 0.7, s=f'{u[2, 2]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.4, 0.7, s=f'{u_[0, 0]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.6, 0.7, s=f'{u_[1, 0]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.8, 0.7, s=f'{u_[2, 0]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.4, 0.5, s=f'{u_[0, 1]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.6, 0.5, s=f'{u_[1, 1]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.8, 0.5, s=f'{u_[2, 1]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.4, 0.3, s=f'{u_[0, 2]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.6, 0.3, s=f'{u_[1, 2]:6.3f}', fontdict=ax4_font, ha='right')
+        ax4.text(0.8, 0.3, s=f'{u_[2, 2]:6.3f}', fontdict=ax4_font, ha='right')
         ax4.text(0.9, 0.5, s=']', fontdict=ax4_font, ha='right')
         for axis in 'xyz':
             getattr(ax3, 'set_{}lim'.format(axis))((-max_radius, max_radius))
@@ -311,9 +320,13 @@ def animate_similarity_index(u_diag: Iterable,
 if __name__ == '__main__':
     # calculate_similarity_indices('~/_/si/1.cif',
     #                              '~/_/si/2.cif',
-    #                              output_path='~/_/output.txt')
-    t = [rotation_around(np.array([0, 0, 1]), by=np.deg2rad(10 * i))
-         for i in range(36)]
+    #                              output_path='~/_/si/output.txt')
+    t1 = [rotation_around(np.array([0, 0, 1]), by=np.deg2rad(10 * i))
+          for i in range(36)]
+    t2 = [np.eye(3) * np.sqrt((1.5 - np.cos(np.deg2rad(10 * i)) / 2))
+          for i in range(36)]
+    t3 = [np.array([(1, 0, 0), (0, 1, 0), (0, 0, np.sqrt(2 ** np.sin(np.deg2rad(10 * i))))])
+          for i in range(36)]
     animate_similarity_index(u_diag=(2, 1, 1),
-                             transformations=t,
-                             output_path='~/_/S_animation_211_zrot.gif')
+                             transformations=t1,
+                             output_path='~/_/si/S_animation_211_zrot.gif')
