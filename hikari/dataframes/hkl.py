@@ -263,9 +263,17 @@ class HklKeys:
         'reduce_behaviour': 'keep',
         'type': int
     }
+    ___ = {
+        'default': '',
+        'description': 'Dummy column for irrelevant data',
+        'imperative': False,
+        'dtype': 'str',
+        'reduce_behaviour': 'keep',
+        'type': str
+    }
     defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'sf', 'b', 'm', 'la', 'ph',
                     'u', 'r', 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3',
-                    'x', 'y', 'z', 'ze', 'ze2', 'Iosi', 'Icsi', 'equiv'}
+                    'x', 'y', 'z', 'ze', 'ze2', 'Iosi', 'Icsi', 'equiv', '_'}
     # TODO check if needed and cplt?
 
     def __init__(self, keys=()):
