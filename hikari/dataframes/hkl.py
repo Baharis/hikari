@@ -1116,9 +1116,10 @@ class HklReader(HklIo):
         """
         slice_end = list(np.cumsum(self._format_dict['widths']))
         slice_beg = [0] + slice_end[:-1]
-        parsed = [line[beg:end] for beg, end in zip(slice_beg, slice_end)]
-        parsed = np.array(parsed)
         try:
+            parsed = [line[beg:end] for beg, end in zip(slice_beg, slice_end)]
+            parsed = np.array(parsed)
+            assert min([len(p) for p in parsed]) > 0
             assert len(parsed) == len(self._format_dict['widths'])
         except (ValueError, AssertionError):
             return None
