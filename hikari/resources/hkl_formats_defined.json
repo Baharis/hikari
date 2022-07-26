@@ -120,6 +120,26 @@
             -4
         ]
     },
+    "m80": {
+        "labels": [
+            "h",
+            "k",
+            "l",
+            "b",
+            "F",
+            "_"
+        ],
+        "prefix": "Block1 begin",
+        "suffix": "Block1 end",
+        "widths": [
+            4,
+            4,
+            4,
+            4,
+            12,
+            144
+        ]
+    },
     "shelx_2": {
         "labels": [
             "h",
