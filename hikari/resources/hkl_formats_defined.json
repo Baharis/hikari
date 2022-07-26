@@ -127,7 +127,8 @@
             "l",
             "b",
             "F",
-            "_"
+            "sf",
+            "None"
         ],
         "prefix": "Block1 begin",
         "suffix": "Block1 end",
@@ -137,7 +138,8 @@
             4,
             4,
             12,
-            144
+            12,
+            132
         ]
     },
     "shelx_2": {
