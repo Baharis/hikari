@@ -284,7 +284,7 @@ def animate_similarity_index(u_diag: Iterable,
         ax2.axvline(x=step, color='b')
         ax2.plot(step, si[step], 'bo')
         ax2.set_xlim([0, steps])
-        ax2.set_ylim([0, 25])
+        ax2.set_ylim([0, 10])
         ax3.plot_surface(x_, y_, z_, rstride=4, cstride=4, color='b')
         u_ = get_u(step)
         ax4_font = {'family': 'serif', 'weight': 'normal', 'size': 16}
@@ -302,7 +302,8 @@ def animate_similarity_index(u_diag: Iterable,
         ax4.text(0.8, 0.3, s=f'{u_[2, 2]:6.3f}', fontdict=ax4_font, ha='right')
         ax4.text(0.9, 0.5, s=']', fontdict=ax4_font, ha='right')
         for axis in 'xyz':
-            getattr(ax3, 'set_{}lim'.format(axis))((-max_radius, max_radius))
+            getattr(ax1, f'set_{axis}lim')((-max_radius, max_radius))
+            getattr(ax3, f'set_{axis}lim')((-max_radius, max_radius))
 
     fig.tight_layout()
     fig.subplots_adjust(left=0.02, bottom=0.02, right=0.98, top=0.98,
