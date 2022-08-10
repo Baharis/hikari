@@ -964,6 +964,9 @@ class HklIo:
         | free_6   |          | h -4 k -4 l -4         | NO   | YES  | YES    |
         |          |          | I -8 si -8 m -4        |      | (a)  |        |
         +----------+----------+------------------------+------+------+--------+
+        | m80      |          | h 4 k 4 l 4 b 4 F 12   | YES  | YES  | NO     |
+        |          |          | None 132               | (b)  | (b)  |        |
+        +----------+----------+------------------------+------+------+--------+
         | shelx_2  | 2        | h 4 k 4 l 4 I 8 si 8   | NO   | YES  | NO     |
         |          |          | b 4 la 8               |      | (a)  |        |
         +----------+----------+------------------------+------+------+--------+
@@ -986,36 +989,36 @@ class HklIo:
         |          |          | Ic 14 I 14 si 13       | (*)  |      |        |
         +----------+----------+------------------------+------+------+--------+
         | tonto_F  |          | h -4 k -4 l -4         | YES  | YES  | YES    |
-        |          |          | F -8 sf -8             | (b)  | (b)  |        |
+        |          |          | F -8 sf -8             | (c)  | (c)  |        |
         +----------+----------+------------------------+------+------+--------+
         | tonto_I  | tonto    | h -4 k -4 l -4         | YES  | YES  | YES    |
-        |          |          | I -8 si -8             | (b)  | (b)  |        |
+        |          |          | I -8 si -8             | (c)  | (c)  |        |
         +----------+----------+------------------------+------+------+--------+
         | xd_F6    |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
-        |          |          | F -13 sf -13           | (c)  |      |        |
+        |          |          | F -13 sf -13           | (d)  |      |        |
         +----------+----------+------------------------+------+------+--------+
         | xd_F7    |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
-        |          |          | F -13 sf -13 t -10     | (c)  |      |        |
+        |          |          | F -13 sf -13 t -10     | (d)  |      |        |
         +----------+----------+------------------------+------+------+--------+
         | xd_F-7   |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
-        |          |          | F -13 sf -13 ph -10    | (c)  |      |        |
+        |          |          | F -13 sf -13 ph -10    | (d)  |      |        |
         +----------+----------+------------------------+------+------+--------+
         | xd_F13   |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
-        |          |          | F -13 sf -13 t -10     | (c)  |      |        |
+        |          |          | F -13 sf -13 t -10     | (d)  |      |        |
         |          |          | u1 -10 u2 -10 u3 -10   |      |      |        |
         |          |          | v1 -10 v2 -10 v3 -10   |      |      |        |
         +----------+----------+------------------------+------+------+--------+
         | xd_I6    | xd       | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
-        |          |          | I -13 si -13           | (c)  |      |        |
+        |          |          | I -13 si -13           | (d)  |      |        |
         +----------+----------+------------------------+------+------+--------+
         | xd_I7    |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
-        |          |          | I -13 si -13 t -10     | (c)  |      |        |
+        |          |          | I -13 si -13 t -10     | (d)  |      |        |
         +----------+----------+------------------------+------+------+--------+
         | xd_I-7   |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
-        |          |          | I -13 si -13 ph -10    | (c)  |      |        |
+        |          |          | I -13 si -13 ph -10    | (d)  |      |        |
         +----------+----------+------------------------+------+------+--------+
         | xd_I13   |          | h -4 k -4 l -4 b -3    | YES  | NO   | YES    |
-        |          |          | I -13 si -13 t -10     | (c)  |      |        |
+        |          |          | I -13 si -13 t -10     | (d)  |      |        |
         |          |          | u1 -10 u2 -10 u3 -10   |      |      |        |
         |          |          | v1 -10 v2 -10 v3 -10   |      |      |        |
         +----------+----------+------------------------+------+------+--------+
@@ -1030,11 +1033,13 @@ class HklIo:
 
         - Suffix (a) is a zero-line: a shelx ending line with h = k = l = 0,
 
-        - Prefix and suffix (b) are tonto-characteristic beginning/end of file,
+        - Prefix and suffix (b) express a superflip-style block/start end,
 
-        - Prefix (c) is an xd-characteristic line with info about file content.
+        - Prefix and suffix (c) are tonto-characteristic beginning/end of file,
 
-        Pre/suffixes denoted with (*) are not suported in terms of writing.
+        - Prefix (d) is an xd-characteristic line with info about file content.
+
+        Pre/suffixes denoted with (*) are not supported in terms of writing.
         A custom hkl file format can be defined by providing
         a *format string* instead of 'Name'.
         The string should look like the ones in column "contents".
