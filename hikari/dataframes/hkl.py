@@ -361,7 +361,7 @@ class HklFrame(BaseFrame):
     are defined and describe/operate on the :attr:`frame`.
     """
 
-    HKL_LIMIT = 99
+    HKL_LIMIT = 127
     """Highest absolute value of h, k or l index, which can be
     interpreted correctly by current version of the software."""
 
@@ -1333,14 +1333,3 @@ class HklToResConverter:
 
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
-
-
-if __name__ == "__main__":
-    h1 = HklFrame()
-    h1.edit_cell(a=30, b=30, c=30, al=10, be=10, ga=10)
-    h1.fill()
-    h2 = HklFrame()
-    h2.edit_cell(a=30, b=30, c=30, al=10, be=10, ga=10)
-    h2.fill2()
-    h2.to_res('~/_/skew.res')
-
