@@ -597,10 +597,10 @@ class HklFrame(BaseFrame):
             hkl = _make_hkl_ball(hkl_limits)
 
         # create new dataframe using obtained ball of data
-        _h, _k, _l = np.vsplit(hkl.T, 3)
+        _h, _k, _l = hkl.T
         ones = np.ones_like(np.array(_h)[0])
-        self.from_dict({'h': np.array(_h)[0], 'k': np.array(_k)[0],
-                        'l': np.array(_l)[0], 'I': ones, 'si': ones, 'm': ones})
+        self.from_dict({'h': np.squeeze(_h), 'k': np.squeeze(_k),
+                        'l': np.squeeze(_l), 'I': ones, 'si': ones, 'm': ones})
 
     def stats(self, bins=10, space_group=SG['P1']):
         """
