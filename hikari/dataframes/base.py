@@ -381,14 +381,14 @@ class BaseFrame:
         s2a('-100/110/101'), s2a('110/0-10/011'), s2a('101/011/00-1')]
 
     @property
-    def reduced_cell(self):
-        """Instance of `BaseFrame` with Selling-reduced unit cell"""
+    def semi_reduced_cell(self):
+        """Instance of `BaseFrame` with not-unique reduced unit cell"""
         raise NotImplementedError
         return 0
 
     @property
-    def reduction_matrix(self):
-        """Matrix transforming this cell to the Selling-reduced cell"""
+    def semi_reduction_matrix(self):
+        """Matrix transforming this cell to not-unique reduced cell"""
         a, b, c = self.a_v, self.b_v, self.c_v
         d = -a - b - c
         s = np.array([np.dot(b, c), np.dot(a, c), np.dot(a, b),
@@ -402,6 +402,10 @@ class BaseFrame:
                 e3_trans_total = e3_trans @ e3_trans_total
                 s = s6_trans @ s
             else:
-                # reorder vectors so that a <= b <= c <= d
-                return e3_trans_total
+                a, b, c = e3_trans_total @ self.A_d
+                d = -a - b - c
+                a2, b2 = np.dot(a, a), np.dot(b, b)
+                c2, d2 = np.dot(c, c), np.dot(d, d)
+                length_order = np.array([a2, b2, c2, d2]).argsort()
+                return (e3_trans_total @ self.A_d)[length_order]
         raise RuntimeError("Number of reduction cycles exceeded maximum (1000)")
