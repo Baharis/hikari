@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 
 import numpy as np
@@ -589,6 +590,35 @@ class HklFrame(BaseFrame):
             previous_length = len(hkl)
             max_index = max_index * 2
             hkl = _make_hkl_ball(max_index)
+
+        # create new dataframe using obtained ball of data
+        _h, _k, _l = np.vsplit(hkl.T, 3)
+        ones = np.ones_like(np.array(_h)[0])
+        self.from_dict({'h': np.array(_h)[0], 'k': np.array(_k)[0],
+                        'l': np.array(_l)[0], 'I': ones, 'si': ones, 'm': ones})
+
+    def fill2(self, radius=2.0):
+        max_h = math.ceil(radius / self.a_r)
+        max_k = math.ceil(radius / self.b_r)
+        max_l = math.ceil(radius / self.c_r)
+
+        # make an initial guess of the hkl ball
+        def _make_hkl_ball(h=max_h, k=max_k, l_=max_l):
+            hkl_grid = np.mgrid[-h:h:2j*h+1j, -k:k:2j*k+1j, -l_:l_:2j*l_+1j]
+            hkls = np.stack(hkl_grid, -1).reshape(-1, 3)
+            xyz = np.array((self.a_w, self.b_w, self.c_w))
+            return hkls[lin.norm(hkls @ xyz, axis=1) <= radius]
+        hkl = _make_hkl_ball()
+
+        # increase the ball size until all needed points are in
+        previous_length = -1
+        while len(hkl) > previous_length \
+                and max(max_h, max_k, max_l) <= self.HKL_LIMIT:
+            previous_length = len(hkl)
+            max_h = math.ceil(max_h * 1.2)
+            max_k = math.ceil(max_k * 1.2)
+            max_l = math.ceil(max_l * 1.2)
+            hkl = _make_hkl_ball(max_h, max_k, max_l)
 
         # create new dataframe using obtained ball of data
         _h, _k, _l = np.vsplit(hkl.T, 3)
