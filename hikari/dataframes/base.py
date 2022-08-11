@@ -1,5 +1,31 @@
 import numpy as np
 from hikari.utility import angle2rad, cfloat, det3x3
+from hikari.utility import str2array as s2a
+
+
+class Selling:
+    """
+    Dataclass for Selling parameters, matrices, and other definitions
+    used in obtaining reduced unit cell.
+    """
+
+    class S6:
+        """Dataclass for matrices used in S6 Selling scalar space"""
+        S1_FLIP_MATRIX = s2a('-100000/110000/100010/-100100/101000/100001')
+        S2_FLIP_MATRIX = s2a('110000/0-10000/010100/011000/0-10010/010001')
+        S3_FLIP_MATRIX = s2a('101000/001100/00-1000/011000/001010/00-1001')
+        S4_FLIP_MATRIX = s2a('100-100/001100/010100/000-100/000110/000101')
+        S5_FLIP_MATRIX = s2a('001010/0100-10/100010/000110/0000-10/000011')
+        S6_FLIP_MATRIX = s2a('010001/100001/00100-1/000101/000011/00000-1')
+
+    class E3:
+        """Dataclass for matrices used in euclidean E3 vector space"""
+        S1_FLIP_MATRIX = s2a('110/0-10/001')
+        S2_FLIP_MATRIX = s2a('-100/110/001')
+        S3_FLIP_MATRIX = s2a('-100/010/101')
+        S4_FLIP_MATRIX = s2a('-100/110/101')
+        S5_FLIP_MATRIX = s2a('110/0-10/011')
+        S6_FLIP_MATRIX = s2a('101/011/00-1')
 
 
 class BaseFrame:
