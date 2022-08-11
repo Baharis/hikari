@@ -27,6 +27,49 @@ class Selling:
         S5_FLIP_MATRIX = s2a('110/0-10/011')
         S6_FLIP_MATRIX = s2a('101/011/00-1')
 
+    def __init__(self, basis_matrix: np.ndarray) -> None:
+        self.a, self.b, self.c = np.vsplit(basis_matrix)
+
+    @property
+    def d(self) -> np.ndarray:
+        return -self.a - self.b - self.c
+
+    @property
+    def s(self) -> np.ndarray:
+        return np.array(np.dot(self.b, self.c), np.dot(self.a, self.c),
+                        np.dot(self.a, self.b), np.dot(self.a, self.d),
+                        np.dot(self.b, self.d), np.dot(self.c, self.d))
+
+    def _reduce(self):
+        reduction_cycle = 0
+        s = self.s
+        e3_sum_transformation = np.eye(3)
+        while reduction_cycle < 1000:
+            if s[0] > 0:
+                s6_transformation = self.S6.S1_FLIP_MATRIX
+                e3_transformation = self.E3.S1_FLIP_MATRIX
+            elif s[1] > 0:
+                s6_transformation = self.S6.S1_FLIP_MATRIX
+                e3_transformation = self.E3.S1_FLIP_MATRIX
+            elif s[2] > 0:
+                s6_transformation = self.S6.S1_FLIP_MATRIX
+                e3_transformation = self.E3.S1_FLIP_MATRIX
+            elif s[3] > 0:
+                s6_transformation = self.S6.S1_FLIP_MATRIX
+                e3_transformation = self.E3.S1_FLIP_MATRIX
+            elif s[4] > 0:
+                s6_transformation = self.S6.S1_FLIP_MATRIX
+                e3_transformation = self.E3.S1_FLIP_MATRIX
+            elif s[5] > 0:
+                s6_transformation = self.S6.S1_FLIP_MATRIX
+                e3_transformation = self.E3.S1_FLIP_MATRIX
+            else:
+                # reorder vectors so that a <= b <= c <= d
+                return 0
+            s = s6_transformation @ s
+            e3_sum_transformation = e3_transformation @ e3_sum_transformation
+        raise TimeoutError('Number of reduction cycles exceeded maximum (1000)')
+
 
 class BaseFrame:
     """
@@ -284,7 +327,7 @@ class BaseFrame:
     @property
     def A_d(self):
         """
-        :return: Matrix A with vertically stacked direct space vectors.
+        :return: Basis matrix A with vertically stacked direct space vectors.
         :rtype: np.array
         """
         return np.vstack([self._a_v, self._b_v, self._c_v])
@@ -380,7 +423,7 @@ class BaseFrame:
     @property
     def A_r(self):
         """
-        :return: Matrix A\* with vertically stacked reciprocal space vectors.
+        :return: Basis matrix A\* with vertically stacked reciprocal space vectors.
         :rtype: np.array
         """
         return np.vstack([self._a_w, self._b_w, self._c_w])
