@@ -572,33 +572,29 @@ class HklFrame(BaseFrame):
         :param radius: Maximum distance from the reciprocal space origin
             to placed reflection (in reciprocal Angstrom).
         """
-        max_h = math.ceil(radius / self.a_r)
-        max_k = math.ceil(radius / self.b_r)
-        max_l = math.ceil(radius / self.c_r)
+        hkl_limits = np.ceil(radius / np.array([self.a_r, self.b_r, self.c_r]))\
+            .astype(np.int16)
 
         # make an initial guess of the hkl ball
-        def _make_hkl_ball(h=max_h, k=max_k, l_=max_l):
-            hkl_grid = np.mgrid[-h:h:2j*h+1j, -k:k:2j*k+1j, -l_:l_:2j*l_+1j]
-            hkls = np.stack(hkl_grid, -1).reshape(-1, 3)
-            xyz = np.array((self.a_w, self.b_w, self.c_w))
-            return hkls[lin.norm(hkls @ xyz, axis=1) <= radius]
+        def _make_hkl_ball(lims=hkl_limits):
+            hkls = np.indices(2 * lims + 1, np.int16).reshape(3, -1).T - lims
+            return hkls[lin.norm(hkls @ self.A_r, axis=1) <= radius]
         hkl = _make_hkl_ball()
 
-        def increment_index_limit(index: int) -> int:
-            if index >= self.HKL_LIMIT:
-                msg = 'Attempting to use index > HKL_LIMIT of {} when filling'
-                raise ValueError(msg.format(self.HKL_LIMIT))
+        def increment_index_limit(lims: np.ndarray) -> np.ndarray:
+            if any(lims >= self.HKL_LIMIT):
+                msg = 'Attempting to use hkl indices {} above HKL_LIMIT of {}'
+                raise ValueError(msg.format(lims, self.HKL_LIMIT))
             else:
-                return min(math.ceil(index * 1.1), self.HKL_LIMIT)
+                return np.clip(np.ceil(lims * 1.1).astype(np.int16),
+                               0, np.int16(self.HKL_LIMIT))
 
         # increase the ball size until all needed points are in
         previous_length = -1
         while len(hkl) > previous_length:
             previous_length = len(hkl)
-            max_h = increment_index_limit(max_h)
-            max_k = increment_index_limit(max_k)
-            max_l = increment_index_limit(max_l)
-            hkl = _make_hkl_ball(max_h, max_k, max_l)
+            hkl_limits = increment_index_limit(hkl_limits)
+            hkl = _make_hkl_ball(hkl_limits)
 
         # create new dataframe using obtained ball of data
         _h, _k, _l = np.vsplit(hkl.T, 3)
