@@ -565,39 +565,13 @@ class HklFrame(BaseFrame):
             self.place()
         self._recalculate_structure_factors_and_intensities()
 
-    def fill(self, radius=2.0):
+    def fill(self, radius: float = 2.0) -> None:
         """
         Fill dataframe with all reflections within *radius* from space origin.
 
         :param radius: Maximum distance from the reciprocal space origin
             to placed reflection (in reciprocal Angstrom).
-        :type radius: float
         """
-
-        max_index = 25
-
-        # make an initial guess of the hkl ball
-        def _make_hkl_ball(i=max_index):
-            hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
-            hkls = np.stack(hkl_grid, -1).reshape(-1, 3)
-            xyz = np.array((self.a_w, self.b_w, self.c_w))
-            return hkls[lin.norm(hkls @ xyz, axis=1) <= radius]
-        hkl = _make_hkl_ball()
-
-        # increase the ball size until all needed points are in
-        previous_length = -1
-        while len(hkl) > previous_length and max_index <= self.HKL_LIMIT:
-            previous_length = len(hkl)
-            max_index = max_index * 2
-            hkl = _make_hkl_ball(max_index)
-
-        # create new dataframe using obtained ball of data
-        _h, _k, _l = np.vsplit(hkl.T, 3)
-        ones = np.ones_like(np.array(_h)[0])
-        self.from_dict({'h': np.array(_h)[0], 'k': np.array(_k)[0],
-                        'l': np.array(_l)[0], 'I': ones, 'si': ones, 'm': ones})
-
-    def fill2(self, radius=2.0):
         max_h = math.ceil(radius / self.a_r)
         max_k = math.ceil(radius / self.b_r)
         max_l = math.ceil(radius / self.c_r)
