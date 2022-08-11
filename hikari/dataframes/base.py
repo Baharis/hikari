@@ -3,74 +3,6 @@ from hikari.utility import angle2rad, cfloat, det3x3
 from hikari.utility import str2array as s2a
 
 
-class Selling:
-    """
-    Dataclass for Selling parameters, matrices, and other definitions
-    used in obtaining reduced unit cell.
-    """
-
-    class S6:
-        """Dataclass for matrices used in S6 Selling scalar space"""
-        S1_FLIP_MATRIX = s2a('-100000/110000/100010/-100100/101000/100001')
-        S2_FLIP_MATRIX = s2a('110000/0-10000/010100/011000/0-10010/010001')
-        S3_FLIP_MATRIX = s2a('101000/001100/00-1000/011000/001010/00-1001')
-        S4_FLIP_MATRIX = s2a('100-100/001100/010100/000-100/000110/000101')
-        S5_FLIP_MATRIX = s2a('001010/0100-10/100010/000110/0000-10/000011')
-        S6_FLIP_MATRIX = s2a('010001/100001/00100-1/000101/000011/00000-1')
-
-    class E3:
-        """Dataclass for matrices used in euclidean E3 vector space"""
-        S1_FLIP_MATRIX = s2a('110/0-10/001')
-        S2_FLIP_MATRIX = s2a('-100/110/001')
-        S3_FLIP_MATRIX = s2a('-100/010/101')
-        S4_FLIP_MATRIX = s2a('-100/110/101')
-        S5_FLIP_MATRIX = s2a('110/0-10/011')
-        S6_FLIP_MATRIX = s2a('101/011/00-1')
-
-    def __init__(self, basis_matrix: np.ndarray) -> None:
-        self.a, self.b, self.c = np.vsplit(basis_matrix)
-
-    @property
-    def d(self) -> np.ndarray:
-        return -self.a - self.b - self.c
-
-    @property
-    def s(self) -> np.ndarray:
-        return np.array(np.dot(self.b, self.c), np.dot(self.a, self.c),
-                        np.dot(self.a, self.b), np.dot(self.a, self.d),
-                        np.dot(self.b, self.d), np.dot(self.c, self.d))
-
-    def _reduce(self):
-        reduction_cycle = 0
-        s = self.s
-        e3_sum_transformation = np.eye(3)
-        while reduction_cycle < 1000:
-            if s[0] > 0:
-                s6_transformation = self.S6.S1_FLIP_MATRIX
-                e3_transformation = self.E3.S1_FLIP_MATRIX
-            elif s[1] > 0:
-                s6_transformation = self.S6.S1_FLIP_MATRIX
-                e3_transformation = self.E3.S1_FLIP_MATRIX
-            elif s[2] > 0:
-                s6_transformation = self.S6.S1_FLIP_MATRIX
-                e3_transformation = self.E3.S1_FLIP_MATRIX
-            elif s[3] > 0:
-                s6_transformation = self.S6.S1_FLIP_MATRIX
-                e3_transformation = self.E3.S1_FLIP_MATRIX
-            elif s[4] > 0:
-                s6_transformation = self.S6.S1_FLIP_MATRIX
-                e3_transformation = self.E3.S1_FLIP_MATRIX
-            elif s[5] > 0:
-                s6_transformation = self.S6.S1_FLIP_MATRIX
-                e3_transformation = self.E3.S1_FLIP_MATRIX
-            else:
-                # reorder vectors so that a <= b <= c <= d
-                return 0
-            s = s6_transformation @ s
-            e3_sum_transformation = e3_transformation @ e3_sum_transformation
-        raise TimeoutError('Number of reduction cycles exceeded maximum (1000)')
-
-
 class BaseFrame:
     """
     This class stores and manipulates basic information present
@@ -435,3 +367,41 @@ class BaseFrame:
         :rtype: np.array
         """
         return self.A_r @ self.A_r.T
+
+    SELLING_S6_TRANSFORMATIONS = [
+        s2a('-100000/110000/100010/-100100/101000/100001'),
+        s2a('110000/0-10000/010100/011000/0-10010/010001'),
+        s2a('101000/001100/00-1000/011000/001010/00-1001'),
+        s2a('100-100/001100/010100/000-100/000110/000101'),
+        s2a('001010/0100-10/100010/000110/0000-10/000011'),
+        s2a('010001/100001/00100-1/000101/000011/00000-1')]
+
+    SELLING_E3_TRANSFORMATIONS = [
+        s2a('110/0-10/001'), s2a('-100/110/001'), s2a('-100/010/101'),
+        s2a('-100/110/101'), s2a('110/0-10/011'), s2a('101/011/00-1')]
+
+    @property
+    def reduced_cell(self):
+        """Instance of `BaseFrame` with Selling-reduced unit cell"""
+        raise NotImplementedError
+        return 0
+
+    @property
+    def reduction_matrix(self):
+        """Matrix transforming this cell to the Selling-reduced cell"""
+        a, b, c = self.a_v, self.b_v, self.c_v
+        d = -a - b - c
+        s = np.array([np.dot(b, c), np.dot(a, c), np.dot(a, b),
+                      np.dot(a, d), np.dot(b, d), np.dot(c, d)])
+        e3_trans_total = np.eye(3)
+        for _ in range(1000):
+            largest_scalar_index = np.argmax(s)
+            if s[largest_scalar_index] > 0:
+                e3_trans = self.SELLING_E3_TRANSFORMATIONS[largest_scalar_index]
+                s6_trans = self.SELLING_S6_TRANSFORMATIONS[largest_scalar_index]
+                e3_trans_total = e3_trans @ e3_trans_total
+                s = s6_trans @ s
+            else:
+                # reorder vectors so that a <= b <= c <= d
+                return e3_trans_total
+        raise RuntimeError("Number of reduction cycles exceeded maximum (1000)")
