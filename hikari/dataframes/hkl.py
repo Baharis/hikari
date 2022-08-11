@@ -610,14 +610,20 @@ class HklFrame(BaseFrame):
             return hkls[lin.norm(hkls @ xyz, axis=1) <= radius]
         hkl = _make_hkl_ball()
 
+        def increment_index_limit(index: int) -> int:
+            if index >= self.HKL_LIMIT:
+                msg = 'Attempting to use index > HKL_LIMIT of {} when filling'
+                raise ValueError(msg.format(self.HKL_LIMIT))
+            else:
+                return min(math.ceil(index * 1.1), self.HKL_LIMIT)
+
         # increase the ball size until all needed points are in
         previous_length = -1
-        while len(hkl) > previous_length \
-                and max(max_h, max_k, max_l) <= self.HKL_LIMIT:
+        while len(hkl) > previous_length:
             previous_length = len(hkl)
-            max_h = math.ceil(max_h * 1.2)
-            max_k = math.ceil(max_k * 1.2)
-            max_l = math.ceil(max_l * 1.2)
+            max_h = increment_index_limit(max_h)
+            max_k = increment_index_limit(max_k)
+            max_l = increment_index_limit(max_l)
             hkl = _make_hkl_ball(max_h, max_k, max_l)
 
         # create new dataframe using obtained ball of data
@@ -1327,3 +1333,14 @@ class HklToResConverter:
 
     # TODO wrap table/data in getter/setter and make it automatically place,
     # TODO refresh, set keys etc.
+
+
+if __name__ == "__main__":
+    h1 = HklFrame()
+    h1.edit_cell(a=30, b=30, c=30, al=10, be=10, ga=10)
+    h1.fill()
+    h2 = HklFrame()
+    h2.edit_cell(a=30, b=30, c=30, al=10, be=10, ga=10)
+    h2.fill2()
+    h2.to_res('~/_/skew.res')
+
