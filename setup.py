@@ -25,7 +25,7 @@ with io.open(os.path.join(HERE, "README.md"), encoding="utf-8") as f:
 
 setup(
     name='hikari-toolkit',
-    version='0.2.2',
+    version='0.2.3',
     author='Daniel Tchoń',
     author_email='dtchon@chem.uw.edu.pl',
     packages=find_packages(exclude=('legacy', )),
