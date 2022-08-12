@@ -1,5 +1,6 @@
 import numpy as np
 from hikari.utility import angle2rad, cfloat, det3x3
+from hikari.utility import str2array as s2a
 
 
 class BaseFrame:
@@ -258,7 +259,7 @@ class BaseFrame:
     @property
     def A_d(self):
         """
-        :return: Matrix A with vertically stacked direct space vectors.
+        :return: Basis matrix A with vertically stacked direct space vectors.
         :rtype: np.array
         """
         return np.vstack([self._a_v, self._b_v, self._c_v])
@@ -354,7 +355,7 @@ class BaseFrame:
     @property
     def A_r(self):
         """
-        :return: Matrix A\* with vertically stacked reciprocal space vectors.
+        :return: Basis matrix A\* with vertically stacked reciprocal space vectors.
         :rtype: np.array
         """
         return np.vstack([self._a_w, self._b_w, self._c_w])
@@ -366,3 +367,15 @@ class BaseFrame:
         :rtype: np.array
         """
         return self.A_r @ self.A_r.T
+
+    SELLING_S6_TRANSFORMATIONS = [
+        s2a('-100000/110000/100010/-100100/101000/100001'),
+        s2a('110000/0-10000/010100/011000/0-10010/010001'),
+        s2a('101000/001100/00-1000/011000/001010/00-1001'),
+        s2a('100-100/001100/010100/000-100/000110/000101'),
+        s2a('001010/0100-10/100010/000110/0000-10/000011'),
+        s2a('010001/100001/00100-1/000101/000011/00000-1')]
+
+    SELLING_E3_TRANSFORMATIONS = [
+        s2a('110/0-10/001'), s2a('-100/110/001'), s2a('-100/010/101'),
+        s2a('-100/110/101'), s2a('110/0-10/011'), s2a('101/011/00-1')]

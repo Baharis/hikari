@@ -326,6 +326,19 @@ class TestHklFrame(unittest.TestCase):
         self.assertAlmostEqual(sum(xyz.sum(axis=0) - expected_xyz_sum), 0.0)
         self.assertAlmostEqual(sum(xyz.mean(axis=0) - expected_xyz_mean), 0.0)
 
+    def test_fill(self):
+        self.h2.fill(radius=2.0)
+        self.assertEqual(len(self.h2), 6030)
+        self.h2.edit_cell(a=3, b=10, c=30)
+        self.h2.fill(radius=2.0)
+        self.assertEqual(len(self.h2), 29872)
+        self.h2.edit_cell(a=10, b=10, c=10, al=100, be=100, ga=100)
+        self.h2.fill(radius=2.0)
+        self.assertEqual(len(self.h2), 31734)
+        self.h2.edit_cell(a=99, b=99, c=99)
+        with self.assertRaises(ValueError):
+            self.h2.fill(radius=2.0)
+
     def test_trim(self):
         self.h2.place()
         self.h2.trim(limit=1.2)

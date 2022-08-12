@@ -159,6 +159,24 @@ class TestListTools(unittest.TestCase):
         self.assertEqual(''.join(rescale_list_to_other([1, 4], 'Test')), 'Tt')
 
 
+class TestNumpyTools(unittest.TestCase):
+    def test_str2array_simple(self):
+        self.assertTrue(np.allclose(str2array('123'), np.array([1, 2, 3])))
+
+    def test_str2array_with_minus(self):
+        self.assertTrue(np.allclose(str2array('-12-3'), np.array([-1, 2, -3])))
+
+    def test_str2array_with_slash(self):
+        self.assertTrue(np.allclose(str2array('100/010/001'), np.eye(3)))
+
+    def test_str2array_with_all_special_characters(self):
+        self.assertTrue(np.allclose(str2array('9/-8'), np.array([(9,), (-8,)])))
+
+    def test_str2array_raises_value_error_for_uneven_input(self):
+        with self.assertRaises(ValueError):
+            _ = str2array('12/3')
+
+
 class TestMathTools(unittest.TestCase):
     def test_angle2rad(self):
         self.assertEqual(angle2rad(-5), -0.08726646259971647)

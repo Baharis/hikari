@@ -360,7 +360,7 @@ class HklFrame(BaseFrame):
     are defined and describe/operate on the :attr:`frame`.
     """
 
-    HKL_LIMIT = 99
+    HKL_LIMIT = 127
     """Highest absolute value of h, k or l index, which can be
     interpreted correctly by current version of the software."""
 
@@ -564,37 +564,41 @@ class HklFrame(BaseFrame):
             self.place()
         self._recalculate_structure_factors_and_intensities()
 
-    def fill(self, radius=2.0):
+    def fill(self, radius: float = 2.0) -> None:
         """
         Fill dataframe with all reflections within *radius* from space origin.
 
         :param radius: Maximum distance from the reciprocal space origin
             to placed reflection (in reciprocal Angstrom).
-        :type radius: float
         """
+        hkl_ratios = radius / np.array([self.a_r, self.b_r, self.c_r])
+        hkl_limits = np.ceil(hkl_ratios).astype(np.int16)
 
-        max_index = 25
+        def hkl_walls(h, k, l_):
+            hw = np.mgrid[h:h:1j, -k:k:2j*k+1j, -l_:l_:2j*l_+1j].reshape(3, -1)
+            kw = np.mgrid[-h:h:2j*h+1j, k:k:1j, -l_:l_:2j*l_+1j].reshape(3, -1)
+            lw = np.mgrid[-h:h:2j*h+1j, -k:k:2j*k+1j, l_:l_:1j].reshape(3, -1)
+            return hw.T, kw.T, lw.T
 
-        # make an initial guess of the hkl ball
-        def _make_hkl_ball(i=max_index):
-            hkl_grid = np.mgrid[-i:i:2j*i+1j, -i:i:2j*i+1j, -i:i:2j*i+1j]
-            hkls = np.stack(hkl_grid, -1).reshape(-1, 3)
-            xyz = np.array((self.a_w, self.b_w, self.c_w))
-            return hkls[lin.norm(hkls @ xyz, axis=1) <= radius]
-        hkl = _make_hkl_ball()
+        for _ in range(self.HKL_LIMIT):
+            limits_too_small = [any(lin.norm(hkls @ self.A_r, axis=1) <= radius)
+                                for hkls in hkl_walls(*hkl_limits)]
+            if any(limits_too_small):
+                hkl_limits += limits_too_small
+            else:
+                hkl_limits -= 1
+                break
 
-        # increase the ball size until all needed points are in
-        previous_length = -1
-        while len(hkl) > previous_length and max_index <= self.HKL_LIMIT:
-            previous_length = len(hkl)
-            max_index = max_index * 2
-            hkl = _make_hkl_ball(max_index)
+        if any(hkl_limits > self.HKL_LIMIT):
+            msg = 'Attempting to use hkl indices {} above HKL_LIMIT of {}'
+            raise ValueError(msg.format(hkl_limits, self.HKL_LIMIT))
 
-        # create new dataframe using obtained ball of data
-        _h, _k, _l = np.vsplit(hkl.T, 3)
+        hkls = np.indices(2 * hkl_limits + 1, np.int16).reshape(3, -1).T \
+            - hkl_limits
+        _h, _k, _l = hkls[lin.norm(hkls @ self.A_r, axis=1) <= radius].T
         ones = np.ones_like(np.array(_h)[0])
-        self.from_dict({'h': np.array(_h)[0], 'k': np.array(_k)[0],
-                        'l': np.array(_l)[0], 'I': ones, 'si': ones, 'm': ones})
+        self.from_dict({'h': np.squeeze(_h), 'k': np.squeeze(_k),
+                        'l': np.squeeze(_l), 'I': ones, 'si': ones, 'm': ones})
 
     def stats(self, bins=10, space_group=SG['P1']):
         """
