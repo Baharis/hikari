@@ -572,37 +572,6 @@ class HklFrame(BaseFrame):
         :param radius: Maximum distance from the reciprocal space origin
             to placed reflection (in reciprocal Angstrom).
         """
-        hkl_limits = np.ceil(radius / np.array([self.a_r, self.b_r, self.c_r]))\
-            .astype(np.int16)
-
-        # make an initial guess of the hkl ball
-        def _make_hkl_ball(lims=hkl_limits):
-            hkls = np.indices(2 * lims + 1, np.int16).reshape(3, -1).T - lims
-            return hkls[lin.norm(hkls @ self.A_r, axis=1) <= radius]
-        hkl = _make_hkl_ball()
-
-        def increment_index_limit(lims: np.ndarray) -> np.ndarray:
-            if any(lims > self.HKL_LIMIT):
-                msg = 'Attempting to use hkl indices {} above HKL_LIMIT of {}'
-                raise ValueError(msg.format(lims, self.HKL_LIMIT))
-            else:
-                return np.clip(np.ceil(lims * 1.1).astype(np.int16),
-                               0, np.int16(self.HKL_LIMIT))
-
-        # increase the ball size until all needed points are in
-        previous_length = -1
-        while len(hkl) > previous_length:
-            previous_length = len(hkl)
-            hkl_limits = increment_index_limit(hkl_limits)
-            hkl = _make_hkl_ball(hkl_limits)
-
-        # create new dataframe using obtained ball of data
-        _h, _k, _l = hkl.T
-        ones = np.ones_like(np.array(_h)[0])
-        self.from_dict({'h': np.squeeze(_h), 'k': np.squeeze(_k),
-                        'l': np.squeeze(_l), 'I': ones, 'si': ones, 'm': ones})
-
-    def fill3(self, radius: float = 2.0) -> None:
         hkl_ratios = radius / np.array([self.a_r, self.b_r, self.c_r])
         hkl_limits = np.ceil(hkl_ratios).astype(np.int16)
 
