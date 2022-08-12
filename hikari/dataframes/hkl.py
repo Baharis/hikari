@@ -582,7 +582,7 @@ class HklFrame(BaseFrame):
         hkl = _make_hkl_ball()
 
         def increment_index_limit(lims: np.ndarray) -> np.ndarray:
-            if any(lims >= self.HKL_LIMIT):
+            if any(lims > self.HKL_LIMIT):
                 msg = 'Attempting to use hkl indices {} above HKL_LIMIT of {}'
                 raise ValueError(msg.format(lims, self.HKL_LIMIT))
             else:
@@ -598,6 +598,36 @@ class HklFrame(BaseFrame):
 
         # create new dataframe using obtained ball of data
         _h, _k, _l = hkl.T
+        ones = np.ones_like(np.array(_h)[0])
+        self.from_dict({'h': np.squeeze(_h), 'k': np.squeeze(_k),
+                        'l': np.squeeze(_l), 'I': ones, 'si': ones, 'm': ones})
+
+    def fill3(self, radius: float = 2.0) -> None:
+        hkl_ratios = radius / np.array([self.a_r, self.b_r, self.c_r])
+        hkl_limits = np.ceil(hkl_ratios).astype(np.int16)
+
+        def hkl_walls(h, k, l):
+            hw = np.mgrid[h:h:1j, -k:k:2j*k+1j, -l:l:2j*l+1j].reshape(3, -1).T
+            kw = np.mgrid[-h:h:2j*h+1j, k:k:1j, -l:l:2j*l+1j].reshape(3, -1).T
+            lw = np.mgrid[-h:h:2j*h+1j, -k:k:2j*k+1j, l:l:1j].reshape(3, -1).T
+            return hw, kw, lw
+
+        for _ in range(self.HKL_LIMIT):
+            limits_too_small = [any(lin.norm(hkls @ self.A_r, axis=1) <= radius)
+                                for hkls in hkl_walls(*hkl_limits)]
+            if any(limits_too_small):
+                hkl_limits += limits_too_small
+            else:
+                hkl_limits -= 1
+                break
+
+        if any(hkl_limits > self.HKL_LIMIT):
+            msg = 'Attempting to use hkl indices {} above HKL_LIMIT of {}'
+            raise ValueError(msg.format(hkl_limits, self.HKL_LIMIT))
+
+        hkls = np.indices(2 * hkl_limits + 1, np.int16).reshape(3, -1).T \
+            - hkl_limits
+        _h, _k, _l = hkls[lin.norm(hkls @ self.A_r, axis=1) <= radius].T
         ones = np.ones_like(np.array(_h)[0])
         self.from_dict({'h': np.squeeze(_h), 'k': np.squeeze(_k),
                         'l': np.squeeze(_l), 'I': ones, 'si': ones, 'm': ones})
