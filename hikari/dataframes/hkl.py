@@ -574,11 +574,11 @@ class HklFrame(BaseFrame):
         hkl_ratios = radius / np.array([self.a_r, self.b_r, self.c_r])
         hkl_limits = np.ceil(hkl_ratios).astype(np.int16)
 
-        def hkl_walls(h, k, l):
-            hw = np.mgrid[h:h:1j, -k:k:2j*k+1j, -l:l:2j*l+1j].reshape(3, -1).T
-            kw = np.mgrid[-h:h:2j*h+1j, k:k:1j, -l:l:2j*l+1j].reshape(3, -1).T
-            lw = np.mgrid[-h:h:2j*h+1j, -k:k:2j*k+1j, l:l:1j].reshape(3, -1).T
-            return hw, kw, lw
+        def hkl_walls(h, k, l_):
+            hw = np.mgrid[h:h:1j, -k:k:2j*k+1j, -l_:l_:2j*l_+1j].reshape(3, -1)
+            kw = np.mgrid[-h:h:2j*h+1j, k:k:1j, -l_:l_:2j*l_+1j].reshape(3, -1)
+            lw = np.mgrid[-h:h:2j*h+1j, -k:k:2j*k+1j, l_:l_:1j].reshape(3, -1)
+            return hw.T, kw.T, lw.T
 
         for _ in range(self.HKL_LIMIT):
             limits_too_small = [any(lin.norm(hkls @ self.A_r, axis=1) <= radius)
