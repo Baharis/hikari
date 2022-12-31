@@ -535,12 +535,14 @@ class HklFrame(BaseFrame):
         :type point_group: hikari.symmetry.Group
         """
         inc = 10 ** (int(np.log10(self.HKL_LIMIT)) + 2)
+        equiv_dtype = self.keys.get_property('equiv', 'dtype')
         self.keys.add(('equiv',))
         self.table.reset_index(drop=True, inplace=True)
         self.table['equiv'] = -inc**3
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
         for op in point_group.operations:
-            new_equiv = op.transform(_hkl_matrix) @ np.array([inc ** 2, inc, 1])
+            _new_hkl_matrix = op.transform(_hkl_matrix).astype(equiv_dtype)
+            new_equiv = _new_hkl_matrix @ np.array([inc ** 2, inc, 1])
             _to_update = self.table['equiv'] < new_equiv
             self.table.loc[_to_update, 'equiv'] = new_equiv[_to_update]
 
