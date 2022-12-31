@@ -94,7 +94,7 @@ def calculate_similarity_indices(cif1_path: str,
         cif1p = make_abspath(cif1_path)
         cif2p = cif1p if cif2_path is None else make_abspath(cif2_path)
         cif1b = 1 if cif1_block is None else cif1_block
-        cif2b = 2 if cif1b is 1 and cif1p is cif2p \
+        cif2b = 2 if cif1b == 1 and cif1p is cif2p \
             else 1 if cif2_block is None else cif2_block
         return cif1p, cif2p, cif1b, cif2b
     cif1_path, cif2_path, cif1_block, cif2_block = interpret_paths()
@@ -181,7 +181,7 @@ def calculate_similarity_indices(cif1_path: str,
             print(f'{k:>8} {si_string(sis[k])}', file=f)
         sis_all = [v for k, v in sis.items()]
         sis_h = [v for k, v in sis.items()
-                 if k[0] is 'H' and k[:2] not in chemical_elements]
+                 if k[0] == 'H' and k[:2] not in chemical_elements]
         if sis_all:
             avg_si_all = sum(sis_all) / len(sis_all)
             print(f'# avg(*) {si_string(avg_si_all)}', file=f)
