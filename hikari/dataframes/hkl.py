@@ -1,3 +1,4 @@
+import abc
 import copy
 import random
 
@@ -14,6 +15,233 @@ from hikari.utility import cubespace, chemical_elements, make_abspath, \
     rescale_list_to_range, rescale_list_to_other
 
 pd.options.mode.chained_assignment = 'raise'
+
+
+class HklKeyRegistryBase(type):
+    """Metaclass for `HklKey`s which registers them if they define `name`."""
+    REGISTRY = {}
+    default: None
+    dtype: np.dtype
+
+    def __new__(mcs, name, bases, attrs):
+        new_cls = type.__new__(mcs, name, bases, attrs)
+        if hasattr(new_cls, 'name') and new_cls.name:
+            mcs.REGISTRY[new_cls.name] = new_cls
+        return new_cls
+
+    @property
+    def type(cls):
+        return type(cls.dtype.type(cls.default).item())
+
+
+class HklKey(metaclass=HklKeyRegistryBase):
+    """Base Class for every subsequent HklKey."""
+    name: str = ''                  # if not empty, how key will be registered
+    default = None                  # default to set if value was not provided
+    dtype: str = ''                 # dtype to use when defining numpy array
+    imperative: bool = False        # is key imperative for every table?
+    reduce_behaviour: str = 'keep'  # 'add', 'average', 'discard' or 'keep' 1st
+    type: type = type(None)         # python type used when defining instances
+
+
+class HklKeyImperativeInt8(HklKey):
+    default = 0
+    dtype = np.int8
+    imperative = True
+
+
+class HklKeyAveragedFloat64:
+    default = 0.0
+    dtype = np.float64
+    reduce_behaviour = 'average'
+
+
+class HklKeyKeptFloat64:
+    default = 0.0
+    dtype = np.float64
+    reduce_behaviour = 'keep'
+
+
+class HklKeyIndexH(HklKeyImperativeInt8):
+    """Reciprocal lattice Miller index h"""
+    name = 'h'
+
+
+class HklKeyIndexK(HklKeyImperativeInt8):
+    """Reciprocal lattice Miller index k"""
+    name = 'k'
+
+
+class HklKeyIndexL(HklKeyImperativeInt8):
+    """Reciprocal lattice Miller index l"""
+    name = 'l'
+
+
+class HklKeyStructureFactor(HklKeyAveragedFloat64):
+    """Crystallographic structure factor F"""
+    name = 'F'
+    default = 1.0
+
+
+class HklKeyIntensity(HklKeyAveragedFloat64):
+    """Crystallographic intensity I_obs"""
+    name = 'I'
+    default = 1.0
+
+
+class HklKeyIntensityCalculated(HklKeyAveragedFloat64):
+    """Crystallographic calculated intensity I_calc"""
+    name = 'Ic'
+    default = 1.0
+
+
+class HklKeyIntensityUncertainty(HklKeyAveragedFloat64):
+    """Uncertainty of intensity I determination"""
+    name = 'si'
+
+
+class HklKeyStructureFactorUncertainty(HklKeyAveragedFloat64):
+    """Uncertainty of structure factor F determination"""
+    name = 'sf'
+
+
+class HklKeyStructureFactorToUncertaintyRatio(HklKeyAveragedFloat64):
+    """Structure factor to its uncertainty ratio"""
+    name = 'u'
+
+
+class HklKeyBatchNumber(HklKey):
+    """Batch or run number"""
+    name = 'b'
+    default = 0
+    dtype = np.int16
+    reduce_behaviour = 'discard'
+
+
+class HklKeyCrystalNumber(HklKey):
+    """Crystal domain or twin number"""
+    name = 'c'
+    default = 0
+    dtype = np.int16
+    reduce_behaviour = 'discard'
+
+
+class HklKeyMultiplicity(HklKey):
+    """Multiplicity i.e. how many observation contributed to this reflection"""
+    name = 'm'
+    default = 1
+    dtype = np.int16
+    imperative = True
+    reduce_behaviour = 'add'
+
+
+class HklKeyWavelength(HklKey):
+    """Wavelength expressed in Angstrom"""
+    name = 'la'
+    default = 0.0
+    dtype = np.float64
+    reduce_behaviour = 'discard'
+
+
+class HklKeyPhase(HklKeyAveragedFloat64):
+    """Reflection phase expressed in radians"""
+    name = 'ph'
+    default = 0.0
+
+
+class HklKeyRadius(HklKey):
+    """Distance from 000 node, i.e. double the sin(th)/la resolution in A^-1"""
+    name = 'r'
+    dtype = np.float32
+
+
+class HklKeyTransmissionPathLength(HklKeyKeptFloat64):
+    """Absorption-weighted transmission path length in centimeters"""
+    name = 't'
+
+
+class HklKeyCosineU1(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'u1'
+
+
+class HklKeyCosineU2(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'u2'
+
+
+class HklKeyCosineU3(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'u3'
+
+
+class HklKeyCosineV1(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'v1'
+
+
+class HklKeyCosineV2(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'v2'
+
+
+class HklKeyCosineV3(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'v3'
+
+
+class HklKeyCoordinateX(HklKeyKeptFloat64):
+    """Reciprocal space coordinate x*"""
+    name = 'x'
+    dtype = np.float32
+
+
+class HklKeyCoordinateY(HklKeyKeptFloat64):
+    """Reciprocal space coordinate x*"""
+    name = 'y'
+    dtype = np.float32
+
+
+class HklKeyCoordinateZ(HklKeyKeptFloat64):
+    """Reciprocal space coordinate x*"""
+    name = 'z'
+    dtype = np.float32
+
+
+class HklKeyZeta(HklKeyAveragedFloat64):
+    """weighted diff. in observed I - calculated Ic intensity"""
+    name = 'ze'
+
+
+class HklKeyZetaSquared(HklKeyAveragedFloat64):
+    """weighted diff. in observed I - calculated Ic intensity, squared"""
+    name = 'ze2'
+
+
+class HklKeyCalculatedIntensityToSigma(HklKeyAveragedFloat64):
+    """Calculated intensity of reflection divided by experimental sigma"""
+    name = 'Icsi'
+    default = 1.0
+
+
+class HklKeyObservedIntensityToSigma(HklKeyAveragedFloat64):
+    """Observed intensity of reflection divided by experimental sigma"""
+    name = 'Iosi'
+    default = 1.0
+
+
+class HklKeyEquivalenceCode(HklKey):
+    """Integer unique for each set of symmetrically equivalent reflections"""
+    name = 'equiv'
+    default = 0
+    dtype = np.int64
+
+
+class HklKeyDummy(HklKey):
+    """Dummy column for loading or holding irrelevant string data"""
+    name = 'None'
+    default = ''
+    dtype = np.str
 
 
 class HklKeys:
