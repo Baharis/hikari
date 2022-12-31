@@ -241,8 +241,11 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         x_mesh, y_mesh, z_mesh = sph2cart(r=np.ones_like(polar_mesh),
                                           p=np.deg2rad(polar_mesh),
                                           a=np.deg2rad(azimuth_mesh))
-        np.warnings.filterwarnings('ignore',  # mpl uses depreciated numpy
-                                   category=np.VisibleDeprecationWarning)
+        try:
+            np.warnings.filterwarnings('ignore',  # mpl uses depreciated numpy
+                                       category=np.VisibleDeprecationWarning)
+        except AttributeError:
+            pass
         ax.plot_wireframe(x_mesh, y_mesh, z_mesh, colors='k', linewidth=0.25)
 
         # color map declarations
