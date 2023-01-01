@@ -1,6 +1,7 @@
-import abc
 import copy
 import random
+from collections import UserDict
+from typing import Iterable, Union
 
 import numpy as np
 import numpy.linalg as lin
@@ -17,7 +18,7 @@ from hikari.utility import cubespace, chemical_elements, make_abspath, \
 pd.options.mode.chained_assignment = 'raise'
 
 
-class HklKeyRegistryBase(type):
+class HklKeyRegistry(type):
     """Metaclass for `HklKey`s which registers them if they define `name`."""
     REGISTRY = {}
     default: None
@@ -34,7 +35,7 @@ class HklKeyRegistryBase(type):
         return type(cls.dtype.type(cls.default).item())
 
 
-class HklKey(metaclass=HklKeyRegistryBase):
+class HklKey(metaclass=HklKeyRegistry):
     """Base Class for every subsequent HklKey."""
     name: str = ''                  # if not empty, how key will be registered
     default = None                  # default to set if value was not provided
@@ -242,6 +243,31 @@ class HklKeyDummy(HklKey):
     name = 'None'
     default = ''
     dtype = np.str
+
+
+class HklKeyDict(UserDict):
+    IMPERATIVES = [k for k, v in HklKeyRegistry.REGISTRY.items()
+                   if v.imperative]
+
+    def __init__(self, keys=()):
+        super().__init__()
+        self.add(*self.IMPERATIVES)
+        self.add(keys)
+
+    def add(self, *keys: str) -> None:
+        """Add `HklKeys` to self using `HklKeyRegistry` keys"""
+        for key in keys:
+            self[key] = HklKeyRegistry.REGISTRY[key]
+
+    def set(self, *keys: str) -> None:
+        """Set `HklKeys` of self using `HklKeyRegistry` keys"""
+        self.__init__(*keys)
+
+    def remove(self,  *keys: str) -> None:
+        """Remove `HklKeys` from self using `HklKeyRegistry` keys"""
+        for key in keys:
+            if key not in self.IMPERATIVES:
+                del self[key]
 
 
 class HklKeys:
