@@ -241,7 +241,7 @@ class HklKeyDummy(HklKey):
     """Dummy column for loading or holding irrelevant string data"""
     name = 'None'
     default = ''
-    dtype = np.str
+    dtype = np.str_
 
 
 class HklFrame(BaseFrame):
