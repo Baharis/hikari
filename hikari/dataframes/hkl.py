@@ -18,7 +18,7 @@ from hikari.utility import cubespace, chemical_elements, make_abspath, \
 pd.options.mode.chained_assignment = 'raise'
 
 
-class HklKeyRegistry(type):
+class HklKeyRegistrar(type):
     """Metaclass for `HklKey`s which registers them if they define `name`."""
     REGISTRY = {}
     default: None
@@ -35,7 +35,7 @@ class HklKeyRegistry(type):
         return type(cls.dtype.type(cls.default).item())
 
 
-class HklKey(metaclass=HklKeyRegistry):
+class HklKey(metaclass=HklKeyRegistrar):
     """Base Class for every subsequent HklKey."""
     name: str = ''                  # if not empty, how key will be registered
     default = None                  # default to set if value was not provided
@@ -51,13 +51,13 @@ class HklKeyImperativeInt8(HklKey):
     imperative = True
 
 
-class HklKeyAveragedFloat64:
+class HklKeyAveragedFloat64(HklKey):
     default = 0.0
     dtype = np.float64
     reduce_behaviour = 'average'
 
 
-class HklKeyKeptFloat64:
+class HklKeyKeptFloat64(HklKey):
     default = 0.0
     dtype = np.float64
     reduce_behaviour = 'keep'
@@ -246,351 +246,28 @@ class HklKeyDummy(HklKey):
 
 
 class HklKeyDict(UserDict):
-    IMPERATIVES = [k for k, v in HklKeyRegistry.REGISTRY.items()
+    IMPERATIVES = [k for k, v in HklKeyRegistrar.REGISTRY.items()
                    if v.imperative]
 
     def __init__(self, keys=()):
         super().__init__()
         self.add(*self.IMPERATIVES)
-        self.add(keys)
+        self.add(*keys)
 
     def add(self, *keys: str) -> None:
         """Add `HklKeys` to self using `HklKeyRegistry` keys"""
         for key in keys:
-            self[key] = HklKeyRegistry.REGISTRY[key]
+            self[key] = HklKeyRegistrar.REGISTRY[key]
 
     def set(self, *keys: str) -> None:
         """Set `HklKeys` of self using `HklKeyRegistry` keys"""
-        self.__init__(*keys)
+        self.__init__(keys)
 
     def remove(self,  *keys: str) -> None:
         """Remove `HklKeys` from self using `HklKeyRegistry` keys"""
         for key in keys:
             if key not in self.IMPERATIVES:
                 del self[key]
-
-
-class HklKeys:
-    """
-    A helper class supporting HklFrame.
-    Menages properties and presence of keys
-    present in HklFrame's dataframe
-    """
-    # DEFINE ALL POSSIBLE HKL KEYS
-    __h = {
-        'default': 0,
-        'description': 'Reciprocal lattice index h',
-        'imperative': True,
-        'dtype': 'int8',
-        'reduce_behaviour': 'keep',
-        'type': int
-    }
-    __k = {
-        'default': 0,
-        'description': 'Reciprocal lattice index k',
-        'imperative': True,
-        'dtype': 'int8',
-        'reduce_behaviour': 'keep',
-        'type': int
-    }
-    __l = {
-        'default': 0,
-        'description': 'Reciprocal lattice index l',
-        'imperative': True,
-        'dtype': 'int8',
-        'reduce_behaviour': 'keep',
-        'type': int
-    }
-    __F = {
-        'default': 1.0,
-        'description': 'Structure factor',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __I = {
-        'default': 1.0,
-        'description': 'Observed intensity',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __Ic = {
-        'default': 1.0,
-        'description': 'Calculated intensity',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __si = {
-        'default': 0.0,
-        'description': 'Uncertainty of intensity I determination',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __sf = {
-        'default': 0.0,
-        'description': 'Uncertainty of structure factor determination',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __u = {
-        'default': 0.0,
-        'description': 'Structure factor to its uncertainty ratio',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __b = {
-        'default': 1,
-        'description': 'Batch / run number',
-        'imperative': False,
-        'dtype': 'int16',
-        'reduce_behaviour': 'discard',
-        'type': int
-    }
-    __c = {
-        'default': 1,
-        'description': 'crystal or twin number',
-        'imperative': False,
-        'dtype': 'int16',
-        'reduce_behaviour': 'discard',
-        'type': int
-    }
-    __m = {
-        'default': 1,
-        'description': 'multiplicity',
-        'imperative': True,
-        'dtype': 'int16',
-        'reduce_behaviour': 'add',
-        'type': int
-    }
-    __la = {
-        'default': 0.0,
-        'description': 'wavelength',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'discard',
-        'type': float
-    }
-    __ph = {
-        'default': 0.0,
-        'description': 'reflection phase in radians',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __r = {
-        'default': 0.0,
-        'description': 'distance from 000. Divide by two for resol. in A^-1',
-        'imperative': False,
-        'dtype': 'float32',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __t = {
-        'default': 0.0,
-        'description': 'absorption weighted path length in centimeters',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __u1 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __u2 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __u3 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __v1 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __v2 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __v3 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __x = {
-        'default': 0.0,
-        'description': 'reciprocal position vector x value',
-        'imperative': False,
-        'dtype': 'float32',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __y = {
-        'default': 0.0,
-        'description': 'reciprocal position vector y value',
-        'imperative': False,
-        'dtype': 'float32',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __z = {
-        'default': 0.0,
-        'description': 'reciprocal position vector z value',
-        'imperative': False,
-        'dtype': 'float32',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __ze = {
-        'default': 0.0,
-        'description': 'weighted diff. in observed I - calculated Ic intensity',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __ze2 = {
-        'default': 0.0,
-        'description': 'weighted diff. in obs. I - calculated Ic int., squared',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __Icsi = {
-        'default': 1.0,
-        'description': 'Calculated intensity of reflection div. by exp. sigma',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __Iosi = {
-        'default': 1.0,
-        'description': 'Observed intensity of reflection div. by exp. sigma',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __equiv = {
-        'default': 0,
-        'description': 'integer unique for each set of sym. equiv. reflections',
-        'imperative': False,
-        'dtype': 'int64',
-        'reduce_behaviour': 'keep',
-        'type': int
-    }
-    __None = {
-        'default': '',
-        'description': 'Dummy column for irrelevant data',
-        'imperative': False,
-        'dtype': 'str',
-        'reduce_behaviour': 'keep',
-        'type': str
-    }
-    defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'sf', 'b', 'm', 'la', 'ph',
-                    'u', 'r', 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3',
-                    'x', 'y', 'z', 'ze', 'ze2', 'Iosi', 'Icsi', 'equiv', 'None'}
-    # TODO check if needed and cplt?
-
-    def __init__(self, keys=()):
-        # DEFINE ALL KNOWN KEYS
-        self.imperatives = set()
-        for key in HklKeys.defined_keys:
-            if self.get_property(key, 'imperative'):
-                self.imperatives.add(key)
-        self.all = set()
-        self.add(self.imperatives)
-        self.add(keys)
-
-    def add(self, keys):
-        """Add keys from a keys list to the HklKeys handler"""
-        for key in keys:
-            self.all.add(key)
-        self.__refresh()
-
-    def set(self, keys):
-        """Set keys from a keys list in the HklKeys handler"""
-        self.all = set()
-        self.add(self.imperatives)
-        for key in keys:
-            self.all.add(key)
-        self.__refresh()
-
-    def remove(self, keys):
-        """Remove keys from a keys list in the HklKeys handler"""
-        for key in keys:
-            self.all.discard(key)
-        self.add(self.imperatives)
-        self.__refresh()
-
-    def get_property(self, key, prop):
-        """Get desired key property imported from defined dictionary"""
-        return getattr(self, '_HklKeys__'+key)[prop]
-
-    def __refresh(self):
-        """refresh defined dictionaries based on all keys' set"""
-
-        # SET 'OF_TYPE' DICTIONARY:
-        types = set()
-        for key in HklKeys.defined_keys:
-            typ = self.get_property(key, 'type').__name__
-            types.add(typ)
-        self.of_type = dict()
-        for typ in types:
-            self.of_type[typ] = set()
-        for key in self.all:
-            typ = self.get_property(key, 'type').__name__
-            self.of_type[typ].add(key)
-
-        # SET 'REDUCE BEHAVIOUR' DICTIONARY
-        behaviours = set()
-        for key in HklKeys.defined_keys:
-            behaviour = self.get_property(key, 'reduce_behaviour')
-            behaviours.add(behaviour)
-        self.reduce_behaviour = dict()
-        for behaviour in behaviours:
-            self.reduce_behaviour[behaviour] = set()
-        for key in self.all:
-            behaviour = self.get_property(key, 'reduce_behaviour')
-            self.reduce_behaviour[behaviour].add(key)
 
 
 class HklFrame(BaseFrame):
@@ -622,7 +299,7 @@ class HklFrame(BaseFrame):
         """HklFrame constructor"""
         super().__init__()
 
-        self.keys = HklKeys()
+        self.keys = HklKeyDict()
         """Object managing keys (column names) of :attr:`table`."""
 
         self.__la = 0.71069
@@ -789,8 +466,8 @@ class HklFrame(BaseFrame):
         :type point_group: hikari.symmetry.Group
         """
         inc = 10 ** (int(np.log10(self.HKL_LIMIT)) + 2)
-        equiv_dtype = self.keys.get_property('equiv', 'dtype')
-        self.keys.add(('equiv',))
+        equiv_dtype = HklKeyRegistrar.REGISTRY['equiv'].dtype
+        self.keys.add('equiv')
         self.table.reset_index(drop=True, inplace=True)
         self.table['equiv'] = -inc**3
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
@@ -811,9 +488,9 @@ class HklFrame(BaseFrame):
         :type dictionary: Dict[str, numpy.ndarray]
         """
         df = pd.DataFrame()
-        self.keys.add(dictionary.keys())
+        self.keys.add(*dictionary.keys())
         for key, value in dictionary.items():
-            typ = self.keys.get_property(key, 'dtype')
+            typ = self.keys[key].dtype
             df[key] = pd.Series(value, dtype=typ, name=key)
         self.table = df[(df['h'] != 0) | (df['k'] != 0) | (df['l'] != 0)].copy()
         if not('x' in self.table.columns):
@@ -943,11 +620,11 @@ class HklFrame(BaseFrame):
         # for each key apply a necessary reduce operation and add it to data
         data = dict()
         for key in self.table.keys():
-            if key in self.keys.reduce_behaviour['keep']:
+            if self.keys[key].reduce_behaviour == 'keep':
                 data[key] = grouped_first[key]
-            elif key in self.keys.reduce_behaviour['add']:
+            elif self.keys[key].reduce_behaviour == 'add':
                 data[key] = grouped_sum[key]
-            elif key in self.keys.reduce_behaviour['average']:
+            elif self.keys[key].reduce_behaviour == 'average':
                 data[key] = grouped_mean[key]
         self.from_dict(data)
 
@@ -963,7 +640,7 @@ class HklFrame(BaseFrame):
         self.table.loc[:, 'y'] = xyz[:, 1]
         self.table.loc[:, 'z'] = xyz[:, 2]
         self.table.loc[:, 'r'] = lin.norm(xyz, axis=1)
-        self.keys.add(('x', 'y', 'z', 'r'))
+        self.keys.add('x', 'y', 'z', 'r')
 
     def calculate_fcf_statistics(self):
         """
@@ -975,7 +652,7 @@ class HklFrame(BaseFrame):
         self.table['ze2'] = ze ** 2
         self.table['Iosi'] = self.table['I'] / self.table['si']
         self.table['Icsi'] = self.table['Ic'] / self.table['si']
-        self.keys.add(('ze', 'ze2', 'Iosi', 'Icsi'))
+        self.keys.add('ze', 'ze2', 'Iosi', 'Icsi')
 
     def read(self, hkl_path, hkl_format='shelx_4'):
         """
@@ -991,31 +668,27 @@ class HklFrame(BaseFrame):
         """
         reader = HklReader(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
         dict_of_data = reader.read()
-        self.keys.set(dict_of_data.keys())
-        forgotten_keys = tuple(self.keys.imperatives - set(dict_of_data.keys()))
-        for forgotten in forgotten_keys:
-            default = self.keys.get_property(forgotten, 'default')
+        self.keys.set(*dict_of_data.keys())
+        forgotten_keys = [k for k in self.keys.IMPERATIVES
+                          if k not in dict_of_data.keys()]
+        for key in forgotten_keys:
             length_of_data = max([len(v) for v in dict_of_data.values()])
-            dict_of_data[forgotten] = [default] * length_of_data
+            dict_of_data[key] = [self.keys[key].default] * length_of_data
         self.from_dict(dict_of_data)
 
     def _recalculate_structure_factors_and_intensities(self):
         """
         Calculate 'I' and 'si' or 'F' and 'sf', depending on which are missing.
         """
-        if 'I' in self.keys.all and not('si' in self.keys.all):
+        if 'I' in self.keys and 'si' not in self.keys:
             raise KeyError('Intensities "I" are defined, but "si" not.')
-        if 'F' in self.keys.all and not('sf' in self.keys.all):
+        if 'F' in self.keys and 'sf' not in self.keys:
             raise KeyError('Structure factors "F" are defined, but "sf" not.')
-        if all(('I' in self.keys.all,
-               'si' in self.keys.all,
-                not('F' in self.keys.all),
-                not('sf' in self.keys.all))):
+        if all(('I' in self.keys, 'si' in self.keys,
+                'F' not in self.keys, 'sf' not in self.keys)):
             self._recalculate_structure_factors_from_intensities()
-        if all(('F' in self.keys.all,
-               'sf' in self.keys.all,
-                not('I' in self.keys.all),
-                not('si' in self.keys.all))):
+        if all(('F' in self.keys, 'sf' in self.keys,
+                'I' not in self.keys, 'si' not in self.keys)):
             self._recalculate_intensities_from_structure_factors()
 
     def _recalculate_structure_factors_from_intensities(self):
@@ -1036,7 +709,7 @@ class HklFrame(BaseFrame):
         new_data['F'] = signum_of_i * absolute_sqrt_of_i
         new_data['sf'] = new_data["si"] / (2 * absolute_sqrt_of_i)
         self.table = new_data
-        self.keys.add({'F', 'sf'})
+        self.keys.add('F', 'sf')
 
     def _recalculate_intensities_from_structure_factors(self):
         """
@@ -1055,7 +728,7 @@ class HklFrame(BaseFrame):
         new_data['I'] = signum_of_f * (abs(new_data['F']) ** 2)
         new_data['si'] = 2 * new_data["sf"] * abs(new_data["F"])
         self.table = new_data
-        self.keys.add({'I', 'si'})
+        self.keys.add('I', 'si')
 
     def transform(self, operations):
         """
@@ -1171,7 +844,7 @@ class HklIo:
     """
 
     def __init__(self, hkl_file_path, hkl_file_format):
-        self.keys = HklKeys()
+        self.keys = HklKeyDict()
         self.use_separator = True
         self.file_path = make_abspath(hkl_file_path)
         self.formats_defined = hkl_formats
@@ -1415,7 +1088,7 @@ class HklReader(HklIo):
         :return: A dictionary containing information read from .hkl file.
         :rtype: dict
         """
-        self.keys.set(self._format_dict['labels'])
+        self.keys.set(*self._format_dict['labels'])
 
         if self.is_current_format_free:
             def parse_line(line):
@@ -1438,7 +1111,7 @@ class HklReader(HklIo):
         def build_dict_of_reflections(_hkl_array):
             dict_of_data = dict()
             for index, key in enumerate(self._format_dict['labels']):
-                key_dtype = self.keys.get_property(key, 'dtype')
+                key_dtype = self.keys[key].dtype
                 dict_of_data[key] = _hkl_array[index].astype(key_dtype)
             return dict_of_data
         return build_dict_of_reflections(array_of_reflections)
