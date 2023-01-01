@@ -1,7 +1,6 @@
 import copy
 import random
-from collections import UserDict
-from typing import Iterable, Union
+from typing import Union
 
 import numpy as np
 import numpy.linalg as lin
@@ -30,9 +29,9 @@ class HklKeyRegistrar(type):
             mcs.REGISTRY[new_cls.name] = new_cls
         return new_cls
 
-    @classmethod
-    def get_imperative_names(mcs):
-        return [k for k, v in mcs.REGISTRY.items() if v.imperative]
+    @property
+    def IMPERATIVES(self):  # noqa - capital letters to avoid attribute clash
+        return [k for k, v in self.REGISTRY.items() if v.imperative]
 
 
 class HklKey(metaclass=HklKeyRegistrar):
@@ -251,7 +250,7 @@ class HklFrame(BaseFrame):
     It utilises other `Hkl*` classes to import, store, manipulate and output
     information about single-crystal diffraction patterns.
 
-    HklFrame acts as an container which stores
+    HklFrame acts as a container which stores
     the diffraction data (Pandas dataframe, :attr:`table`)
     and elementary crystal cell data (:class:`hikari.dataframes.Base`).
     Demanding methods belonging to this class are vectorized,
@@ -262,7 +261,7 @@ class HklFrame(BaseFrame):
     :func:`copy` to other object or output using :func:`write` if needed.
 
     The HklFrame always initiates empty and does not accept any arguments.
-    Some of the magic methods, such as :func:`__len__` and :func:`__add__`
+    Some magic methods, such as :func:`__len__` and :func:`__add__`
     are defined and describe/operate on the :attr:`frame`.
     """
 
@@ -290,7 +289,7 @@ class HklFrame(BaseFrame):
         """
         :param other: HklFrame to be added to data
         :type other: HklFrame
-        :return: concatenated :attr:`table` dataframes, with metadata from first
+        :return: concatenated :attr:`table` dataframes with metadata from first
         :rtype: HklFrame
         """
         _copied = self.copy()
@@ -337,18 +336,18 @@ class HklFrame(BaseFrame):
     @property
     def r_lim(self):
         """
-        :return: Radius of limiting sphere calculated in A-1 based on :attr:`la`
+        :return: Radius of limiting sphere in A^-1 calculated as 2/:attr:`la`
         :rtype: float
         """
-        return 2 / self.la
+        return 2.0 / self.la
 
     def _in_dacs(self, opening_angle, vectors):
-        oa = np.deg2rad(opening_angle)                # opening angle in radians
+        oa = np.deg2rad(opening_angle)
         xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
         r = self.table.loc[:, 'r'].to_numpy()
         v = np.array(vectors)
         v = (v.T / lin.norm(v, axis=1)).T              # normalise vectors v
-        m1 = np.matmul(v, xyz.T)                       # dist from dac plane "p"
+        m1 = np.matmul(v, xyz.T)                       # dist from dac plane p
         phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))  # angle <(plane p, v)
         lim = self.r_lim * np.sin(oa - phi)            # True if in dac
         return r[None, :] < lim
@@ -359,13 +358,13 @@ class HklFrame(BaseFrame):
         Sample/DAC orientation can be supplied either via specifying crystal
         orientation in :class:`hikari.dataframes.BaseFrame`, in
         :attr:`orientation` or providing a xyz\* *vector* perpendicular to the
-        dac-accessible disc. For further details refer to `*Tchoń & Makal, IUCrJ
+        dac-accessible disc. For further details, see `*Tchoń & Makal, IUCrJ
         8, 1006-1017 (2021)* <https://doi.org/10.1107/s2052252521009532>`_.
 
-        :param opening_angle: DAC single opening angle in degrees, default 35.0.
+        :param opening_angle: DAC single opening angle in degrees, default 35.
         :type opening_angle: float
         :param vector: Provides information about orientation of crystal
-          relative to DAC. If None, current :attr:`orientation` is used instead.
+          relative to DAC. If None, :attr:`orientation` is used instead.
         :type vector: Tuple[float]
         :return: HklFrame containing only reflections in dac-accessible region.
         :rtype: HklFrame
@@ -385,9 +384,9 @@ class HklFrame(BaseFrame):
         Count unique dac-accessible reflections for n crystals placed such that
         vector n is perpendicular to diamond. For details see :meth:`dac_trim`.
 
-        :param opening_angle: DAC single opening angle in degrees, default 35.0.
+        :param opening_angle: DAC single opening angle in degrees, default 35.
         :type opening_angle: float
-        :param vectors: Array containing rotational axes of available DAC-discs.
+        :param vectors: Array with rotational axes of available DAC-discs.
         :type vectors: np.array
         :return: Array with numbers of unique reflns in DAC-accessible region.
         :rtype: np.array
@@ -438,7 +437,7 @@ class HklFrame(BaseFrame):
         :type point_group: hikari.symmetry.Group
         """
         inc = 10 ** (int(np.log10(self.HKL_LIMIT)) + 2)
-        equiv_dtype = HklKeyRegistrar.REGISTRY['equiv'].dtype
+        equiv_dtype = HklKey.REGISTRY['equiv'].dtype
         self.table.reset_index(drop=True, inplace=True)
         self.table['equiv'] = -inc**3
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
@@ -450,7 +449,7 @@ class HklFrame(BaseFrame):
 
     def from_dict(self, dictionary):
         """
-        Construct the self.data using information stored in dictionary.
+        Construct the `self.data` using information stored in dictionary.
         The dictionary keys must be valid strings, see :class:`HklKeys` for
         a list of valid keys. The dictionary values must be iterable of equal
         size, preferably `numpy.ndarray`.
@@ -460,7 +459,7 @@ class HklFrame(BaseFrame):
         """
         df = pd.DataFrame()
         for key, value in dictionary.items():
-            typ = HklKeyRegistrar.REGISTRY[key].dtype
+            typ = HklKey.REGISTRY[key].dtype
             df[key] = pd.Series(value, dtype=typ, name=key)
         self.table = df[(df['h'] != 0) | (df['k'] != 0) | (df['l'] != 0)].copy()
         if not('x' in self.table.columns):
@@ -510,7 +509,7 @@ class HklFrame(BaseFrame):
 
         :param bins: Number of equal-volume bins to divide the data into.
         :type bins: int
-        :param space_group: Group used to calculate equivalence and extinctions.
+        :param space_group: Group used to calculate equivalence and extinctions
         :type space_group: hikari.symmetry.Group
         :return: String containing table with stats as a function of resolution
         :rtype: str
@@ -550,10 +549,10 @@ class HklFrame(BaseFrame):
         """
         Average down each set of redundant reflections present in the table,
         to one reflection. The redundancy is determined using the
-        :meth:`find_equivalents` method with appropriate point group. Therefore,
+        :meth:`find_equivalents` method with appropriate point group. Thus,
         the merging can be used in different ways depending on point group:
 
-        - For PG['1'], only reflections with exactly the same h, k and l indices
+        - For PG['1'], only reflections with exactly the same h, k, l indices
           will be merged. Resulting dataframe will not contain any duplicates.
 
         - For PG['-1'] reflections with the same h, k and l as well as their
@@ -570,12 +569,12 @@ class HklFrame(BaseFrame):
         Fixed parameters *h, k, l, x, y, z, r* and *equiv* will be preserved;
         Floating points such as intensity *I*, structure factor *F* and their
         uncertainties *si* and *sf* will be averaged using arithmetic mean;
-        Multiplicity *m* will be summed; Other parameters which would lose their
-        meaning such as batch number *b* will be discarded.
+        Multiplicity *m* will be summed; Other parameters which would lose
+        their meaning such as batch number *b* will be discarded.
 
         The merging inevitably removes some information from the dataframe,
         but it can be necessary for some operations. For example, the drawing
-        procedures work much better and provide clearer image if multiple points
+        procedures work faster and provide clearer image if multiple points
         occupying the same position in space are reduced to one instance.
 
         :param point_group: Point Group used to determine symmetry equivalence
@@ -590,11 +589,11 @@ class HklFrame(BaseFrame):
         # for each key apply a necessary reduce operation and add it to data
         data = dict()
         for key in self.table.keys():
-            if HklKeyRegistrar.REGISTRY[key].reduce_behaviour == 'keep':
+            if HklKey.REGISTRY[key].reduce_behaviour == 'keep':
                 data[key] = grouped_first[key]
-            elif HklKeyRegistrar.REGISTRY[key].reduce_behaviour == 'add':
+            elif HklKey.REGISTRY[key].reduce_behaviour == 'add':
                 data[key] = grouped_sum[key]
-            elif HklKeyRegistrar.REGISTRY[key].reduce_behaviour == 'average':
+            elif HklKey.REGISTRY[key].reduce_behaviour == 'average':
                 data[key] = grouped_mean[key]
         self.from_dict(data)
 
@@ -636,10 +635,10 @@ class HklFrame(BaseFrame):
         """
         reader = HklReader(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
         dict_of_data = reader.read()
-        forgotten_keys = [k for k in HklKeyRegistrar.get_imperative_names()
+        forgotten_keys = [k for k in HklKey.IMPERATIVES
                           if k not in dict_of_data.keys()]
         for key in forgotten_keys:
-            default = HklKeyRegistrar.REGISTRY[key].default
+            default = HklKey.REGISTRY[key].default
             length_of_data = max([len(v) for v in dict_of_data.values()])
             dict_of_data[key] = [default] * length_of_data
         self.from_dict(dict_of_data)
@@ -701,10 +700,10 @@ class HklFrame(BaseFrame):
         Apply a symmetry operation or list of symmetry operations to transform
         the diffraction pattern.
 
-        If one symmetry operation (3x3 or 4x4 numpy array / matrix) is provided,
+        If one symmetry operation (3x3 or 4x4 numpy array) is provided,
         it effectively multiplies the hkl matrix by the operation matrix
-        and accordingly alters the self.data dataframe. As a result,
-        the length of self.data before and after transformation is the same.
+        and accordingly alters the `self.data` dataframe. As a result,
+        the length of `self.data` before and after transformation is the same.
 
         However, the function behaves slightly counter-intuitively
         if two or more operation matrices are provided. In such case
@@ -712,7 +711,7 @@ class HklFrame(BaseFrame):
         for each operation, and then *concatenates* resulting matrices.
         Resulting self.data is len(operations) times longer than the initial.
 
-        The function can use 3x3 or larger (eg. 4x4) matrices, as it selects
+        The function can use 3x3 or larger (e.g. 4x4) matrices, as it selects
         only the upper-left 3x3 segment for the sake of calculations.
         Also, while reconstructing the symmetry of merged reflection file
         it is important to use all symmetry operations, not only generators.
@@ -768,9 +767,9 @@ class HklFrame(BaseFrame):
         """
         Export the reflection information from table to .res file,
         so that a software used to visualize .res files can be used
-        to visualise a diffraction data in three dimensions.
+        to visualize a diffraction data in three dimensions.
 
-        :param colored: Which key of dataframe should be visualised using color.
+        :param colored: Which key of dataframe should be visualized using color
         :type colored: str
         :param path: Absolute or relative path where the file should be saved
         :type path: str
@@ -804,9 +803,8 @@ class HklFrame(BaseFrame):
 
 class HklIo:
     """
-    A helper class supporting HklFrame.
-    Menages reading and writing hkl files
-    into and out of HklFrame's dataframe
+    A helper class supporting HklFrame. Manages reading and writing hkl files
+    into and out of HklFrame's dataframe.
     """
 
     def __init__(self, hkl_file_path, hkl_file_format):
@@ -974,7 +972,7 @@ class HklIo:
         Import format string such as 'h 4 k 4 l 4 I 8 si 8' as format 'custom'.
 
         :param custom_format_string: string containing alternating data labels
-            and column widths (all negative if free format) separated using ' '.
+            and column widths (all negative if free format) separated using ' '
         :type custom_format_string: str
         :return: None
         """
@@ -1002,7 +1000,7 @@ class HklIo:
 class HklReader(HklIo):
     """
     A helper class for HklFrame,
-    Menages reading hkl files and importing data and keys from them
+    Manages reading hkl files and importing data and keys from them
     """
 
     def __init__(self, hkl_file_path, hkl_file_format):
@@ -1074,7 +1072,7 @@ class HklReader(HklIo):
         def build_dict_of_reflections(_hkl_array):
             dict_of_data = dict()
             for index, key in enumerate(self._format_dict['labels']):
-                key_dtype = HklKeyRegistrar.REGISTRY[key].dtype
+                key_dtype = HklKey.REGISTRY[key].dtype
                 dict_of_data[key] = _hkl_array[index].astype(key_dtype)
             return dict_of_data
         return build_dict_of_reflections(array_of_reflections)
@@ -1083,7 +1081,7 @@ class HklReader(HklIo):
 class HklWriter(HklIo):
     """
     A helper class for HklFrame,
-    Menages writing hkl files and exporting data to them
+    Manages writing hkl files and exporting data to them
     """
     def __init__(self, hkl_file_path, hkl_file_format):
         super().__init__(hkl_file_path, hkl_file_format)
@@ -1106,7 +1104,7 @@ class HklWriter(HklIo):
 
 
 class HklToResConverter:
-    """A class responsible for representing hkl data using using .res format"""
+    """A class responsible for representing hkl data using .res format"""
 
     MIN_DISTANCE = 10.0
     ELEMENTS = chemical_elements[:100]
