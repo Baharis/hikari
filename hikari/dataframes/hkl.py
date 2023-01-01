@@ -30,9 +30,9 @@ class HklKeyRegistrar(type):
             mcs.REGISTRY[new_cls.name] = new_cls
         return new_cls
 
-    @property
-    def type(cls):
-        return type(cls.dtype.type(cls.default).item())
+    @classmethod
+    def get_imperative_names(mcs):
+        return [k for k, v in mcs.REGISTRY.items() if v.imperative]
 
 
 class HklKey(metaclass=HklKeyRegistrar):
@@ -245,31 +245,6 @@ class HklKeyDummy(HklKey):
     dtype = np.str
 
 
-class HklKeyDict(UserDict):
-    IMPERATIVES = [k for k, v in HklKeyRegistrar.REGISTRY.items()
-                   if v.imperative]
-
-    def __init__(self, keys=()):
-        super().__init__()
-        self.add(*self.IMPERATIVES)
-        self.add(*keys)
-
-    def add(self, *keys: str) -> None:
-        """Add `HklKeys` to self using `HklKeyRegistry` keys"""
-        for key in keys:
-            self[key] = HklKeyRegistrar.REGISTRY[key]
-
-    def set(self, *keys: str) -> None:
-        """Set `HklKeys` of self using `HklKeyRegistry` keys"""
-        self.__init__(keys)
-
-    def remove(self,  *keys: str) -> None:
-        """Remove `HklKeys` from self using `HklKeyRegistry` keys"""
-        for key in keys:
-            if key not in self.IMPERATIVES:
-                del self[key]
-
-
 class HklFrame(BaseFrame):
     """
     A master object which manages single-crystal diffraction files.
@@ -298,9 +273,6 @@ class HklFrame(BaseFrame):
     def __init__(self):
         """HklFrame constructor"""
         super().__init__()
-
-        self.keys = HklKeyDict()
-        """Object managing keys (column names) of :attr:`table`."""
 
         self.__la = 0.71069
         """Wavelength of radiation used in experiment."""
@@ -467,7 +439,6 @@ class HklFrame(BaseFrame):
         """
         inc = 10 ** (int(np.log10(self.HKL_LIMIT)) + 2)
         equiv_dtype = HklKeyRegistrar.REGISTRY['equiv'].dtype
-        self.keys.add('equiv')
         self.table.reset_index(drop=True, inplace=True)
         self.table['equiv'] = -inc**3
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
@@ -488,9 +459,8 @@ class HklFrame(BaseFrame):
         :type dictionary: Dict[str, numpy.ndarray]
         """
         df = pd.DataFrame()
-        self.keys.add(*dictionary.keys())
         for key, value in dictionary.items():
-            typ = self.keys[key].dtype
+            typ = HklKeyRegistrar.REGISTRY[key].dtype
             df[key] = pd.Series(value, dtype=typ, name=key)
         self.table = df[(df['h'] != 0) | (df['k'] != 0) | (df['l'] != 0)].copy()
         if not('x' in self.table.columns):
@@ -620,11 +590,11 @@ class HklFrame(BaseFrame):
         # for each key apply a necessary reduce operation and add it to data
         data = dict()
         for key in self.table.keys():
-            if self.keys[key].reduce_behaviour == 'keep':
+            if HklKeyRegistrar.REGISTRY[key].reduce_behaviour == 'keep':
                 data[key] = grouped_first[key]
-            elif self.keys[key].reduce_behaviour == 'add':
+            elif HklKeyRegistrar.REGISTRY[key].reduce_behaviour == 'add':
                 data[key] = grouped_sum[key]
-            elif self.keys[key].reduce_behaviour == 'average':
+            elif HklKeyRegistrar.REGISTRY[key].reduce_behaviour == 'average':
                 data[key] = grouped_mean[key]
         self.from_dict(data)
 
@@ -640,7 +610,6 @@ class HklFrame(BaseFrame):
         self.table.loc[:, 'y'] = xyz[:, 1]
         self.table.loc[:, 'z'] = xyz[:, 2]
         self.table.loc[:, 'r'] = lin.norm(xyz, axis=1)
-        self.keys.add('x', 'y', 'z', 'r')
 
     def calculate_fcf_statistics(self):
         """
@@ -652,7 +621,6 @@ class HklFrame(BaseFrame):
         self.table['ze2'] = ze ** 2
         self.table['Iosi'] = self.table['I'] / self.table['si']
         self.table['Icsi'] = self.table['Ic'] / self.table['si']
-        self.keys.add('ze', 'ze2', 'Iosi', 'Icsi')
 
     def read(self, hkl_path, hkl_format='shelx_4'):
         """
@@ -668,27 +636,27 @@ class HklFrame(BaseFrame):
         """
         reader = HklReader(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
         dict_of_data = reader.read()
-        self.keys.set(*dict_of_data.keys())
-        forgotten_keys = [k for k in self.keys.IMPERATIVES
+        forgotten_keys = [k for k in HklKeyRegistrar.get_imperative_names()
                           if k not in dict_of_data.keys()]
         for key in forgotten_keys:
+            default = HklKeyRegistrar.REGISTRY[key].default
             length_of_data = max([len(v) for v in dict_of_data.values()])
-            dict_of_data[key] = [self.keys[key].default] * length_of_data
+            dict_of_data[key] = [default] * length_of_data
         self.from_dict(dict_of_data)
 
     def _recalculate_structure_factors_and_intensities(self):
         """
         Calculate 'I' and 'si' or 'F' and 'sf', depending on which are missing.
         """
-        if 'I' in self.keys and 'si' not in self.keys:
+        if 'I' in self.table.keys() and 'si' not in self.table.keys():
             raise KeyError('Intensities "I" are defined, but "si" not.')
-        if 'F' in self.keys and 'sf' not in self.keys:
+        if 'F' in self.table.keys() and 'sf' not in self.table.keys():
             raise KeyError('Structure factors "F" are defined, but "sf" not.')
-        if all(('I' in self.keys, 'si' in self.keys,
-                'F' not in self.keys, 'sf' not in self.keys)):
+        if all(('I' in self.table.keys(), 'si' in self.table.keys(),
+                'F' not in self.table.keys(), 'sf' not in self.table.keys())):
             self._recalculate_structure_factors_from_intensities()
-        if all(('F' in self.keys, 'sf' in self.keys,
-                'I' not in self.keys, 'si' not in self.keys)):
+        if all(('F' in self.table.keys(), 'sf' in self.table.keys(),
+                'I' not in self.table.keys(), 'si' not in self.table.keys())):
             self._recalculate_intensities_from_structure_factors()
 
     def _recalculate_structure_factors_from_intensities(self):
@@ -709,7 +677,6 @@ class HklFrame(BaseFrame):
         new_data['F'] = signum_of_i * absolute_sqrt_of_i
         new_data['sf'] = new_data["si"] / (2 * absolute_sqrt_of_i)
         self.table = new_data
-        self.keys.add('F', 'sf')
 
     def _recalculate_intensities_from_structure_factors(self):
         """
@@ -728,7 +695,6 @@ class HklFrame(BaseFrame):
         new_data['I'] = signum_of_f * (abs(new_data['F']) ** 2)
         new_data['si'] = 2 * new_data["sf"] * abs(new_data["F"])
         self.table = new_data
-        self.keys.add('I', 'si')
 
     def transform(self, operations):
         """
@@ -844,7 +810,6 @@ class HklIo:
     """
 
     def __init__(self, hkl_file_path, hkl_file_format):
-        self.keys = HklKeyDict()
         self.use_separator = True
         self.file_path = make_abspath(hkl_file_path)
         self.formats_defined = hkl_formats
@@ -1088,8 +1053,6 @@ class HklReader(HklIo):
         :return: A dictionary containing information read from .hkl file.
         :rtype: dict
         """
-        self.keys.set(*self._format_dict['labels'])
-
         if self.is_current_format_free:
             def parse_line(line):
                 return self._parse_free_line(line)
@@ -1111,7 +1074,7 @@ class HklReader(HklIo):
         def build_dict_of_reflections(_hkl_array):
             dict_of_data = dict()
             for index, key in enumerate(self._format_dict['labels']):
-                key_dtype = self.keys[key].dtype
+                key_dtype = HklKeyRegistrar.REGISTRY[key].dtype
                 dict_of_data[key] = _hkl_array[index].astype(key_dtype)
             return dict_of_data
         return build_dict_of_reflections(array_of_reflections)
