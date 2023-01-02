@@ -1,19 +1,26 @@
+import io
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 
-from hikari.scripts import calculate_similarity_indices, potency_map
+from hikari.scripts import calculate_similarity_indices, potency_map, \
+    completeness_statistics, dac_statistics, reformat_hkl, simulate_dac
 
 
 nacl_cif_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.cif'))
+nacl_hkl_path = str(pathlib.Path(__file__).parent.joinpath('NaCl.hkl'))
+nacl_commons = {'a': 5.64109, 'b': 5.64109, 'c': 5.64109,
+                'al': 90, 'be': 90, 'ga': 90, 'input_path': nacl_hkl_path,
+                'input_format': 'shelx_4', 'input_wavelength': 'MoKa'}
 
 
 class TestCompareADPsScripts(unittest.TestCase):
     temp_dir = tempfile.TemporaryDirectory()
-    output1_path = str(pathlib.Path(temp_dir.name) / 'similarity.out')
-    output2_path = str(pathlib.Path(temp_dir.name) / 'similarity.out')
+    output1_path = str(pathlib.Path(temp_dir.name) / 'similarity1.out')
+    output2_path = str(pathlib.Path(temp_dir.name) / 'similarity2.out')
 
     def test_calculate_similarity_index_for_implicit_cif2_path(self):
         calculate_similarity_indices(cif1_path=nacl_cif_path,
@@ -67,9 +74,14 @@ class TestCompareADPsScripts(unittest.TestCase):
             self.assertAlmostEqual(float(last_line_contents[-3]), 50.0)
 
 
-class TestHklPotencyScripts(unittest.TestCase):
+class TestHklScripts(unittest.TestCase):
     temp_dir = tempfile.TemporaryDirectory()
-    hkl_path = str(pathlib.Path(temp_dir.name) / 'potency.hkl')
+    hkl_path = str(pathlib.Path(temp_dir.name) / 'temp.hkl')
+
+    @mock.patch('sys.stdout', new_callable=io.StringIO)
+    def get_stdout(self, callable_, kwargs, mock_stdout):
+        callable_(**kwargs)
+        return mock_stdout.getvalue()
 
     def test_potency_map_simple(self):
         potency_map(a=10, b=10, c=10, al=90, be=90, ga=90, space_group='P1',
@@ -82,6 +94,34 @@ class TestHklPotencyScripts(unittest.TestCase):
         potency_map(a=10, b=10, c=10, al=90, be=90, ga=90, space_group='Pm-3m',
                     path=self.hkl_path, output_quality=2, wavelength='MoKa',
                     orientation=ori)
+
+    def test_completeness_statistics(self):
+        kwargs = dict({'space_group': 'Fm-3m'}, **nacl_commons)
+        stdout = self.get_stdout(completeness_statistics, kwargs)
+        line = '(2.468, 2.557]    586     12      12   7.831589   1.0   48.833'
+        self.assertIn(line, stdout)
+
+    def test_dac_statistics(self):
+        kwargs = dict({'opening_angle': 35, 'orientation': np.eye(3),
+                       'resolution': 1.2}, **nacl_commons)
+        stdout = self.get_stdout(dac_statistics, kwargs)
+        line = '0.556991        26        60       122  0.433333  0.213115'
+        self.assertIn(line, stdout)
+
+    def test_reformat_hkl(self):
+        reformat_hkl(input_path=nacl_hkl_path, input_format='shelx_4',
+                     output_path=self.hkl_path, output_format='shelx_40')
+        with open(nacl_hkl_path, 'r') as f1:
+            with open(self.hkl_path, 'r') as f2:
+                self.assertEqual(len(f1.readlines()), len(f2.readlines()))
+
+    def test_simulate_dac(self):
+        kwargs = dict({'opening_angle': 35, 'orientation': np.eye(3),
+                       'resolution': 1.2, 'output_path': self.hkl_path,
+                       'output_format': 'shelx_4'}, **nacl_commons)
+        simulate_dac(**kwargs)
+        with open(self.hkl_path, 'r') as f:
+            self.assertEqual(len(f.readlines()), 553)
 
 
 if __name__ == '__main__':
