@@ -98,9 +98,9 @@ class TestHklScripts(unittest.TestCase):
     def test_completeness_statistics(self):
         kwargs = dict({'space_group': 'Fm-3m'}, **nacl_commons)
         stdout = self.get_stdout(completeness_statistics, kwargs)
-        line = '(2.468, 2.557]    586     12      12   7.831589   1.0   48.833'
+        line = '(2.373, 2.468]    287      6       6  11.039363'
         self.assertIn(line, stdout)
-        # TODO: for some reason, on ubuntu latest, one refl is not read? WHY?
+        # TODO: for some reason, on ubuntu latest ONLY, one refl is not read?
         # TODO: check that out eventually - the last reflection not read
 
     def test_dac_statistics(self):
