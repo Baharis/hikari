@@ -225,7 +225,10 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         pyplot.rcParams.update({'font.size': 16})
         ax.view_init(elev=90 - sum(self.polar_limits) / 2,
                      azim=sum(self.azimuth_limits) / 2)
-        ax.dist = 6.5
+        try:
+            ax.dist = 6.5
+        except AttributeError:
+            pass
         ax.plot([1], [1], [1], 'w')
         ax.plot([-1], [-1], [-1], 'w')
         ax.set_axis_off()

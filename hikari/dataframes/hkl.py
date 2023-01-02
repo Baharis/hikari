@@ -1,5 +1,6 @@
 import copy
 import random
+from typing import Union, Iterable
 
 import numpy as np
 import numpy.linalg as lin
@@ -7,7 +8,7 @@ import pandas as pd
 
 import hikari
 from hikari.dataframes import BaseFrame
-from hikari.symmetry import PG, SG
+from hikari.symmetry import PG, SG, Group
 from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style, \
     characteristic_radiation
 from hikari.utility import cubespace, chemical_elements, make_abspath, \
@@ -16,327 +17,231 @@ from hikari.utility import cubespace, chemical_elements, make_abspath, \
 pd.options.mode.chained_assignment = 'raise'
 
 
-class HklKeys:
-    """
-    A helper class supporting HklFrame.
-    Menages properties and presence of keys
-    present in HklFrame's dataframe
-    """
-    # DEFINE ALL POSSIBLE HKL KEYS
-    __h = {
-        'default': 0,
-        'description': 'Reciprocal lattice index h',
-        'imperative': True,
-        'dtype': 'int8',
-        'reduce_behaviour': 'keep',
-        'type': int
-    }
-    __k = {
-        'default': 0,
-        'description': 'Reciprocal lattice index k',
-        'imperative': True,
-        'dtype': 'int8',
-        'reduce_behaviour': 'keep',
-        'type': int
-    }
-    __l = {
-        'default': 0,
-        'description': 'Reciprocal lattice index l',
-        'imperative': True,
-        'dtype': 'int8',
-        'reduce_behaviour': 'keep',
-        'type': int
-    }
-    __F = {
-        'default': 1.0,
-        'description': 'Structure factor',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __I = {
-        'default': 1.0,
-        'description': 'Observed intensity',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __Ic = {
-        'default': 1.0,
-        'description': 'Calculated intensity',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __si = {
-        'default': 0.0,
-        'description': 'Uncertainty of intensity I determination',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __sf = {
-        'default': 0.0,
-        'description': 'Uncertainty of structure factor determination',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __u = {
-        'default': 0.0,
-        'description': 'Structure factor to its uncertainty ratio',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __b = {
-        'default': 1,
-        'description': 'Batch / run number',
-        'imperative': False,
-        'dtype': 'int16',
-        'reduce_behaviour': 'discard',
-        'type': int
-    }
-    __c = {
-        'default': 1,
-        'description': 'crystal or twin number',
-        'imperative': False,
-        'dtype': 'int16',
-        'reduce_behaviour': 'discard',
-        'type': int
-    }
-    __m = {
-        'default': 1,
-        'description': 'multiplicity',
-        'imperative': True,
-        'dtype': 'int16',
-        'reduce_behaviour': 'add',
-        'type': int
-    }
-    __la = {
-        'default': 0.0,
-        'description': 'wavelength',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'discard',
-        'type': float
-    }
-    __ph = {
-        'default': 0.0,
-        'description': 'reflection phase in radians',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __r = {
-        'default': 0.0,
-        'description': 'distance from 000. Divide by two for resol. in A^-1',
-        'imperative': False,
-        'dtype': 'float32',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __t = {
-        'default': 0.0,
-        'description': 'absorption weighted path length in centimeters',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __u1 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __u2 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __u3 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __v1 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __v2 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __v3 = {
-        'default': 0.0,
-        'description': 'Direction cosines of a vector (see XD manual for ref.)',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __x = {
-        'default': 0.0,
-        'description': 'reciprocal position vector x value',
-        'imperative': False,
-        'dtype': 'float32',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __y = {
-        'default': 0.0,
-        'description': 'reciprocal position vector y value',
-        'imperative': False,
-        'dtype': 'float32',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __z = {
-        'default': 0.0,
-        'description': 'reciprocal position vector z value',
-        'imperative': False,
-        'dtype': 'float32',
-        'reduce_behaviour': 'keep',
-        'type': float
-    }
-    __ze = {
-        'default': 0.0,
-        'description': 'weighted diff. in observed I - calculated Ic intensity',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __ze2 = {
-        'default': 0.0,
-        'description': 'weighted diff. in obs. I - calculated Ic int., squared',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __Icsi = {
-        'default': 1.0,
-        'description': 'Calculated intensity of reflection div. by exp. sigma',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __Iosi = {
-        'default': 1.0,
-        'description': 'Observed intensity of reflection div. by exp. sigma',
-        'imperative': False,
-        'dtype': 'float64',
-        'reduce_behaviour': 'average',
-        'type': float
-    }
-    __equiv = {
-        'default': 0,
-        'description': 'integer unique for each set of sym. equiv. reflections',
-        'imperative': False,
-        'dtype': 'int64',
-        'reduce_behaviour': 'keep',
-        'type': int
-    }
-    __None = {
-        'default': '',
-        'description': 'Dummy column for irrelevant data',
-        'imperative': False,
-        'dtype': 'str',
-        'reduce_behaviour': 'keep',
-        'type': str
-    }
-    defined_keys = {'h', 'k', 'l', 'F', 'I', 'si', 'sf', 'b', 'm', 'la', 'ph',
-                    'u', 'r', 't', 'u1', 'u2', 'u3', 'v1', 'v2', 'v3',
-                    'x', 'y', 'z', 'ze', 'ze2', 'Iosi', 'Icsi', 'equiv', 'None'}
-    # TODO check if needed and cplt?
+class HklKeyRegistrar(type):
+    """Metaclass for `HklKey`s which registers them if they define `name`."""
+    REGISTRY = {}
+    default: None
+    dtype: np.dtype
 
-    def __init__(self, keys=()):
-        # DEFINE ALL KNOWN KEYS
-        self.imperatives = set()
-        for key in HklKeys.defined_keys:
-            if self.get_property(key, 'imperative'):
-                self.imperatives.add(key)
-        self.all = set()
-        self.add(self.imperatives)
-        self.add(keys)
+    def __new__(mcs, name, bases, attrs):
+        new_cls = type.__new__(mcs, name, bases, attrs)
+        if hasattr(new_cls, 'name') and new_cls.name:
+            mcs.REGISTRY[new_cls.name] = new_cls
+        return new_cls
 
-    def add(self, keys):
-        """Add keys from a keys list to the HklKeys handler"""
-        for key in keys:
-            self.all.add(key)
-        self.__refresh()
+    @property
+    def IMPERATIVES(self):  # noqa - capital letters to avoid attribute clash
+        return [k for k, v in self.REGISTRY.items() if v.imperative]
 
-    def set(self, keys):
-        """Set keys from a keys list in the HklKeys handler"""
-        self.all = set()
-        self.add(self.imperatives)
-        for key in keys:
-            self.all.add(key)
-        self.__refresh()
 
-    def remove(self, keys):
-        """Remove keys from a keys list in the HklKeys handler"""
-        for key in keys:
-            self.all.discard(key)
-        self.add(self.imperatives)
-        self.__refresh()
+class HklKey(metaclass=HklKeyRegistrar):
+    """Base Class for every subsequent HklKey."""
+    name: str = ''                  # if not empty, how key will be registered
+    default = None                  # default to set if value was not provided
+    dtype: str = ''                 # dtype to use when defining numpy array
+    imperative: bool = False        # is key imperative for every table?
+    reduce_behaviour: str = 'keep'  # 'add', 'average', 'discard' or 'keep' 1st
+    type: type = type(None)         # python type used when defining instances
 
-    def get_property(self, key, prop):
-        """Get desired key property imported from defined dictionary"""
-        return getattr(self, '_HklKeys__'+key)[prop]
 
-    def __refresh(self):
-        """refresh defined dictionaries based on all keys' set"""
+class HklKeyImperativeInt8(HklKey):
+    default = 0
+    dtype = np.int8
+    imperative = True
 
-        # SET 'OF_TYPE' DICTIONARY:
-        types = set()
-        for key in HklKeys.defined_keys:
-            typ = self.get_property(key, 'type').__name__
-            types.add(typ)
-        self.of_type = dict()
-        for typ in types:
-            self.of_type[typ] = set()
-        for key in self.all:
-            typ = self.get_property(key, 'type').__name__
-            self.of_type[typ].add(key)
 
-        # SET 'REDUCE BEHAVIOUR' DICTIONARY
-        behaviours = set()
-        for key in HklKeys.defined_keys:
-            behaviour = self.get_property(key, 'reduce_behaviour')
-            behaviours.add(behaviour)
-        self.reduce_behaviour = dict()
-        for behaviour in behaviours:
-            self.reduce_behaviour[behaviour] = set()
-        for key in self.all:
-            behaviour = self.get_property(key, 'reduce_behaviour')
-            self.reduce_behaviour[behaviour].add(key)
+class HklKeyAveragedFloat64(HklKey):
+    default = 0.0
+    dtype = np.float64
+    reduce_behaviour = 'average'
+
+
+class HklKeyKeptFloat64(HklKey):
+    default = 0.0
+    dtype = np.float64
+    reduce_behaviour = 'keep'
+
+
+class HklKeyIndexH(HklKeyImperativeInt8):
+    """Reciprocal lattice Miller index h"""
+    name = 'h'
+
+
+class HklKeyIndexK(HklKeyImperativeInt8):
+    """Reciprocal lattice Miller index k"""
+    name = 'k'
+
+
+class HklKeyIndexL(HklKeyImperativeInt8):
+    """Reciprocal lattice Miller index l"""
+    name = 'l'
+
+
+class HklKeyStructureFactor(HklKeyAveragedFloat64):
+    """Crystallographic structure factor F"""
+    name = 'F'
+    default = 1.0
+
+
+class HklKeyIntensity(HklKeyAveragedFloat64):
+    """Crystallographic intensity I_obs"""
+    name = 'I'
+    default = 1.0
+
+
+class HklKeyIntensityCalculated(HklKeyAveragedFloat64):
+    """Crystallographic calculated intensity I_calc"""
+    name = 'Ic'
+    default = 1.0
+
+
+class HklKeyIntensityUncertainty(HklKeyAveragedFloat64):
+    """Uncertainty of intensity I determination"""
+    name = 'si'
+
+
+class HklKeyStructureFactorUncertainty(HklKeyAveragedFloat64):
+    """Uncertainty of structure factor F determination"""
+    name = 'sf'
+
+
+class HklKeyStructureFactorToUncertaintyRatio(HklKeyAveragedFloat64):
+    """Structure factor to its uncertainty ratio"""
+    name = 'u'
+
+
+class HklKeyBatchNumber(HklKey):
+    """Batch or run number"""
+    name = 'b'
+    default = 0
+    dtype = np.int16
+    reduce_behaviour = 'discard'
+
+
+class HklKeyCrystalNumber(HklKey):
+    """Crystal domain or twin number"""
+    name = 'c'
+    default = 0
+    dtype = np.int16
+    reduce_behaviour = 'discard'
+
+
+class HklKeyMultiplicity(HklKey):
+    """Multiplicity i.e. how many observation contributed to this reflection"""
+    name = 'm'
+    default = 1
+    dtype = np.int16
+    imperative = True
+    reduce_behaviour = 'add'
+
+
+class HklKeyWavelength(HklKey):
+    """Wavelength expressed in Angstrom"""
+    name = 'la'
+    default = 0.0
+    dtype = np.float64
+    reduce_behaviour = 'discard'
+
+
+class HklKeyPhase(HklKeyAveragedFloat64):
+    """Reflection phase expressed in radians"""
+    name = 'ph'
+    default = 0.0
+
+
+class HklKeyRadius(HklKey):
+    """Distance from 000 node, i.e. double the sin(th)/la resolution in A^-1"""
+    name = 'r'
+    dtype = np.float64
+
+
+class HklKeyTransmissionPathLength(HklKeyKeptFloat64):
+    """Absorption-weighted transmission path length in centimeters"""
+    name = 't'
+
+
+class HklKeyCosineU1(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'u1'
+
+
+class HklKeyCosineU2(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'u2'
+
+
+class HklKeyCosineU3(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'u3'
+
+
+class HklKeyCosineV1(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'v1'
+
+
+class HklKeyCosineV2(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'v2'
+
+
+class HklKeyCosineV3(HklKeyKeptFloat64):
+    """Direction cosines of a vector (unused, see XD manual for reference)"""
+    name = 'v3'
+
+
+class HklKeyCoordinateX(HklKeyKeptFloat64):
+    """Reciprocal space coordinate x*"""
+    name = 'x'
+    dtype = np.float32
+
+
+class HklKeyCoordinateY(HklKeyKeptFloat64):
+    """Reciprocal space coordinate x*"""
+    name = 'y'
+    dtype = np.float32
+
+
+class HklKeyCoordinateZ(HklKeyKeptFloat64):
+    """Reciprocal space coordinate x*"""
+    name = 'z'
+    dtype = np.float32
+
+
+class HklKeyZeta(HklKeyAveragedFloat64):
+    """weighted diff. in observed I - calculated Ic intensity"""
+    name = 'ze'
+
+
+class HklKeyZetaSquared(HklKeyAveragedFloat64):
+    """weighted diff. in observed I - calculated Ic intensity, squared"""
+    name = 'ze2'
+
+
+class HklKeyCalculatedIntensityToSigma(HklKeyAveragedFloat64):
+    """Calculated intensity of reflection divided by experimental sigma"""
+    name = 'Icsi'
+    default = 1.0
+
+
+class HklKeyObservedIntensityToSigma(HklKeyAveragedFloat64):
+    """Observed intensity of reflection divided by experimental sigma"""
+    name = 'Iosi'
+    default = 1.0
+
+
+class HklKeyEquivalenceCode(HklKey):
+    """Integer unique for each set of symmetrically equivalent reflections"""
+    name = 'equiv'
+    default = 0
+    dtype = np.int64
+
+
+class HklKeyDummy(HklKey):
+    """Dummy column for loading or holding irrelevant string data"""
+    name = 'None'
+    default = ''
+    dtype = np.str_
 
 
 class HklFrame(BaseFrame):
@@ -345,7 +250,7 @@ class HklFrame(BaseFrame):
     It utilises other `Hkl*` classes to import, store, manipulate and output
     information about single-crystal diffraction patterns.
 
-    HklFrame acts as an container which stores
+    HklFrame acts as a container which stores
     the diffraction data (Pandas dataframe, :attr:`table`)
     and elementary crystal cell data (:class:`hikari.dataframes.Base`).
     Demanding methods belonging to this class are vectorized,
@@ -356,7 +261,7 @@ class HklFrame(BaseFrame):
     :func:`copy` to other object or output using :func:`write` if needed.
 
     The HklFrame always initiates empty and does not accept any arguments.
-    Some of the magic methods, such as :func:`__len__` and :func:`__add__`
+    Some magic methods, such as :func:`__len__` and :func:`__add__`
     are defined and describe/operate on the :attr:`frame`.
     """
 
@@ -367,9 +272,6 @@ class HklFrame(BaseFrame):
     def __init__(self):
         """HklFrame constructor"""
         super().__init__()
-
-        self.keys = HklKeys()
-        """Object managing keys (column names) of :attr:`table`."""
 
         self.__la = 0.71069
         """Wavelength of radiation used in experiment."""
@@ -387,7 +289,7 @@ class HklFrame(BaseFrame):
         """
         :param other: HklFrame to be added to data
         :type other: HklFrame
-        :return: concatenated :attr:`table` dataframes, with metadata from first
+        :return: concatenated :attr:`table` dataframes with metadata from first
         :rtype: HklFrame
         """
         _copied = self.copy()
@@ -434,35 +336,35 @@ class HklFrame(BaseFrame):
     @property
     def r_lim(self):
         """
-        :return: Radius of limiting sphere calculated in A-1 based on :attr:`la`
+        :return: Radius of limiting sphere in A^-1 calculated as 2/:attr:`la`
         :rtype: float
         """
-        return 2 / self.la
+        return 2.0 / self.la
 
     def _in_dacs(self, opening_angle, vectors):
-        oa = np.deg2rad(opening_angle)                # opening angle in radians
+        oa = np.deg2rad(opening_angle)
         xyz = self.table.loc[:, ('x', 'y', 'z')].to_numpy()
         r = self.table.loc[:, 'r'].to_numpy()
         v = np.array(vectors)
         v = (v.T / lin.norm(v, axis=1)).T              # normalise vectors v
-        m1 = np.matmul(v, xyz.T)                       # dist from dac plane "p"
+        m1 = np.matmul(v, xyz.T)                       # dist from dac plane p
         phi = np.abs(np.arcsin((m1 / r).clip(-1, 1)))  # angle <(plane p, v)
         lim = self.r_lim * np.sin(oa - phi)            # True if in dac
         return r[None, :] < lim
 
-    def dac_trim(self, opening_angle=35.0, vector=None):
+    def dac_trim(self, opening_angle: float = 35.0, vector=None):
         """
         Remove reflections outside the opening_angle DAC-accessible volume.
         Sample/DAC orientation can be supplied either via specifying crystal
         orientation in :class:`hikari.dataframes.BaseFrame`, in
         :attr:`orientation` or providing a xyz\* *vector* perpendicular to the
-        dac-accessible disc. For further details refer to `*Tchoń & Makal, IUCrJ
+        dac-accessible disc. For further details, see `*Tchoń & Makal, IUCrJ
         8, 1006-1017 (2021)* <https://doi.org/10.1107/s2052252521009532>`_.
 
-        :param opening_angle: DAC single opening angle in degrees, default 35.0.
+        :param opening_angle: DAC single opening angle in degrees, default 35.
         :type opening_angle: float
         :param vector: Provides information about orientation of crystal
-          relative to DAC. If None, current :attr:`orientation` is used instead.
+          relative to DAC. If None, :attr:`orientation` is used instead.
         :type vector: Tuple[float]
         :return: HklFrame containing only reflections in dac-accessible region.
         :rtype: HklFrame
@@ -477,14 +379,15 @@ class HklFrame(BaseFrame):
         self.table = self.table[in_dac]
         self.table.reset_index(drop=True, inplace=True)
 
-    def dacs_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
+    def dacs_count(self, opening_angle: float = 35.0,
+                   vectors: np.ndarray = np.array((1, 0, 0))):
         """
         Count unique dac-accessible reflections for n crystals placed such that
         vector n is perpendicular to diamond. For details see :meth:`dac_trim`.
 
-        :param opening_angle: DAC single opening angle in degrees, default 35.0.
+        :param opening_angle: DAC single opening angle in degrees, default 35.
         :type opening_angle: float
-        :param vectors: Array containing rotational axes of available DAC-discs.
+        :param vectors: Array with rotational axes of available DAC-discs.
         :type vectors: np.array
         :return: Array with numbers of unique reflns in DAC-accessible region.
         :rtype: np.array
@@ -507,7 +410,7 @@ class HklFrame(BaseFrame):
         """
         return copy.deepcopy(self)
 
-    def extinct(self, space_group=SG['P1']):
+    def extinct(self, space_group: Group = SG['P1']):
         """
         Removes from dataframe reflections which should be extinct based on
         space :class:`hikari.symmetry.group.Group`. For ref. see ITC-A12.3.5.
@@ -521,7 +424,7 @@ class HklFrame(BaseFrame):
         self.table = self.table[~extinct_flag_list_union]
         self.table.reset_index(drop=True, inplace=True)
 
-    def find_equivalents(self, point_group=PG['1']):
+    def find_equivalents(self, point_group: Group = PG['1']):
         """
         Assign each reflection its symmetry equivalence identifier and store
         it in the `hikari.dataframes.HklFrame.data['equiv']` column.
@@ -535,8 +438,7 @@ class HklFrame(BaseFrame):
         :type point_group: hikari.symmetry.Group
         """
         inc = 10 ** (int(np.log10(self.HKL_LIMIT)) + 2)
-        equiv_dtype = self.keys.get_property('equiv', 'dtype')
-        self.keys.add(('equiv',))
+        equiv_dtype = HklKey.REGISTRY['equiv'].dtype
         self.table.reset_index(drop=True, inplace=True)
         self.table['equiv'] = -inc**3
         _hkl_matrix = self.table.loc[:, ('h', 'k', 'l')].to_numpy()
@@ -546,9 +448,9 @@ class HklFrame(BaseFrame):
             _to_update = self.table['equiv'] < new_equiv
             self.table.loc[_to_update, 'equiv'] = new_equiv[_to_update]
 
-    def from_dict(self, dictionary):
+    def from_dict(self, dictionary: dict):
         """
-        Construct the self.data using information stored in dictionary.
+        Construct the `self.data` using information stored in dictionary.
         The dictionary keys must be valid strings, see :class:`HklKeys` for
         a list of valid keys. The dictionary values must be iterable of equal
         size, preferably `numpy.ndarray`.
@@ -557,9 +459,8 @@ class HklFrame(BaseFrame):
         :type dictionary: Dict[str, numpy.ndarray]
         """
         df = pd.DataFrame()
-        self.keys.add(dictionary.keys())
         for key, value in dictionary.items():
-            typ = self.keys.get_property(key, 'dtype')
+            typ = HklKey.REGISTRY[key].dtype
             df[key] = pd.Series(value, dtype=typ, name=key)
         self.table = df[(df['h'] != 0) | (df['k'] != 0) | (df['l'] != 0)].copy()
         if not('x' in self.table.columns):
@@ -602,14 +503,14 @@ class HklFrame(BaseFrame):
         self.from_dict({'h': np.squeeze(_h), 'k': np.squeeze(_k),
                         'l': np.squeeze(_l), 'I': ones, 'si': ones, 'm': ones})
 
-    def stats(self, bins=10, space_group=SG['P1']):
+    def stats(self, bins: int = 10, space_group: Group = SG['P1']):
         """
         Returns completeness, redundancy, number of all, unique & theoretically
         possible reflections within equal-volume `bins` in given `space group`.
 
         :param bins: Number of equal-volume bins to divide the data into.
         :type bins: int
-        :param space_group: Group used to calculate equivalence and extinctions.
+        :param space_group: Group used to calculate equivalence and extinctions
         :type space_group: hikari.symmetry.Group
         :return: String containing table with stats as a function of resolution
         :rtype: str
@@ -649,10 +550,10 @@ class HklFrame(BaseFrame):
         """
         Average down each set of redundant reflections present in the table,
         to one reflection. The redundancy is determined using the
-        :meth:`find_equivalents` method with appropriate point group. Therefore,
+        :meth:`find_equivalents` method with appropriate point group. Thus,
         the merging can be used in different ways depending on point group:
 
-        - For PG['1'], only reflections with exactly the same h, k and l indices
+        - For PG['1'], only reflections with exactly the same h, k, l indices
           will be merged. Resulting dataframe will not contain any duplicates.
 
         - For PG['-1'] reflections with the same h, k and l as well as their
@@ -669,12 +570,12 @@ class HklFrame(BaseFrame):
         Fixed parameters *h, k, l, x, y, z, r* and *equiv* will be preserved;
         Floating points such as intensity *I*, structure factor *F* and their
         uncertainties *si* and *sf* will be averaged using arithmetic mean;
-        Multiplicity *m* will be summed; Other parameters which would lose their
-        meaning such as batch number *b* will be discarded.
+        Multiplicity *m* will be summed; Other parameters which would lose
+        their meaning such as batch number *b* will be discarded.
 
         The merging inevitably removes some information from the dataframe,
         but it can be necessary for some operations. For example, the drawing
-        procedures work much better and provide clearer image if multiple points
+        procedures work faster and provide clearer image if multiple points
         occupying the same position in space are reduced to one instance.
 
         :param point_group: Point Group used to determine symmetry equivalence
@@ -689,11 +590,11 @@ class HklFrame(BaseFrame):
         # for each key apply a necessary reduce operation and add it to data
         data = dict()
         for key in self.table.keys():
-            if key in self.keys.reduce_behaviour['keep']:
+            if HklKey.REGISTRY[key].reduce_behaviour == 'keep':
                 data[key] = grouped_first[key]
-            elif key in self.keys.reduce_behaviour['add']:
+            elif HklKey.REGISTRY[key].reduce_behaviour == 'add':
                 data[key] = grouped_sum[key]
-            elif key in self.keys.reduce_behaviour['average']:
+            elif HklKey.REGISTRY[key].reduce_behaviour == 'average':
                 data[key] = grouped_mean[key]
         self.from_dict(data)
 
@@ -709,7 +610,6 @@ class HklFrame(BaseFrame):
         self.table.loc[:, 'y'] = xyz[:, 1]
         self.table.loc[:, 'z'] = xyz[:, 2]
         self.table.loc[:, 'r'] = lin.norm(xyz, axis=1)
-        self.keys.add(('x', 'y', 'z', 'r'))
 
     def calculate_fcf_statistics(self):
         """
@@ -721,7 +621,6 @@ class HklFrame(BaseFrame):
         self.table['ze2'] = ze ** 2
         self.table['Iosi'] = self.table['I'] / self.table['si']
         self.table['Icsi'] = self.table['Ic'] / self.table['si']
-        self.keys.add(('ze', 'ze2', 'Iosi', 'Icsi'))
 
     def read(self, hkl_path, hkl_format='shelx_4'):
         """
@@ -737,31 +636,27 @@ class HklFrame(BaseFrame):
         """
         reader = HklReader(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
         dict_of_data = reader.read()
-        self.keys.set(dict_of_data.keys())
-        forgotten_keys = tuple(self.keys.imperatives - set(dict_of_data.keys()))
-        for forgotten in forgotten_keys:
-            default = self.keys.get_property(forgotten, 'default')
+        forgotten_keys = [k for k in HklKey.IMPERATIVES
+                          if k not in dict_of_data.keys()]
+        for key in forgotten_keys:
+            default = HklKey.REGISTRY[key].default
             length_of_data = max([len(v) for v in dict_of_data.values()])
-            dict_of_data[forgotten] = [default] * length_of_data
+            dict_of_data[key] = [default] * length_of_data
         self.from_dict(dict_of_data)
 
     def _recalculate_structure_factors_and_intensities(self):
         """
         Calculate 'I' and 'si' or 'F' and 'sf', depending on which are missing.
         """
-        if 'I' in self.keys.all and not('si' in self.keys.all):
+        if 'I' in self.table.keys() and 'si' not in self.table.keys():
             raise KeyError('Intensities "I" are defined, but "si" not.')
-        if 'F' in self.keys.all and not('sf' in self.keys.all):
+        if 'F' in self.table.keys() and 'sf' not in self.table.keys():
             raise KeyError('Structure factors "F" are defined, but "sf" not.')
-        if all(('I' in self.keys.all,
-               'si' in self.keys.all,
-                not('F' in self.keys.all),
-                not('sf' in self.keys.all))):
+        if all(('I' in self.table.keys(), 'si' in self.table.keys(),
+                'F' not in self.table.keys(), 'sf' not in self.table.keys())):
             self._recalculate_structure_factors_from_intensities()
-        if all(('F' in self.keys.all,
-               'sf' in self.keys.all,
-                not('I' in self.keys.all),
-                not('si' in self.keys.all))):
+        if all(('F' in self.table.keys(), 'sf' in self.table.keys(),
+                'I' not in self.table.keys(), 'si' not in self.table.keys())):
             self._recalculate_intensities_from_structure_factors()
 
     def _recalculate_structure_factors_from_intensities(self):
@@ -782,7 +677,6 @@ class HklFrame(BaseFrame):
         new_data['F'] = signum_of_i * absolute_sqrt_of_i
         new_data['sf'] = new_data["si"] / (2 * absolute_sqrt_of_i)
         self.table = new_data
-        self.keys.add({'F', 'sf'})
 
     def _recalculate_intensities_from_structure_factors(self):
         """
@@ -801,17 +695,16 @@ class HklFrame(BaseFrame):
         new_data['I'] = signum_of_f * (abs(new_data['F']) ** 2)
         new_data['si'] = 2 * new_data["sf"] * abs(new_data["F"])
         self.table = new_data
-        self.keys.add({'I', 'si'})
 
-    def transform(self, operations):
+    def transform(self, operations: Union[Iterable[np.ndarray], np.ndarray]):
         """
         Apply a symmetry operation or list of symmetry operations to transform
         the diffraction pattern.
 
-        If one symmetry operation (3x3 or 4x4 numpy array / matrix) is provided,
+        If one symmetry operation (3x3 or 4x4 numpy array) is provided,
         it effectively multiplies the hkl matrix by the operation matrix
-        and accordingly alters the self.data dataframe. As a result,
-        the length of self.data before and after transformation is the same.
+        and accordingly alters the `self.data` dataframe. As a result,
+        the length of `self.data` before and after transformation is the same.
 
         However, the function behaves slightly counter-intuitively
         if two or more operation matrices are provided. In such case
@@ -819,7 +712,7 @@ class HklFrame(BaseFrame):
         for each operation, and then *concatenates* resulting matrices.
         Resulting self.data is len(operations) times longer than the initial.
 
-        The function can use 3x3 or larger (eg. 4x4) matrices, as it selects
+        The function can use 3x3 or larger (e.g. 4x4) matrices, as it selects
         only the upper-left 3x3 segment for the sake of calculations.
         Also, while reconstructing the symmetry of merged reflection file
         it is important to use all symmetry operations, not only generators.
@@ -828,7 +721,7 @@ class HklFrame(BaseFrame):
         point groups can be imported from :py:mod:`hikari.symmetry` module.
 
         :param operations: Iterable of operation matrices to be applied
-        :type operations: Union[Tuple[np.ndarray, np.ndarray], np.ndarray]
+        :type operations: Union[Iterable[np.ndarray], np.ndarray]
         """
 
         def _make_a_list_of_operations():
@@ -875,16 +768,16 @@ class HklFrame(BaseFrame):
         """
         Export the reflection information from table to .res file,
         so that a software used to visualize .res files can be used
-        to visualise a diffraction data in three dimensions.
+        to visualize a diffraction data in three dimensions.
 
-        :param colored: Which key of dataframe should be visualised using color.
+        :param colored: Which key of dataframe should be visualized using color
         :type colored: str
         :param path: Absolute or relative path where the file should be saved
         :type path: str
         """
         HklToResConverter(self).convert(path)
 
-    def trim(self, limit):
+    def trim(self, limit: float):
         """
         Remove reflections further than *limit* from reciprocal space origin.
 
@@ -911,13 +804,11 @@ class HklFrame(BaseFrame):
 
 class HklIo:
     """
-    A helper class supporting HklFrame.
-    Menages reading and writing hkl files
-    into and out of HklFrame's dataframe
+    A helper class supporting HklFrame. Manages reading and writing hkl files
+    into and out of HklFrame's dataframe.
     """
 
     def __init__(self, hkl_file_path, hkl_file_format):
-        self.keys = HklKeys()
         self.use_separator = True
         self.file_path = make_abspath(hkl_file_path)
         self.formats_defined = hkl_formats
@@ -1082,7 +973,7 @@ class HklIo:
         Import format string such as 'h 4 k 4 l 4 I 8 si 8' as format 'custom'.
 
         :param custom_format_string: string containing alternating data labels
-            and column widths (all negative if free format) separated using ' '.
+            and column widths (all negative if free format) separated using ' '
         :type custom_format_string: str
         :return: None
         """
@@ -1110,7 +1001,7 @@ class HklIo:
 class HklReader(HklIo):
     """
     A helper class for HklFrame,
-    Menages reading hkl files and importing data and keys from them
+    Manages reading hkl files and importing data and keys from them
     """
 
     def __init__(self, hkl_file_path, hkl_file_format):
@@ -1161,8 +1052,6 @@ class HklReader(HklIo):
         :return: A dictionary containing information read from .hkl file.
         :rtype: dict
         """
-        self.keys.set(self._format_dict['labels'])
-
         if self.is_current_format_free:
             def parse_line(line):
                 return self._parse_free_line(line)
@@ -1184,7 +1073,7 @@ class HklReader(HklIo):
         def build_dict_of_reflections(_hkl_array):
             dict_of_data = dict()
             for index, key in enumerate(self._format_dict['labels']):
-                key_dtype = self.keys.get_property(key, 'dtype')
+                key_dtype = HklKey.REGISTRY[key].dtype
                 dict_of_data[key] = _hkl_array[index].astype(key_dtype)
             return dict_of_data
         return build_dict_of_reflections(array_of_reflections)
@@ -1193,7 +1082,7 @@ class HklReader(HklIo):
 class HklWriter(HklIo):
     """
     A helper class for HklFrame,
-    Menages writing hkl files and exporting data to them
+    Manages writing hkl files and exporting data to them
     """
     def __init__(self, hkl_file_path, hkl_file_format):
         super().__init__(hkl_file_path, hkl_file_format)
@@ -1216,7 +1105,7 @@ class HklWriter(HklIo):
 
 
 class HklToResConverter:
-    """A class responsible for representing hkl data using using .res format"""
+    """A class responsible for representing hkl data using .res format"""
 
     MIN_DISTANCE = 10.0
     ELEMENTS = chemical_elements[:100]

@@ -298,6 +298,14 @@ class TestHklFrame(unittest.TestCase):
         self.h2.read(nacl_hkl_path, hkl_format='free_4')
         self.assertEqual(self.h2.table.__len__(), 8578)
 
+    def test_write(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        temp_path = str(pathlib.Path(temp_dir.name) / 'temp.hkl')
+        self.h2.write(hkl_path=temp_path, hkl_format='shelx_40')
+        self.h2.read(nacl_hkl_path, hkl_format='shelx_40')
+        self.assertEqual(self.h2.table.__len__(), 8578)
+        temp_dir.cleanup()
+
     def test_la_and_r_lim(self):
         self.h2.la = 0.50
         self.assertAlmostEqual(self.h2.la, 0.50)
@@ -362,6 +370,36 @@ class TestHklFrame(unittest.TestCase):
         self.assertEqual(len(self.h2.table), 159)
         self.h2.merge(point_group=PG['m-3m'])
         self.assertEqual(len(self.h2.table), 111)
+
+    def test_transform_single(self):
+        ops = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+        sum1_h, sum1_k, sum1_l = self.h2.table.sum(axis=0)[['h', 'k', 'l']]
+        self.h2.transform(ops)
+        sum2_h, sum2_k, sum2_l = self.h2.table.sum(axis=0)[['h', 'k', 'l']]
+        self.assertEqual((sum1_h, sum1_k, sum1_l), (sum2_h, -sum2_k, -sum2_l))
+
+    def test_transform_list(self):
+        ops = [np.eye(3), -np.eye(3)]
+        self.h2.transform(ops)
+        sum_h, sum_k, sum_l = self.h2.table.sum(axis=0)[['h', 'k', 'l']]
+        self.assertEqual((0, 0, 0), (sum_h, sum_k, sum_h))
+
+    def test_thin_out(self):
+        l1 = len(self.h2)
+        self.h2.thin_out(target_cplt=0.321)
+        self.assertAlmostEqual(0.321 * l1, len(self.h2), delta=1.0)
+
+    @staticmethod
+    def assertIsFile(path):
+        if not pathlib.Path(path).resolve().is_file():
+            raise AssertionError("File does not exist: %s" % str(path))
+
+    def test_to_res(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        temp_path = str(pathlib.Path(temp_dir.name) / 'temp_hkl.res')
+        self.h2.to_res(temp_path)
+        self.assertIsFile(temp_path)
+        temp_dir.cleanup()
 
 
 class TestUBaseFrame(unittest.TestCase):
