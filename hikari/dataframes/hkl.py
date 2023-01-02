@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import Union
+from typing import Union, Iterable
 
 import numpy as np
 import numpy.linalg as lin
@@ -695,7 +695,7 @@ class HklFrame(BaseFrame):
         new_data['si'] = 2 * new_data["sf"] * abs(new_data["F"])
         self.table = new_data
 
-    def transform(self, operations):
+    def transform(self, operations: Union[Iterable[np.ndarray], np.ndarray]):
         """
         Apply a symmetry operation or list of symmetry operations to transform
         the diffraction pattern.
@@ -720,7 +720,7 @@ class HklFrame(BaseFrame):
         point groups can be imported from :py:mod:`hikari.symmetry` module.
 
         :param operations: Iterable of operation matrices to be applied
-        :type operations: Union[Tuple[np.ndarray, np.ndarray], np.ndarray]
+        :type operations: Union[Iterable[np.ndarray], np.ndarray]
         """
 
         def _make_a_list_of_operations():
