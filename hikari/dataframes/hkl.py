@@ -152,7 +152,7 @@ class HklKeyPhase(HklKeyAveragedFloat64):
 class HklKeyRadius(HklKey):
     """Distance from 000 node, i.e. double the sin(th)/la resolution in A^-1"""
     name = 'r'
-    dtype = np.float32
+    dtype = np.float64
 
 
 class HklKeyTransmissionPathLength(HklKeyKeptFloat64):
