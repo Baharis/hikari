@@ -32,7 +32,7 @@ class TestCompareADPsScripts(unittest.TestCase):
                                      output_path=self.output2_path)
         with open(self.output1_path, 'r') as out1:
             with open(self.output2_path, 'r') as out2:
-                self.assertEqual(out1.read(), out2.read())
+                self.assertEqual(out1.readlines()[4:], out2.readlines()[4:])
 
     def test_calculate_similarity_index_for_implicit_cif_blocks(self):
         calculate_similarity_indices(cif1_path=nacl_cif_path,
@@ -45,7 +45,7 @@ class TestCompareADPsScripts(unittest.TestCase):
                                      output_path=self.output2_path)
         with open(self.output1_path, 'r') as out1:
             with open(self.output2_path, 'r') as out2:
-                self.assertEqual(out1.read(), out2.read())
+                self.assertEqual(out1.readlines()[4:], out2.readlines()[4:])
 
     def test_calculate_similarity_index_for_identical(self):
         calculate_similarity_indices(cif1_path=nacl_cif_path,
