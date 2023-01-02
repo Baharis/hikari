@@ -8,7 +8,7 @@ import pandas as pd
 
 import hikari
 from hikari.dataframes import BaseFrame
-from hikari.symmetry import PG, SG
+from hikari.symmetry import PG, SG, Group
 from hikari.resources import hkl_formats, hkl_aliases, hkl_mercury_style, \
     characteristic_radiation
 from hikari.utility import cubespace, chemical_elements, make_abspath, \
@@ -352,7 +352,7 @@ class HklFrame(BaseFrame):
         lim = self.r_lim * np.sin(oa - phi)            # True if in dac
         return r[None, :] < lim
 
-    def dac_trim(self, opening_angle=35.0, vector=None):
+    def dac_trim(self, opening_angle: float = 35.0, vector=None):
         """
         Remove reflections outside the opening_angle DAC-accessible volume.
         Sample/DAC orientation can be supplied either via specifying crystal
@@ -379,7 +379,8 @@ class HklFrame(BaseFrame):
         self.table = self.table[in_dac]
         self.table.reset_index(drop=True, inplace=True)
 
-    def dacs_count(self, opening_angle=35.0, vectors=np.array((1, 0, 0))):
+    def dacs_count(self, opening_angle: float = 35.0,
+                   vectors: np.ndarray = np.array((1, 0, 0))):
         """
         Count unique dac-accessible reflections for n crystals placed such that
         vector n is perpendicular to diamond. For details see :meth:`dac_trim`.
@@ -409,7 +410,7 @@ class HklFrame(BaseFrame):
         """
         return copy.deepcopy(self)
 
-    def extinct(self, space_group=SG['P1']):
+    def extinct(self, space_group: Group = SG['P1']):
         """
         Removes from dataframe reflections which should be extinct based on
         space :class:`hikari.symmetry.group.Group`. For ref. see ITC-A12.3.5.
@@ -423,7 +424,7 @@ class HklFrame(BaseFrame):
         self.table = self.table[~extinct_flag_list_union]
         self.table.reset_index(drop=True, inplace=True)
 
-    def find_equivalents(self, point_group=PG['1']):
+    def find_equivalents(self, point_group: Group = PG['1']):
         """
         Assign each reflection its symmetry equivalence identifier and store
         it in the `hikari.dataframes.HklFrame.data['equiv']` column.
@@ -447,7 +448,7 @@ class HklFrame(BaseFrame):
             _to_update = self.table['equiv'] < new_equiv
             self.table.loc[_to_update, 'equiv'] = new_equiv[_to_update]
 
-    def from_dict(self, dictionary):
+    def from_dict(self, dictionary: dict):
         """
         Construct the `self.data` using information stored in dictionary.
         The dictionary keys must be valid strings, see :class:`HklKeys` for
@@ -502,7 +503,7 @@ class HklFrame(BaseFrame):
         self.from_dict({'h': np.squeeze(_h), 'k': np.squeeze(_k),
                         'l': np.squeeze(_l), 'I': ones, 'si': ones, 'm': ones})
 
-    def stats(self, bins=10, space_group=SG['P1']):
+    def stats(self, bins: int = 10, space_group: Group = SG['P1']):
         """
         Returns completeness, redundancy, number of all, unique & theoretically
         possible reflections within equal-volume `bins` in given `space group`.
@@ -776,7 +777,7 @@ class HklFrame(BaseFrame):
         """
         HklToResConverter(self).convert(path)
 
-    def trim(self, limit):
+    def trim(self, limit: float):
         """
         Remove reflections further than *limit* from reciprocal space origin.
 
