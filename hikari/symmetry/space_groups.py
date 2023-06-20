@@ -1,3 +1,10 @@
+import re
+from typing import List, Tuple
+
+import numpy as np
+
+from hikari.symmetry import Group, SymmOp
+
 """
 Dictionary containing all known space groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary
@@ -521,3 +528,167 @@ To access origin choice 1 or 2, append key with "#1" or "2", eg.: SG["Fd-3c#2"].
 | 230 |              | Ia-3d          |                    | `SG['Ia-3d']`     |
 +-----+--------------+----------------+--------------------+-------------------+
 """
+
+
+class HallSymbol:
+    """Parse, interpret, and convert Hall symbol to `hikari.symmetry.Group`"""
+
+    class HallSymbolException(Exception):
+        """Exception raised when group can't be generated from the symbol"""
+
+    REGEX = re.compile(
+        r"""(-?)([pabcirstf])_(-?)(\d['"*xyz]?)([12345abcnuvwd]*)"""
+        """(?:_(-?)(\d['"*xyz]?)([12345abcnuvwd]*))?"""
+        """(?:_(-?)(\d['"*xyz]?)([12345abcnuvwd]*))?"""
+        """(?:_(-?)(\d['"*xyz]?)([12345abcnuvwd]*))?"""
+        """(?:_\((\d)_(\d)_(\d)\))?""")
+    """
+    This is a regex which matches every possible lowercase Hall symbol for
+    classical 3D space groups. It matches up to 17 groups in total as follows:
+
+    1. Centrosymmetry: `[-]?`
+    2. Lattice symbol: `[pabcirstf]` (required)
+    3. Generator 1 inversion component: `[-]?`
+    4. Generator 1 rotation component: `\d['"*xyz]?` (required)
+    5. Generator 1 translation components: `[12345abcnuvwd]*`
+    6. Generator 2 inversion component: `[-]?`
+    7. Generator 2 rotation component: `\d['"*xyz]?`
+    8. Generator 2 translation components: `[12345abcnuvwd]*`
+    9. Generator 3 inversion component: `[-]?`
+    10. Generator 3 rotation component: `\d['"*xyz]?`
+    11. Generator 3 translation components: `[12345abcnuvwd]*`
+    12. Generator 4 inversion component: `[-]?`
+    13. Generator 4 rotation component: `\d['"*xyz]?`
+    14. Generator 4 translation components: `[12345abcnuvwd]*`
+    15. Origin shift constituent 1 expressed as count of 1/12 shifts: `\d`
+    16. Origin shift constituent 2 expressed as count of 1/12 shifts: `\d`
+    17. Origin shift constituent 3 expressed as count of 1/12 shifts: `\d`
+    """
+
+    DIRECTION_SYMBOLS = ("'", '"', '*')
+    TRANSLATION_SYMBOLS = '12345abcnuvwd'
+    LATTICE_GENERATORS = {
+        'p': [SymmOp(np.eye(3))],
+        'a': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2))],
+        'c': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))],
+        'i': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 1 / 2))],
+        'r': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (2 / 3, 1 / 3, 1 / 3)),
+              SymmOp(np.eye(3), (1 / 3, 2 / 3, 2 / 3))],
+        's': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 3, 1 / 3, 2 / 3)),
+              SymmOp(np.eye(3), (2 / 3, 2 / 3, 1 / 3))],
+        't': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 3, 2 / 3, 1 / 3)),
+              SymmOp(np.eye(3), (2 / 3, 1 / 3, 2 / 3))],
+        'f': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2)),
+              SymmOp(np.eye(3), (1 / 2, 0, 1 / 2)),
+              SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))],
+    }
+    UNIVERSAL_MATRICES = {
+        '1': np.eye(3),
+    }
+    PRINCIPAL_MATRICES = UNIVERSAL_MATRICES.update({
+        '1': np.eye(3),
+        '2x': np.diag([1, -1, -1]),
+        '2y': np.diag([-1, 1, -1]),
+        '2z': np.diag([-1, -1, 1]),
+        '2': np.diag([-1, -1, 1]),
+        '3x': np.array([(1, 0, 0), (0, 0, -1), (0, 1, -1)]),
+        '3y': np.array([(-1, 0, 1), (0, 1, 0), (-1, 0, 0)]),
+        '3z': np.array([(0, -1, 0), (1, -1, 0), (0, 0, 1)]),
+        '3*': np.array([(0, 0, 1), (1, 0, 0), (0, 1, 0)]),
+        '3': np.array([(0, -1, 0), (1, -1, 0), (0, 0, 1)]),
+        '4x': np.array([(1, 0, 0), (0, 0, -1), (0, 1, 0)]),
+        '4y': np.array([(0, 0, 1), (0, 1, 0), (-1, 0, 0)]),
+        '4z': np.array([(0, -1, 0), (1, 0, 0), (0, 0, 1)]),
+        '4': np.array([(0, -1, 0), (1, 0, 0), (0, 0, 1)]),
+        '6x': np.array([(1, 0, 0), (0, 1, -1), (0, 1, 0)]),
+        '6y': np.array([(0, 0, 1), (0, 1, 0), (-1, 0, 1)]),
+        '6z': np.array([(1, -1, 0), (1, 0, 0), (0, 0, 1)]),
+        '6': np.array([(1, -1, 0), (1, 0, 0), (0, 0, 1)]),
+    })
+    FACE_X_DIAGONAL_MATRICES = UNIVERSAL_MATRICES.update({
+        '2"': np.array([(-1, 0, 0), (0, 0, 1), (0, 1, 0)]),
+        "2'": np.array([(-1, 0, 0), (0, 0, -1), (0, -1, 0)]),
+        "2": np.array([(-1, 0, 0), (0, 0, -1), (0, -1, 0)]),
+    })
+    FACE_Y_DIAGONAL_MATRICES = UNIVERSAL_MATRICES.update({
+        '2"': np.array([(0, 0, 1), (0, -1, 0), (1, 0, 0)]),
+        "2'": np.array([(0, 0, -1), (0, -1, 0), (-1, 0, 0)]),
+        "2": np.array([(0, 0, -1), (0, -1, 0), (-1, 0, 0)]),
+    })
+    FACE_Z_DIAGONAL_MATRICES = UNIVERSAL_MATRICES.update({
+        '2"': np.array([(0, 1, 0), (1, 0, 0), (0, 0, -1)]),
+        "2'": np.array([(0, -1, 0), (-1, 0, 0), (0, 0, -1)]),
+        "2": np.array([(0, -1, 0), (-1, 0, 0), (0, 0, -1)]),
+    })
+    BODY_DIAGONAL_MATRICES = UNIVERSAL_MATRICES.update({
+        '3*': np.array([(0, 0, 1), (1, 0, 0), (0, 1, 0)]),
+        '3': np.array([(0, 0, 1), (1, 0, 0), (0, 1, 0)]),
+    })
+    TRANSLATION_VECTORS = {
+        'a': np.array([1/2, 0, 0]),
+        'b': np.array([0, 1/2, 0]),
+        'c': np.array([0, 0, 1/2]),
+        'n': np.array([1/2, 1/2, 1/2]),
+        'u': np.array([1/4, 0, 0]),
+        'v': np.array([0, 1/4, 0]),
+        'w': np.array([0, 0, 1/4]),
+        'd': np.array([1 / 2, 1 / 2, 1 / 2]),
+    }
+    TRANSLATION_AXIS_VECTORS = {
+        '3x': {'1': np.array([1 / 3, 0, 0]), '2': np.array([2 / 3, 0, 0])},
+        '3y': {'1': np.array([0, 1 / 3, 0]), '2': np.array([0, 2 / 3, 0])},
+        '3z': {'1': np.array([0, 0, 1 / 3]), '2': np.array([0, 0, 2 / 3])},
+        '3': {'1': np.array([0, 0, 1 / 3]), '2': np.array([0, 0, 2 / 3])},
+        '4x': {'1': np.array([1 / 4, 0, 0]), '3': np.array([3 / 4, 0, 0])},
+        '4y': {'1': np.array([0, 1 / 4, 0]), '3': np.array([0, 3 / 4, 0])},
+        '4z': {'1': np.array([0, 0, 1 / 4]), '3': np.array([0, 0, 3 / 4])},
+        '4': {'1': np.array([0, 0, 1 / 4]), '3': np.array([0, 0, 3 / 4])},
+        '6x': {'1': np.array([1 / 6, 0, 0]), '2': np.array([1 / 3, 0, 0]),
+               '4': np.array([2 / 3, 0, 0]), '5': np.array([5 / 6, 0, 0])},
+        '6y': {'1': np.array([0, 1 / 6, 0]), '2': np.array([0, 1 / 3, 0]),
+               '4': np.array([0, 2 / 3, 0]), '5': np.array([0, 5 / 6, 0])},
+        '6z': {'1': np.array([0, 0, 1 / 6]), '2': np.array([0, 0, 1 / 3]),
+               '4': np.array([0, 0, 2 / 3]), '5': np.array([0, 0, 5 / 6])},
+        '6': {'1': np.array([0, 0, 1 / 6]), '2': np.array([0, 0, 1 / 3]),
+              '4': np.array([0, 0, 2 / 3]), '5': np.array([0, 0, 5 / 6])},
+    }
+
+
+    @classmethod
+    def split(cls, hall_symbol: str) -> Tuple[str, str, str, str]:
+        hall_elements = hall_symbol.lower().replace(' ', '_')
+        return tuple(([e for e in hall_elements if e] + ['', '', ''])[:4])
+
+    def __init__(self, hall_symbol: str) -> None:
+        self.symbol = hall_symbol
+
+    @property
+    def elements(self) -> re.Match:
+        """Return `self.symbol` elements indexed as in `self.HALL_REGEX` doc"""
+        return self.REGEX.match(self.symbol)
+
+    @property
+    def symbol(self) -> str:
+        return self._symbol
+
+    @symbol.setter
+    def symbol(self, symbol: str) -> None:
+        self._symbol = symbol.lower().replace(' ', '_')
+
+    def generators(self) -> None:
+        elements: re.Match = self.elements
+        generators: List[SymmOp] = self.LATTICE_GENERATORS[elements[2]]
+        if elements[1] == '-':
+            generators.append(SymmOp(-np.eye(3)))
+        tf1 = -np.eye(3) if elements[3] == '-' else np.eye(3)
+        index1_matrices = self.PRINCIPAL_MATRICES
+        for symbol, matrix in index1_matrices:
+            if elements[4].startswith(symbol):
+                tf1 @= matrix
+                break
+        else:
+            raise self.HallSymbolException('No matrix for ' + elements[4])
+        tl1 = np.array([0, 0, 0])
+        #TODO WORK IN PROGRESS: https://cci.lbl.gov/sginfo/hall_symbols.html
+        return generators
+

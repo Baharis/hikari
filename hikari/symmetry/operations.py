@@ -29,8 +29,8 @@ class SymmOp:
         translation = -3
 
     def __init__(self, transformation, translation=np.array([0, 0, 0])):
-        self.tf = transformation
-        self.tl = translation
+        self.tf = np.array(transformation)
+        self.tl = np.array(translation)
 
     def __eq__(self, other):
         return np.array_equal(self.tf, other.tf) and \
