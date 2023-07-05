@@ -4,6 +4,7 @@ from typing import List, Tuple
 import numpy as np
 
 from hikari.symmetry import Group, SymmOp
+from hikari.utility import dict_union
 
 """
 Dictionary containing all known space groups written as :class:`Group`
@@ -537,11 +538,10 @@ class HallSymbol:
         """Exception raised when group can't be generated from the symbol"""
 
     REGEX = re.compile(
-        r"""(-?)([pabcirstf])_(-?)(\d['"*xyz]?)([12345abcnuvwd]*)"""
-        """(?:_(-?)(\d['"*xyz]?)([12345abcnuvwd]*))?"""
-        """(?:_(-?)(\d['"*xyz]?)([12345abcnuvwd]*))?"""
-        """(?:_(-?)(\d['"*xyz]?)([12345abcnuvwd]*))?"""
-        """(?:_\((\d)_(\d)_(\d)\))?""")
+        r"""(-?)([pabcirstf])_(-?)(\d)([*xyz]?)([12345abcnuvwd]*)"""
+        """(?:_(-?)(\d)(['"xyz]?)([12345abcnuvwd]*))?"""
+        """(?:_(-?)(\d)\*?([12345abcnuvwd]*))?"""
+        """(?:_-?(\d)([12345abcnuvwd]*))?(?:_\((\d)_(\d)_(\d)\))?""")
     """
     This is a regex which matches every possible lowercase Hall symbol for
     classical 3D space groups. It matches up to 17 groups in total as follows:
@@ -549,82 +549,81 @@ class HallSymbol:
     1. Centrosymmetry: `[-]?`
     2. Lattice symbol: `[pabcirstf]` (required)
     3. Generator 1 inversion component: `[-]?`
-    4. Generator 1 rotation component: `\d['"*xyz]?` (required)
-    5. Generator 1 translation components: `[12345abcnuvwd]*`
-    6. Generator 2 inversion component: `[-]?`
-    7. Generator 2 rotation component: `\d['"*xyz]?`
-    8. Generator 2 translation components: `[12345abcnuvwd]*`
-    9. Generator 3 inversion component: `[-]?`
-    10. Generator 3 rotation component: `\d['"*xyz]?`
-    11. Generator 3 translation components: `[12345abcnuvwd]*`
-    12. Generator 4 inversion component: `[-]?`
-    13. Generator 4 rotation component: `\d['"*xyz]?`
-    14. Generator 4 translation components: `[12345abcnuvwd]*`
-    15. Origin shift constituent 1 expressed as count of 1/12 shifts: `\d`
-    16. Origin shift constituent 2 expressed as count of 1/12 shifts: `\d`
-    17. Origin shift constituent 3 expressed as count of 1/12 shifts: `\d`
+    4. Generator 1 rotation fold: `\d` (required)
+    5. Generator 1 rotation direction: `[*xyz]?`
+    6. Generator 1 translation components: `[12345abcnuvwd]*`
+    7. Generator 2 inversion component: `[-]?`
+    8. Generator 2 rotation fold: `\d`
+    9. Generator 2 rotation direction: `['"xyz]?`
+    10. Generator 2 translation components: `[12345abcnuvwd]*`
+    11. Generator 3 inversion component: `[-]?`
+    12. Generator 3 rotation fold: `\d`
+    13. Generator 3 translation components: `[12345abcnuvwd]*`
+    14. Generator 4 rotation fold: `\d`
+    15. Generator 4 translation components: `[12345abcnuvwd]*`
+    16. Origin shift constituent 1 expressed as count of 1/12 shifts: `\d`
+    17. Origin shift constituent 2 expressed as count of 1/12 shifts: `\d`
+    18. Origin shift constituent 3 expressed as count of 1/12 shifts: `\d`
     """
 
     DIRECTION_SYMBOLS = ("'", '"', '*')
     TRANSLATION_SYMBOLS = '12345abcnuvwd'
     LATTICE_GENERATORS = {
-        'p': [SymmOp(np.eye(3))],
-        'a': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2))],
-        'c': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))],
-        'i': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 1 / 2))],
-        'r': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (2 / 3, 1 / 3, 1 / 3)),
-              SymmOp(np.eye(3), (1 / 3, 2 / 3, 2 / 3))],
-        's': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 3, 1 / 3, 2 / 3)),
-              SymmOp(np.eye(3), (2 / 3, 2 / 3, 1 / 3))],
-        't': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 3, 2 / 3, 1 / 3)),
-              SymmOp(np.eye(3), (2 / 3, 1 / 3, 2 / 3))],
-        'f': [SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2)),
+        'p': (SymmOp(np.eye(3)), ),
+        'a': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2))),
+        'c': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))),
+        'i': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 1 / 2))),
+        'r': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (2 / 3, 1 / 3, 1 / 3)),
+              SymmOp(np.eye(3), (1 / 3, 2 / 3, 2 / 3))),
+        's': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 3, 1 / 3, 2 / 3)),
+              SymmOp(np.eye(3), (2 / 3, 2 / 3, 1 / 3))),
+        't': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 3, 2 / 3, 1 / 3)),
+              SymmOp(np.eye(3), (2 / 3, 1 / 3, 2 / 3))),
+        'f': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2)),
               SymmOp(np.eye(3), (1 / 2, 0, 1 / 2)),
-              SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))],
+              SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))),
     }
     UNIVERSAL_MATRICES = {
         '1': np.eye(3),
     }
-    PRINCIPAL_MATRICES = UNIVERSAL_MATRICES.update({
-        '1': np.eye(3),
-        '2x': np.diag([1, -1, -1]),
-        '2y': np.diag([-1, 1, -1]),
-        '2z': np.diag([-1, -1, 1]),
-        '2': np.diag([-1, -1, 1]),
-        '3x': np.array([(1, 0, 0), (0, 0, -1), (0, 1, -1)]),
-        '3y': np.array([(-1, 0, 1), (0, 1, 0), (-1, 0, 0)]),
-        '3z': np.array([(0, -1, 0), (1, -1, 0), (0, 0, 1)]),
-        '3*': np.array([(0, 0, 1), (1, 0, 0), (0, 1, 0)]),
-        '3': np.array([(0, -1, 0), (1, -1, 0), (0, 0, 1)]),
-        '4x': np.array([(1, 0, 0), (0, 0, -1), (0, 1, 0)]),
-        '4y': np.array([(0, 0, 1), (0, 1, 0), (-1, 0, 0)]),
-        '4z': np.array([(0, -1, 0), (1, 0, 0), (0, 0, 1)]),
-        '4': np.array([(0, -1, 0), (1, 0, 0), (0, 0, 1)]),
-        '6x': np.array([(1, 0, 0), (0, 1, -1), (0, 1, 0)]),
-        '6y': np.array([(0, 0, 1), (0, 1, 0), (-1, 0, 1)]),
-        '6z': np.array([(1, -1, 0), (1, 0, 0), (0, 0, 1)]),
-        '6': np.array([(1, -1, 0), (1, 0, 0), (0, 0, 1)]),
-    })
-    FACE_X_DIAGONAL_MATRICES = UNIVERSAL_MATRICES.update({
+    PRINCIPAL_ROTATIONS = {
+        'x': {'1': np.eye(3),
+              '2': np.diag([1, -1, -1]),
+              '3': np.array([(1, 0, 0), (0, 0, -1), (0, 1, -1)]),
+              '4': np.array([(1, 0, 0), (0, 0, -1), (0, 1, 0)]),
+              '6': np.array([(1, 0, 0), (0, 1, -1), (0, 1, 0)]),},
+        'y': {'1': np.eye(3),
+              '2': np.diag([-1, 1, -1]),
+              '3': np.array([(-1, 0, 1), (0, 1, 0), (-1, 0, 0)]),
+              '4': np.array([(0, 0, 1), (0, 1, 0), (-1, 0, 0)]),
+              '6': np.array([(0, 0, 1), (0, 1, 0), (-1, 0, 1)]),},
+        'z': {'1': np.eye(3),
+              '2': np.diag([-1, -1, 1]),
+              '3': np.array([(0, -1, 0), (1, -1, 0), (0, 0, 1)]),
+              '4': np.array([(0, -1, 0), (1, 0, 0), (0, 0, 1)]),
+              '6': np.array([(1, -1, 0), (1, 0, 0), (0, 0, 1)]),},
+        '*': {'3': np.array([(0, 0, 1), (1, 0, 0), (0, 1, 0)]),}
+    }
+    FACE_X_DIAGONAL_ROTATIONS = {
+        "1'": np.eye(3),
         '2"': np.array([(-1, 0, 0), (0, 0, 1), (0, 1, 0)]),
         "2'": np.array([(-1, 0, 0), (0, 0, -1), (0, -1, 0)]),
-        "2": np.array([(-1, 0, 0), (0, 0, -1), (0, -1, 0)]),
-    })
-    FACE_Y_DIAGONAL_MATRICES = UNIVERSAL_MATRICES.update({
+    }
+    FACE_Y_DIAGONAL_ROTATIONS = {
+        "1'": np.eye(3),
         '2"': np.array([(0, 0, 1), (0, -1, 0), (1, 0, 0)]),
         "2'": np.array([(0, 0, -1), (0, -1, 0), (-1, 0, 0)]),
-        "2": np.array([(0, 0, -1), (0, -1, 0), (-1, 0, 0)]),
-    })
-    FACE_Z_DIAGONAL_MATRICES = UNIVERSAL_MATRICES.update({
+    }
+    FACE_Z_DIAGONAL_ROTATIONS = {
+        "1'": np.eye(3),
         '2"': np.array([(0, 1, 0), (1, 0, 0), (0, 0, -1)]),
         "2'": np.array([(0, -1, 0), (-1, 0, 0), (0, 0, -1)]),
-        "2": np.array([(0, -1, 0), (-1, 0, 0), (0, 0, -1)]),
-    })
-    BODY_DIAGONAL_MATRICES = UNIVERSAL_MATRICES.update({
-        '3*': np.array([(0, 0, 1), (1, 0, 0), (0, 1, 0)]),
+    }
+    BODY_DIAGONAL_ROTATIONS = {
+        '1': np.eye(3),
         '3': np.array([(0, 0, 1), (1, 0, 0), (0, 1, 0)]),
-    })
-    TRANSLATION_VECTORS = {
+    }
+    STATIC_TRANSLATIONS = {
         'a': np.array([1/2, 0, 0]),
         'b': np.array([0, 1/2, 0]),
         'c': np.array([0, 0, 1/2]),
@@ -634,30 +633,20 @@ class HallSymbol:
         'w': np.array([0, 0, 1/4]),
         'd': np.array([1 / 2, 1 / 2, 1 / 2]),
     }
-    TRANSLATION_AXIS_VECTORS = {
+    DYNAMIC_TRANSLATIONS = {
         '3x': {'1': np.array([1 / 3, 0, 0]), '2': np.array([2 / 3, 0, 0])},
         '3y': {'1': np.array([0, 1 / 3, 0]), '2': np.array([0, 2 / 3, 0])},
         '3z': {'1': np.array([0, 0, 1 / 3]), '2': np.array([0, 0, 2 / 3])},
-        '3': {'1': np.array([0, 0, 1 / 3]), '2': np.array([0, 0, 2 / 3])},
         '4x': {'1': np.array([1 / 4, 0, 0]), '3': np.array([3 / 4, 0, 0])},
         '4y': {'1': np.array([0, 1 / 4, 0]), '3': np.array([0, 3 / 4, 0])},
         '4z': {'1': np.array([0, 0, 1 / 4]), '3': np.array([0, 0, 3 / 4])},
-        '4': {'1': np.array([0, 0, 1 / 4]), '3': np.array([0, 0, 3 / 4])},
         '6x': {'1': np.array([1 / 6, 0, 0]), '2': np.array([1 / 3, 0, 0]),
                '4': np.array([2 / 3, 0, 0]), '5': np.array([5 / 6, 0, 0])},
         '6y': {'1': np.array([0, 1 / 6, 0]), '2': np.array([0, 1 / 3, 0]),
                '4': np.array([0, 2 / 3, 0]), '5': np.array([0, 5 / 6, 0])},
         '6z': {'1': np.array([0, 0, 1 / 6]), '2': np.array([0, 0, 1 / 3]),
                '4': np.array([0, 0, 2 / 3]), '5': np.array([0, 0, 5 / 6])},
-        '6': {'1': np.array([0, 0, 1 / 6]), '2': np.array([0, 0, 1 / 3]),
-              '4': np.array([0, 0, 2 / 3]), '5': np.array([0, 0, 5 / 6])},
     }
-
-
-    @classmethod
-    def split(cls, hall_symbol: str) -> Tuple[str, str, str, str]:
-        hall_elements = hall_symbol.lower().replace(' ', '_')
-        return tuple(([e for e in hall_elements if e] + ['', '', ''])[:4])
 
     def __init__(self, hall_symbol: str) -> None:
         self.symbol = hall_symbol
@@ -675,20 +664,69 @@ class HallSymbol:
     def symbol(self, symbol: str) -> None:
         self._symbol = symbol.lower().replace(' ', '_')
 
-    def generators(self) -> None:
+    @property
+    def generators(self) -> List[SymmOp]:
         elements: re.Match = self.elements
-        generators: List[SymmOp] = self.LATTICE_GENERATORS[elements[2]]
+
+        # lattice / centering generators
+        generators: List[SymmOp] = list(self.LATTICE_GENERATORS[elements[2]])
         if elements[1] == '-':
             generators.append(SymmOp(-np.eye(3)))
-        tf1 = -np.eye(3) if elements[3] == '-' else np.eye(3)
-        index1_matrices = self.PRINCIPAL_MATRICES
-        for symbol, matrix in index1_matrices:
-            if elements[4].startswith(symbol):
-                tf1 @= matrix
-                break
-        else:
-            raise self.HallSymbolException('No matrix for ' + elements[4])
-        tl1 = np.array([0, 0, 0])
-        #TODO WORK IN PROGRESS: https://cci.lbl.gov/sginfo/hall_symbols.html
+
+        # generator 1
+        gen1_inv, gen1_fold, gen1_dir, gen1_tl = elements.group(3, 4, 5, 6)
+        tf1 = -np.eye(3) if gen1_inv else np.eye(3)
+        gen1_dir = gen1_dir or 'z'
+        tf1 = tf1 @ self.PRINCIPAL_ROTATIONS[gen1_dir][gen1_fold]
+        tl1 = np.array([0., 0., 0.])
+        gen1_translation_dicts = [self.STATIC_TRANSLATIONS]
+        if gen1_fold in '346':
+            screw_tls = self.DYNAMIC_TRANSLATIONS.get(gen1_fold + gen1_dir, {})
+            gen1_translation_dicts.append(screw_tls)
+        gen1_translations = dict_union(*gen1_translation_dicts)
+        for tl in gen1_tl:
+            tl1 += gen1_translations[tl]
+        generators.append(SymmOp(tf1, tl1))
+
+        # generator 2
+        gen2_inv, gen2_fold, gen2_dir, gen2_tl = elements.group(7, 8, 9, 10)
+        if gen2_fold:
+            tf2 = -np.eye(3) if gen2_inv else np.eye(3)
+            if gen1_fold in '24':
+                gen2_dir = gen2_dir or "x"
+                tf2 = tf2 @ self.PRINCIPAL_ROTATIONS[gen2_dir][gen2_fold]
+            else:  # if gen1_fold in '36'
+                gen2_dir = gen2_dir or "'"
+                diagonal_rots = self.FACE_X_DIAGONAL_ROTATIONS if gen1_dir == 'x' \
+                    else self.FACE_Y_DIAGONAL_ROTATIONS if gen1_dir == 'y' \
+                    else self.FACE_Z_DIAGONAL_ROTATIONS
+                tf2 = tf2 @ diagonal_rots[gen2_fold + gen2_dir]
+            tl2 = np.array([0., 0., 0.])
+            for tl in gen2_tl:
+                tl2 += self.STATIC_TRANSLATIONS[tl]
+            print('gen2:', str(SymmOp(tf2, tl2)), repr(SymmOp(tf2, tl2)))
+            generators.append(SymmOp(tf2, tl2))
+
+        # generator 3
+        gen3_inv, gen3_fold, gen3_tl = elements.group(11, 12, 13)
+        if gen3_fold:
+            tf3 = -np.eye(3) if gen3_inv else np.eye(3)
+            tf3 = tf3 @ self.BODY_DIAGONAL_ROTATIONS[gen3_fold]
+            tl3 = np.array([0., 0., 0.])
+            for tl in gen3_tl:
+                tl3 += self.STATIC_TRANSLATIONS[tl]
+            print('gen3:', str(SymmOp(tf3, tl3)), repr(SymmOp(tf3, tl3)))
+            generators.append(SymmOp(tf3, tl3))
+
+        # generator 4
+        gen4_fold, gen4_tl = elements.group(14, 15)
+        if gen4_fold:
+            tl4 = np.array([0., 0., 0.])
+            for tl in gen4_tl:
+                tl4 += self.STATIC_TRANSLATIONS[tl]
+            generators.append(SymmOp(-np.eye(3), tl4))
+
         return generators
 
+    def group(self):
+        return Group(*self.generators)

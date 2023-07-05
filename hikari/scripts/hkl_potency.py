@@ -366,7 +366,7 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     toppled_vectors = [rotate(toppled_vector, v, i) for i in range(360)]
 
     # calculate the potency for toppleds
-    rads = [2.00, 1/0.7, 1.20, 1.00, 1/1.5]
+    rads = [0.6]
     cplt = [0] * len(rads)
     p.trim(max(rads))
     for t in toppled_vectors:
