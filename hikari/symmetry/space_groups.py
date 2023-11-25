@@ -730,3 +730,8 @@ class HallSymbol:
 
     def group(self):
         return Group(*self.generators)
+
+    #TODO some space groups are incorrect:
+    #TODO HallSymbol('F 4d 2 3').group() == SG['F4132'] == SG[210]
+    #TODO HallSymbol('-I 4bd 2c 3').group() == SG['Ia-3d'] == SG[230]
+    #TODO No idea why. Investigate
