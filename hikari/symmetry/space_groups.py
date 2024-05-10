@@ -571,6 +571,7 @@ class HallSymbol:
     LATTICE_GENERATORS = {
         'p': (SymmOp(np.eye(3)), ),
         'a': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2))),
+        'b': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 0, 1 / 2))),
         'c': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))),
         'i': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 1 / 2))),
         'r': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (2 / 3, 1 / 3, 1 / 3)),
@@ -631,7 +632,7 @@ class HallSymbol:
         'u': np.array([1/4, 0, 0]),
         'v': np.array([0, 1/4, 0]),
         'w': np.array([0, 0, 1/4]),
-        'd': np.array([1 / 2, 1 / 2, 1 / 2]),
+        'd': np.array([1 / 4, 1 / 4, 1 / 4]),
     }
     DYNAMIC_TRANSLATIONS = {
         '3x': {'1': np.array([1 / 3, 0, 0]), '2': np.array([2 / 3, 0, 0])},
