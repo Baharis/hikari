@@ -1,10 +1,11 @@
 import re
-from typing import List, Tuple
+from typing import List, Match, Union
 
 import numpy as np
 
 from hikari.symmetry import Group, SymmOp
 from hikari.utility import dict_union
+
 
 """
 Dictionary containing all known space groups written as :class:`Group`
@@ -653,7 +654,7 @@ class HallSymbol:
         self.symbol = hall_symbol
 
     @property
-    def elements(self) -> re.Match:
+    def elements(self) -> Union[None, Match]:
         """Return `self.symbol` elements indexed as in `self.HALL_REGEX` doc"""
         return self.REGEX.match(self.symbol)
 
@@ -731,8 +732,3 @@ class HallSymbol:
 
     def group(self):
         return Group(*self.generators)
-
-    #TODO some space groups are incorrect:
-    #TODO HallSymbol('F 4d 2 3').group() == SG['F4132'] == SG[210]
-    #TODO HallSymbol('-I 4bd 2c 3').group() == SG['Ia-3d'] == SG[230]
-    #TODO No idea why. Investigate
