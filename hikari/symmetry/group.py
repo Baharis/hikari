@@ -2,10 +2,14 @@
 This file contains class definition and necessary tools for constructing
 and evaluating all symmetry groups.
 """
-import numpy as np
 from itertools import product as itertools_product
 from enum import Enum
-from hikari.symmetry import SymmOp
+from typing import Union
+
+import numpy as np
+
+from hikari.symmetry.operations import SymmOp
+from hikari.symmetry.hall_symbols import HallSymbol
 from hikari.utility.list_tools import find_best
 
 
@@ -17,7 +21,7 @@ def _unpack_group_dictionary_from_json(json_dict):
         g_number = json_group["number"]
         g_gens = [SymmOp.from_code(g) for g in json_group["generators"]]
         g_ops = [SymmOp.from_code(o) for o in json_group["operations"]]
-        g = Group.create_manually(generators=g_gens, operations=g_ops)
+        g = Group.from_generators_operations(generators=g_gens, operations=g_ops)
         g.name = json_group["H-M_short"]
         g.number = abs(g_number)
         group_dict[json_key] = g
@@ -82,9 +86,10 @@ class Group:
         self.number = 0
 
     @classmethod
-    def create_manually(cls, generators, operations):
+    def from_generators_operations(cls, generators, operations):
         """
         Generate group using already complete list of generators and operators.
+        Does not check whether `operations` are correct for efficiency!
         :param generators: A complete list of group generators
         :type generators: List[np.ndarray]
         :param operations: A complete list of group operations
@@ -96,6 +101,12 @@ class Group:
         new_group.__generators = generators
         new_group.__operations = operations
         return new_group
+
+    @classmethod
+    def from_hall_symbol(cls, hall_symbol: Union[str, HallSymbol]):
+        if isinstance(hall_symbol, str):
+            hall_symbol = HallSymbol(hall_symbol)
+        return cls(*hall_symbol.generators)
 
     def __eq__(self, other):
         return all([o in self.operations for o in other.operations])\
@@ -267,7 +278,7 @@ class Group:
         :return: Group with new, transformed basis and origin.
         :rtype: Group
         """
-        transformed_group = Group.create_manually(
+        transformed_group = Group.from_generators_operations(
             generators=[SymmOp.from_matrix(np.linalg.inv(m) @ g.matrix @ m)
                         for g in self.generators],
             operations=[SymmOp.from_matrix(np.linalg.inv(m) @ o.matrix @ m)
