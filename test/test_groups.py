@@ -39,5 +39,4 @@ class TestGroup(unittest.TestCase):
             mask = hall_symbols_table.index.str.contains(sg_index_regex)
             sg_index_first = list(mask).index(True)
             hall_symbol = hall_symbols_table['Hall entry'].iloc[sg_index_first]
-            print(str(i) + ' ' + hall_symbol)
             self.assertEqual(SG[i], Group.from_hall_symbol(hall_symbol))
