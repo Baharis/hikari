@@ -4,7 +4,8 @@ and evaluating all symmetry groups.
 """
 from itertools import product as itertools_product
 from enum import Enum
-from typing import Union
+import pickle
+from typing import Dict, Union
 
 import numpy as np
 
@@ -29,6 +30,15 @@ def _unpack_group_dictionary_from_json(json_dict):
             group_dict[g_name] = g
             group_dict[g_number] = g
     return group_dict
+
+
+def _dump_group_dictionary_to_pickle(
+        group_dict: Dict[Union[str, int], 'Group'],
+        pickle_path: str
+):
+    """Development function used to make a pickle of space groups"""
+    with open(pickle_path, 'bw') as pickle_file:
+        pickle.dump(group_dict, file=pickle_file)
 
 
 class Group:

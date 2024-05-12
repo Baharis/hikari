@@ -203,7 +203,12 @@ class HallSymbol:
                 tl4 += self.STATIC_TRANSLATIONS[tl]
             generators.append(SymmOp(-np.eye(3), tl4))
 
-        if any(elements.group(16, 17, 18)):  # TODO
-            raise self.HallSymbolException('Origin shifts are not implemented')
+        if any(elements.group(16, 17, 18)):
+            shift_ints = [int(i) for i in elements.group(16, 17, 18)]
+            shift_vector = np.array(shift_ints, dtype=float) / 12
+            shift_op_left = SymmOp(np.eye(3), shift_vector)
+            shift_op_right = SymmOp(np.eye(3), -shift_vector)
+            generators = [SymmOp.from_matrix(shift_op_left.matrix @ g.matrix
+                          @ shift_op_right.matrix) for g in generators]
 
         return generators
