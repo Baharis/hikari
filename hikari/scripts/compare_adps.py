@@ -152,6 +152,8 @@ def calculate_similarity_indices(cif1_path: str,
                 adp_cart_1 /= det3x3(adp_cart_1) ** (1 / 3)
                 adp_cart_2 /= det3x3(adp_cart_2) ** (1 / 3)
             if uncertainties:
+                # `unumpy.matrix` and `unumpy.ulinalg.pinv` are deprecated and
+                # will break soon, but uncertainties is ~no longer supported...
                 adp_inv_1 = unumpy.matrix(adp_cart_1).I
                 adp_inv_2 = unumpy.matrix(adp_cart_2).I
             else:
