@@ -4,7 +4,7 @@ along with alternative axis settings. The point groups in this dictionary
 can be accessed using their short Hermann-Maugin notation, as presented below.
 
 +-------+---------------+----------------+---------------+-----------------+
-| No.   | CRYSTAL       | Hermann-Maugin | Schoenflies   | Can be accessed |
+| No.   | CRYSTAL       | Hermann-Mauguin| Schoenflies   | Can be accessed |
 |       | SYSTEM        | notation       | notation      | using           |
 +-------+---------------+----------------+---------------+-----------------+
 | 1     | triclinic     | 1              | C1            | `PG['1']`       |

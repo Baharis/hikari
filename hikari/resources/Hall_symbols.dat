@@ -1,4 +1,4 @@
-n:c       "H-M entry"   "Hall entry"
+n:c        HM            Hall
   1        P_1           p_1
   2        P_-1          -p_1
   3:b      P_1_2_1       p_2y
@@ -189,7 +189,7 @@ n:c       "H-M entry"   "Hall entry"
  38:-cba   C_2_m_m       c_-2_2
  38:bca    C_m_2_m       c_-2_-2
  38:a-cb   A_m_2_m       a_-2_-2
- 39        A_b_m_2       a_2_-2b
+ 39        A_e_m_2       a_2_-2b
  39:ba-c   B_m_a_2       b_2_-2a
  39:cab    B_2_c_m       b_-2a_2
  39:-cba   C_2_m_b       c_-2a_2
@@ -201,7 +201,7 @@ n:c       "H-M entry"   "Hall entry"
  40:-cba   C_2_c_m       c_-2c_2
  40:bca    C_c_2_m       c_-2c_-2c
  40:a-cb   A_m_2_a       a_-2a_-2a
- 41        A_b_a_2       a_2_-2ab
+ 41        A_e_a_2       a_2_-2ab
  41:ba-c   B_b_a_2       b_2_-2ab
  41:cab    B_2_c_b       b_-2ab_2
  41:-cba   C_2_c_b       c_-2ac_2
@@ -302,7 +302,7 @@ n:c       "H-M entry"   "Hall entry"
  63:-cba   A_m_a_m       -a_2_2a
  63:bca    B_b_m_m       -b_2_2b
  63:a-cb   B_m_m_b       -b_2b_2
- 64        C_m_c_a       -c_2ac_2
+ 64        C_m_c_e       -c_2ac_2
  64:ba-c   C_c_m_b       -c_2ac_2ac
  64:cab    A_b_m_a       -a_2ab_2ab
  64:-cba   A_c_a_m       -a_2_2ab
@@ -314,14 +314,14 @@ n:c       "H-M entry"   "Hall entry"
  66        C_c_c_m       -c_2_2c
  66:cab    A_m_a_a       -a_2a_2
  66:bca    B_b_m_b       -b_2b_2b
- 67        C_m_m_a       -c_2a_2
+ 67        C_m_m_e       -c_2a_2
  67:ba-c   C_m_m_b       -c_2a_2a
  67:cab    A_b_m_m       -a_2b_2b
  67:-cba   A_c_m_m       -a_2_2b
  67:bca    B_m_c_m       -b_2_2a
  67:a-cb   B_m_a_m       -b_2a_2
- 68:1      C_c_c_a:1     c_2_2_-1ac
- 68:2      C_c_c_a:2     -c_2a_2ac
+ 68:1      C_c_c_e:1     c_2_2_-1ac
+ 68:2      C_c_c_e:2     -c_2a_2ac
  68:1ba-c  C_c_c_b:1     c_2_2_-1ac
  68:2ba-c  C_c_c_b:2     -c_2a_2c
  68:1cab   A_b_a_a:1     a_2_2_-1ab

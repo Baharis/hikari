@@ -1,6 +1,3 @@
-
-
-
 """
 Dictionary containing all known space groups written as :class:`Group`
 along with alternative axis settings. The point groups in this dictionary
