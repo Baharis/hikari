@@ -353,7 +353,7 @@ class HklFrame(BaseFrame):
         return r[None, :] < lim
 
     def dac_trim(self, opening_angle: float = 35.0, vector=None):
-        """
+        r"""
         Remove reflections outside the opening_angle DAC-accessible volume.
         Sample/DAC orientation can be supplied either via specifying crystal
         orientation in :class:`hikari.dataframes.BaseFrame`, in
@@ -660,7 +660,7 @@ class HklFrame(BaseFrame):
             self._recalculate_intensities_from_structure_factors()
 
     def _recalculate_structure_factors_from_intensities(self):
-        """
+        r"""
         Recalculate the structure factor F and its uncertainty sf.
 
         Structure factor is calculated as follows:
@@ -679,7 +679,7 @@ class HklFrame(BaseFrame):
         self.table = new_data
 
     def _recalculate_intensities_from_structure_factors(self):
-        """
+        r"""
         Recalculate the intensity I and its uncertainty si.
 
         Intensity is calculated as follows:
