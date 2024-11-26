@@ -12,7 +12,7 @@ def _load_indexed_csv(filename):
 
 def _load_indexed_ssv(filename):
     s = io.StringIO(get(__name__, filename).decode('utf-8'))
-    return pd.read_csv(s, comment='#', index_col=0, delim_whitespace=True)
+    return pd.read_csv(s, comment='#', index_col=0, sep='\s+')
 
 
 def _load_json(filename):
