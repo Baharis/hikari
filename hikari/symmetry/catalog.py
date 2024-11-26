@@ -10,11 +10,11 @@ from hikari.utility.typing import PathLike
 from hikari.symmetry.group import Group
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOGUE KEY REGISTRY ~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOG KEY REGISTRY ~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-class GroupCatalogueKeyRegistrar(type):
-    """Metaclass for `GroupCatalogueKey`s, registers these that define `name`"""
+class GroupCatalogKeyRegistrar(type):
+    """Metaclass for `GroupCatalogKey`s, registers these that define `name`"""
     REGISTRY = {}
 
     def __new__(mcs, name, bases, attrs):
@@ -25,12 +25,12 @@ class GroupCatalogueKeyRegistrar(type):
 
     @property
     def accessors(self):
-        """Lists `GroupCatalogueKey`s whose accessor priority is not 0"""
+        """Lists `GroupCatalogKey`s whose accessor priority is not 0"""
         return [k for k, v in self.REGISTRY.items() if v.accessor_priority]
 
 
-class GroupCatalogueKey(metaclass=GroupCatalogueKeyRegistrar):
-    """Base Class for every GroupCatalogueKey."""
+class GroupCatalogKey(metaclass=GroupCatalogKeyRegistrar):
+    """Base Class for every GroupCatalogKey."""
     name: str = ''                    # if not empty, how key will be registered
     accessor_priority: float = 0.     # if >0 used to access groups (inc. order)
     dependencies: list = []           # other keys needed to construct this key
@@ -40,35 +40,35 @@ class GroupCatalogueKey(metaclass=GroupCatalogueKeyRegistrar):
         """Abstract method to implement if key might have to be constructed"""
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOGUE KEYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOG KEYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-class GroupCatalogueKeyNC(GroupCatalogueKey):
+class GroupCatalogKeyNC(GroupCatalogKey):
     """Unique group identification string composed of group number:setting"""
     name = 'n:c'
 
 
-class GroupCatalogueKeyHM(GroupCatalogueKey):
+class GroupCatalogKeyHM(GroupCatalogKey):
     """Full international Hermann-Mauguin name split with `_` with :setting"""
     name = 'HM'
 
 
-class GroupCatalogueKeyHall(GroupCatalogueKey):
+class GroupCatalogKeyHall(GroupCatalogKey):
     name = 'Hall'
 
 
-class GroupCatalogueKeyGroup(GroupCatalogueKey):
+class GroupCatalogKeyGroup(GroupCatalogKey):
     name = 'group'
-    dependencies = [GroupCatalogueKeyHall]
+    dependencies = [GroupCatalogKeyHall]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
         return pd.Series(Group.from_hall_symbol(h) for h in table['Hall'])
 
 
-class GroupCatalogueKeyNumber(GroupCatalogueKey):
+class GroupCatalogKeyNumber(GroupCatalogKey):
     name = 'number'
-    dependencies = [GroupCatalogueKeyNC]
+    dependencies = [GroupCatalogKeyNC]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
@@ -76,29 +76,29 @@ class GroupCatalogueKeyNumber(GroupCatalogueKey):
         return (table['n:c'] + ':').str.split(':', expand=True).iloc[:, 0].astype(int)
 
 
-class GroupCatalogueKeySetting(GroupCatalogueKey):
+class GroupCatalogKeySetting(GroupCatalogKey):
     name = 'setting'
-    dependencies = [GroupCatalogueKeyNC]
+    dependencies = [GroupCatalogKeyNC]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
         return table['n:c'].str.split(':', expand=True).iloc[:, -1].fillna('').astype(str)
 
 
-class GroupCatalogueKeyHMShort(GroupCatalogueKey):
+class GroupCatalogKeyHMShort(GroupCatalogKey):
     """Shortened `HM` symbol where all underscores were simply removed"""
     name = 'HM-short'
-    dependencies = [GroupCatalogueKeyHM]
+    dependencies = [GroupCatalogKeyHM]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
         return table['HM'].str.replace('_', '')
 
 
-class GroupCatalogueKeyHMSimple(GroupCatalogueKey):
+class GroupCatalogKeyHMSimple(GroupCatalogKey):
     """`HM-short` without setting and with `1` removed for monoclinic system"""
     name = 'HM-simple'
-    dependencies = [GroupCatalogueKeyHM, GroupCatalogueKeyHMShort, GroupCatalogueKeyGroup]
+    dependencies = [GroupCatalogKeyHM, GroupCatalogKeyHMShort, GroupCatalogKeyGroup]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
@@ -111,50 +111,50 @@ class GroupCatalogueKeyHMSimple(GroupCatalogueKey):
         return simple.str.replace('_', '')
 
 
-class GroupCatalogueKeyHMNumbered(GroupCatalogueKey):
+class GroupCatalogKeyHMNumbered(GroupCatalogKey):
     """Nicely-formatted name with `number: HM-short` to be used in GUIs"""
     name = 'HM-numbered'
-    dependencies = [GroupCatalogueKeyNumber, GroupCatalogueKeyHMShort]
+    dependencies = [GroupCatalogKeyNumber, GroupCatalogKeyHMShort]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
         return table['number'].astype(str).str.cat(table['HM-short'], sep=': ')
 
 
-class GroupCatalogueKeyStandard(GroupCatalogueKey):
+class GroupCatalogKeyStandard(GroupCatalogKey):
     name = 'standard'
-    dependencies = [GroupCatalogueKeyNumber]
+    dependencies = [GroupCatalogKeyNumber]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
         return table['number'].rolling(2).var().ne(0)
 
 
-def _resolve_construct_order(keys: List[GroupCatalogueKey]) -> List[GroupCatalogueKey]:
+def _resolve_construct_order(keys: List[GroupCatalogKey]) -> List[GroupCatalogKey]:
     """
-    Return `GroupCatalogueKey`s in an order that warrants that
+    Return `GroupCatalogKey`s in an order that warrants that
     key's dependencies are constructed before it
     """
     unordered = deepcopy(keys)
     ordered = []
-    def find_constructable(unordered_: List[GroupCatalogueKey]) -> GroupCatalogueKey:
+    def find_constructable(unordered_: List[GroupCatalogKey]) -> GroupCatalogKey:
         for key_i, key in enumerate(unordered_):
             if all(d in ordered for d in key.dependencies):
                 return unordered_.pop(key_i)
-            raise RuntimeError('Circular dependency when creating `GroupCatalogue`')
+            raise RuntimeError('Circular dependency when creating `GroupCatalog`')
     while len(ordered) < len(keys):
         ordered.append(find_constructable(unordered))
     return ordered
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOGUE CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOG CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-class GroupCatalogue:
+class GroupCatalog:
     """
     Manage generating and mappings of point and space groups.
     Relies on a built-in pandas DataFrame `table` to store all the information.
-    Individual columns are named & generated based on `GroupCatalogueKey` data.
+    Individual columns are named & generated based on `GroupCatalogKey` data.
 
     Some notes on the uniqueness of columns pairwise for accessing:
 
@@ -170,21 +170,21 @@ class GroupCatalogue:
     REST_COL_FORMAT = {'n:c': '7.7s', 'HM-short': '9.9s', 'Hall': '14.14s'}
 
     def __init__(self, table: pd.DataFrame) -> None:
-        for key in _resolve_construct_order(list(GroupCatalogueKey.REGISTRY.values())):
+        for key in _resolve_construct_order(list(GroupCatalogKey.REGISTRY.values())):
             if key.name not in table:
                 table[key.name] = key.construct(table)
         self.table: pd.DataFrame = table
 
     @classmethod
-    def _from_ssv(cls, ssv_path: PathLike) -> 'GroupCatalogue':
-        """Generate a `GroupCatalogue` from a .ssv file"""
+    def _from_ssv(cls, ssv_path: PathLike) -> 'GroupCatalog':
+        """Generate a `GroupCatalog` from a .ssv file"""
         with open(ssv_path, 'r') as ssv_file:
             table = pd.read_csv(ssv_file, comment='#', sep=r'\s+')
         return cls(table)
 
     @classmethod
-    def _from_pickle(cls, pickle_path: PathLike) -> 'GroupCatalogue':
-        """Load a `GroupCatalogue` from a .pickle file"""
+    def _from_pickle(cls, pickle_path: PathLike) -> 'GroupCatalog':
+        """Load a `GroupCatalog` from a .pickle file"""
         with open(pickle_path, 'br') as pickle_file:
             new = pickle.load(pickle_file)
         if isinstance(new, cls):
@@ -193,7 +193,7 @@ class GroupCatalogue:
             raise TypeError(f'Loaded pickle is not instance of {cls}')
 
     def _as_rest_table(self, txt_path: PathLike) -> None:
-        """Write an instant of `GroupCatalogue` to a .txt file as ReST table"""
+        """Write an instant of `GroupCatalog` to a .txt file as ReST table"""
         r = self.REST_COL_FORMAT
         field_len_re = re.compile(r'^(\d*)(?:\.\d+)?[a-z]*$')
         field_lens = [int(field_len_re.match(v).group(1)) for v in r.values()]
@@ -212,7 +212,7 @@ class GroupCatalogue:
             pickle.dump(self, file=pickle_file)
 
     @property
-    def standard(self) -> 'GroupCatalogue':
-        """A subset of current catalogue with standard-setting groups only"""
+    def standard(self) -> 'GroupCatalog':
+        """A subset of current catalog with standard-setting groups only"""
         standard = deepcopy(self.table[self.table['standard']]).reset_index()
         return self.__class__(standard)
