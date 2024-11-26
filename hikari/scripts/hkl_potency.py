@@ -21,7 +21,7 @@ def potency_map(a, b, c, al, be, ga,
                 output_quality=3,
                 resolution=1.2,
                 wavelength='MoKa'):
-    """
+    r"""
     Calculate and draw a potency map for a given crystal in diamond anvil cell
     (DAC) with a given opening angle, as a function of crystal orientation.
     For details see `this paper <https://doi.org/10.1107/S2052252521009532>`_.

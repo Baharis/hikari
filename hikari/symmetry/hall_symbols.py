@@ -15,10 +15,10 @@ class HallSymbol:
 
     REGEX = re.compile(
         r"""(-?)([pabcirstf])_(-?)(\d)([*xyz]?)([12345abcnuvwd]*)"""
-        """(?:_(-?)(\d)(['"xyz]?)([12345abcnuvwd]*))?"""
-        """(?:_(-?)(\d)\*?([12345abcnuvwd]*))?"""
-        """(?:_-?(\d)([12345abcnuvwd]*))?(?:_\((\d)_(\d)_(\d)\))?""")
-    """
+        r"""(?:_(-?)(\d)(['"xyz]?)([12345abcnuvwd]*))?"""
+        r"""(?:_(-?)(\d)\*?([12345abcnuvwd]*))?"""
+        r"""(?:_-?(\d)([12345abcnuvwd]*))?(?:_\((\d)_(\d)_(\d)\))?""")
+    r"""
     This is a regex which matches every possible lowercase Hall symbol for
     classical 3D space groups. It matches up to 17 groups in total as follows:
 
