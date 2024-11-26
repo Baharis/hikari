@@ -531,7 +531,7 @@ class HklFrame(BaseFrame):
 
         def group_by_resolution(hkl_):
             bin_limits = cubespace(0.0, max(self.table['r']), num=bins + 1)
-            return hkl_.table.groupby(pd.cut(hkl_.table['r'], bin_limits))
+            return hkl_.table.groupby(by=pd.cut(hkl_.table['r'], bin_limits), observed=False)
 
         grouped_base = group_by_resolution(hkl_base)
         grouped_full = group_by_resolution(hkl_full)
