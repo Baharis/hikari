@@ -1,10 +1,14 @@
+import warnings
 from copy import deepcopy
+from functools import reduce
+from operator import or_
 import pickle
 import re
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
+from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from hikari.utility.typing import PathLike
 from hikari.symmetry.group import Group
@@ -24,9 +28,10 @@ class GroupCatalogKeyRegistrar(type):
         return new_cls
 
     @property
-    def accessors(self):
+    def accessors(self) -> List['GroupCatalogKey']:
         """Lists `GroupCatalogKey`s whose accessor priority is not 0"""
-        return [k for k, v in self.REGISTRY.items() if v.accessor_priority]
+        accessors = [v for k, v in self.REGISTRY.items() if v.accessor_priority]
+        return sorted(accessors, key=lambda a: a.accessor_priority, reverse=True)
 
 
 class GroupCatalogKey(metaclass=GroupCatalogKeyRegistrar):
@@ -48,32 +53,41 @@ class GroupCatalogKeyNC(GroupCatalogKey):
     name = 'n:c'
 
 
-class GroupCatalogKeyHM(GroupCatalogKey):
-    """Full international Hermann-Mauguin name split with `_` with :setting"""
-    name = 'HM'
-
-
-class GroupCatalogKeyHall(GroupCatalogKey):
-    name = 'Hall'
-
-
-class GroupCatalogKeyGroup(GroupCatalogKey):
-    name = 'group'
-    dependencies = [GroupCatalogKeyHall]
-
-    @classmethod
-    def construct(cls, table: pd.DataFrame) -> pd.Series:
-        return pd.Series(Group.from_hall_symbol(h) for h in table['Hall'])
-
-
 class GroupCatalogKeyNumber(GroupCatalogKey):
     name = 'number'
+    accessor_priority = 350.
     dependencies = [GroupCatalogKeyNC]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
         print(table)
         return (table['n:c'] + ':').str.split(':', expand=True).iloc[:, 0].astype(int)
+
+
+class GroupCatalogKeyHM(GroupCatalogKey):
+    """Full international Hermann-Mauguin name split with `_` with :setting"""
+    name = 'HM'
+    accessor_priority = 150.
+
+
+class GroupCatalogKeyHall(GroupCatalogKey):
+    name = 'Hall'
+    accessor_priority = 250.
+
+
+class GroupCatalogKeyGroup(GroupCatalogKey):
+    name = 'group'
+    dependencies = [GroupCatalogKeyNumber, GroupCatalogKeyHM, GroupCatalogKeyHall]
+
+    @classmethod
+    def construct(cls, table: pd.DataFrame) -> pd.Series:
+        groups = []
+        for n, name, symbol in zip(table['number'], table['HM'], table['Hall']):
+            group = Group.from_hall_symbol(symbol)
+            group.name = name
+            group.number = n
+            groups.append(group)
+        return pd.Series(groups)
 
 
 class GroupCatalogKeySetting(GroupCatalogKey):
@@ -88,6 +102,7 @@ class GroupCatalogKeySetting(GroupCatalogKey):
 class GroupCatalogKeyHMShort(GroupCatalogKey):
     """Shortened `HM` symbol where all underscores were simply removed"""
     name = 'HM-short'
+    accessor_priority = 140.
     dependencies = [GroupCatalogKeyHM]
 
     @classmethod
@@ -98,6 +113,7 @@ class GroupCatalogKeyHMShort(GroupCatalogKey):
 class GroupCatalogKeyHMSimple(GroupCatalogKey):
     """`HM-short` without setting and with `1` removed for monoclinic system"""
     name = 'HM-simple'
+    accessor_priority = 130.
     dependencies = [GroupCatalogKeyHM, GroupCatalogKeyHMShort, GroupCatalogKeyGroup]
 
     @classmethod
@@ -130,6 +146,9 @@ class GroupCatalogKeyStandard(GroupCatalogKey):
         return table['number'].rolling(2).var().ne(0)
 
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOG HELPER FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+
 def _resolve_construct_order(keys: List[GroupCatalogKey]) -> List[GroupCatalogKey]:
     """
     Return `GroupCatalogKey`s in an order that warrants that
@@ -159,7 +178,7 @@ class GroupCatalog:
     Some notes on the uniqueness of columns pairwise for accessing:
 
     - Column `Hall` has 3 groups appear twice due to inconsistency of HM names:
-      `c_2_2_-1ac`, `a_2_2_-1ab`, and `a_2_2_-1ab`.
+      `c_2_2_-1ac`, `a_2_2_-1ab`, and `b_2_2_-1ab`.
     - There are no overlaps between `HM` and `Hall` column names
     - There are no overlaps between `HM-short` and `Hall` column names
     - There are no overlaps between `HM-simple` and `Hall` column names
@@ -216,3 +235,46 @@ class GroupCatalog:
         """A subset of current catalog with standard-setting groups only"""
         standard = deepcopy(self.table[self.table['standard']]).reset_index()
         return self.__class__(standard)
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SMART GETTERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+    def _get_by_key(self, key: Union[str, int]) -> DataFrame:
+        """Iterate over accessors; whenever key is in accessor, return matching group"""
+        matching = []
+        for accessor in GroupCatalogKey.accessors:
+            matching.append(self.table[self.table.loc[:, accessor.name] == key])
+        return pd.concat(matching, axis=0)
+
+    def _get_by_kwargs(self, **kwargs) -> DataFrame:
+        """Return the first group that matches all queries specified in kwargs"""
+        masks = []
+        for key, value in kwargs.items():
+            masks.append(self.table[key].eq(value))
+        return self.table[reduce(or_, masks)]
+
+    def get(self, key: Union[str, int] = None, **kwargs) -> Union[Group, None]:
+        got1 = self._get_by_key(key) if key else pd.DataFrame()
+        got2 = self._get_by_kwargs(**kwargs) if kwargs else pd.DataFrame()
+        if len(got1) == 0 and len(got2) == 0:
+            return
+        elif len(got1) > 0 and len(got2) == 0:
+            got = got1
+        elif len(got1) == 0 and len(got2) > 0:
+            got = got2
+        else:
+            got = got1.merge(got2, how='inner', on=['n:c'])
+        if len(got) > 1:
+            matches = list(got['n:c'])
+            warnings.warn(f'get({key=}, {kwargs=}) yielded multiple {matches=}. '
+                          f'Returning first result in standard setting, if possible')
+            std = self.standard.table
+            for nc in matches:
+                if nc in std['n:c']:
+                    return deepcopy(std.loc[std.loc['n:c'] == nc]['group'][0])
+        return deepcopy(got['group'].iloc[0] if len(got) else None)
+
+    def __getitem__(self, item: Union[str, int]) -> Group:
+        got = self.get(key=item)
+        if not got:
+            raise KeyError(f'Unknown key: {item}')
+        return got
