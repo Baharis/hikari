@@ -38,5 +38,5 @@ class TestGroup(unittest.TestCase):
             sg_index_regex = rf'^{i}(?::[\da-z-]+)?$'
             mask = hall_symbols_table.index.str.contains(sg_index_regex)
             sg_index_first = list(mask).index(True)
-            hall_symbol = hall_symbols_table['Hall entry'].iloc[sg_index_first]
+            hall_symbol = hall_symbols_table['Hall'].iloc[sg_index_first]
             self.assertEqual(SG[i], Group.from_hall_symbol(hall_symbol))
