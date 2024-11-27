@@ -1,7 +1,7 @@
 import warnings
 from copy import deepcopy
 from functools import reduce
-from operator import or_
+from operator import and_
 import pickle
 import re
 from typing import List, Union
@@ -31,7 +31,7 @@ class GroupCatalogKey:
 
 class GroupCatalogKeyNC(GroupCatalogKey):
     """Unique group identification string composed of group number:setting"""
-    name = 'n:c'
+    name = 'n_c'
 
 
 class GroupCatalogKeyNumber(GroupCatalogKey):
@@ -42,7 +42,7 @@ class GroupCatalogKeyNumber(GroupCatalogKey):
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
-        return (table['n:c'] + ':').str.split(':', expand=True).iloc[:, 0].astype(int)
+        return (table['n_c'] + ':').str.split(':', expand=True).iloc[:, 0].astype(int)
 
 
 class GroupCatalogKeySetting(GroupCatalogKey):
@@ -52,7 +52,7 @@ class GroupCatalogKeySetting(GroupCatalogKey):
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
-        return table['n:c'].str.split(':', expand=True).iloc[:, -1].fillna('').astype(str)
+        return table['n_c'].str.split(':', expand=True).iloc[:, -1].fillna('').astype(str)
 
 
 class GroupCatalogKeyHM(GroupCatalogKey):
@@ -80,7 +80,7 @@ class GroupCatalogKeyPointGroup(GroupCatalogKeyGroup):
     def construct(cls, table: pd.DataFrame) -> pd.Series:
         groups = []
         for n, name, symbol in zip(table['number'], table['HM'], table['Hall']):
-            symbol = 'p_'.join(re.fullmatch(r'(-?)(.+)', symbol).groups())
+            # symbol = 'p_'.join(re.fullmatch(r'(-?)(.+)', symbol).groups())
             group = Group.from_hall_symbol(symbol)
             group.name = name
             group.number = n
@@ -201,13 +201,25 @@ class GroupCatalog:
         GroupCatalogKeyHMNumbered,
         GroupCatalogKeyStandard,
     ]
-    REST_COL_FORMAT = {'n:c': '7.7s', 'HM_short': '9.9s', 'Hall': '14.14s'}
+    REST_COL_FORMAT = {
+        'n_c': '7.7s',
+        'Hall': '16.16s',  # 14 is the longest
+        'HM': '16.16s',  # 12 is the longest
+        'HM_short': '11.11s',  # 9 is the longest
+        'HM_simple': '11.11s',  # 7 is the longest
+
+    }
 
     def __init__(self, table: pd.DataFrame) -> None:
         for key in _resolve_construct_order(self.KEYS):
             if key.name not in table:
                 table[key.name] = key.construct(table)
         self.table: pd.DataFrame = table
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.table.equals(other.table)
+        return NotImplemented
 
     @classmethod
     def from_ssv(cls, ssv_path: PathLike) -> 'GroupCatalog':
@@ -226,7 +238,7 @@ class GroupCatalog:
         else:
             raise TypeError(f'Loaded pickle is not instance of {cls}')
 
-    def as_rest_table(self, txt_path: PathLike) -> None:
+    def to_rest_table(self, txt_path: PathLike) -> None:
         """Write an instant of `GroupCatalog` to a .txt file as ReST table"""
         r = self.REST_COL_FORMAT
         field_len_re = re.compile(r'^(\d*)(?:\.\d+)?[a-z]*$')
@@ -234,7 +246,9 @@ class GroupCatalog:
         sep = '+-' + '-+-'.join(['-' * f for f in field_lens]) + '-+'
         fmt = '| ' + ' | '.join([f'{{:{f}.{f}s}}' for f in field_lens]) + ' |'
         lines = [fmt.format(*r.keys())]
+        underscore_escape = re.compile(r'_(?=[-(])')
         for t in self.table[list(r.keys())].itertuples(index=False):
+            t = [underscore_escape.sub(repl=r'\_', string=tt) for tt in t]
             lines.append(fmt.format(*t))
         rest = sep + '\n' + ('\n' + sep + '\n').join(lines) + '\n' + sep
         with open(txt_path, 'w') as txt_file:
@@ -243,7 +257,7 @@ class GroupCatalog:
     def to_pickle(self, pickle_path: PathLike) -> None:
         """Development only; Dump `self` to a .pickle file"""
         with open(pickle_path, 'bw') as pickle_file:
-            pickle.dump(self, file=pickle_file)
+            pickle.dump(self, file=pickle_file)  # noqa - this code is OK
 
     @property
     def accessors(self) -> List['GroupCatalogKey']:
@@ -271,11 +285,11 @@ class GroupCatalog:
         masks = []
         for key, value in kwargs.items():
             masks.append(self.table[key].eq(value))
-        return self.table[reduce(or_, masks)]
+        return self.table[reduce(and_, masks)]
 
     def get(self, key: Union[str, int] = None, **kwargs) -> Union[Group, None]:
-        got1 = self._get_by_key(key) if key else pd.DataFrame()
-        got2 = self._get_by_kwargs(**kwargs) if kwargs else pd.DataFrame()
+        got1 = deepcopy(self._get_by_key(key)) if key else pd.DataFrame()
+        got2 = deepcopy(self._get_by_kwargs(**kwargs)) if kwargs else pd.DataFrame()
         if len(got1) == 0 and len(got2) == 0:
             return
         elif len(got1) > 0 and len(got2) == 0:
@@ -283,16 +297,16 @@ class GroupCatalog:
         elif len(got1) == 0 and len(got2) > 0:
             got = got2
         else:
-            got = got1.merge(got2, how='inner', on=['n:c'])
-        got.drop_duplicates(subset='n:c', inplace=True, ignore_index=True)
+            got = got1.merge(got2, how='inner', on=['n_c'])
+        got.drop_duplicates(subset='n_c', inplace=True, ignore_index=True)
         if len(got) > 1:
-            matches = list(got['n:c'])
+            matches = list(got['n_c'])
             warnings.warn(f'get({key=}, {kwargs=}) yielded multiple {matches=}. '
                           f'Returning first result in standard setting, if possible')
             std = self.standard.table
             for nc in matches:
-                if nc in std['n:c']:
-                    return deepcopy(std.loc[std.loc['n:c'] == nc]['group'][0])
+                if nc in std['n_c']:
+                    return deepcopy(std.loc[std.loc['n_c'] == nc]['group'][0])
         return deepcopy(got['group'].iloc[0] if len(got) else None)
 
     def __getitem__(self, item: Union[str, int]) -> Group:
