@@ -1,9 +1,9 @@
 import unittest
 
-from hikari.resources import hall_symbols_table, point_groups_json,\
-    space_groups_json
+from hikari.resources import (hall_symbols_pg_table, hall_symbols_sg_table,
+                              point_groups_pickle, space_groups_pickle)
 from hikari.symmetry import Group, PG, SymmOp, SG
-from hikari.symmetry.group import _unpack_group_dictionary_from_json  # noqa
+from hikari.symmetry.catalog import PointGroupCatalog, SpaceGroupCatalog
 
 
 class TestGroup(unittest.TestCase):
@@ -15,28 +15,16 @@ class TestGroup(unittest.TestCase):
         sg230_generators = [SymmOp.from_code(c) for c in sg230_generator_codes]
         _ = Group(*sg230_generators)
 
-    def test_point_groups_consistent_with_pickles(self):
-        json_pg_dict = _unpack_group_dictionary_from_json(point_groups_json)
-        pickled_pg_dict = PG
-        all_pg_keys = list({*json_pg_dict.keys(), *pickled_pg_dict.keys()})
-        for pg_key in all_pg_keys:
-            json_pg = json_pg_dict[pg_key]
-            pickled_pg = pickled_pg_dict[pg_key]
-            self.assertEqual(json_pg, pickled_pg)
+    def test_point_groups_pickle_consistent_with_wsv(self):
+        pgc1 = PointGroupCatalog(hall_symbols_pg_table)
+        pgc2 = PointGroupCatalog.from_bytes(point_groups_pickle)
+        all_keys = list({*pgc1.keys(), *pgc2.keys()})
+        for key in all_keys:
+            self.assertEqual(pgc1.get(n_c=key), pgc2.get(n_c=key))
 
-    def test_space_groups_consistent_with_pickles(self):
-        json_sg_dict = _unpack_group_dictionary_from_json(space_groups_json)
-        pickled_sg_dict = SG
-        all_sg_keys = list({*json_sg_dict.keys(), *pickled_sg_dict.keys()})
-        for sg_key in all_sg_keys:
-            json_sg = json_sg_dict[sg_key]
-            pickled_sg = pickled_sg_dict[sg_key]
-            self.assertEqual(json_sg, pickled_sg)
-
-    def test_space_groups_picked_match_hall(self):
-        for i in range(1, 231):
-            sg_index_regex = rf'^{i}(?::[\da-z-]+)?$'
-            mask = hall_symbols_table.index.str.contains(sg_index_regex)
-            sg_index_first = list(mask).index(True)
-            hall_symbol = hall_symbols_table['Hall'].iloc[sg_index_first]
-            self.assertEqual(SG[i], Group.from_hall_symbol(hall_symbol))
+    def test_space_groups_pickle_consistent_with_wsv(self):
+        sgc1 = SpaceGroupCatalog(hall_symbols_sg_table)
+        sgc2 = SpaceGroupCatalog.from_bytes(space_groups_pickle)
+        all_keys = list({*sgc1.keys(), *sgc2.keys()})
+        for key in all_keys:
+            self.assertEqual(sgc1.get(n_c=key), sgc2.get(n_c=key))

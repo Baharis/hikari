@@ -362,7 +362,7 @@ class TestHklFrame(unittest.TestCase):
         self.assertEqual(self.h2.table['equiv'].nunique(), 10)
 
     def test_merge(self):
-        self.h2.merge(point_group=PG['2/m'])
+        self.h2.merge(point_group=PG['12/m1'])
         self.assertEqual(len(self.h2.table), 831)
         self.h2.merge(point_group=PG['4/m'])
         self.assertEqual(len(self.h2.table), 390)

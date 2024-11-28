@@ -16,24 +16,6 @@ from hikari.symmetry.hall_symbols import HallSymbol
 from hikari.utility.list_tools import find_best
 
 
-def _unpack_group_dictionary_from_json(json_dict):
-    """Development function used to get PG and SG from csv to pickle it later"""
-    group_dict = {}
-    for json_key, json_group in json_dict.items():
-        g_name = json_group["H-M_short"]
-        g_number = json_group["number"]
-        g_gens = [SymmOp.from_code(g) for g in json_group["generators"]]
-        g_ops = [SymmOp.from_code(o) for o in json_group["operations"]]
-        g = Group.from_generators_operations(generators=g_gens, operations=g_ops)
-        g.name = json_group["H-M_short"]
-        g.number = abs(g_number)
-        group_dict[json_key] = g
-        if g_number > 0:
-            group_dict[g_name] = g
-            group_dict[g_number] = g
-    return group_dict
-
-
 def _dump_group_dictionary_to_pickle(
         group_dict: dict[Union[str, int], 'Group'],
         pickle_path: str

@@ -8,7 +8,8 @@ from typing import Sequence
 
 from .typing import Number
 
-from numpy import power, linspace, sign, abs
+import numpy as np
+
 
 def find_best(strings: list[str], criteria: str) -> str:
     """
@@ -24,7 +25,7 @@ def find_best(strings: list[str], criteria: str) -> str:
     """
     criterion, _, further_criteria = criteria.partition('>')
     wanted = criterion.partition('=')[0].split('+')
-    if all(w in strings or w is '' for w in wanted):
+    if all(w in strings or w == '' for w in wanted):
         return criterion.rpartition('=')[2]
     else:
         return find_best(strings, further_criteria)
@@ -75,8 +76,8 @@ def cubespace(
         return cubespace(start, stop, num=num+1, include_start=True)[1:]
     cubed_start = pow(start, 3)
     cubed_stop = pow(stop, 3)
-    cubed_space = linspace(cubed_start, cubed_stop, num)
-    return sign(cubed_space) * power(abs(cubed_space), 1/3)
+    cubed_space = np.linspace(cubed_start, cubed_stop, num)
+    return np.sign(cubed_space) * np.power(abs(cubed_space), 1/3)
 
 
 def rescale_list_to_range(original: Sequence, limits: Sequence) -> list:
@@ -99,11 +100,12 @@ def rescale_list_to_range(original: Sequence, limits: Sequence) -> list:
     :return: Original list rescaled to fit between min and max
     :rtype: list
     """
+    original = np.array(original)
     new_min, new_max = limits[0:2]
     old_min, old_max = min(original), max(original)
-    return (new_max + new_min) / 2 * original[0] / old_min if old_min == old_max \
-        else [new_max * (v - old_min) / (old_max - old_min) +
-              new_min * (old_max - v) / (old_max - old_min) for v in original]
+    return (new_max + new_min) / 2 * original / old_min if old_min == old_max \
+        else list((new_max * (original - old_min) / (old_max - old_min) +
+                   new_min * (old_max - original) / (old_max - old_min)))
 
 
 def rescale_list_to_other(source: Sequence, target: Sequence) -> list:
