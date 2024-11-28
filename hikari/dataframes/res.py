@@ -1,5 +1,5 @@
 from enum import Enum
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 import numpy as np
 from hikari.dataframes import BaseFrame
 from hikari.resources import Xray_atomic_form_factors
@@ -18,7 +18,7 @@ class ResInstructionType(Enum):
 class ResFrame(BaseFrame):
     def __init__(self):
         super().__init__()
-        self.data = OrderedDict()
+        self.data = {}
 
     def atomic_form_factor(self, atom, hkl):
         """
@@ -84,7 +84,7 @@ class ResFrame(BaseFrame):
 
     def read(self, path):
         """
-        Read data from specified ins/res file and return an OrderedDict
+        Read data from specified ins/res file and return an dict
 
         :param path: Relative or absolute path to the res file to be read
         :type path: str
@@ -100,28 +100,28 @@ class ResFrame(BaseFrame):
         self.data['SYMM'] = list()
 
         # SPECIFY SUPPORTED KEYS AND THEIR TYPES
-        key_types = OrderedDict([
-            ('TITL', 'multiline'),
-            ('CELL', 'listing'),
-            ('ZERR', 'listing'),
-            ('LATT', 'listing'),
-            ('SYMM', 'multiline'),
-            ('SFAC', 'listing'),
-            ('UNIT', 'listing'),
-            ('L.S.', 'listing'),
-            ('PLAN', 'listing'),
-            ('SIZE', 'listing'),
-            ('MORE', 'listing'),
-            ('BOND', 'listing'),
-            ('CONF', 'listing'),
-            ('FMAP', 'listing'),
-            ('ACTA', 'listing'),
-            ('WGHT', 'listing'),
-            ('FVAR', 'listing'),
-            ('HKLF', 'listing'),
-            ('REM',	'special'),
-            ('END',	'special')
-        ])
+        key_types = {
+            'TITL': 'multiline',
+            'CELL': 'listing',
+            'ZERR': 'listing',
+            'LATT': 'listing',
+            'SYMM': 'multiline',
+            'SFAC': 'listing',
+            'UNIT': 'listing',
+            'L.S.': 'listing',
+            'PLAN': 'listing',
+            'SIZE': 'listing',
+            'MORE': 'listing',
+            'BOND': 'listing',
+            'CONF': 'listing',
+            'FMAP': 'listing',
+            'ACTA': 'listing',
+            'WGHT': 'listing',
+            'FVAR': 'listing',
+            'HKLF': 'listing',
+            'REM': 'special',
+            'END': 'special',
+        }
 
         # READ THE FILE AND JOIN LINES SEPARATED BY '=' SIGN
         with open(make_abspath(path), 'r') as res_file:

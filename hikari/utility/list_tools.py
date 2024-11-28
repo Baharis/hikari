@@ -2,15 +2,20 @@
 This file contains tools to work with tuples and lists used in the package.
 """
 
+from __future__ import annotations
+
+from typing import Sequence
+
+from .typing import Number
+
 from numpy import power, linspace, sign, abs
 
-
-def find_best(strings, criteria):
+def find_best(strings: list[str], criteria: str) -> str:
     """
     Parse a list of `strings` and return the "best" element based on `criteria`.
 
     :param strings: List of string where best will be found based on `criteria`.
-    :type strings: List[str]
+    :type strings: list[str]
     :param criteria: '>'-separated substrings sought in descending order.
         '+' is a logical 'and', '=' substitutes: `A=B` returns B if A is found.
     :type criteria: str
@@ -25,7 +30,12 @@ def find_best(strings, criteria):
         return find_best(strings, further_criteria)
 
 
-def cubespace(start, stop=False, num=10, include_start=True):
+def cubespace(
+        start: Number,
+        stop: Number = False,
+        num: int = 10,
+        include_start: bool = True,
+):
     """
     Return sequence of *num* floats between *start* and *stop*.
     Analogously to numpy's linspace, values in returned list are chosen
@@ -50,7 +60,7 @@ def cubespace(start, stop=False, num=10, include_start=True):
     :param start: The starting value of a sequence.
     :type start: float
     :param stop: The ending value of a sequence. If False (default), *start*
-        is used as a the ending value, while the starting value is set to 0.
+        is used as the ending value, while the starting value is set to 0.
     :type stop: float
     :param num: Number of samples to generate. Default is 10.
     :type num: int
@@ -69,7 +79,7 @@ def cubespace(start, stop=False, num=10, include_start=True):
     return sign(cubed_space) * power(abs(cubed_space), 1/3)
 
 
-def rescale_list_to_range(original, limits):
+def rescale_list_to_range(original: Sequence, limits: Sequence) -> list:
     """
     Linearly rescale values in original list to limits (minimum and maximum).
 
@@ -84,19 +94,19 @@ def rescale_list_to_range(original, limits):
 
     :param original: Original list or list-like to be rescaled.
     :type original: list
-    :param limits: Tuple of two floats, min and max, to constrain the new list
-    :type limits: tuple
+    :param limits: Sequence of two floats, min and max, to constrain the new list
+    :type limits: Sequence
     :return: Original list rescaled to fit between min and max
     :rtype: list
     """
     new_min, new_max = limits[0:2]
     old_min, old_max = min(original), max(original)
-    return (new_max + new_min) / 2 * original / old_min if old_min == old_max \
+    return (new_max + new_min) / 2 * original[0] / old_min if old_min == old_max \
         else [new_max * (v - old_min) / (old_max - old_min) +
               new_min * (old_max - v) / (old_max - old_min) for v in original]
 
 
-def rescale_list_to_other(source, target):
+def rescale_list_to_other(source: Sequence, target: Sequence) -> list:
     """
     Linearly rescale *source* list of numeral values to
     elements of iterable scale in *target*.
@@ -113,12 +123,12 @@ def rescale_list_to_other(source, target):
     >>> rescale_list_to_other([1, 2, 3], 'holy grail')
     ['h', ' ', 'l']
 
-    :param source: Iterable of numerals to be rescaled to *other*.
-    :type source: Iterable
-    :param target: Iterable from which the values in new list will be selected.
-    :type target: Iterable
+    :param source: Sequence of numerals to be rescaled to *other*.
+    :type source: Sequence
+    :param target: Sequence from which the values in new list will be selected.
+    :type target: Sequence
     :return: List with elements from *other* assigned using values in original.
     :rtype: list
     """
-    return [target[int(v)] for v
-            in rescale_list_to_range(source, (0, len(target)-1))]
+    return [target[int(v)] for v in
+            rescale_list_to_range(original=source, limits=(0, len(target)-1))]

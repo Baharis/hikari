@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import warnings
 from collections.abc import Buffer
 from copy import deepcopy
@@ -6,7 +8,7 @@ from operator import and_
 from pathlib import Path
 import pickle
 import re
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -156,14 +158,14 @@ class GroupCatalogKeyStandard(GroupCatalogKey):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOG HELPER FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-def _resolve_construct_order(keys: List[GroupCatalogKey]) -> List[GroupCatalogKey]:
+def _resolve_construct_order(keys: list[GroupCatalogKey]) -> list[GroupCatalogKey]:
     """
     Return `GroupCatalogKey`s in an order that warrants that
     key's dependencies are constructed before it
     """
     unordered = deepcopy(keys)
     ordered = []
-    def find_constructable(unordered_: List[GroupCatalogKey]) -> GroupCatalogKey:
+    def find_constructable(unordered_: list[GroupCatalogKey]) -> GroupCatalogKey:
         for key_i, key in enumerate(unordered_):
             if all(any(issubclass(o, d) for o in ordered) for d in key.dependencies):
                 return unordered_.pop(key_i)
@@ -199,7 +201,7 @@ class GroupCatalog:
     - There are no overlaps between `HM_simple` and `HM` column names
     - There are 345 overlaps between `HM_simple` and `HM_short` column names
     """
-    KEYS: List[GroupCatalogKey] = [
+    KEYS: list[GroupCatalogKey] = [
         GroupCatalogKeyNC,
         GroupCatalogKeyNumber,
         GroupCatalogKeySetting,
@@ -284,7 +286,7 @@ class GroupCatalog:
             pickle.dump(self, file=pickle_file)  # noqa - this code is OK
 
     @property
-    def accessors(self) -> List['GroupCatalogKey']:
+    def accessors(self) -> list['GroupCatalogKey']:
         """Lists `cls.KEYS whose accessor priority is not 0 in decreasing order"""
         accessors = [k for k in self.KEYS if k.accessor_priority]
         return sorted(accessors, key=lambda a: a.accessor_priority, reverse=True)

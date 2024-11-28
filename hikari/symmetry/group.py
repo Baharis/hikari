@@ -2,10 +2,12 @@
 This file contains class definition and necessary tools for constructing
 and evaluating all symmetry groups.
 """
+from __future__ import annotations
+
 from itertools import product as itertools_product
 from enum import Enum
 import pickle
-from typing import Dict, Union
+from typing import Union
 
 import numpy as np
 
@@ -33,7 +35,7 @@ def _unpack_group_dictionary_from_json(json_dict):
 
 
 def _dump_group_dictionary_to_pickle(
-        group_dict: Dict[Union[str, int], 'Group'],
+        group_dict: dict[Union[str, int], 'Group'],
         pickle_path: str
 ):
     """Development function used to make a pickle of space groups"""
@@ -75,13 +77,13 @@ class Group:
     def __init__(self, *generators):
         """
         :param generators: List of operations necessary to construct whole group
-        :type generators: List[SymmOp]
+        :type generators: list[SymmOp]
         """
 
         generator_list = []
         for gen in generators:
-            if gen % 1 not in generator_list:
-                generator_list.append(gen % 1)
+            if gen % 1 not in generator_list:  # noqa - SymmOp supports % int
+                generator_list.append(gen % 1)  # noqa - SymmOp supports % int
 
         def _find_new_product(ops):
             if len(ops) > 200:
@@ -96,16 +98,20 @@ class Group:
         self.number = 0
 
     @classmethod
-    def from_generators_operations(cls, generators, operations):
+    def from_generators_operations(
+            cls,
+            generators: list[SymmOp],
+            operations: list[SymmOp],
+    ) -> 'Group':
         """
         Generate group using already complete list of generators and operators.
         Does not check whether `operations` are correct for efficiency!
         :param generators: A complete list of group generators
-        :type generators: List[np.ndarray]
+        :type generators: list[SymmOp]
         :param operations: A complete list of group operations
-        :type operations: List[np.ndarray]
-        :return:
-        :rtype:
+        :type operations: list[SymmOp]
+        :return: Symmetry group with given generators and operators.
+        :rtype: Group
         """
         new_group = cls()
         new_group.__generators = generators
@@ -270,7 +276,7 @@ class Group:
         return Group(*new_generators)
 
     def transform(self, m):
-        """
+        r"""
         Transform the group using 4x4 matrix. For reference, see `bilbao
         resources <https://www.cryst.ehu.es/cryst/trmatrix.html>`_ or `IUCr
         pamphlet no. 22 <https://www.iucr.org/education/pamphlets/22>`_.

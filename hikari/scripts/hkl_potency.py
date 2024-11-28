@@ -204,9 +204,9 @@ def potency_violin_plot(job_name='violin',
     :type precision: int
     :param space_groups: List of space groups to investigate, strings or ints
         (see :class:`hikari.symmetry.Group`). Defaults to 11 "Laue" groups.
-    :type space_groups: Tuple[int] or Tuple[str]
+    :type space_groups: tuple[int] or tuple[str]
     :param labels: List of tex-style labels to be used for logging and plotting.
-    :type labels: Tuple[str]
+    :type labels: tuple[str]
     :param resolution: If given, additionally limit data resolution to given
         value. Please provide the resolution as a distance from the origin
         in reciprocal space (twice the resolution in reciprocal angstrom).

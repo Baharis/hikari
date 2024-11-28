@@ -365,7 +365,7 @@ class HklFrame(BaseFrame):
         :type opening_angle: float
         :param vector: Provides information about orientation of crystal
           relative to DAC. If None, :attr:`orientation` is used instead.
-        :type vector: Tuple[float]
+        :type vector: tuple[float]
         :return: HklFrame containing only reflections in dac-accessible region.
         :rtype: HklFrame
         """
@@ -632,7 +632,7 @@ class HklFrame(BaseFrame):
         :param hkl_path: Absolute or relative path to the .hkl file.
         :type hkl_path: str
         :param hkl_format: Format of provided .hkl file.
-        :type hkl_format: union[int, str, OrderedDict]
+        :type hkl_format: union[int, str, dict]
         """
         reader = HklReader(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
         dict_of_data = reader.read()
@@ -796,7 +796,7 @@ class HklFrame(BaseFrame):
         :param hkl_path: Absolute or relative path to the .hkl file.
         :type hkl_path: str
         :param hkl_format: Desired format of .hkl file.
-        :type hkl_format: union[int, str, OrderedDict]
+        :type hkl_format: union[int, str, dict]
         """
         writer = HklWriter(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
         writer.write(hkl_data=self.table)
