@@ -1,15 +1,17 @@
 import warnings
+from collections.abc import Buffer
 from copy import deepcopy
 from functools import reduce
 from operator import and_
+from pathlib import Path
 import pickle
 import re
 from typing import List, Union
 
 import numpy as np
 import pandas as pd
-from pandas.core.interchange.dataframe_protocol import DataFrame
 
+from hikari.resources import point_groups_pickle, space_groups_pickle
 from hikari.utility.typing import PathLike
 from hikari.symmetry.group import Group
 
@@ -229,24 +231,29 @@ class GroupCatalog:
         return NotImplemented
 
     @classmethod
-    def from_ssv(cls, ssv_path: PathLike) -> 'GroupCatalog':
-        """Generate a `GroupCatalog` from a .ssv file"""
-        with open(ssv_path, 'r') as ssv_file:
-            table = pd.read_csv(ssv_file, comment='#', sep=r'\s+')
-        return cls(table)
-
-    @classmethod
-    def from_pickle(cls, pickle_path: PathLike) -> 'GroupCatalog':
-        """Load a `GroupCatalog` from a .pickle file"""
-        with open(pickle_path, 'br') as pickle_file:
-            new = pickle.load(pickle_file)
+    def from_bytes(cls, bytes_: Buffer):
+        """Load directly from bytes object. Drastically speeds up library load"""
+        new = pickle.loads(bytes_)
         if isinstance(new, cls):
             return new
         else:
             raise TypeError(f'Loaded pickle is not instance of {cls}')
 
+    @classmethod
+    def from_pickle(cls, pickle_path: PathLike) -> 'GroupCatalog':
+        """Load from pickled bytes file. Drastically speeds up library load"""
+        with open(pickle_path, 'br') as pickled_bytes:
+            return cls.from_bytes(pickled_bytes.read())
+
+    @classmethod
+    def from_ssv(cls, ssv_path: PathLike) -> 'GroupCatalog':
+        """New from a .ssv file. Used for development or custom `GroupCatalog`s."""
+        with open(ssv_path, 'r') as ssv_file:
+            table = pd.read_csv(ssv_file, comment='#', sep=r'\s+')
+        return cls(table)
+
     def to_rest_table(self, txt_path: PathLike) -> None:
-        """Write an instant of `GroupCatalog` to a .txt file as ReST table"""
+        """Generate a .txt file with ReST table containing `GroupCatalog` elements."""
         r = self.REST_COL_FORMAT
         field_len_re = re.compile(r'^(\d*)(?:\.\d+)?[a-z]*$')
         field_lens = [int(field_len_re.match(v).group(1)) for v in r.values()]
@@ -262,7 +269,17 @@ class GroupCatalog:
             txt_file.write(rest)
 
     def to_pickle(self, pickle_path: PathLike) -> None:
-        """Development only; Dump `self` to a .pickle file"""
+        r"""
+        Dump a `GroupCatalog` to a .pkl file.
+        Used for development purposes or saving custom `GroupCatalog`s.
+        Loading pickles is drastically faster than generating Catalog from ssv.
+
+        .. code-block:: python
+
+            PG = PointGroupCatalog.from_ssv(r'hikari\resources\Hall_symbols_PG.dat')
+            SG = SpaceGroupCatalog.from_ssv(r'hikari\resources\Hall_symbols_SG.dat')
+
+        """
         with open(pickle_path, 'bw') as pickle_file:
             pickle.dump(self, file=pickle_file)  # noqa - this code is OK
 
@@ -280,14 +297,14 @@ class GroupCatalog:
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SMART GETTERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-    def _get_by_key(self, key: Union[str, int]) -> DataFrame:
+    def _get_by_key(self, key: Union[str, int]) -> pd.DataFrame:
         """Iterate over accessors; whenever key is in accessor, return matching group"""
         matching = []
         for accessor in self.accessors:
             matching.append(self.table[self.table.loc[:, accessor.name] == key])
         return pd.concat(matching, axis=0)
 
-    def _get_by_kwargs(self, **kwargs) -> DataFrame:
+    def _get_by_kwargs(self, **kwargs) -> pd.DataFrame:
         """Return the first group that matches all queries specified in kwargs"""
         masks = []
         for key, value in kwargs.items():
@@ -307,16 +324,14 @@ class GroupCatalog:
         else:
             got = got1.merge(got2, how='inner', on=['n_c'])
         got.drop_duplicates(subset='n_c', inplace=True, ignore_index=True)
+        got.sort_values(by='standard', kind='stable', ascending=False, inplace=True)
+        first_got = got['group'].iloc[0] if len(got) else None
         if len(got) > 1:
-            matches = list(got['n_c'])
+            matches = list(got['HM_numbered'])
             msg = f'get({key=}, {kwargs=}) yielded multiple {matches=}. '\
-                  f'Returning first result in standard setting, if possible'
+                  f'Returning first in standard setting, if possible: {first_got.name}'
             warnings.warn(msg, AmbiguousGroupAccessorWarning)
-            std = self.standard.table
-            for n_c in matches:
-                if n_c in std['n_c']:
-                    return deepcopy(std.loc[std.loc['n_c'] == n_c]['group'][0])
-        return deepcopy(got['group'].iloc[0] if len(got) else None)
+        return deepcopy(first_got)
 
     def __getitem__(self, item: Union[str, int]) -> Group:
         """Get first `Group` matching provided anonymous accessor or raise"""
@@ -335,3 +350,18 @@ class SpaceGroupCatalog(GroupCatalog):
     """Subclass of `GroupCatalog` specialized to hold space groups"""
     KEYS = GroupCatalog.KEYS + [GroupCatalogKeySpaceGroup]
 
+
+def regenerate_group_catalog_pickles():
+    r"""
+    This function replaces current `resources/*_group.pickle`s.
+    It should be run from hikari's source directory with hikari imported
+    as module whenever any changes to `GroupCatalog` class are made.
+    """
+    pg = PointGroupCatalog.from_ssv(Path('resources/Hall_symbols_PG.dat'))
+    sg = SpaceGroupCatalog.from_ssv(Path('resources/Hall_symbols_SG.dat'))
+    pg.to_pickle(Path('resources/point_groups.pickle'))
+    sg.to_pickle(Path('resources/space_groups.pickle'))
+
+
+PG = PointGroupCatalog.from_bytes(point_groups_pickle)
+SG = SpaceGroupCatalog.from_bytes(space_groups_pickle)
