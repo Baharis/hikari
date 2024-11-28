@@ -16,15 +16,6 @@ from hikari.symmetry.hall_symbols import HallSymbol
 from hikari.utility.list_tools import find_best
 
 
-def _dump_group_dictionary_to_pickle(
-        group_dict: dict[Union[str, int], 'Group'],
-        pickle_path: str
-):
-    """Development function used to make a pickle of space groups"""
-    with open(pickle_path, 'bw') as pickle_file:
-        pickle.dump(group_dict, file=pickle_file)
-
-
 class Group:
     """
     Base immutable class containing information about symmetry groups.

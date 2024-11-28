@@ -289,7 +289,7 @@ class GroupCatalog:
 
         """
         with open(pickle_path, 'bw') as pickle_file:
-            pickle.dump(self, file=pickle_file)  # noqa - this code is OK
+            pickle.dump(self, file=pickle_file, protocol=4)  # noqa - type is OK
 
     @property
     def accessors(self) -> list['GroupCatalogKey']:
