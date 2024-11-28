@@ -347,8 +347,9 @@ class GroupCatalog:
         first_got = got['group'].iloc[0] if len(got) else None
         if len(got) > 1:
             matches = list(got['HM_numbered'])
-            msg = f'get({key=}, {kwargs=}) yielded multiple {matches=}. '\
-                  f'Returning first in standard setting, if possible: {first_got.name}'
+            msg = (f'get(key={key}, kwargs={kwargs}) yielded multiple matches: '
+                   f'{matches}. Returning first in standard setting, '
+                   f'if possible: {first_got.name}')
             warnings.warn(msg, AmbiguousGroupAccessorWarning)
         return deepcopy(first_got)
 
