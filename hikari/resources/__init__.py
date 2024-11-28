@@ -1,42 +1,48 @@
-from pkgutil import get_data as get
+from __future__ import annotations
+
+from collections.abc import Buffer
 import io
 import json
-import pickle
+
 import pandas as pd
+from importlib.resources import files
 
 
-def _load_indexed_csv(filename):
-    s = io.StringIO(get(__name__, filename).decode('utf-8'))
+def _load_bytes(resource_name: str) -> Buffer:
+    with files(__name__).joinpath(resource_name).open('rb') as f:
+        return f.read()
+
+
+def _load_indexed_csv(resource_name: str) -> pd.DataFrame:
+    with files(__name__).joinpath(resource_name).open('r', encoding='utf-8') as f:
+        s = io.StringIO(f.read())
     return pd.read_csv(s, comment='#', index_col=0)
 
 
-def _load_indexed_ssv(filename):
-    s = io.StringIO(get(__name__, filename).decode('utf-8'))
+def _load_indexed_ssv(resource_name: str) -> pd.DataFrame:
+    with files(__name__).joinpath(resource_name).open('r', encoding='utf-8') as f:
+        s = io.StringIO(f.read())
     return pd.read_csv(s, comment='#', index_col=0, sep=r'\s+')
 
 
-def _load_json(filename):
-    return json.loads(get(__name__, filename).decode('utf-8'))
+def _load_json(resource_name: str) -> dict:
+    with files(__name__).joinpath(resource_name).open('r', encoding='utf-8') as f:
+        return json.load(f)
 
 
-def _load_pickle(filename):
-    return pickle.loads(get(__name__, filename))
+def _load_text(resource_name: str) -> str:
+    return files(__name__).joinpath(resource_name).read_text(encoding='utf-8')
 
 
-def _save_pickle(data, filename):
-    pickle.dump(data, open(filename, 'wb'), protocol=4)
-
-
-gnuplot_angular_heatmap_template = \
-    get(__name__, 'gnuplot_angular_heatmap_template.gnu').decode('utf-8')
+gnuplot_angular_heatmap_template = _load_text('gnuplot_angular_heatmap_template.gnu')
 point_groups_json = _load_json('point_groups.json')
 space_groups_json = _load_json('space_groups.json')
-point_groups_pickle = get(__name__, 'point_groups.pickle')
-space_groups_pickle = get(__name__, 'space_groups.pickle')
+point_groups_pickle = _load_bytes('point_groups.pickle')
+space_groups_pickle = _load_bytes('space_groups.pickle')
 hkl_formats = _load_json('hkl_formats_defined.json')
 hkl_aliases = _load_json('hkl_formats_aliases.json')
-hkl_mercury_style = get(__name__, 'hkl.msd').decode('utf-8')
+hkl_mercury_style = _load_text('hkl.msd')
 characteristic_radiation = _load_json('characteristic_radiation.json')
-cif_core_dict = get(__name__, 'cif_core_2.4.5.dic').decode('utf-8')
+cif_core_dict = _load_text('cif_core_2.4.5.dic')
 Xray_atomic_form_factors = _load_indexed_csv('Xray_atomic_form_factors.csv')
 hall_symbols_table = _load_indexed_ssv('Hall_symbols_SG.dat')

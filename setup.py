@@ -7,8 +7,8 @@ import sys
 from setuptools import setup, find_packages
 
 # Version control
-python_requires = '>=3.6'
-MIN_VERSION = (3, 6)
+python_requires = '>=3.7'
+MIN_VERSION = (3, 7)
 error_msg = ('This package requires Python %d.%d or higher.' % MIN_VERSION)
 try:
     if sys.version_info < MIN_VERSION:
@@ -46,7 +46,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
