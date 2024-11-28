@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Buffer
 import io
 import json
 
@@ -8,7 +7,7 @@ import pandas as pd
 from importlib.resources import files
 
 
-def _load_bytes(resource_name: str) -> Buffer:
+def _load_bytes(resource_name: str) -> bytes:
     with files(__name__).joinpath(resource_name).open('rb') as f:
         return f.read()
 

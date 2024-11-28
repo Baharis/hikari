@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Buffer
 from copy import deepcopy
 from functools import reduce
 from operator import and_
@@ -247,7 +246,7 @@ class GroupCatalog:
         return NotImplemented
 
     @classmethod
-    def from_bytes(cls, bytes_: Buffer):
+    def from_bytes(cls, bytes_: bytes):
         """Load directly from bytes object. Drastically speeds up library load"""
         new = pickle.loads(bytes_)
         if isinstance(new, cls):
