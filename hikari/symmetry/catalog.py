@@ -171,6 +171,13 @@ def _resolve_construct_order(keys: List[GroupCatalogKey]) -> List[GroupCatalogKe
     return ordered
 
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOG WARNING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+
+class AmbiguousGroupAccessorWarning(UserWarning):
+    """Raised if the accessors provided to get the `Group` match >1 `Group`"""
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOG CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
@@ -288,6 +295,7 @@ class GroupCatalog:
         return self.table[reduce(and_, masks)]
 
     def get(self, key: Union[str, int] = None, **kwargs) -> Union[Group, None]:
+        """Get first `Group` matching provided anonymous&known accessors or None"""
         got1 = deepcopy(self._get_by_key(key)) if key else pd.DataFrame()
         got2 = deepcopy(self._get_by_kwargs(**kwargs)) if kwargs else pd.DataFrame()
         if len(got1) == 0 and len(got2) == 0:
@@ -301,15 +309,17 @@ class GroupCatalog:
         got.drop_duplicates(subset='n_c', inplace=True, ignore_index=True)
         if len(got) > 1:
             matches = list(got['n_c'])
-            warnings.warn(f'get({key=}, {kwargs=}) yielded multiple {matches=}. '
-                          f'Returning first result in standard setting, if possible')
+            msg = f'get({key=}, {kwargs=}) yielded multiple {matches=}. '\
+                  f'Returning first result in standard setting, if possible'
+            warnings.warn(msg, AmbiguousGroupAccessorWarning)
             std = self.standard.table
-            for nc in matches:
-                if nc in std['n_c']:
-                    return deepcopy(std.loc[std.loc['n_c'] == nc]['group'][0])
+            for n_c in matches:
+                if n_c in std['n_c']:
+                    return deepcopy(std.loc[std.loc['n_c'] == n_c]['group'][0])
         return deepcopy(got['group'].iloc[0] if len(got) else None)
 
     def __getitem__(self, item: Union[str, int]) -> Group:
+        """Get first `Group` matching provided anonymous accessor or raise"""
         got = self.get(key=item)
         if not got:
             raise KeyError(f'Unknown key: {item}')
