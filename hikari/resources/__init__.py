@@ -4,33 +4,34 @@ import io
 import json
 
 import pandas as pd
-from importlib.resources import files
+from importlib.resources import open_text, open_binary
 
 
 def _load_bytes(resource_name: str) -> bytes:
-    with files(__name__).joinpath(resource_name).open('rb') as f:
+    with open_binary(__name__, resource_name) as f:
         return f.read()
 
 
 def _load_indexed_csv(resource_name: str) -> pd.DataFrame:
-    with files(__name__).joinpath(resource_name).open('r', encoding='utf-8') as f:
+    with open_text(__name__, resource_name, encoding='utf-8') as f:
         s = io.StringIO(f.read())
     return pd.read_csv(s, comment='#', index_col=0)
 
 
 def _load_indexed_wsv(resource_name: str) -> pd.DataFrame:
-    with files(__name__).joinpath(resource_name).open('r', encoding='utf-8') as f:
+    with open_text(__name__, resource_name, encoding='utf-8') as f:
         s = io.StringIO(f.read())
     return pd.read_csv(s, comment='#', index_col=0, sep=r'\s+')
 
 
 def _load_json(resource_name: str) -> dict:
-    with files(__name__).joinpath(resource_name).open('r', encoding='utf-8') as f:
+    with open_text(__name__, resource_name, encoding='utf-8') as f:
         return json.load(f)
 
 
 def _load_text(resource_name: str) -> str:
-    return files(__name__).joinpath(resource_name).read_text(encoding='utf-8')
+    with open_text(__name__, resource_name, encoding='utf-8') as f:
+        return f.read()
 
 
 gnuplot_angular_heatmap_template = _load_text('gnuplot_angular_heatmap_template.gnu')
