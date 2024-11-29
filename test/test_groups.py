@@ -1,9 +1,11 @@
 import unittest
 
-from hikari.resources import (hall_symbols_pg_table, hall_symbols_sg_table,
-                              point_groups_pickle, space_groups_pickle)
+from hikari.resources import (point_groups_dataframe, space_groups_dataframe,
+                              point_groups_json, space_groups_json)
 from hikari.symmetry import Group, PG, SymmOp, SG
-from hikari.symmetry.catalog import PointGroupCatalog, SpaceGroupCatalog
+from hikari.symmetry.catalog import GroupCatalog
+
+import pandas as pd
 
 
 class TestGroup(unittest.TestCase):
@@ -16,15 +18,13 @@ class TestGroup(unittest.TestCase):
         _ = Group(*sg230_generators)
 
     def test_point_groups_pickle_consistent_with_wsv(self):
-        pgc1 = PointGroupCatalog(hall_symbols_pg_table)
-        pgc2 = PointGroupCatalog.from_bytes(point_groups_pickle)
-        all_keys = list({*pgc1.keys(), *pgc2.keys()})
-        for key in all_keys:
-            self.assertEqual(pgc1.get(n_c=key), pgc2.get(n_c=key))
+        pgc1 = GroupCatalog(point_groups_dataframe)
+        pgc2 = GroupCatalog.from_json(point_groups_json)
+        pd.testing.assert_frame_equal(pgc1.table, pgc2.table)
+        pd.testing.assert_frame_equal(pgc1.table, PG.table)
 
     def test_space_groups_pickle_consistent_with_wsv(self):
-        sgc1 = SpaceGroupCatalog(hall_symbols_sg_table)
-        sgc2 = SpaceGroupCatalog.from_bytes(space_groups_pickle)
-        all_keys = list({*sgc1.keys(), *sgc2.keys()})
-        for key in all_keys:
-            self.assertEqual(sgc1.get(n_c=key), sgc2.get(n_c=key))
+        sgc1 = GroupCatalog(space_groups_dataframe)
+        sgc2 = GroupCatalog.from_json(space_groups_json)
+        pd.testing.assert_frame_equal(sgc1.table, sgc2.table)
+        pd.testing.assert_frame_equal(sgc1.table, SG.table)

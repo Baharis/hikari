@@ -79,7 +79,7 @@ class SymmOp:
             tf[i, 2] = 1 if '+z' in coord else -1 if '-z' in coord else 0
             coord = coord.replace('+x', '').replace('+y', '').replace('+z', '')\
                 .replace('-x', '').replace('-y', '').replace('-z', '')
-            tl[i] = 0 if coord is '' else float(Fraction(coord))
+            tl[i] = 0 if coord == '' else float(Fraction(coord))
         return cls(tf, tl)
 
     @classmethod

@@ -78,7 +78,7 @@ class Group:
     ) -> 'Group':
         """
         Generate group using already complete list of generators and operators.
-        Does not check whether `operations` are correct for efficiency!
+        Does not check if `operations` are correct or complete for efficiency!
         :param generators: A complete list of group generators
         :type generators: list[SymmOp]
         :param operations: A complete list of group operations

@@ -3,17 +3,19 @@ from __future__ import annotations
 import warnings
 from copy import deepcopy
 from functools import reduce
+import json
 from operator import and_
 from pathlib import Path
 import pickle
 import re
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
 
-from hikari.resources import (point_groups_pickle, space_groups_pickle,
-                              hall_symbols_pg_table, hall_symbols_sg_table)
+from hikari.resources import (point_groups_json, space_groups_json,
+                              point_groups_dataframe, space_groups_dataframe)
+from hikari.symmetry import SymmOp
 from hikari.utility.typing import PathLike
 from hikari.symmetry.group import Group
 
@@ -24,9 +26,10 @@ from hikari.symmetry.group import Group
 class GroupCatalogKey:
     """Base Class for every following `GroupCatalogKey`. Each named
     `GroupCatalogKey` represents a single column in the `GroupCatalog` table."""
-    name: str = ''                    # if not empty, how key will be registered
-    accessor_priority: float = 0.     # if >0 used to access groups (inc. order)
-    dependencies: list = []           # other keys needed to construct this key
+    name: str = ''                  # if not empty, how key will be registered
+    accessor_priority: float = 0.   # if > 0 used to access groups (inc. order)
+    dtype: Union[str, Any] = 'str'  # used for type-casting at column creation
+    dependencies: list = []         # other keys needed to construct this key
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
@@ -52,6 +55,7 @@ class GroupCatalogKeyNumber(GroupCatalogKey):
     name = 'number'
     accessor_priority = 350.
     dependencies = [GroupCatalogKeyNC]
+    dtype = 'int16'
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
@@ -81,28 +85,10 @@ class GroupCatalogKeyHall(GroupCatalogKeyCompulsory):
 
 
 class GroupCatalogKeyGroup(GroupCatalogKey):
-    """Abstract base class for point and space group columns / constructors"""
-    name = 'group'
-    dependencies = [GroupCatalogKeyNumber, GroupCatalogKeyHM, GroupCatalogKeyHall]
-
-
-class GroupCatalogKeyPointGroup(GroupCatalogKeyGroup):
-    """Point and space groups are identical, so must recreate full Hall symbol"""
-
-    @classmethod
-    def construct(cls, table: pd.DataFrame) -> pd.Series:
-        groups = []
-        for n, name, symbol in zip(table['number'], table['HM'], table['Hall']):
-            # symbol = 'p_'.join(re.fullmatch(r'(-?)(.+)', symbol).groups())
-            group = Group.from_hall_symbol(symbol)
-            group.name = name
-            group.number = n
-            groups.append(group)
-        return pd.Series(groups)
-
-
-class GroupCatalogKeySpaceGroup(GroupCatalogKeyGroup):
     """Creates and names `hikari.symmetry.Group` object based on Hall symbol"""
+    name = 'group'
+    dtype = Group
+    dependencies = [GroupCatalogKeyNumber, GroupCatalogKeyHM, GroupCatalogKeyHall]
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
@@ -184,6 +170,58 @@ def _resolve_construct_order(keys: list[GroupCatalogKey]) -> list[GroupCatalogKe
     return ordered
 
 
+# ~~~~~~~~~~~~~~~~~~~~~~~ CATALOG JSON ENCODER/DECODER ~~~~~~~~~~~~~~~~~~~~~~~ #
+
+
+def is_json_serializable(x):
+    try:
+        json.dumps(x)
+        return True
+    except TypeError:
+        return False
+
+
+class GroupCatalogJSONEncoder(json.JSONEncoder):
+    """Handles serialization of `GroupCatalog` to a `.json` file"""
+    def default(self, gc: GroupCatalog) -> dict:
+        if not isinstance(gc, GroupCatalog):
+            return super().default(gc)  # raises TypeError for other input
+        records = []
+        for row in gc.table.itertuples(index=False):
+            record = dict(row._asdict())  # noqa - It should be protected
+            record['group'] = {
+                'generators': [g.code for g in record['group'].generators],
+                'operations': [o.code for o in record['group'].operations],
+            }
+            records.append(record)
+        return {'_type': gc.__class__.__name__, 'table': records}
+
+
+class GroupCatalogJSONDecoder(json.JSONDecoder):
+    """Handles deserialization of `GroupCatalog` from a `.json` file"""
+    def __init__(self, *args, **kwargs) -> None:
+        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj) -> Any:  # noqa - signature must match
+        if '_type' not in obj:
+            return obj
+        _type = obj['_type']
+        if _type == 'GroupCatalog':
+            records = []
+            for record in obj['table']:
+                group = record['group']
+                group = Group.from_generators_operations(
+                    generators=[SymmOp.from_code(c) for c in group['generators']],
+                    operations=[SymmOp.from_code(c) for c in group['operations']])
+                record.update({'group': group})
+                records.append(record)
+            print(records[0]['group'])
+            print(type(records[0]['group']))
+            print(pd.DataFrame.from_records(obj))
+            return GroupCatalog(table=pd.DataFrame.from_records(records))
+        return obj
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CATALOG WARNING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
@@ -218,6 +256,7 @@ class GroupCatalog:
         GroupCatalogKeySetting,
         GroupCatalogKeyHM,
         GroupCatalogKeyHall,
+        GroupCatalogKeyGroup,
         GroupCatalogKeyHMShort,
         GroupCatalogKeyHMSimple,
         GroupCatalogKeyHMNumbered,
@@ -229,7 +268,6 @@ class GroupCatalog:
         'HM': '16.16s',  # 12 is the longest
         'HM_short': '11.11s',  # 9 is the longest
         'HM_simple': '11.11s',  # 7 is the longest
-
     }
 
     def __init__(self, table: pd.DataFrame) -> None:
@@ -238,12 +276,22 @@ class GroupCatalog:
         for key in _resolve_construct_order(self.KEYS):
             if key.name not in table:
                 table[key.name] = key.construct(table)
+            gck = {k.name: k for k in self.KEYS}[key.name]
+            if not (table[key.name].dtype == gck.dtype or (
+                    isinstance(gck.dtype, type) and
+                    all(isinstance(v, gck.dtype) for v in table[key.name]))):
+                table[key.name] = table[key.name].astype(gck.dtype)
         self.table: pd.DataFrame = table
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self.table.equals(other.table)
         return NotImplemented
+
+    @classmethod
+    def from_json(cls, text: str) -> 'GroupCatalog':
+        """Load from a json-formatted string"""
+        return json.loads(text, cls=GroupCatalogJSONDecoder)
 
     @classmethod
     def from_bytes(cls, bytes_: bytes):
@@ -259,6 +307,12 @@ class GroupCatalog:
         """Load from pickled bytes file. Drastically speeds up library load"""
         with open(pickle_path, 'br') as pickled_bytes:
             return cls.from_bytes(pickled_bytes.read())
+
+    def to_json(self, json_path: PathLike) -> None:
+        with open(json_path, 'w') as json_file:
+            # noinspection PyTypeChecker
+            json.dump(obj=self, fp=json_file, cls=GroupCatalogJSONEncoder,
+                      ensure_ascii=False, indent=4)
 
     def to_rest_table(self, txt_path: PathLike) -> None:
         """Generate a .txt file with ReST table containing `GroupCatalog` elements."""
@@ -284,8 +338,8 @@ class GroupCatalog:
 
         .. code-block:: python
 
-            PG = PointGroupCatalog.to_pickle(r'hikari\resources\Hall_symbols_PG.dat')
-            SG = SpaceGroupCatalog.to_pickle(r'hikari\resources\Hall_symbols_SG.dat')
+            PG = GroupCatalog.to_pickle(r'hikari\resources\Hall_symbols_PG.dat')
+            SG = GroupCatalog.to_pickle(r'hikari\resources\Hall_symbols_SG.dat')
 
         """
         with open(pickle_path, 'bw') as pickle_file:
@@ -361,39 +415,29 @@ class GroupCatalog:
         return got
 
 
-class PointGroupCatalog(GroupCatalog):
-    """Subclass of `GroupCatalog` specialized to hold space groups"""
-    KEYS = GroupCatalog.KEYS + [GroupCatalogKeyPointGroup]
-
-
-class SpaceGroupCatalog(GroupCatalog):
-    """Subclass of `GroupCatalog` specialized to hold space groups"""
-    KEYS = GroupCatalog.KEYS + [GroupCatalogKeySpaceGroup]
-
-
 def regenerate_group_catalog_pickles():
     r"""
     This function replaces current `resources/*_group.pickle`s.
     It should be run from hikari's parent directory with hikari imported
     as module whenever any changes to `GroupCatalog` class are made.
     """
-    pg = PointGroupCatalog(hall_symbols_pg_table)
-    sg = SpaceGroupCatalog(hall_symbols_sg_table)
-    pg.to_pickle(Path('hikari/resources/point_groups.pickle'))
-    sg.to_pickle(Path('hikari/resources/space_groups.pickle'))
+    pg = GroupCatalog(point_groups_dataframe)
+    sg = GroupCatalog(space_groups_dataframe)
+    pg.to_pickle(Path('hikari/resources/point_groups-pandas.pickle'))
+    sg.to_pickle(Path('hikari/resources/space_groups-pandas.pickle'))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ PRE-DEFINED GROUPS CATALOGS ~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-PG = PointGroupCatalog.from_bytes(point_groups_pickle)
+PG = GroupCatalog.from_json(point_groups_json)
 r"""
 Since hikari's groups do not carry information about lattice translations,
 hikari does not differentiate between point groups and space groups.
 As a result, all groups are instances of the same class `Group`,
 and are stored in almost identical `GroupCatalog`s.
 
-This pre-defined `PointGroupCatalog` `PG` holds and provides access
+This pre-defined `GroupCatalog` `PG` holds and provides access
 to all pre-defined point groups available in hikari.
 The point groups are named and generated based on a wsv file in resources.
 Individual groups can be accessed in two different ways:
@@ -504,7 +548,8 @@ keywords. Please mind that in the raw docstring all `\` should be ignored.
 +---------+------------------+------------------+-------------+-------------+
 """
 
-SG = SpaceGroupCatalog.from_bytes(space_groups_pickle)
+
+SG = GroupCatalog.from_json(space_groups_json)
 r"""
 Since hikari's groups do not carry information about lattice translations,
 hikari does not differentiate between point groups and space groups.
