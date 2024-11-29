@@ -1,0 +1,1255 @@
+{
+    "_type": "GroupCatalog",
+    "table": [
+        {
+            "n_c": "1",
+            "HM": "1",
+            "Hall": "p_1",
+            "number": 1,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z"
+                ],
+                "operations": [
+                    "x,y,z"
+                ]
+            },
+            "HM_short": "1",
+            "HM_simple": "1",
+            "HM_numbered": "1: 1",
+            "standard": true
+        },
+        {
+            "n_c": "2",
+            "HM": "-1",
+            "Hall": "-p_1",
+            "number": 2,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z"
+                ],
+                "operations": [
+                    "x,y,z",
+                    "-x,-y,-z"
+                ]
+            },
+            "HM_short": "-1",
+            "HM_simple": "-1",
+            "HM_numbered": "2: -1",
+            "standard": true
+        },
+        {
+            "n_c": "3:b",
+            "HM": "1_2_1",
+            "Hall": "p_2y",
+            "number": 3,
+            "setting": "b",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,y,-z"
+                ],
+                "operations": [
+                    "x,y,z",
+                    "-x,y,-z"
+                ]
+            },
+            "HM_short": "121",
+            "HM_simple": "2",
+            "HM_numbered": "3: 121",
+            "standard": true
+        },
+        {
+            "n_c": "3:c",
+            "HM": "1_1_2",
+            "Hall": "p_2",
+            "number": 3,
+            "setting": "c",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,z"
+                ],
+                "operations": [
+                    "x,y,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "112",
+            "HM_simple": "2",
+            "HM_numbered": "3: 112",
+            "standard": false
+        },
+        {
+            "n_c": "3:a",
+            "HM": "2_1_1",
+            "Hall": "p_2x",
+            "number": 3,
+            "setting": "a",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "x,-y,-z"
+                ],
+                "operations": [
+                    "x,y,z",
+                    "x,-y,-z"
+                ]
+            },
+            "HM_short": "211",
+            "HM_simple": "2",
+            "HM_numbered": "3: 211",
+            "standard": false
+        },
+        {
+            "n_c": "4:b",
+            "HM": "1_m_1",
+            "Hall": "p_-2y",
+            "number": 4,
+            "setting": "b",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "x,-y,z"
+                ],
+                "operations": [
+                    "x,y,z",
+                    "x,-y,z"
+                ]
+            },
+            "HM_short": "1m1",
+            "HM_simple": "m",
+            "HM_numbered": "4: 1m1",
+            "standard": true
+        },
+        {
+            "n_c": "4:c",
+            "HM": "1_1_m",
+            "Hall": "p_-2",
+            "number": 4,
+            "setting": "c",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "x,y,-z"
+                ],
+                "operations": [
+                    "x,y,z",
+                    "x,y,-z"
+                ]
+            },
+            "HM_short": "11m",
+            "HM_simple": "m",
+            "HM_numbered": "4: 11m",
+            "standard": false
+        },
+        {
+            "n_c": "4:a",
+            "HM": "m_1_1",
+            "Hall": "p_-2x",
+            "number": 4,
+            "setting": "a",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,y,z"
+                ],
+                "operations": [
+                    "x,y,z",
+                    "-x,y,z"
+                ]
+            },
+            "HM_short": "m11",
+            "HM_simple": "m",
+            "HM_numbered": "4: m11",
+            "standard": false
+        },
+        {
+            "n_c": "5:b",
+            "HM": "1_2/m_1",
+            "Hall": "-p_2y",
+            "number": 5,
+            "setting": "b",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x,y,-z"
+                ],
+                "operations": [
+                    "x,-y,z",
+                    "-x,y,-z",
+                    "x,y,z",
+                    "-x,-y,-z"
+                ]
+            },
+            "HM_short": "12/m1",
+            "HM_simple": "2/m",
+            "HM_numbered": "5: 12/m1",
+            "standard": true
+        },
+        {
+            "n_c": "5:c",
+            "HM": "1_1_2/m",
+            "Hall": "-p_2",
+            "number": 5,
+            "setting": "c",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x,-y,z"
+                ],
+                "operations": [
+                    "x,y,-z",
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "112/m",
+            "HM_simple": "2/m",
+            "HM_numbered": "5: 112/m",
+            "standard": false
+        },
+        {
+            "n_c": "5:a",
+            "HM": "2/m_1_1",
+            "Hall": "-p_2x",
+            "number": 5,
+            "setting": "a",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "x,-y,-z"
+                ],
+                "operations": [
+                    "x,-y,-z",
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x,y,z"
+                ]
+            },
+            "HM_short": "2/m11",
+            "HM_simple": "2/m",
+            "HM_numbered": "5: 2/m11",
+            "standard": false
+        },
+        {
+            "n_c": "6",
+            "HM": "2_2_2",
+            "Hall": "p_2_2",
+            "number": 6,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,z",
+                    "x,-y,-z"
+                ],
+                "operations": [
+                    "x,-y,-z",
+                    "x,y,z",
+                    "-x,y,-z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "222",
+            "HM_simple": "222",
+            "HM_numbered": "6: 222",
+            "standard": true
+        },
+        {
+            "n_c": "7",
+            "HM": "m_m_2",
+            "Hall": "p_2_-2",
+            "number": 7,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,z",
+                    "-x,y,z"
+                ],
+                "operations": [
+                    "x,-y,z",
+                    "-x,y,z",
+                    "x,y,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "mm2",
+            "HM_simple": "mm2",
+            "HM_numbered": "7: mm2",
+            "standard": true
+        },
+        {
+            "n_c": "8",
+            "HM": "m_m_m",
+            "Hall": "-p_2_2",
+            "number": 8,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x,-y,z",
+                    "x,-y,-z"
+                ],
+                "operations": [
+                    "x,-y,z",
+                    "x,y,-z",
+                    "-x,y,z",
+                    "x,-y,-z",
+                    "-x,-y,-z",
+                    "x,y,z",
+                    "-x,y,-z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "mmm",
+            "HM_simple": "mmm",
+            "HM_numbered": "8: mmm",
+            "standard": true
+        },
+        {
+            "n_c": "9",
+            "HM": "4",
+            "Hall": "p_4",
+            "number": 9,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x,z"
+                ],
+                "operations": [
+                    "y,-x,z",
+                    "-y,x,z",
+                    "x,y,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "4",
+            "HM_simple": "4",
+            "HM_numbered": "9: 4",
+            "standard": true
+        },
+        {
+            "n_c": "10",
+            "HM": "-4",
+            "Hall": "p_-4",
+            "number": 10,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "y,-x,-z"
+                ],
+                "operations": [
+                    "y,-x,-z",
+                    "-y,x,-z",
+                    "x,y,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "-4",
+            "HM_simple": "-4",
+            "HM_numbered": "10: -4",
+            "standard": true
+        },
+        {
+            "n_c": "11",
+            "HM": "4/m",
+            "Hall": "-p_4",
+            "number": 11,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-y,x,z"
+                ],
+                "operations": [
+                    "x,y,-z",
+                    "-x,-y,-z",
+                    "y,-x,-z",
+                    "-y,x,-z",
+                    "y,-x,z",
+                    "-y,x,z",
+                    "x,y,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "4/m",
+            "HM_simple": "4/m",
+            "HM_numbered": "11: 4/m",
+            "standard": true
+        },
+        {
+            "n_c": "12",
+            "HM": "4_2_2",
+            "Hall": "p_4_2",
+            "number": 12,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x,z",
+                    "x,-y,-z"
+                ],
+                "operations": [
+                    "x,-y,-z",
+                    "y,x,-z",
+                    "-y,-x,-z",
+                    "y,-x,z",
+                    "-y,x,z",
+                    "x,y,z",
+                    "-x,y,-z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "422",
+            "HM_simple": "422",
+            "HM_numbered": "12: 422",
+            "standard": true
+        },
+        {
+            "n_c": "13",
+            "HM": "4_m_m",
+            "Hall": "p_4_-2",
+            "number": 13,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x,z",
+                    "-x,y,z"
+                ],
+                "operations": [
+                    "x,-y,z",
+                    "-y,-x,z",
+                    "y,x,z",
+                    "-x,y,z",
+                    "y,-x,z",
+                    "-y,x,z",
+                    "x,y,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "4mm",
+            "HM_simple": "4mm",
+            "HM_numbered": "13: 4mm",
+            "standard": true
+        },
+        {
+            "n_c": "14:1",
+            "HM": "-4_2_m",
+            "Hall": "p_-4_2",
+            "number": 14,
+            "setting": "1",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "y,-x,-z",
+                    "x,-y,-z"
+                ],
+                "operations": [
+                    "-y,-x,z",
+                    "y,x,z",
+                    "x,-y,-z",
+                    "y,-x,-z",
+                    "-y,x,-z",
+                    "x,y,z",
+                    "-x,y,-z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "-42m",
+            "HM_simple": "-42m",
+            "HM_numbered": "14: -42m",
+            "standard": true
+        },
+        {
+            "n_c": "14:2",
+            "HM": "-4_m_2",
+            "Hall": "p_-4_-2",
+            "number": 14,
+            "setting": "2",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "y,-x,-z",
+                    "-x,y,z"
+                ],
+                "operations": [
+                    "x,-y,z",
+                    "-y,x,-z",
+                    "-x,y,z",
+                    "y,x,-z",
+                    "y,-x,-z",
+                    "-y,-x,-z",
+                    "x,y,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "-4m2",
+            "HM_simple": "-4m2",
+            "HM_numbered": "14: -4m2",
+            "standard": false
+        },
+        {
+            "n_c": "15",
+            "HM": "4/m_m_m",
+            "Hall": "-p_4_2",
+            "number": 15,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-y,x,z",
+                    "x,-y,-z"
+                ],
+                "operations": [
+                    "x,-y,z",
+                    "y,x,z",
+                    "-x,y,z",
+                    "y,-x,-z",
+                    "-y,x,-z",
+                    "-y,x,z",
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x,y,-z",
+                    "-y,-x,z",
+                    "x,y,-z",
+                    "x,-y,-z",
+                    "y,x,-z",
+                    "-y,-x,-z",
+                    "y,-x,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "4/mmm",
+            "HM_simple": "4/mmm",
+            "HM_numbered": "15: 4/mmm",
+            "standard": true
+        },
+        {
+            "n_c": "16",
+            "HM": "3",
+            "Hall": "p_3",
+            "number": 16,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x-y,z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "x,y,z",
+                    "-x+y,-x,z"
+                ]
+            },
+            "HM_short": "3",
+            "HM_simple": "3",
+            "HM_numbered": "16: 3",
+            "standard": true
+        },
+        {
+            "n_c": "17",
+            "HM": "-3",
+            "Hall": "-p_3",
+            "number": 17,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-y,x-y,z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "x-y,x,-z",
+                    "y,-x+y,-z",
+                    "-x,-y,-z",
+                    "-x+y,-x,z",
+                    "x,y,z"
+                ]
+            },
+            "HM_short": "-3",
+            "HM_simple": "-3",
+            "HM_numbered": "17: -3",
+            "standard": true
+        },
+        {
+            "n_c": "18:1",
+            "HM": "3_2_1",
+            "Hall": "p_3_2\"",
+            "number": 18,
+            "setting": "1",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x-y,z",
+                    "y,x,-z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "x,y,z",
+                    "-x+y,-x,z",
+                    "y,x,-z",
+                    "-x,-x+y,-z",
+                    "x-y,-y,-z"
+                ]
+            },
+            "HM_short": "321",
+            "HM_simple": "321",
+            "HM_numbered": "18: 321",
+            "standard": true
+        },
+        {
+            "n_c": "18:2",
+            "HM": "3_1_2",
+            "Hall": "p_3_2",
+            "number": 18,
+            "setting": "2",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x-y,z",
+                    "-y,-x,-z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "-x+y,y,-z",
+                    "x,y,z",
+                    "-x+y,-x,z",
+                    "-y,-x,-z",
+                    "x,x-y,-z"
+                ]
+            },
+            "HM_short": "312",
+            "HM_simple": "312",
+            "HM_numbered": "18: 312",
+            "standard": false
+        },
+        {
+            "n_c": "19:1",
+            "HM": "3_m_1",
+            "Hall": "p_3_-2\"",
+            "number": 19,
+            "setting": "1",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x-y,z",
+                    "-y,-x,z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "x,x-y,z",
+                    "x,y,z",
+                    "-x+y,y,z",
+                    "-y,-x,z",
+                    "-x+y,-x,z"
+                ]
+            },
+            "HM_short": "3m1",
+            "HM_simple": "3m1",
+            "HM_numbered": "19: 3m1",
+            "standard": true
+        },
+        {
+            "n_c": "19:2",
+            "HM": "3_1_m",
+            "Hall": "p_3_-2",
+            "number": 19,
+            "setting": "2",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x-y,z",
+                    "y,x,z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "y,x,z",
+                    "x,y,z",
+                    "x-y,-y,z",
+                    "-x+y,-x,z",
+                    "-x,-x+y,z"
+                ]
+            },
+            "HM_short": "31m",
+            "HM_simple": "31m",
+            "HM_numbered": "19: 31m",
+            "standard": false
+        },
+        {
+            "n_c": "20:1",
+            "HM": "-3_m_1",
+            "Hall": "-p_3_2\"",
+            "number": 20,
+            "setting": "1",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-y,x-y,z",
+                    "y,x,-z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "x-y,x,-z",
+                    "y,-x+y,-z",
+                    "x,x-y,z",
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x+y,y,z",
+                    "-y,-x,z",
+                    "-x+y,-x,z",
+                    "y,x,-z",
+                    "-x,-x+y,-z",
+                    "x-y,-y,-z"
+                ]
+            },
+            "HM_short": "-3m1",
+            "HM_simple": "-3m1",
+            "HM_numbered": "20: -3m1",
+            "standard": true
+        },
+        {
+            "n_c": "20:2",
+            "HM": "-3_1_m",
+            "Hall": "-p_3_2",
+            "number": 20,
+            "setting": "2",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-y,x-y,z",
+                    "-y,-x,-z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "x-y,x,-z",
+                    "y,x,z",
+                    "y,-x+y,-z",
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x+y,y,-z",
+                    "x-y,-y,z",
+                    "-x+y,-x,z",
+                    "-y,-x,-z",
+                    "x,x-y,-z",
+                    "-x,-x+y,z"
+                ]
+            },
+            "HM_short": "-31m",
+            "HM_simple": "-31m",
+            "HM_numbered": "20: -31m",
+            "standard": false
+        },
+        {
+            "n_c": "21",
+            "HM": "6",
+            "Hall": "p_6",
+            "number": 21,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "x-y,x,z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "-x+y,-x,z",
+                    "x-y,x,z",
+                    "y,-x+y,z",
+                    "x,y,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "6",
+            "HM_simple": "6",
+            "HM_numbered": "21: 6",
+            "standard": true
+        },
+        {
+            "n_c": "22",
+            "HM": "-6",
+            "Hall": "p_-6",
+            "number": 22,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x+y,-x,-z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "x,y,-z",
+                    "-x+y,-x,z",
+                    "-y,x-y,-z",
+                    "x,y,z",
+                    "-x+y,-x,-z"
+                ]
+            },
+            "HM_short": "-6",
+            "HM_simple": "-6",
+            "HM_numbered": "22: -6",
+            "standard": true
+        },
+        {
+            "n_c": "23",
+            "HM": "6/m",
+            "Hall": "-p_6",
+            "number": 23,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "x-y,x,z"
+                ],
+                "operations": [
+                    "-y,x-y,z",
+                    "x-y,x,-z",
+                    "y,-x+y,-z",
+                    "x-y,x,z",
+                    "-y,x-y,-z",
+                    "-x,-y,-z",
+                    "x,y,z",
+                    "-x+y,-x,-z",
+                    "y,-x+y,z",
+                    "x,y,-z",
+                    "-x+y,-x,z",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "6/m",
+            "HM_simple": "6/m",
+            "HM_numbered": "23: 6/m",
+            "standard": true
+        },
+        {
+            "n_c": "24",
+            "HM": "6_2_2",
+            "Hall": "p_6_2",
+            "number": 24,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "x-y,x,z",
+                    "-y,-x,-z"
+                ],
+                "operations": [
+                    "x-y,x,z",
+                    "-x+y,-x,z",
+                    "-x,-x+y,-z",
+                    "-y,-x,-z",
+                    "-x,-y,z",
+                    "-y,x-y,z",
+                    "-x+y,y,-z",
+                    "x,y,z",
+                    "y,-x+y,z",
+                    "y,x,-z",
+                    "x,x-y,-z",
+                    "x-y,-y,-z"
+                ]
+            },
+            "HM_short": "622",
+            "HM_simple": "622",
+            "HM_numbered": "24: 622",
+            "standard": true
+        },
+        {
+            "n_c": "25",
+            "HM": "6_m_m",
+            "Hall": "p_6_-2",
+            "number": 25,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "x-y,x,z",
+                    "y,x,z"
+                ],
+                "operations": [
+                    "x-y,x,z",
+                    "x,x-y,z",
+                    "x-y,-y,z",
+                    "-x+y,-x,z",
+                    "-x,-y,z",
+                    "-y,x-y,z",
+                    "y,x,z",
+                    "x,y,z",
+                    "y,-x+y,z",
+                    "-x+y,y,z",
+                    "-y,-x,z",
+                    "-x,-x+y,z"
+                ]
+            },
+            "HM_short": "6mm",
+            "HM_simple": "6mm",
+            "HM_numbered": "25: 6mm",
+            "standard": true
+        },
+        {
+            "n_c": "26:1",
+            "HM": "-6_m_2",
+            "Hall": "p_-6_-2\"",
+            "number": 26,
+            "setting": "1",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x+y,-x,-z",
+                    "-y,-x,z"
+                ],
+                "operations": [
+                    "x,x-y,z",
+                    "x,y,-z",
+                    "-x+y,-x,z",
+                    "-y,-x,-z",
+                    "-y,x-y,z",
+                    "-y,x-y,-z",
+                    "x,y,z",
+                    "-x+y,y,-z",
+                    "-x+y,-x,-z",
+                    "-x+y,y,z",
+                    "-y,-x,z",
+                    "x,x-y,-z"
+                ]
+            },
+            "HM_short": "-6m2",
+            "HM_simple": "-6m2",
+            "HM_numbered": "26: -6m2",
+            "standard": true
+        },
+        {
+            "n_c": "26:2",
+            "HM": "-6_2_m",
+            "Hall": "p_-6_-2",
+            "number": 26,
+            "setting": "2",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x+y,-x,-z",
+                    "y,x,z"
+                ],
+                "operations": [
+                    "x,y,-z",
+                    "x-y,-y,z",
+                    "-x+y,-x,z",
+                    "-x,-x+y,-z",
+                    "-y,x-y,z",
+                    "y,x,z",
+                    "-y,x-y,-z",
+                    "x,y,z",
+                    "-x+y,-x,-z",
+                    "y,x,-z",
+                    "x-y,-y,-z",
+                    "-x,-x+y,z"
+                ]
+            },
+            "HM_short": "-62m",
+            "HM_simple": "-62m",
+            "HM_numbered": "26: -62m",
+            "standard": false
+        },
+        {
+            "n_c": "27",
+            "HM": "6/m_m_m",
+            "Hall": "-p_6_2",
+            "number": 27,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "x-y,x,z",
+                    "-y,-x,-z"
+                ],
+                "operations": [
+                    "x-y,x,-z",
+                    "x-y,x,z",
+                    "x,x-y,z",
+                    "-x,-y,-z",
+                    "x,y,-z",
+                    "x-y,-y,z",
+                    "-x+y,-x,z",
+                    "-x,-x+y,-z",
+                    "-y,-x,-z",
+                    "-x,-y,z",
+                    "-y,x-y,z",
+                    "y,x,z",
+                    "y,-x+y,-z",
+                    "-y,x-y,-z",
+                    "-x+y,y,-z",
+                    "x,y,z",
+                    "-x+y,-x,-z",
+                    "y,-x+y,z",
+                    "-x+y,y,z",
+                    "-y,-x,z",
+                    "y,x,-z",
+                    "x,x-y,-z",
+                    "x-y,-y,-z",
+                    "-x,-x+y,z"
+                ]
+            },
+            "HM_short": "6/mmm",
+            "HM_simple": "6/mmm",
+            "HM_numbered": "27: 6/mmm",
+            "standard": true
+        },
+        {
+            "n_c": "28",
+            "HM": "2_3",
+            "Hall": "p_2_2_3",
+            "number": 28,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,z",
+                    "x,-y,-z",
+                    "z,x,y"
+                ],
+                "operations": [
+                    "-y,-z,x",
+                    "z,-x,-y",
+                    "x,y,z",
+                    "-x,y,-z",
+                    "z,x,y",
+                    "y,-z,-x",
+                    "y,z,x",
+                    "-y,z,-x",
+                    "-z,-x,y",
+                    "x,-y,-z",
+                    "-z,x,-y",
+                    "-x,-y,z"
+                ]
+            },
+            "HM_short": "23",
+            "HM_simple": "23",
+            "HM_numbered": "28: 23",
+            "standard": true
+        },
+        {
+            "n_c": "29",
+            "HM": "m_-3",
+            "Hall": "-p_2_2_3",
+            "number": 29,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-x,-y,z",
+                    "x,-y,-z",
+                    "z,x,y"
+                ],
+                "operations": [
+                    "-x,-y,-z",
+                    "x,y,-z",
+                    "-z,x,-y",
+                    "-y,z,-x",
+                    "-x,-y,z",
+                    "-x,y,z",
+                    "z,-x,y",
+                    "y,z,x",
+                    "-z,-x,y",
+                    "-y,z,x",
+                    "x,-y,z",
+                    "-z,x,y",
+                    "-z,-x,-y",
+                    "y,z,-x",
+                    "-y,-z,x",
+                    "z,-x,-y",
+                    "x,y,z",
+                    "-x,y,-z",
+                    "z,x,y",
+                    "z,x,-y",
+                    "y,-z,-x",
+                    "x,-y,-z",
+                    "-y,-z,-x",
+                    "y,-z,x"
+                ]
+            },
+            "HM_short": "m-3",
+            "HM_simple": "m-3",
+            "HM_numbered": "29: m-3",
+            "standard": true
+        },
+        {
+            "n_c": "30",
+            "HM": "4_3_2",
+            "Hall": "p_4_2_3",
+            "number": 30,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-y,x,z",
+                    "x,-y,-z",
+                    "z,x,y"
+                ],
+                "operations": [
+                    "-z,y,x",
+                    "z,-y,x",
+                    "-y,z,-x",
+                    "-z,x,-y",
+                    "x,-z,y",
+                    "-x,-y,z",
+                    "-x,z,y",
+                    "-y,x,z",
+                    "y,z,x",
+                    "-x,-z,-y",
+                    "-z,-x,y",
+                    "z,y,-x",
+                    "-z,-y,-x",
+                    "-y,-x,-z",
+                    "y,-x,z",
+                    "-y,-z,x",
+                    "z,-x,-y",
+                    "x,y,z",
+                    "y,-z,-x",
+                    "z,x,y",
+                    "-x,y,-z",
+                    "x,z,-y",
+                    "x,-y,-z",
+                    "y,x,-z"
+                ]
+            },
+            "HM_short": "432",
+            "HM_simple": "432",
+            "HM_numbered": "30: 432",
+            "standard": true
+        },
+        {
+            "n_c": "31",
+            "HM": "-4_3_m",
+            "Hall": "p_-4_2_3",
+            "number": 31,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "y,-x,-z",
+                    "x,-y,-z",
+                    "z,x,y"
+                ],
+                "operations": [
+                    "-x,-z,y",
+                    "-z,-y,x",
+                    "y,-x,-z",
+                    "-y,z,-x",
+                    "-z,x,-y",
+                    "-x,-y,z",
+                    "y,z,x",
+                    "-z,-x,y",
+                    "-z,y,-x",
+                    "x,z,y",
+                    "-x,z,-y",
+                    "z,-y,-x",
+                    "-y,x,-z",
+                    "y,x,z",
+                    "-y,-z,x",
+                    "z,-x,-y",
+                    "x,y,z",
+                    "y,-z,-x",
+                    "z,x,y",
+                    "-x,y,-z",
+                    "z,y,x",
+                    "-y,-x,z",
+                    "x,-y,-z",
+                    "x,-z,-y"
+                ]
+            },
+            "HM_short": "-43m",
+            "HM_simple": "-43m",
+            "HM_numbered": "31: -43m",
+            "standard": true
+        },
+        {
+            "n_c": "32",
+            "HM": "m_-3_m",
+            "Hall": "-p_4_2_3",
+            "number": 32,
+            "setting": "",
+            "group": {
+                "generators": [
+                    "x,y,z",
+                    "-x,-y,-z",
+                    "-y,x,z",
+                    "x,-y,-z",
+                    "z,x,y"
+                ],
+                "operations": [
+                    "-x,-z,y",
+                    "-z,-y,x",
+                    "-z,y,x",
+                    "y,-x,-z",
+                    "-x,-y,-z",
+                    "z,-y,x",
+                    "x,y,-z",
+                    "-y,z,-x",
+                    "-z,x,-y",
+                    "x,-z,y",
+                    "-x,y,z",
+                    "-x,-y,z",
+                    "-x,z,y",
+                    "z,-x,y",
+                    "-y,x,z",
+                    "y,z,x",
+                    "-x,-z,-y",
+                    "-z,-x,y",
+                    "-y,z,x",
+                    "z,y,-x",
+                    "-z,y,-x",
+                    "x,-y,z",
+                    "x,z,y",
+                    "-z,x,y",
+                    "-z,-y,-x",
+                    "-x,z,-y",
+                    "z,-y,-x",
+                    "-y,-x,-z",
+                    "-y,x,-z",
+                    "y,-x,z",
+                    "-z,-x,-y",
+                    "y,z,-x",
+                    "y,x,z",
+                    "-y,-z,x",
+                    "z,-x,-y",
+                    "y,-z,-x",
+                    "z,x,-y",
+                    "x,y,z",
+                    "-x,y,-z",
+                    "z,y,x",
+                    "z,x,y",
+                    "x,z,-y",
+                    "-y,-x,z",
+                    "x,-y,-z",
+                    "y,x,-z",
+                    "-y,-z,-x",
+                    "x,-z,-y",
+                    "y,-z,x"
+                ]
+            },
+            "HM_short": "m-3m",
+            "HM_simple": "m-3m",
+            "HM_numbered": "32: m-3m",
+            "standard": true
+        }
+    ]
+}
