@@ -11,7 +11,7 @@ from typing import Union
 import numpy as np
 
 from hikari.symmetry.operations import SymmOp
-from hikari.symmetry.hall_symbols import HallSymbol
+from hikari.symmetry.hall import HallSymbol
 from hikari.utility.list_tools import find_best
 
 

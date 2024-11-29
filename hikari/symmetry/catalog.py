@@ -389,8 +389,8 @@ def regenerate_group_catalog_jsons():
     """
     pg = GroupCatalog(point_groups_dataframe)
     sg = GroupCatalog(space_groups_dataframe)
-    pg.to_json(Path('hikari/resources/point_groups-pandas.json'))
-    sg.to_json(Path('hikari/resources/space_groups-pandas.json'))
+    pg.to_json(Path('hikari/resources/point_groups.json'))
+    sg.to_json(Path('hikari/resources/space_groups.json'))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ PRE-DEFINED GROUPS CATALOGS ~~~~~~~~~~~~~~~~~~~~~~~~ #

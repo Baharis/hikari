@@ -20,22 +20,6 @@ hikari.symmetry.operations module
    :undoc-members:
    :show-inheritance:
 
-hikari.symmetry.point\_groups module
-------------------------------------
-
-.. automodule:: hikari.symmetry.point_groups
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-hikari.symmetry.space\_groups module
-------------------------------------
-
-.. automodule:: hikari.symmetry.space_groups
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
