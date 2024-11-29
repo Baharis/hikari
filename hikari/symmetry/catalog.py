@@ -214,9 +214,6 @@ class GroupCatalogJSONDecoder(json.JSONDecoder):
                     operations=[SymmOp.from_code(c) for c in group['operations']])
                 record.update({'group': group})
                 records.append(record)
-            print(records[0]['group'])
-            print(type(records[0]['group']))
-            print(pd.DataFrame.from_records(obj))
             return GroupCatalog(table=pd.DataFrame.from_records(records))
         return obj
 

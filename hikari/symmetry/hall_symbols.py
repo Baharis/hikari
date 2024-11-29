@@ -181,7 +181,6 @@ class HallSymbol:
             tl2 = np.array([0., 0., 0.])
             for tl in gen2_tl:
                 tl2 += self.STATIC_TRANSLATIONS[tl]
-            # print('gen2:', str(SymmOp(tf2, tl2)), repr(SymmOp(tf2, tl2)))
             generators.append(SymmOp(tf2, tl2))
 
         # generator 3
@@ -192,7 +191,6 @@ class HallSymbol:
             tl3 = np.array([0., 0., 0.])
             for tl in gen3_tl:
                 tl3 += self.STATIC_TRANSLATIONS[tl]
-            # print('gen3:', str(SymmOp(tf3, tl3)), repr(SymmOp(tf3, tl3)))
             generators.append(SymmOp(tf3, tl3))
 
         # generator 4
