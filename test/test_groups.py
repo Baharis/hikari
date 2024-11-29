@@ -17,13 +17,13 @@ class TestGroup(unittest.TestCase):
         sg230_generators = [SymmOp.from_code(c) for c in sg230_generator_codes]
         _ = Group(*sg230_generators)
 
-    def test_point_groups_pickle_consistent_with_wsv(self):
+    def test_point_group_catalogs_consistent_wsv_json_pg(self):
         pgc1 = GroupCatalog(point_groups_dataframe)
         pgc2 = GroupCatalog.from_json(point_groups_json)
         pd.testing.assert_frame_equal(pgc1.table, pgc2.table)
         pd.testing.assert_frame_equal(pgc1.table, PG.table)
 
-    def test_space_groups_pickle_consistent_with_wsv(self):
+    def test_space_group_catalogs_consistent_wsv_json_sg(self):
         sgc1 = GroupCatalog(space_groups_dataframe)
         sgc2 = GroupCatalog.from_json(space_groups_json)
         pd.testing.assert_frame_equal(sgc1.table, sgc2.table)

@@ -30,7 +30,7 @@ setup(
     author_email='dtchon@chem.uw.edu.pl',
     packages=find_packages(exclude=('legacy', )),
     package_data={'': ['*.csv', '*.dic', '*.gnu', 'hkl.msd', '*.json',
-                       '*.pickle', 'NaCl.cif', 'NaCl.fcf', 'NaCl.hkl',
+                       '*.wsv', 'NaCl.cif', 'NaCl.fcf', 'NaCl.hkl',
                        'NaCl.lst', 'NaCl.res']},
     url='https://github.com/Baharis/hikari',
     license='MIT',

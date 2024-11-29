@@ -6,7 +6,6 @@ from functools import reduce
 import json
 from operator import and_
 from pathlib import Path
-import pickle
 import re
 from typing import Any, Union
 
@@ -293,21 +292,6 @@ class GroupCatalog:
         """Load from a json-formatted string"""
         return json.loads(text, cls=GroupCatalogJSONDecoder)
 
-    @classmethod
-    def from_bytes(cls, bytes_: bytes):
-        """Load directly from bytes object. Drastically speeds up library load"""
-        new = pickle.loads(bytes_)
-        if isinstance(new, cls):
-            return new
-        else:
-            raise TypeError(f'Loaded pickle is not instance of {cls}')
-
-    @classmethod
-    def from_pickle(cls, pickle_path: PathLike) -> 'GroupCatalog':
-        """Load from pickled bytes file. Drastically speeds up library load"""
-        with open(pickle_path, 'br') as pickled_bytes:
-            return cls.from_bytes(pickled_bytes.read())
-
     def to_json(self, json_path: PathLike) -> None:
         with open(json_path, 'w') as json_file:
             # noinspection PyTypeChecker
@@ -329,21 +313,6 @@ class GroupCatalog:
         rest = sep + '\n' + ('\n' + sep + '\n').join(lines) + '\n' + sep
         with open(txt_path, 'w') as txt_file:
             txt_file.write(rest)
-
-    def to_pickle(self, pickle_path: PathLike) -> None:
-        r"""
-        Dump a `GroupCatalog` to a .pkl file.
-        Used for development purposes or saving custom `GroupCatalog`s.
-        Loading pickles is drastically faster than generating Catalog from wsv.
-
-        .. code-block:: python
-
-            PG = GroupCatalog.to_pickle(r'hikari\resources\Hall_symbols_PG.dat')
-            SG = GroupCatalog.to_pickle(r'hikari\resources\Hall_symbols_SG.dat')
-
-        """
-        with open(pickle_path, 'bw') as pickle_file:
-            pickle.dump(self, file=pickle_file, protocol=4)  # noqa - type is OK
 
     @property
     def accessors(self) -> list['GroupCatalogKey']:
@@ -415,16 +384,16 @@ class GroupCatalog:
         return got
 
 
-def regenerate_group_catalog_pickles():
+def regenerate_group_catalog_jsons():
     r"""
-    This function replaces current `resources/*_group.pickle`s.
+    This function regenerates current `resources/*_group.json`s from `.wsv`s.
     It should be run from hikari's parent directory with hikari imported
     as module whenever any changes to `GroupCatalog` class are made.
     """
     pg = GroupCatalog(point_groups_dataframe)
     sg = GroupCatalog(space_groups_dataframe)
-    pg.to_pickle(Path('hikari/resources/point_groups-pandas.pickle'))
-    sg.to_pickle(Path('hikari/resources/space_groups-pandas.pickle'))
+    pg.to_json(Path('hikari/resources/point_groups-pandas.json'))
+    sg.to_json(Path('hikari/resources/space_groups-pandas.json'))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~ PRE-DEFINED GROUPS CATALOGS ~~~~~~~~~~~~~~~~~~~~~~~~ #
