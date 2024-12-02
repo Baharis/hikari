@@ -135,7 +135,7 @@ jobs:
       if: steps.release.outputs.released == 'true'
       with:
         repository-url: https://test.pypi.org/legacy/
-        password: ${{ secrets.TEST_PYPI_PICOMETER_API_TOKEN }}
+        password: ${{ secrets.TEST_PYPI_HIKARI_API_TOKEN }}
 
     - name: Test install from TestPyPI
       run: |
@@ -148,7 +148,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       if: steps.release.outputs.released == 'true'
       with:
-        password: ${{ secrets.PYPI_PICOMETER_API_TOKEN }}
+        password: ${{ secrets.PYPI_HIKARI_API_TOKEN }}
 
     - name: Publish package distributions to GitHub Releases
       uses: python-semantic-release/publish-action@v9
