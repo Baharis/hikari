@@ -7,7 +7,7 @@
 [![Documentation Status](https://readthedocs.org/projects/hikari/badge/?version=stable)](https://hikari.readthedocs.io/en/stable/?badge=stable)
 [![tests](https://github.com/Baharis/hikari/actions/workflows/codecov.yml/badge.svg?branch=master)](https://github.com/Baharis/hikari/actions/workflows/codecov.yml)
 
-hikari is a simple Python3.7+ package intended for manipulating and running 
+hikari is a simple Python3.9+ package intended for manipulating and running 
 scripts on basic crystallographic files:
 .hkl, .fcf, .cif, and to some extent .res and .lst.
 
@@ -22,11 +22,11 @@ In order to start working with the package, install it using:
 
     $ pip install hikari-toolkit
 
-Since it runs on Python 3.7+ and requires specific versions of some popular
+Since it runs on Python 3.9+ and requires specific versions of some popular
 packages such as `numpy`, you might be interested in using hikari
 in a virtual environment. On Linux, it can be created using `virtualenvwrapper`:
 
-    $ mkvirtualenv -p /usr/bin/python3.7 hikari-venv
+    $ mkvirtualenv -p /usr/bin/python3.9 hikari-venv
 
 After running python from this virtual environment,
 the package should be available in the namespace via `import hikari`.
@@ -43,7 +43,23 @@ instructions and aim to solve certain problems, like reformatting the file
 or evaluating data completeness in an experiment. In the majority of cases,
 you will be most likely more interested in the latter.
 
-## Author
+
+## Contributing
+
+Interested in contributing? Check out the
+[contributing guidelines](CONTRIBUTING.md).
+Please note that this project is released with
+a [Code of Conduct](CODE_OF_CONDUCT).
+By contributing to this project, you agree to abide by its terms.
+
+
+## License
+
+`hikari` was created by Daniel Tchoń.
+It is licensed under the terms of the [MIT license](LICENSE).
+
+
+## Credits
 
 This software is made by
 [Daniel Tchoń](https://www.researchgate.net/profile/Daniel-Tchon),
@@ -57,3 +73,11 @@ Dr hab. Anna Makal and prof. dr hab. Krzysztof Woźniak are
 acknowledged for helpful discussions about crystallography behind the subject.
 Dr Jarosław Kalinowski and mgr inż. Damian Tchoń are acknowledged
 for insightful tips on project structure and code optimisation.
+
+`picometer` was created with the help of
+[`cookiecutter`](https://cookiecutter.readthedocs.io/en/latest/)
+and the `py-pkgs-cookiecutter` [template](https://github.com/py-pkgs/py-pkgs-cookiecutter).
+It is published with the help of
+[`poetry`](https://python-poetry.org/),
+[Python Semantic Versioning](https://python-semantic-release.readthedocs.io/en/latest/),
+and [Gitmoji](https://gitmoji.dev/).
