@@ -180,7 +180,7 @@ def is_json_serializable(x):
 
 class GroupCatalogJSONEncoder(json.JSONEncoder):
     """Handles serialization of `GroupCatalog` to a `.json` file"""
-    def default(self, gc: GroupCatalog) -> dict:
+    def default(self, gc: 'GroupCatalog') -> dict:
         if not isinstance(gc, GroupCatalog):
             return super().default(gc)  # raises TypeError for other input
         records = []
