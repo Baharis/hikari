@@ -68,6 +68,26 @@ jobs:
       uses: fortran-lang/setup-fortran@v1
       if: matrix.os == 'macos-latest'
 
+    - name: Install lapack and openblas for scipy on MacOS
+      run: |
+        #!/usr/env bash
+        brew install openblas
+        brew install lapack
+        # Set the following environment variables so that the build tools can find the libraries.
+        # openblas
+        export LDFLAGS="-L/usr/local/opt/openblas/lib $LDFLAGS"
+        export CPPFLAGS="-I/usr/local/opt/openblas/include $CPPFLAGS"
+        export PKG_CONFIG_PATH="/usr/local/opt/openblas/lib/pkgconfig $PKG_CONFIG_PATH"
+        # lapack
+        export LDFLAGS="-L/usr/local/opt/lapack/lib $LDFLAGS"
+        export CPPFLAGS="-I/usr/local/opt/lapack/include $CPPFLAGS"
+        export PKG_CONFIG_PATH="/usr/local/opt/lapack/lib/pkgconfig $PKG_CONFIG_PATH"
+        ## tell compiler not to error out for implicit function declarations
+        export CFLAGS=-Wno-error=implicit-function-declaration
+        export LAPACK=/usr/local/opt/lapack/lib/liblapack.dylib
+        export BLAS=/usr/local/opt/openblas/lib/libopenblas.dylib
+      if: matrix.os == 'macos-latest'
+
     - name: Install package
       run: poetry install --with dev
 
