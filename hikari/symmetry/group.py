@@ -2,8 +2,6 @@
 This file contains class definition and necessary tools for constructing
 and evaluating all symmetry groups.
 """
-from __future__ import annotations
-
 from itertools import product as itertools_product
 from enum import Enum
 from typing import Union

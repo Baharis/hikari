@@ -2,8 +2,6 @@
 This file contains tools to work with tuples and lists used in the package.
 """
 
-from __future__ import annotations
-
 from typing import Sequence
 
 from .typing import Number

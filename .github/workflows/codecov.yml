@@ -1,44 +1,148 @@
-name: tests
+# This workflow will install Python dependencies, run tests, and lint with a small matrix of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: "CI & CD"
 
 # Controls when the workflow will run
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [ "master", "development" ]
+  pull_request:
+    branches: [ "master", "development" ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  setup:
+    runs-on: ubuntu-latest
+
+    outputs:
+      os: ${{ steps.setup-matrix.outputs.os }}
+      python-version: ${{ steps.setup-matrix.outputs.python-version }}
+
+    steps:
+      - name: Determine event type and set matrix
+        id: setup-matrix
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "os=['ubuntu-latest']" >> "$GITHUB_OUTPUT"
+            echo "python-version=['3.9']" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "os=['ubuntu-latest','macos-latest','windows-latest']" >> "$GITHUB_OUTPUT"
+            echo "python-version=['3.9','3.x']" >> "$GITHUB_OUTPUT"
+          fi
+
+  CI:
+    needs: setup
+
+    runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.10']
+        os: ${{ fromJSON(needs.setup.outputs.os) }}
+        python-version: ${{ fromJSON(needs.setup.outputs.python-version) }}
         include:
-          - os: ubuntu-20.04
-            python-version: '3.7'
-    runs-on: ${{ matrix.os }}
-    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} tests
+          - os: ubuntu-latest
+            python-version: "3.9"
+            representative: True
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    defaults:
+      run:
+        shell: bash
+
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout
-        uses: actions/checkout@v3
+    - name: Check-out repository
+      uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
 
-      - name: Install Python dependencies
-        uses: py-actions/py-dependency-install@v3
-        with:
-          path: "requirements.txt"
+    - name: Install poetry
+      uses: snok/install-poetry@v1
 
-      - name: Generate coverage report
-        run: |
-          pip install coverage
-          coverage run -m unittest
+    - name: Install package
+      run: poetry install --with dev
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          verbose: true
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        echo "Linting errors in picometer/tests:"
+        poetry run flake8 ./picometer --count --select=E9,F63,F7,F82 --show-source --statistics
+        poetry run flake8 ./tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        echo "Linting warnings in picometer/tests:"
+        poetry run flake8 ./picometer --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        poetry run flake8 ./tests --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+
+    - name: Test with pytest
+      run: poetry run pytest tests/ --cov=picometer --cov-report=xml
+
+    - name: Use Codecov to track coverage
+      uses: codecov/codecov-action@v4
+      if: ${{ matrix.representative }}
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        files: ./coverage.xml   # coverage report
+
+    - name: Build documentation
+      run: poetry run make html --directory docs/
+      if: ${{ matrix.representative }}
+
+  CD:
+    # Only run this job if the "CI" job passes
+    needs: CI
+
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+    # Set up operating system
+    runs-on: ubuntu-latest
+
+    # Define job steps
+    steps:
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Check-out repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ssh-key: ${{ secrets.CONTINUOUS_DEPLOYMENT_KEY }}
+
+    - name: Use Python Semantic Release to prepare release
+      id: release
+      uses: python-semantic-release/python-semantic-release@v9
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      if: steps.release.outputs.released == 'true'
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        password: ${{ secrets.TEST_PYPI_PICOMETER_API_TOKEN }}
+
+    - name: Test install from TestPyPI
+      run: |
+          pip install \
+          --index-url https://test.pypi.org/simple/ \
+          --extra-index-url https://pypi.org/simple \
+          picometer
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      if: steps.release.outputs.released == 'true'
+      with:
+        password: ${{ secrets.PYPI_PICOMETER_API_TOKEN }}
+
+    - name: Publish package distributions to GitHub Releases
+      uses: python-semantic-release/publish-action@v9
+      if: steps.release.outputs.released == 'true'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
