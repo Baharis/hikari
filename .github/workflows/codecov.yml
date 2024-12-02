@@ -70,16 +70,16 @@ jobs:
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        echo "Linting errors in picometer/tests:"
-        poetry run flake8 ./picometer --count --select=E9,F63,F7,F82 --show-source --statistics
+        echo "Linting errors in hikari/tests:"
+        poetry run flake8 ./hikari --count --select=E9,F63,F7,F82 --show-source --statistics
         poetry run flake8 ./tests --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        echo "Linting warnings in picometer/tests:"
-        poetry run flake8 ./picometer --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        echo "Linting warnings in hikari/tests:"
+        poetry run flake8 ./hikari --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
         poetry run flake8 ./tests --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
     - name: Test with pytest
-      run: poetry run pytest tests/ --cov=picometer --cov-report=xml
+      run: poetry run pytest tests/ --cov=hikari --cov-report=xml
 
     - name: Use Codecov to track coverage
       uses: codecov/codecov-action@v4
@@ -133,7 +133,7 @@ jobs:
           pip install \
           --index-url https://test.pypi.org/simple/ \
           --extra-index-url https://pypi.org/simple \
-          picometer
+          hikari
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
