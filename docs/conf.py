@@ -12,10 +12,19 @@
 #
 import os
 import sys
+import tomli
 sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- General configuration ---------------------------------------------------
+
+with open("../../pyproject.toml", "rb") as f:
+    py_project = tomli.load(f)
+project = py_project['tool']['poetry']['name']
+copyright = u'2022, Daniel Tchoń'
+author = 'Daniel Tchoń'
+version = py_project['tool']['poetry']['version']
+release = py_project['tool']['poetry']['version']
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
