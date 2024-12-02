@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration ---------------------------------------------------
 
-with open("../../pyproject.toml", "rb") as f:
+with open("../pyproject.toml", "rb") as f:
     py_project = tomli.load(f)
 project = py_project['tool']['poetry']['name']
 copyright = u'2022, Daniel Tchoń'
