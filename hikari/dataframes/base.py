@@ -58,9 +58,9 @@ class BaseFrame:
         'a': ['_cell_length_a', cfloat, 1.0],
         'b': ['_cell_length_b', cfloat, 1.0],
         'c': ['_cell_length_c', cfloat, 1.0],
-        'al': ['_cell_length_alpha', cfloat, 90],
-        'be': ['_cell_length_beta', cfloat, 90],
-        'ga': ['_cell_length_gamma', cfloat, 90],
+        'al': ['_cell_angle_alpha', cfloat, 90],
+        'be': ['_cell_angle_beta', cfloat, 90],
+        'ga': ['_cell_angle_gamma', cfloat, 90],
         'ub11': ['_diffrn_orient_matrix_UB_11', float, 1.0],
         'ub12': ['_diffrn_orient_matrix_UB_12', float, 0.0],
         'ub13': ['_diffrn_orient_matrix_UB_13', float, 0.0],
@@ -274,7 +274,7 @@ class BaseFrame:
 
     @property
     def a_r(self):
-        """
+        r"""
         :return: Length of unit cell vector **a\*** in reciprocal space.
         :rtype: float
         """
@@ -282,7 +282,7 @@ class BaseFrame:
 
     @property
     def b_r(self):
-        """
+        r"""
         :return: Length of unit cell vector **b\*** in reciprocal space.
         :rtype: float
         """
@@ -290,7 +290,7 @@ class BaseFrame:
 
     @property
     def c_r(self):
-        """
+        r"""
         :return: Length of unit cell vector **c\*** in reciprocal space.
         :rtype: float
         """
@@ -298,7 +298,7 @@ class BaseFrame:
 
     @property
     def al_r(self):
-        """
+        r"""
         :return: Angle between vectors **b\*** and **c\*** in degrees.
         :rtype: float
         """
@@ -306,7 +306,7 @@ class BaseFrame:
 
     @property
     def be_r(self):
-        """
+        r"""
         :return: Angle between vectors **c\*** and **a\*** in degrees.
         :rtype: float
         """
@@ -314,7 +314,7 @@ class BaseFrame:
 
     @property
     def ga_r(self):
-        """
+        r"""
         :return: Angle between vectors **a\*** and **b\*** in degrees.
         :rtype: float
         """
@@ -330,7 +330,7 @@ class BaseFrame:
 
     @property
     def a_w(self):
-        """
+        r"""
         :return: Unit cell vector **a\*** in reciprocal space.
         :rtype: numpy.array
         """
@@ -338,7 +338,7 @@ class BaseFrame:
 
     @property
     def b_w(self):
-        """
+        r"""
         :return: Unit cell vector **b\*** in reciprocal space.
         :rtype: numpy.array
         """
@@ -346,7 +346,7 @@ class BaseFrame:
 
     @property
     def c_w(self):
-        """
+        r"""
         :return: Unit cell vector **c\*** in reciprocal space.
         :rtype: numpy.array
         """
@@ -354,7 +354,7 @@ class BaseFrame:
 
     @property
     def A_r(self):
-        """
+        r"""
         :return: Basis matrix A\* with vertically stacked reciprocal space vectors.
         :rtype: np.array
         """
@@ -362,7 +362,7 @@ class BaseFrame:
 
     @property
     def G_r(self):
-        """
+        r"""
         :return: Reciprocal space metric matrix [ai\* . aj\*]ij.
         :rtype: np.array
         """

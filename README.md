@@ -7,7 +7,7 @@
 [![Documentation Status](https://readthedocs.org/projects/hikari/badge/?version=stable)](https://hikari.readthedocs.io/en/stable/?badge=stable)
 [![tests](https://github.com/Baharis/hikari/actions/workflows/codecov.yml/badge.svg?branch=master)](https://github.com/Baharis/hikari/actions/workflows/codecov.yml)
 
-hikari is a simple Python3.6+ package intended for manipulating and running 
+hikari is a simple Python3.7+ package intended for manipulating and running 
 scripts on basic crystallographic files:
 .hkl, .fcf, .cif, and to some extent .res and .lst.
 
@@ -22,11 +22,11 @@ In order to start working with the package, install it using:
 
     $ pip install hikari-toolkit
 
-Since it runs on Python 3.6+ and requires specific versions of some popular
+Since it runs on Python 3.7+ and requires specific versions of some popular
 packages such as `numpy`, you might be interested in using hikari
 in a virtual environment. On Linux, it can be created using `virtualenvwrapper`:
 
-    $ mkvirtualenv -p /usr/bin/python3.6 hikari-venv
+    $ mkvirtualenv -p /usr/bin/python3.7 hikari-venv
 
 After running python from this virtual environment,
 the package should be available in the namespace via `import hikari`.

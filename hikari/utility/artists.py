@@ -1,5 +1,6 @@
 import abc
 from pathlib import Path
+import matplotlib as mpl
 from matplotlib import pyplot, colors, cm
 from mpl_toolkits.mplot3d import art3d
 import numpy as np
@@ -38,7 +39,7 @@ class Artist:
     def _assert_is_iterable(iterable, length=0):
         try:
             _ = len(iterable)
-            if not len(iterable) == length and length is not 0:
+            if not len(iterable) == length and length > 0:
                 raise TypeError()
         except TypeError:
             raise ArtistError(f'object {iterable} should be an iterable'
@@ -225,10 +226,11 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         pyplot.rcParams.update({'font.size': 16})
         ax.view_init(elev=90 - sum(self.polar_limits) / 2,
                      azim=sum(self.azimuth_limits) / 2)
-        try:
+        mpl_version = [int(i) for i in mpl.__version__.split('.')]
+        if mpl_version >= [3, 6]:  # introduced in mpl 3.3.*
+            ax.set_box_aspect(None, zoom=1.4)
+        else:  # deprecated mpl 3.6.*, privatized 3.8.*; similar, not identical
             ax.dist = 6.5
-        except AttributeError:
-            pass
         ax.plot([1], [1], [1], 'w')
         ax.plot([-1], [-1], [-1], 'w')
         ax.set_axis_off()
@@ -255,7 +257,7 @@ class MatplotlibAngularHeatmapArtist(MatplotlibArtist, AngularHeatmapArtist):
         m = cm.ScalarMappable(cmap=self.heat_palette)
         m.set_array(heat_mesh)
         m.set_clim(*self.heat_limits)
-        pyplot.colorbar(m, fraction=0.06, pad=0.0, shrink=0.9)
+        pyplot.colorbar(m, ax=ax, fraction=0.06, pad=0.0, shrink=0.9)
         norm = colors.Normalize(*self.heat_limits)
 
         # draw (100), (010), (010) axes

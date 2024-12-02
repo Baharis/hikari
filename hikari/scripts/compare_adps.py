@@ -1,4 +1,6 @@
-from typing import Dict, Any, Iterable, Tuple, List
+from __future__ import annotations
+
+from typing import Any, Iterable
 
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -152,6 +154,8 @@ def calculate_similarity_indices(cif1_path: str,
                 adp_cart_1 /= det3x3(adp_cart_1) ** (1 / 3)
                 adp_cart_2 /= det3x3(adp_cart_2) ** (1 / 3)
             if uncertainties:
+                # `unumpy.matrix` and `unumpy.ulinalg.pinv` are deprecated and
+                # will break soon, but uncertainties is ~no longer supported...
                 adp_inv_1 = unumpy.matrix(adp_cart_1).I
                 adp_inv_2 = unumpy.matrix(adp_cart_2).I
             else:
@@ -174,7 +178,7 @@ def calculate_similarity_indices(cif1_path: str,
     print(si_header(), file=f)
 
     def calculate_and_print_similarity_indices():
-        sis: Dict[Any, float or UFloat] = {}
+        sis: dict[Any, float or UFloat] = {}
         for k in common_labels:
             sis[k] = calculate_similarity_index(adp_frac_dict_1[k],
                                                 adp_frac_dict_2[k])
@@ -199,7 +203,7 @@ def calculate_similarity_indices(cif1_path: str,
 
 
 def animate_similarity_index(u_diag: Iterable,
-                             transformations: List[np.ndarray],
+                             transformations: list[np.ndarray],
                              output_path: str) -> None:
     """
     Make a gif presenting the change of similarity index against some arbitrary
@@ -246,7 +250,7 @@ def animate_similarity_index(u_diag: Iterable,
         r12_den = det3x3(adp_inv_1 + adp_inv_2) ** (1 / 2)
         return 100 * (1 - r12_num / r12_den)
 
-    def get_xyz(step: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_xyz(step: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Get positions of x, y, z nodes after `step` steps of animation"""
         trans_matrix = transformations[step]
         x_list = x.reshape(10_000)

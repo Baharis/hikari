@@ -2,29 +2,17 @@
 This file contains class definition and necessary tools for constructing
 and evaluating all symmetry groups.
 """
-import numpy as np
+from __future__ import annotations
+
 from itertools import product as itertools_product
 from enum import Enum
-from hikari.symmetry import SymmOp
+from typing import Union
+
+import numpy as np
+
+from hikari.symmetry.operations import SymmOp
+from hikari.symmetry.hall import HallSymbol
 from hikari.utility.list_tools import find_best
-
-
-def _unpack_group_dictionary_from_json(json_dict):
-    """Development function used to get PG and SG from csv to pickle it later"""
-    group_dict = {}
-    for json_key, json_group in json_dict.items():
-        g_name = json_group["H-M_short"]
-        g_number = json_group["number"]
-        g_gens = [SymmOp.from_code(g) for g in json_group["generators"]]
-        g_ops = [SymmOp.from_code(o) for o in json_group["operations"]]
-        g = Group.create_manually(generators=g_gens, operations=g_ops)
-        g.name = json_group["H-M_short"]
-        g.number = abs(g_number)
-        group_dict[json_key] = g
-        if g_number > 0:
-            group_dict[g_name] = g
-            group_dict[g_number] = g
-    return group_dict
 
 
 class Group:
@@ -61,13 +49,13 @@ class Group:
     def __init__(self, *generators):
         """
         :param generators: List of operations necessary to construct whole group
-        :type generators: List[SymmOp]
+        :type generators: list[SymmOp]
         """
 
         generator_list = []
         for gen in generators:
-            if gen % 1 not in generator_list:
-                generator_list.append(gen % 1)
+            if gen % 1 not in generator_list:  # noqa - SymmOp supports % int
+                generator_list.append(gen % 1)  # noqa - SymmOp supports % int
 
         def _find_new_product(ops):
             if len(ops) > 200:
@@ -82,20 +70,31 @@ class Group:
         self.number = 0
 
     @classmethod
-    def create_manually(cls, generators, operations):
+    def from_generators_operations(
+            cls,
+            generators: list[SymmOp],
+            operations: list[SymmOp],
+    ) -> 'Group':
         """
         Generate group using already complete list of generators and operators.
+        Does not check if `operations` are correct or complete for efficiency!
         :param generators: A complete list of group generators
-        :type generators: List[np.ndarray]
+        :type generators: list[SymmOp]
         :param operations: A complete list of group operations
-        :type operations: List[np.ndarray]
-        :return:
-        :rtype:
+        :type operations: list[SymmOp]
+        :return: Symmetry group with given generators and operators.
+        :rtype: Group
         """
         new_group = cls()
         new_group.__generators = generators
         new_group.__operations = operations
         return new_group
+
+    @classmethod
+    def from_hall_symbol(cls, hall_symbol: Union[str, HallSymbol]):
+        if isinstance(hall_symbol, str):
+            hall_symbol = HallSymbol(hall_symbol)
+        return cls(*hall_symbol.generators)
 
     def __eq__(self, other):
         return all([o in self.operations for o in other.operations])\
@@ -249,7 +248,7 @@ class Group:
         return Group(*new_generators)
 
     def transform(self, m):
-        """
+        r"""
         Transform the group using 4x4 matrix. For reference, see `bilbao
         resources <https://www.cryst.ehu.es/cryst/trmatrix.html>`_ or `IUCr
         pamphlet no. 22 <https://www.iucr.org/education/pamphlets/22>`_.
@@ -267,7 +266,7 @@ class Group:
         :return: Group with new, transformed basis and origin.
         :rtype: Group
         """
-        transformed_group = Group.create_manually(
+        transformed_group = Group.from_generators_operations(
             generators=[SymmOp.from_matrix(np.linalg.inv(m) @ g.matrix @ m)
                         for g in self.generators],
             operations=[SymmOp.from_matrix(np.linalg.inv(m) @ o.matrix @ m)

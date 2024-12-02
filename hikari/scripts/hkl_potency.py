@@ -21,7 +21,7 @@ def potency_map(a, b, c, al, be, ga,
                 output_quality=3,
                 resolution=1.2,
                 wavelength='MoKa'):
-    """
+    r"""
     Calculate and draw a potency map for a given crystal in diamond anvil cell
     (DAC) with a given opening angle, as a function of crystal orientation.
     For details see `this paper <https://doi.org/10.1107/S2052252521009532>`_.
@@ -204,9 +204,9 @@ def potency_violin_plot(job_name='violin',
     :type precision: int
     :param space_groups: List of space groups to investigate, strings or ints
         (see :class:`hikari.symmetry.Group`). Defaults to 11 "Laue" groups.
-    :type space_groups: Tuple[int] or Tuple[str]
+    :type space_groups: tuple[int] or tuple[str]
     :param labels: List of tex-style labels to be used for logging and plotting.
-    :type labels: Tuple[str]
+    :type labels: tuple[str]
     :param resolution: If given, additionally limit data resolution to given
         value. Please provide the resolution as a distance from the origin
         in reciprocal space (twice the resolution in reciprocal angstrom).
@@ -366,7 +366,7 @@ def dac_potency_around_axis(a, b, c, al, be, ga,
     toppled_vectors = [rotate(toppled_vector, v, i) for i in range(360)]
 
     # calculate the potency for toppleds
-    rads = [2.00, 1/0.7, 1.20, 1.00, 1/1.5]
+    rads = [0.6]
     cplt = [0] * len(rads)
     p.trim(max(rads))
     for t in toppled_vectors:

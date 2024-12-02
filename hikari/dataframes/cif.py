@@ -1,27 +1,25 @@
+from __future__ import annotations
+
 import abc
-import re
+from collections import UserDict
 import pathlib
+import re
 import tempfile
 
-from collections import OrderedDict
 from enum import Enum
 from functools import lru_cache
-from typing import List, Union, Dict, TextIO
+from typing import Union, TextIO
 
 from hikari.resources import cif_core_dict
 from hikari.utility import make_abspath
 
 
-class CifBlock(OrderedDict):
+class CifBlock(UserDict):
     """
     CifBlock object handles all data inside an individual block of Cif file.
-    It is a subclass of an `OrderedDict` and, as such, features a lot
-    of similarities with python dictionary while preserving item order.
+    As a subclass of an `UserDict`, in python3.7+ it is ordered by design.
     Individual Cif items can be accessed or assigned using a dict-like syntax.
     """
-
-    def __init__(self, *args):
-        super().__init__(*args)
 
     def get_as_type(self, key, typ, default=None):
         """
@@ -35,7 +33,7 @@ class CifBlock(OrderedDict):
         :param default: if given, return it on KeyError
         :type default: Any
         :return: converted value of `self[key]` or `default`
-        :rtype: Union[List, str]
+        :rtype: Union[list, str]
         """
         value = self.get(key)
         if value is None:
@@ -74,12 +72,11 @@ class CifBlock(OrderedDict):
         writer.write(cif_frame=CifFrame({'hikari': self}))
 
 
-class CifFrame(OrderedDict):
+class CifFrame(UserDict):
     """
     A master object which manages cif files. It utilises other `Cif*` classes
     to manage multiple :class:`CifBlock`s with crystallographic information.
-    It is a subclass of an `OrderedDict` and, as such, features a lot
-    of similarities with python dictionary while preserving item order.
+    As a subclass of an `UserDict`, in python3.7+ it is ordered by design.
     Individual Cif blocks and items within them can be accessed or assigned
     using a single- or nested- dict-like syntax.
 
@@ -87,7 +84,7 @@ class CifFrame(OrderedDict):
     meaning it should be first created, and only then accessed using
     methods such as :func:`read` or :func:`write`, but not chain assignments.
 
-    Unlike OrderedDict, CifBlock always initiates empty and does not accept
+    Unlike dict, CifBlock always initiates empty and does not accept
     any parameters at creation.
     """
 
@@ -112,7 +109,7 @@ class CifFrame(OrderedDict):
         writer.write(cif_frame=self)
 
 
-class CifValidator(OrderedDict):
+class CifValidator(UserDict):
     """
     This object reads an appropriate cif core dictionary and uses it in order to
     format or validate all entries passing through it.
@@ -140,7 +137,7 @@ class CifValidator(OrderedDict):
 
     def get(self, key, default=None):
         key, _key = (key[1:], key) if key.startswith('_') else (key, '_' + key)
-        value = OrderedDict()
+        value = UserDict()
         try:
             value = self[key]
         except KeyError as e:
@@ -211,7 +208,7 @@ class CifReaderBuffer(CifIOBuffer):
 
     def __init__(self, target):
         super().__init__(target=target)
-        self.target: OrderedDict = target
+        self.target: UserDict = target
 
     def add(self, word):
         """Append the word to names or values based on its first char"""
@@ -224,7 +221,7 @@ class CifReaderBuffer(CifIOBuffer):
 
     def flush(self):
         """Update the target dict with names and values stored hitherto"""
-        d = OrderedDict()
+        d = UserDict()
         lv = len(self.values)
         ln = len(self.names)
         if lv == ln == 0:
@@ -256,8 +253,7 @@ class CifReader(CifIO):
 
     @lru_cache(maxsize=1)
     def _blocks(self, lines):
-        return OrderedDict({l[5:]: i for i, l in enumerate(lines)
-                            if l.startswith('data_')})
+        return {l[5:]: i for i, l in enumerate(lines) if l.startswith('data_')}
 
     class State(Enum):
         """This class stores current cif reading state (eg. inside loop etc.)"""
@@ -265,8 +261,8 @@ class CifReader(CifIO):
         loop_keys = 1
         loop_values = 2
 
-    def format_dictionary(self, parsed_dict_: Dict[str, List[str]]) \
-            -> Dict[str, Union[str, List[str]]]:
+    def format_dictionary(self, parsed_dict_: dict[str, list[str]]) \
+            -> dict[str, Union[str, list[str]]]:
         """
         Reformat a dictionary of parsed data so that the format of every name
         and value agrees with the cif core dictionary stored in `CifValidator`.
@@ -282,7 +278,7 @@ class CifReader(CifIO):
             is_a_validator_name_field = not self.validate and k_ == '_name'
             return is_listable or is_long or is_a_validator_name_field
 
-        new_dict = OrderedDict()
+        new_dict = dict()
         for k, v in parsed_dict_.items():
             if item_value_should_be_a_list(k, v):
                 new_dict[k] = v
@@ -293,16 +289,16 @@ class CifReader(CifIO):
     def parse_lines(self, start, end):
         """
         Read the data from :attr:`~.CifIO.lines` numbered `start` to `end`,
-        interpret it, and return it as an instance of an `OrderedDict`.
+        interpret it, and return it as an instance of a dict.
 
         :param start: number of the first line which data should be read from
         :type start: int
         :param end: number of the first line which should not be read anymore
         :type end: int
         :return: ordered dictionary with name: value pairs for all parsed lines
-        :rtype: OrderedDict
+        :rtype: dict
         """
-        parsed_data = OrderedDict()
+        parsed_data = dict()
         buffer = CifReaderBuffer(target=parsed_data)
         state = self.State.default
         for line in self.file_lines[start:end]:
@@ -325,7 +321,7 @@ class CifReader(CifIO):
         formatted_data = self.format_dictionary(parsed_data)
         return formatted_data
 
-    def read(self) -> OrderedDict:
+    def read(self) -> dict:
         """
         Read the contents of cif currently pointed by :attr:`~.CifIO.file_path`
         and block :attr:`~.CifIO.data_block_header` and return them to a dict.
@@ -341,7 +337,7 @@ class CifReader(CifIO):
         block_names = self.blocks.keys()
         block_starts = self.blocks.values()
         block_ends = list(block_starts)[1:] + [None]
-        read_data = OrderedDict()
+        read_data = {}
         for n, s, e in zip(block_names, block_starts, block_ends):
             read_data[n] = CifBlock(self.parse_lines(s + 1, e))
         return read_data
@@ -365,7 +361,7 @@ class CifReader(CifIO):
         self.file_contents = self._protect_split(split_string)
 
     @classmethod
-    def _protect_split(cls, split_string: List[str]) -> str:
+    def _protect_split(cls, split_string: list[str]) -> str:
         quoted = split_string[2::4]
         for ws, sub in cls.WHITESPACE_SUBSTITUTES.items():
             quoted = [w.replace(ws, sub) for w in quoted]

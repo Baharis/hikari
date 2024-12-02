@@ -23,6 +23,6 @@ def str2array(s: str) -> np.ndarray:
     :return: a two-dimensional numpy array with integers
     """
     elements = [re.findall(r"-?\d", column) for column in s.split('/')]
-    if len({len(element_column) for element_column in elements}) is not 1:
+    if len({len(element_column) for element_column in elements}) != 1:
         raise ValueError('All columns specified with "/" must have same length')
     return np.array(elements, dtype=np.int8)

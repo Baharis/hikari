@@ -29,8 +29,8 @@ class SymmOp:
         translation = -3
 
     def __init__(self, transformation, translation=np.array([0, 0, 0])):
-        self.tf = transformation
-        self.tl = translation
+        self.tf = np.array(transformation)
+        self.tl = np.array(translation)
 
     def __eq__(self, other):
         return np.array_equal(self.tf, other.tf) and \
@@ -79,7 +79,7 @@ class SymmOp:
             tf[i, 2] = 1 if '+z' in coord else -1 if '-z' in coord else 0
             coord = coord.replace('+x', '').replace('+y', '').replace('+z', '')\
                 .replace('-x', '').replace('-y', '').replace('-z', '')
-            tl[i] = 0 if coord is '' else float(Fraction(coord))
+            tl[i] = 0 if coord == '' else float(Fraction(coord))
         return cls(tf, tl)
 
     @classmethod

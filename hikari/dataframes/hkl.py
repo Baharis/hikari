@@ -353,7 +353,7 @@ class HklFrame(BaseFrame):
         return r[None, :] < lim
 
     def dac_trim(self, opening_angle: float = 35.0, vector=None):
-        """
+        r"""
         Remove reflections outside the opening_angle DAC-accessible volume.
         Sample/DAC orientation can be supplied either via specifying crystal
         orientation in :class:`hikari.dataframes.BaseFrame`, in
@@ -365,7 +365,7 @@ class HklFrame(BaseFrame):
         :type opening_angle: float
         :param vector: Provides information about orientation of crystal
           relative to DAC. If None, :attr:`orientation` is used instead.
-        :type vector: Tuple[float]
+        :type vector: tuple[float]
         :return: HklFrame containing only reflections in dac-accessible region.
         :rtype: HklFrame
         """
@@ -531,7 +531,7 @@ class HklFrame(BaseFrame):
 
         def group_by_resolution(hkl_):
             bin_limits = cubespace(0.0, max(self.table['r']), num=bins + 1)
-            return hkl_.table.groupby(pd.cut(hkl_.table['r'], bin_limits))
+            return hkl_.table.groupby(by=pd.cut(hkl_.table['r'], bin_limits), observed=False)
 
         grouped_base = group_by_resolution(hkl_base)
         grouped_full = group_by_resolution(hkl_full)
@@ -632,7 +632,7 @@ class HklFrame(BaseFrame):
         :param hkl_path: Absolute or relative path to the .hkl file.
         :type hkl_path: str
         :param hkl_format: Format of provided .hkl file.
-        :type hkl_format: union[int, str, OrderedDict]
+        :type hkl_format: union[int, str, dict]
         """
         reader = HklReader(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
         dict_of_data = reader.read()
@@ -660,7 +660,7 @@ class HklFrame(BaseFrame):
             self._recalculate_intensities_from_structure_factors()
 
     def _recalculate_structure_factors_from_intensities(self):
-        """
+        r"""
         Recalculate the structure factor F and its uncertainty sf.
 
         Structure factor is calculated as follows:
@@ -679,7 +679,7 @@ class HklFrame(BaseFrame):
         self.table = new_data
 
     def _recalculate_intensities_from_structure_factors(self):
-        """
+        r"""
         Recalculate the intensity I and its uncertainty si.
 
         Intensity is calculated as follows:
@@ -796,7 +796,7 @@ class HklFrame(BaseFrame):
         :param hkl_path: Absolute or relative path to the .hkl file.
         :type hkl_path: str
         :param hkl_format: Desired format of .hkl file.
-        :type hkl_format: union[int, str, OrderedDict]
+        :type hkl_format: union[int, str, dict]
         """
         writer = HklWriter(hkl_file_path=hkl_path, hkl_file_format=hkl_format)
         writer.write(hkl_data=self.table)
