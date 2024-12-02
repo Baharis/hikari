@@ -65,7 +65,7 @@ jobs:
       uses: snok/install-poetry@v1
 
     - name: Install gfortran
-      run: brew install --cask gfortran
+      uses: fortran-lang/setup-fortran@v1
       if: matrix.os == 'macos-latest'
 
     - name: Install package
