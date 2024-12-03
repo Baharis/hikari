@@ -1,12 +1,15 @@
 [tool.poetry]
-name = "hikari"
+name = "hikari-toolkit"
 version = "0.3.0"
 description = "A high-level tool for manipulating crystallographic files"
 authors = ["Daniel Tchoń <dtchon@chem.uw.edu.pl>"]
 license = "MIT"
 readme = "README.md"
 
-include = ['hikari/resources/*']
+packages = [
+    { include = "hikari" }]
+include = [{path = 'hikari/resources/*', format = ['sdist', 'wheel']}]
+exclude = ["docs*", "tests*"]
 classifiers = [
     'Development Status :: 3 - Alpha',
     'Environment :: Console',
