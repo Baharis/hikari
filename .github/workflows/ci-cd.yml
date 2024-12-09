@@ -87,6 +87,9 @@ jobs:
         poetry run flake8 ./hikari --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
         poetry run flake8 ./tests --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
+    - name: Request rapid hikari tests only
+      run: echo "HIKARI_TESTS_RAPID=True" >> $GITHUB_ENV
+
     - name: Test with pytest
       run: poetry run pytest tests/ --cov=hikari --cov-report=xml
       continue-on-error: true
