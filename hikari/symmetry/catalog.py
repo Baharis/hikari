@@ -331,10 +331,10 @@ class GroupCatalog:
         return list(self.table['n_c'])
 
     def values(self) -> list[Group]:
-        return list(self.table['groups'])
+        return list(self.table['group'])
 
     def items(self) -> list[tuple[Union[int, str], Group]]:
-        return [(k, v) for k, v in zip(self.table['n_c'], self.table['groups'])]
+        return [(k, v) for k, v in zip(self.table['n_c'], self.table['group'])]
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SMART GETTERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
