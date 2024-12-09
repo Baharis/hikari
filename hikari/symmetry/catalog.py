@@ -141,6 +141,7 @@ class GroupCatalogKeyStandard(GroupCatalogKey):
     """Boolean column with True if setting is standard (first with given number)"""
     name = 'standard'
     dependencies = [GroupCatalogKeyNumber]
+    dtype = bool
 
     @classmethod
     def construct(cls, table: pd.DataFrame) -> pd.Series:
@@ -282,6 +283,9 @@ class GroupCatalog:
             return self.table.equals(other.table)
         return NotImplemented
 
+    def __len__(self) -> int:
+        return len(self.table)
+
     @classmethod
     def from_json(cls, text: str) -> 'GroupCatalog':
         """Load from a json-formatted string"""
@@ -318,7 +322,7 @@ class GroupCatalog:
     @property
     def standard(self) -> 'GroupCatalog':
         """A subset of current catalog with standard-setting groups only"""
-        standard = deepcopy(self.table[self.table['standard']]).reset_index()
+        standard = deepcopy(self.table[self.table['standard']]).reset_index(drop=True)
         return self.__class__(standard)
 
     # ~~~~~~~~~~~~~~~~~~~~ DUCK-TYPING DICT-LIKE INTERFACE ~~~~~~~~~~~~~~~~~~~ #
