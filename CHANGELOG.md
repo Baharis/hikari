@@ -1,6 +1,47 @@
 # CHANGELOG
 
 
+## v0.3.1 (2024-12-10)
+
+### :bug:
+
+- :bug: Fix `GroupCatalog.values`, `.items`
+  ([`81d700c`](https://github.com/Baharis/hikari/commit/81d700c9ca1ac453b42ac6c85d30fa00c2e1a8f1))
+
+- :bug: Fix all space groups being "standard" due to wrong type in json
+  ([`ebe9b7d`](https://github.com/Baharis/hikari/commit/ebe9b7db6b804bea2fadcac85381f6b1babca36b))
+
+### :package:
+
+- :package: Add `MANIFEST.in` to potentially help adding resources to wheel
+  ([`2875cf7`](https://github.com/Baharis/hikari/commit/2875cf70dd366270738aea5aa947f197c1cad4cb))
+
+### Other
+
+- :coffin: Remove dead resources function `_load_bytes`
+  ([`de35f29`](https://github.com/Baharis/hikari/commit/de35f29f92c3f6be0f4560cbc96ea488a7510c4c))
+
+- :construction_worker: In continuous integration, run rapid tests only
+  ([`49bc6a9`](https://github.com/Baharis/hikari/commit/49bc6a977a4c677a2347dc8f4c86229d0e359e3a))
+
+- :green_heart: Fix continuous integration to properly publish `hikari` under name `hikari-toolkit`
+  ([`3992db7`](https://github.com/Baharis/hikari/commit/3992db795fcb2d4c414db8914849eb55dff0781f))
+
+- :white_check_mark: Add even more tests for `GroupCatalog`
+  ([`b6b17d6`](https://github.com/Baharis/hikari/commit/b6b17d6a0a4bc7391afa2a557f3287d92e6018e4))
+
+- :white_check_mark: Add further tests for `GroupCatalog`
+  ([`1723078`](https://github.com/Baharis/hikari/commit/17230789b0134be3b4fc8db3d3edaa52ea322254))
+
+- :white_check_mark: Skip the potency map tests on python 3.13.0 only
+  ([`b8f178a`](https://github.com/Baharis/hikari/commit/b8f178a816ec5be28d47d7a8f75fc61dce1fba30))
+
+- 🔀 Merge pull request #42 from Baharis/development
+  ([`fe1ca24`](https://github.com/Baharis/hikari/commit/fe1ca24d0220ac8ea69ef2a8739bcef2e06e4281))
+
+Fix `GroupCatalog`, fix and expand `GroupCatalog` testing
+
+
 ## v0.3.0 (2024-12-02)
 
 ### :pencil2:
