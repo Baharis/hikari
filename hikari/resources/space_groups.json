@@ -18,7 +18,7 @@
             "HM_short": "P1",
             "HM_simple": "P1",
             "HM_numbered": "1: P1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "2",
@@ -39,7 +39,7 @@
             "HM_short": "P-1",
             "HM_simple": "P-1",
             "HM_numbered": "2: P-1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "3:b",
@@ -60,7 +60,7 @@
             "HM_short": "P121",
             "HM_simple": "P2",
             "HM_numbered": "3: P121",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "3:c",
@@ -81,7 +81,7 @@
             "HM_short": "P112",
             "HM_simple": "P2",
             "HM_numbered": "3: P112",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "3:a",
@@ -102,7 +102,7 @@
             "HM_short": "P211",
             "HM_simple": "P2",
             "HM_numbered": "3: P211",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "4:b",
@@ -123,7 +123,7 @@
             "HM_short": "P1211",
             "HM_simple": "P21",
             "HM_numbered": "4: P1211",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "4:c",
@@ -144,7 +144,7 @@
             "HM_short": "P1121",
             "HM_simple": "P21",
             "HM_numbered": "4: P1121",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "4:a",
@@ -165,7 +165,7 @@
             "HM_short": "P2111",
             "HM_simple": "P21",
             "HM_numbered": "4: P2111",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "5:b1",
@@ -189,7 +189,7 @@
             "HM_short": "C121",
             "HM_simple": "C2",
             "HM_numbered": "5: C121",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "5:b2",
@@ -213,7 +213,7 @@
             "HM_short": "A121",
             "HM_simple": "A2",
             "HM_numbered": "5: A121",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "5:b3",
@@ -237,7 +237,7 @@
             "HM_short": "I121",
             "HM_simple": "I2",
             "HM_numbered": "5: I121",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "5:c1",
@@ -261,7 +261,7 @@
             "HM_short": "A112",
             "HM_simple": "A2",
             "HM_numbered": "5: A112",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "5:c2",
@@ -285,7 +285,7 @@
             "HM_short": "B112",
             "HM_simple": "B2",
             "HM_numbered": "5: B112",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "5:c3",
@@ -309,7 +309,7 @@
             "HM_short": "I112",
             "HM_simple": "I2",
             "HM_numbered": "5: I112",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "5:a1",
@@ -333,7 +333,7 @@
             "HM_short": "B211",
             "HM_simple": "B2",
             "HM_numbered": "5: B211",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "5:a2",
@@ -357,7 +357,7 @@
             "HM_short": "C211",
             "HM_simple": "C2",
             "HM_numbered": "5: C211",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "5:a3",
@@ -381,7 +381,7 @@
             "HM_short": "I211",
             "HM_simple": "I2",
             "HM_numbered": "5: I211",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "6:b",
@@ -402,7 +402,7 @@
             "HM_short": "P1m1",
             "HM_simple": "Pm",
             "HM_numbered": "6: P1m1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "6:c",
@@ -423,7 +423,7 @@
             "HM_short": "P11m",
             "HM_simple": "Pm",
             "HM_numbered": "6: P11m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "6:a",
@@ -444,7 +444,7 @@
             "HM_short": "Pm11",
             "HM_simple": "Pm",
             "HM_numbered": "6: Pm11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "7:b1",
@@ -465,7 +465,7 @@
             "HM_short": "P1c1",
             "HM_simple": "Pc",
             "HM_numbered": "7: P1c1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "7:b2",
@@ -486,7 +486,7 @@
             "HM_short": "P1n1",
             "HM_simple": "Pn",
             "HM_numbered": "7: P1n1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "7:b3",
@@ -507,7 +507,7 @@
             "HM_short": "P1a1",
             "HM_simple": "Pa",
             "HM_numbered": "7: P1a1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "7:c1",
@@ -528,7 +528,7 @@
             "HM_short": "P11a",
             "HM_simple": "Pa",
             "HM_numbered": "7: P11a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "7:c2",
@@ -549,7 +549,7 @@
             "HM_short": "P11n",
             "HM_simple": "Pn",
             "HM_numbered": "7: P11n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "7:c3",
@@ -570,7 +570,7 @@
             "HM_short": "P11b",
             "HM_simple": "Pb",
             "HM_numbered": "7: P11b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "7:a1",
@@ -591,7 +591,7 @@
             "HM_short": "Pb11",
             "HM_simple": "Pb",
             "HM_numbered": "7: Pb11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "7:a2",
@@ -612,7 +612,7 @@
             "HM_short": "Pn11",
             "HM_simple": "Pn",
             "HM_numbered": "7: Pn11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "7:a3",
@@ -633,7 +633,7 @@
             "HM_short": "Pc11",
             "HM_simple": "Pc",
             "HM_numbered": "7: Pc11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "8:b1",
@@ -657,7 +657,7 @@
             "HM_short": "C1m1",
             "HM_simple": "Cm",
             "HM_numbered": "8: C1m1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "8:b2",
@@ -681,7 +681,7 @@
             "HM_short": "A1m1",
             "HM_simple": "Am",
             "HM_numbered": "8: A1m1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "8:b3",
@@ -705,7 +705,7 @@
             "HM_short": "I1m1",
             "HM_simple": "Im",
             "HM_numbered": "8: I1m1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "8:c1",
@@ -729,7 +729,7 @@
             "HM_short": "A11m",
             "HM_simple": "Am",
             "HM_numbered": "8: A11m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "8:c2",
@@ -753,7 +753,7 @@
             "HM_short": "B11m",
             "HM_simple": "Bm",
             "HM_numbered": "8: B11m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "8:c3",
@@ -777,7 +777,7 @@
             "HM_short": "I11m",
             "HM_simple": "Im",
             "HM_numbered": "8: I11m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "8:a1",
@@ -801,7 +801,7 @@
             "HM_short": "Bm11",
             "HM_simple": "Bm",
             "HM_numbered": "8: Bm11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "8:a2",
@@ -825,7 +825,7 @@
             "HM_short": "Cm11",
             "HM_simple": "Cm",
             "HM_numbered": "8: Cm11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "8:a3",
@@ -849,7 +849,7 @@
             "HM_short": "Im11",
             "HM_simple": "Im",
             "HM_numbered": "8: Im11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:b1",
@@ -873,7 +873,7 @@
             "HM_short": "C1c1",
             "HM_simple": "Cc",
             "HM_numbered": "9: C1c1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "9:b2",
@@ -897,7 +897,7 @@
             "HM_short": "A1n1",
             "HM_simple": "An",
             "HM_numbered": "9: A1n1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:b3",
@@ -921,7 +921,7 @@
             "HM_short": "I1a1",
             "HM_simple": "Ia",
             "HM_numbered": "9: I1a1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-b1",
@@ -945,7 +945,7 @@
             "HM_short": "A1a1",
             "HM_simple": "Aa",
             "HM_numbered": "9: A1a1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-b2",
@@ -969,7 +969,7 @@
             "HM_short": "C1n1",
             "HM_simple": "Cn",
             "HM_numbered": "9: C1n1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-b3",
@@ -993,7 +993,7 @@
             "HM_short": "I1c1",
             "HM_simple": "Ic",
             "HM_numbered": "9: I1c1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:c1",
@@ -1017,7 +1017,7 @@
             "HM_short": "A11a",
             "HM_simple": "Aa",
             "HM_numbered": "9: A11a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:c2",
@@ -1041,7 +1041,7 @@
             "HM_short": "B11n",
             "HM_simple": "Bn",
             "HM_numbered": "9: B11n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:c3",
@@ -1065,7 +1065,7 @@
             "HM_short": "I11b",
             "HM_simple": "Ib",
             "HM_numbered": "9: I11b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-c1",
@@ -1089,7 +1089,7 @@
             "HM_short": "B11b",
             "HM_simple": "Bb",
             "HM_numbered": "9: B11b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-c2",
@@ -1113,7 +1113,7 @@
             "HM_short": "A11n",
             "HM_simple": "An",
             "HM_numbered": "9: A11n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-c3",
@@ -1137,7 +1137,7 @@
             "HM_short": "I11a",
             "HM_simple": "Ia",
             "HM_numbered": "9: I11a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:a1",
@@ -1161,7 +1161,7 @@
             "HM_short": "Bb11",
             "HM_simple": "Bb",
             "HM_numbered": "9: Bb11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:a2",
@@ -1185,7 +1185,7 @@
             "HM_short": "Cn11",
             "HM_simple": "Cn",
             "HM_numbered": "9: Cn11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:a3",
@@ -1209,7 +1209,7 @@
             "HM_short": "Ic11",
             "HM_simple": "Ic",
             "HM_numbered": "9: Ic11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-a1",
@@ -1233,7 +1233,7 @@
             "HM_short": "Cc11",
             "HM_simple": "Cc",
             "HM_numbered": "9: Cc11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-a2",
@@ -1257,7 +1257,7 @@
             "HM_short": "Bn11",
             "HM_simple": "Bn",
             "HM_numbered": "9: Bn11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "9:-a3",
@@ -1281,7 +1281,7 @@
             "HM_short": "Ib11",
             "HM_simple": "Ib",
             "HM_numbered": "9: Ib11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "10:b",
@@ -1305,7 +1305,7 @@
             "HM_short": "P12/m1",
             "HM_simple": "P2/m",
             "HM_numbered": "10: P12/m1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "10:c",
@@ -1329,7 +1329,7 @@
             "HM_short": "P112/m",
             "HM_simple": "P2/m",
             "HM_numbered": "10: P112/m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "10:a",
@@ -1353,7 +1353,7 @@
             "HM_short": "P2/m11",
             "HM_simple": "P2/m",
             "HM_numbered": "10: P2/m11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "11:b",
@@ -1377,7 +1377,7 @@
             "HM_short": "P121/m1",
             "HM_simple": "P21/m",
             "HM_numbered": "11: P121/m1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "11:c",
@@ -1401,7 +1401,7 @@
             "HM_short": "P1121/m",
             "HM_simple": "P21/m",
             "HM_numbered": "11: P1121/m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "11:a",
@@ -1425,7 +1425,7 @@
             "HM_short": "P21/m11",
             "HM_simple": "P21/m",
             "HM_numbered": "11: P21/m11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "12:b1",
@@ -1454,7 +1454,7 @@
             "HM_short": "C12/m1",
             "HM_simple": "C2/m",
             "HM_numbered": "12: C12/m1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "12:b2",
@@ -1483,7 +1483,7 @@
             "HM_short": "A12/m1",
             "HM_simple": "A2/m",
             "HM_numbered": "12: A12/m1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "12:b3",
@@ -1512,7 +1512,7 @@
             "HM_short": "I12/m1",
             "HM_simple": "I2/m",
             "HM_numbered": "12: I12/m1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "12:c1",
@@ -1541,7 +1541,7 @@
             "HM_short": "A112/m",
             "HM_simple": "A2/m",
             "HM_numbered": "12: A112/m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "12:c2",
@@ -1570,7 +1570,7 @@
             "HM_short": "B112/m",
             "HM_simple": "B2/m",
             "HM_numbered": "12: B112/m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "12:c3",
@@ -1599,7 +1599,7 @@
             "HM_short": "I112/m",
             "HM_simple": "I2/m",
             "HM_numbered": "12: I112/m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "12:a1",
@@ -1628,7 +1628,7 @@
             "HM_short": "B2/m11",
             "HM_simple": "B2/m",
             "HM_numbered": "12: B2/m11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "12:a2",
@@ -1657,7 +1657,7 @@
             "HM_short": "C2/m11",
             "HM_simple": "C2/m",
             "HM_numbered": "12: C2/m11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "12:a3",
@@ -1686,7 +1686,7 @@
             "HM_short": "I2/m11",
             "HM_simple": "I2/m",
             "HM_numbered": "12: I2/m11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "13:b1",
@@ -1710,7 +1710,7 @@
             "HM_short": "P12/c1",
             "HM_simple": "P2/c",
             "HM_numbered": "13: P12/c1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "13:b2",
@@ -1734,7 +1734,7 @@
             "HM_short": "P12/n1",
             "HM_simple": "P2/n",
             "HM_numbered": "13: P12/n1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "13:b3",
@@ -1758,7 +1758,7 @@
             "HM_short": "P12/a1",
             "HM_simple": "P2/a",
             "HM_numbered": "13: P12/a1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "13:c1",
@@ -1782,7 +1782,7 @@
             "HM_short": "P112/a",
             "HM_simple": "P2/a",
             "HM_numbered": "13: P112/a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "13:c2",
@@ -1806,7 +1806,7 @@
             "HM_short": "P112/n",
             "HM_simple": "P2/n",
             "HM_numbered": "13: P112/n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "13:c3",
@@ -1830,7 +1830,7 @@
             "HM_short": "P112/b",
             "HM_simple": "P2/b",
             "HM_numbered": "13: P112/b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "13:a1",
@@ -1854,7 +1854,7 @@
             "HM_short": "P2/b11",
             "HM_simple": "P2/b",
             "HM_numbered": "13: P2/b11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "13:a2",
@@ -1878,7 +1878,7 @@
             "HM_short": "P2/n11",
             "HM_simple": "P2/n",
             "HM_numbered": "13: P2/n11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "13:a3",
@@ -1902,7 +1902,7 @@
             "HM_short": "P2/c11",
             "HM_simple": "P2/c",
             "HM_numbered": "13: P2/c11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "14:b1",
@@ -1926,7 +1926,7 @@
             "HM_short": "P121/c1",
             "HM_simple": "P21/c",
             "HM_numbered": "14: P121/c1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "14:b2",
@@ -1950,7 +1950,7 @@
             "HM_short": "P121/n1",
             "HM_simple": "P21/n",
             "HM_numbered": "14: P121/n1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "14:b3",
@@ -1974,7 +1974,7 @@
             "HM_short": "P121/a1",
             "HM_simple": "P21/a",
             "HM_numbered": "14: P121/a1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "14:c1",
@@ -1998,7 +1998,7 @@
             "HM_short": "P1121/a",
             "HM_simple": "P21/a",
             "HM_numbered": "14: P1121/a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "14:c2",
@@ -2022,7 +2022,7 @@
             "HM_short": "P1121/n",
             "HM_simple": "P21/n",
             "HM_numbered": "14: P1121/n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "14:c3",
@@ -2046,7 +2046,7 @@
             "HM_short": "P1121/b",
             "HM_simple": "P21/b",
             "HM_numbered": "14: P1121/b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "14:a1",
@@ -2070,7 +2070,7 @@
             "HM_short": "P21/b11",
             "HM_simple": "P21/b",
             "HM_numbered": "14: P21/b11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "14:a2",
@@ -2094,7 +2094,7 @@
             "HM_short": "P21/n11",
             "HM_simple": "P21/n",
             "HM_numbered": "14: P21/n11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "14:a3",
@@ -2118,7 +2118,7 @@
             "HM_short": "P21/c11",
             "HM_simple": "P21/c",
             "HM_numbered": "14: P21/c11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:b1",
@@ -2147,7 +2147,7 @@
             "HM_short": "C12/c1",
             "HM_simple": "C2/c",
             "HM_numbered": "15: C12/c1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "15:b2",
@@ -2176,7 +2176,7 @@
             "HM_short": "A12/n1",
             "HM_simple": "A2/n",
             "HM_numbered": "15: A12/n1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:b3",
@@ -2205,7 +2205,7 @@
             "HM_short": "I12/a1",
             "HM_simple": "I2/a",
             "HM_numbered": "15: I12/a1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-b1",
@@ -2234,7 +2234,7 @@
             "HM_short": "A12/a1",
             "HM_simple": "A2/a",
             "HM_numbered": "15: A12/a1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-b2",
@@ -2263,7 +2263,7 @@
             "HM_short": "C12/n1",
             "HM_simple": "C2/n",
             "HM_numbered": "15: C12/n1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-b3",
@@ -2292,7 +2292,7 @@
             "HM_short": "I12/c1",
             "HM_simple": "I2/c",
             "HM_numbered": "15: I12/c1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:c1",
@@ -2321,7 +2321,7 @@
             "HM_short": "A112/a",
             "HM_simple": "A2/a",
             "HM_numbered": "15: A112/a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:c2",
@@ -2350,7 +2350,7 @@
             "HM_short": "B112/n",
             "HM_simple": "B2/n",
             "HM_numbered": "15: B112/n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:c3",
@@ -2379,7 +2379,7 @@
             "HM_short": "I112/b",
             "HM_simple": "I2/b",
             "HM_numbered": "15: I112/b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-c1",
@@ -2408,7 +2408,7 @@
             "HM_short": "B112/b",
             "HM_simple": "B2/b",
             "HM_numbered": "15: B112/b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-c2",
@@ -2437,7 +2437,7 @@
             "HM_short": "A112/n",
             "HM_simple": "A2/n",
             "HM_numbered": "15: A112/n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-c3",
@@ -2466,7 +2466,7 @@
             "HM_short": "I112/a",
             "HM_simple": "I2/a",
             "HM_numbered": "15: I112/a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:a1",
@@ -2495,7 +2495,7 @@
             "HM_short": "B2/b11",
             "HM_simple": "B2/b",
             "HM_numbered": "15: B2/b11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:a2",
@@ -2524,7 +2524,7 @@
             "HM_short": "C2/n11",
             "HM_simple": "C2/n",
             "HM_numbered": "15: C2/n11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:a3",
@@ -2553,7 +2553,7 @@
             "HM_short": "I2/c11",
             "HM_simple": "I2/c",
             "HM_numbered": "15: I2/c11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-a1",
@@ -2582,7 +2582,7 @@
             "HM_short": "C2/c11",
             "HM_simple": "C2/c",
             "HM_numbered": "15: C2/c11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-a2",
@@ -2611,7 +2611,7 @@
             "HM_short": "B2/n11",
             "HM_simple": "B2/n",
             "HM_numbered": "15: B2/n11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "15:-a3",
@@ -2640,7 +2640,7 @@
             "HM_short": "I2/b11",
             "HM_simple": "I2/b",
             "HM_numbered": "15: I2/b11",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "16",
@@ -2664,7 +2664,7 @@
             "HM_short": "P222",
             "HM_simple": "P222",
             "HM_numbered": "16: P222",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "17",
@@ -2688,7 +2688,7 @@
             "HM_short": "P2221",
             "HM_simple": "P2221",
             "HM_numbered": "17: P2221",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "17:cab",
@@ -2712,7 +2712,7 @@
             "HM_short": "P2122",
             "HM_simple": "P2122",
             "HM_numbered": "17: P2122",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "17:bca",
@@ -2736,7 +2736,7 @@
             "HM_short": "P2212",
             "HM_simple": "P2212",
             "HM_numbered": "17: P2212",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "18",
@@ -2760,7 +2760,7 @@
             "HM_short": "P21212",
             "HM_simple": "P21212",
             "HM_numbered": "18: P21212",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "18:cab",
@@ -2784,7 +2784,7 @@
             "HM_short": "P22121",
             "HM_simple": "P22121",
             "HM_numbered": "18: P22121",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "18:bca",
@@ -2808,7 +2808,7 @@
             "HM_short": "P21221",
             "HM_simple": "P21221",
             "HM_numbered": "18: P21221",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "19",
@@ -2832,7 +2832,7 @@
             "HM_short": "P212121",
             "HM_simple": "P212121",
             "HM_numbered": "19: P212121",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "20",
@@ -2861,7 +2861,7 @@
             "HM_short": "C2221",
             "HM_simple": "C2221",
             "HM_numbered": "20: C2221",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "20:cab",
@@ -2890,7 +2890,7 @@
             "HM_short": "A2122",
             "HM_simple": "A2122",
             "HM_numbered": "20: A2122",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "20:bca",
@@ -2919,7 +2919,7 @@
             "HM_short": "B2212",
             "HM_simple": "B2212",
             "HM_numbered": "20: B2212",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "21",
@@ -2948,7 +2948,7 @@
             "HM_short": "C222",
             "HM_simple": "C222",
             "HM_numbered": "21: C222",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "21:cab",
@@ -2977,7 +2977,7 @@
             "HM_short": "A222",
             "HM_simple": "A222",
             "HM_numbered": "21: A222",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "21:bca",
@@ -3006,7 +3006,7 @@
             "HM_short": "B222",
             "HM_simple": "B222",
             "HM_numbered": "21: B222",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "22",
@@ -3045,7 +3045,7 @@
             "HM_short": "F222",
             "HM_simple": "F222",
             "HM_numbered": "22: F222",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "23",
@@ -3074,7 +3074,7 @@
             "HM_short": "I222",
             "HM_simple": "I222",
             "HM_numbered": "23: I222",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "24",
@@ -3103,7 +3103,7 @@
             "HM_short": "I212121",
             "HM_simple": "I212121",
             "HM_numbered": "24: I212121",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "25",
@@ -3127,7 +3127,7 @@
             "HM_short": "Pmm2",
             "HM_simple": "Pmm2",
             "HM_numbered": "25: Pmm2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "25:cab",
@@ -3151,7 +3151,7 @@
             "HM_short": "P2mm",
             "HM_simple": "P2mm",
             "HM_numbered": "25: P2mm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "25:bca",
@@ -3175,7 +3175,7 @@
             "HM_short": "Pm2m",
             "HM_simple": "Pm2m",
             "HM_numbered": "25: Pm2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "26",
@@ -3199,7 +3199,7 @@
             "HM_short": "Pmc21",
             "HM_simple": "Pmc21",
             "HM_numbered": "26: Pmc21",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "26:ba-c",
@@ -3223,7 +3223,7 @@
             "HM_short": "Pcm21",
             "HM_simple": "Pcm21",
             "HM_numbered": "26: Pcm21",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "26:cab",
@@ -3247,7 +3247,7 @@
             "HM_short": "P21ma",
             "HM_simple": "P21ma",
             "HM_numbered": "26: P21ma",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "26:-cba",
@@ -3271,7 +3271,7 @@
             "HM_short": "P21am",
             "HM_simple": "P21am",
             "HM_numbered": "26: P21am",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "26:bca",
@@ -3295,7 +3295,7 @@
             "HM_short": "Pb21m",
             "HM_simple": "Pb21m",
             "HM_numbered": "26: Pb21m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "26:a-cb",
@@ -3319,7 +3319,7 @@
             "HM_short": "Pm21b",
             "HM_simple": "Pm21b",
             "HM_numbered": "26: Pm21b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "27",
@@ -3343,7 +3343,7 @@
             "HM_short": "Pcc2",
             "HM_simple": "Pcc2",
             "HM_numbered": "27: Pcc2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "27:cab",
@@ -3367,7 +3367,7 @@
             "HM_short": "P2aa",
             "HM_simple": "P2aa",
             "HM_numbered": "27: P2aa",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "27:bca",
@@ -3391,7 +3391,7 @@
             "HM_short": "Pb2b",
             "HM_simple": "Pb2b",
             "HM_numbered": "27: Pb2b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "28",
@@ -3415,7 +3415,7 @@
             "HM_short": "Pma2",
             "HM_simple": "Pma2",
             "HM_numbered": "28: Pma2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "28:ba-c",
@@ -3439,7 +3439,7 @@
             "HM_short": "Pbm2",
             "HM_simple": "Pbm2",
             "HM_numbered": "28: Pbm2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "28:cab",
@@ -3463,7 +3463,7 @@
             "HM_short": "P2mb",
             "HM_simple": "P2mb",
             "HM_numbered": "28: P2mb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "28:-cba",
@@ -3487,7 +3487,7 @@
             "HM_short": "P2cm",
             "HM_simple": "P2cm",
             "HM_numbered": "28: P2cm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "28:bca",
@@ -3511,7 +3511,7 @@
             "HM_short": "Pc2m",
             "HM_simple": "Pc2m",
             "HM_numbered": "28: Pc2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "28:a-cb",
@@ -3535,7 +3535,7 @@
             "HM_short": "Pm2a",
             "HM_simple": "Pm2a",
             "HM_numbered": "28: Pm2a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "29",
@@ -3559,7 +3559,7 @@
             "HM_short": "Pca21",
             "HM_simple": "Pca21",
             "HM_numbered": "29: Pca21",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "29:ba-c",
@@ -3583,7 +3583,7 @@
             "HM_short": "Pbc21",
             "HM_simple": "Pbc21",
             "HM_numbered": "29: Pbc21",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "29:cab",
@@ -3607,7 +3607,7 @@
             "HM_short": "P21ab",
             "HM_simple": "P21ab",
             "HM_numbered": "29: P21ab",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "29:-cba",
@@ -3631,7 +3631,7 @@
             "HM_short": "P21ca",
             "HM_simple": "P21ca",
             "HM_numbered": "29: P21ca",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "29:bca",
@@ -3655,7 +3655,7 @@
             "HM_short": "Pc21b",
             "HM_simple": "Pc21b",
             "HM_numbered": "29: Pc21b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "29:a-cb",
@@ -3679,7 +3679,7 @@
             "HM_short": "Pb21a",
             "HM_simple": "Pb21a",
             "HM_numbered": "29: Pb21a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "30",
@@ -3703,7 +3703,7 @@
             "HM_short": "Pnc2",
             "HM_simple": "Pnc2",
             "HM_numbered": "30: Pnc2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "30:ba-c",
@@ -3727,7 +3727,7 @@
             "HM_short": "Pcn2",
             "HM_simple": "Pcn2",
             "HM_numbered": "30: Pcn2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "30:cab",
@@ -3751,7 +3751,7 @@
             "HM_short": "P2na",
             "HM_simple": "P2na",
             "HM_numbered": "30: P2na",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "30:-cba",
@@ -3775,7 +3775,7 @@
             "HM_short": "P2an",
             "HM_simple": "P2an",
             "HM_numbered": "30: P2an",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "30:bca",
@@ -3799,7 +3799,7 @@
             "HM_short": "Pb2n",
             "HM_simple": "Pb2n",
             "HM_numbered": "30: Pb2n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "30:a-cb",
@@ -3823,7 +3823,7 @@
             "HM_short": "Pn2b",
             "HM_simple": "Pn2b",
             "HM_numbered": "30: Pn2b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "31",
@@ -3847,7 +3847,7 @@
             "HM_short": "Pmn21",
             "HM_simple": "Pmn21",
             "HM_numbered": "31: Pmn21",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "31:ba-c",
@@ -3871,7 +3871,7 @@
             "HM_short": "Pnm21",
             "HM_simple": "Pnm21",
             "HM_numbered": "31: Pnm21",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "31:cab",
@@ -3895,7 +3895,7 @@
             "HM_short": "P21mn",
             "HM_simple": "P21mn",
             "HM_numbered": "31: P21mn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "31:-cba",
@@ -3919,7 +3919,7 @@
             "HM_short": "P21nm",
             "HM_simple": "P21nm",
             "HM_numbered": "31: P21nm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "31:bca",
@@ -3943,7 +3943,7 @@
             "HM_short": "Pn21m",
             "HM_simple": "Pn21m",
             "HM_numbered": "31: Pn21m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "31:a-cb",
@@ -3967,7 +3967,7 @@
             "HM_short": "Pm21n",
             "HM_simple": "Pm21n",
             "HM_numbered": "31: Pm21n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "32",
@@ -3991,7 +3991,7 @@
             "HM_short": "Pba2",
             "HM_simple": "Pba2",
             "HM_numbered": "32: Pba2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "32:cab",
@@ -4015,7 +4015,7 @@
             "HM_short": "P2cb",
             "HM_simple": "P2cb",
             "HM_numbered": "32: P2cb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "32:bca",
@@ -4039,7 +4039,7 @@
             "HM_short": "Pc2a",
             "HM_simple": "Pc2a",
             "HM_numbered": "32: Pc2a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "33",
@@ -4063,7 +4063,7 @@
             "HM_short": "Pna21",
             "HM_simple": "Pna21",
             "HM_numbered": "33: Pna21",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "33:ba-c",
@@ -4087,7 +4087,7 @@
             "HM_short": "Pbn21",
             "HM_simple": "Pbn21",
             "HM_numbered": "33: Pbn21",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "33:cab",
@@ -4111,7 +4111,7 @@
             "HM_short": "P21nb",
             "HM_simple": "P21nb",
             "HM_numbered": "33: P21nb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "33:-cba",
@@ -4135,7 +4135,7 @@
             "HM_short": "P21cn",
             "HM_simple": "P21cn",
             "HM_numbered": "33: P21cn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "33:bca",
@@ -4159,7 +4159,7 @@
             "HM_short": "Pc21n",
             "HM_simple": "Pc21n",
             "HM_numbered": "33: Pc21n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "33:a-cb",
@@ -4183,7 +4183,7 @@
             "HM_short": "Pn21a",
             "HM_simple": "Pn21a",
             "HM_numbered": "33: Pn21a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "34",
@@ -4207,7 +4207,7 @@
             "HM_short": "Pnn2",
             "HM_simple": "Pnn2",
             "HM_numbered": "34: Pnn2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "34:cab",
@@ -4231,7 +4231,7 @@
             "HM_short": "P2nn",
             "HM_simple": "P2nn",
             "HM_numbered": "34: P2nn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "34:bca",
@@ -4255,7 +4255,7 @@
             "HM_short": "Pn2n",
             "HM_simple": "Pn2n",
             "HM_numbered": "34: Pn2n",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "35",
@@ -4284,7 +4284,7 @@
             "HM_short": "Cmm2",
             "HM_simple": "Cmm2",
             "HM_numbered": "35: Cmm2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "35:cab",
@@ -4313,7 +4313,7 @@
             "HM_short": "A2mm",
             "HM_simple": "A2mm",
             "HM_numbered": "35: A2mm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "35:bca",
@@ -4342,7 +4342,7 @@
             "HM_short": "Bm2m",
             "HM_simple": "Bm2m",
             "HM_numbered": "35: Bm2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "36",
@@ -4371,7 +4371,7 @@
             "HM_short": "Cmc21",
             "HM_simple": "Cmc21",
             "HM_numbered": "36: Cmc21",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "36:ba-c",
@@ -4400,7 +4400,7 @@
             "HM_short": "Ccm21",
             "HM_simple": "Ccm21",
             "HM_numbered": "36: Ccm21",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "36:cab",
@@ -4429,7 +4429,7 @@
             "HM_short": "A21ma",
             "HM_simple": "A21ma",
             "HM_numbered": "36: A21ma",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "36:-cba",
@@ -4458,7 +4458,7 @@
             "HM_short": "A21am",
             "HM_simple": "A21am",
             "HM_numbered": "36: A21am",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "36:bca",
@@ -4487,7 +4487,7 @@
             "HM_short": "Bb21m",
             "HM_simple": "Bb21m",
             "HM_numbered": "36: Bb21m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "36:a-cb",
@@ -4516,7 +4516,7 @@
             "HM_short": "Bm21b",
             "HM_simple": "Bm21b",
             "HM_numbered": "36: Bm21b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "37",
@@ -4545,7 +4545,7 @@
             "HM_short": "Ccc2",
             "HM_simple": "Ccc2",
             "HM_numbered": "37: Ccc2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "37:cab",
@@ -4574,7 +4574,7 @@
             "HM_short": "A2aa",
             "HM_simple": "A2aa",
             "HM_numbered": "37: A2aa",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "37:bca",
@@ -4603,7 +4603,7 @@
             "HM_short": "Bb2b",
             "HM_simple": "Bb2b",
             "HM_numbered": "37: Bb2b",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "38",
@@ -4632,7 +4632,7 @@
             "HM_short": "Amm2",
             "HM_simple": "Amm2",
             "HM_numbered": "38: Amm2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "38:ba-c",
@@ -4661,7 +4661,7 @@
             "HM_short": "Bmm2",
             "HM_simple": "Bmm2",
             "HM_numbered": "38: Bmm2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "38:cab",
@@ -4690,7 +4690,7 @@
             "HM_short": "B2mm",
             "HM_simple": "B2mm",
             "HM_numbered": "38: B2mm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "38:-cba",
@@ -4719,7 +4719,7 @@
             "HM_short": "C2mm",
             "HM_simple": "C2mm",
             "HM_numbered": "38: C2mm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "38:bca",
@@ -4748,7 +4748,7 @@
             "HM_short": "Cm2m",
             "HM_simple": "Cm2m",
             "HM_numbered": "38: Cm2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "38:a-cb",
@@ -4777,7 +4777,7 @@
             "HM_short": "Am2m",
             "HM_simple": "Am2m",
             "HM_numbered": "38: Am2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "39",
@@ -4806,7 +4806,7 @@
             "HM_short": "Aem2",
             "HM_simple": "Aem2",
             "HM_numbered": "39: Aem2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "39:ba-c",
@@ -4835,7 +4835,7 @@
             "HM_short": "Bma2",
             "HM_simple": "Bma2",
             "HM_numbered": "39: Bma2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "39:cab",
@@ -4864,7 +4864,7 @@
             "HM_short": "B2cm",
             "HM_simple": "B2cm",
             "HM_numbered": "39: B2cm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "39:-cba",
@@ -4893,7 +4893,7 @@
             "HM_short": "C2mb",
             "HM_simple": "C2mb",
             "HM_numbered": "39: C2mb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "39:bca",
@@ -4922,7 +4922,7 @@
             "HM_short": "Cm2a",
             "HM_simple": "Cm2a",
             "HM_numbered": "39: Cm2a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "39:a-cb",
@@ -4951,7 +4951,7 @@
             "HM_short": "Ac2m",
             "HM_simple": "Ac2m",
             "HM_numbered": "39: Ac2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "40",
@@ -4980,7 +4980,7 @@
             "HM_short": "Ama2",
             "HM_simple": "Ama2",
             "HM_numbered": "40: Ama2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "40:ba-c",
@@ -5009,7 +5009,7 @@
             "HM_short": "Bbm2",
             "HM_simple": "Bbm2",
             "HM_numbered": "40: Bbm2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "40:cab",
@@ -5038,7 +5038,7 @@
             "HM_short": "B2mb",
             "HM_simple": "B2mb",
             "HM_numbered": "40: B2mb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "40:-cba",
@@ -5067,7 +5067,7 @@
             "HM_short": "C2cm",
             "HM_simple": "C2cm",
             "HM_numbered": "40: C2cm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "40:bca",
@@ -5096,7 +5096,7 @@
             "HM_short": "Cc2m",
             "HM_simple": "Cc2m",
             "HM_numbered": "40: Cc2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "40:a-cb",
@@ -5125,7 +5125,7 @@
             "HM_short": "Am2a",
             "HM_simple": "Am2a",
             "HM_numbered": "40: Am2a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "41",
@@ -5154,7 +5154,7 @@
             "HM_short": "Aea2",
             "HM_simple": "Aea2",
             "HM_numbered": "41: Aea2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "41:ba-c",
@@ -5183,7 +5183,7 @@
             "HM_short": "Bba2",
             "HM_simple": "Bba2",
             "HM_numbered": "41: Bba2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "41:cab",
@@ -5212,7 +5212,7 @@
             "HM_short": "B2cb",
             "HM_simple": "B2cb",
             "HM_numbered": "41: B2cb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "41:-cba",
@@ -5241,7 +5241,7 @@
             "HM_short": "C2cb",
             "HM_simple": "C2cb",
             "HM_numbered": "41: C2cb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "41:bca",
@@ -5270,7 +5270,7 @@
             "HM_short": "Cc2a",
             "HM_simple": "Cc2a",
             "HM_numbered": "41: Cc2a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "41:a-cb",
@@ -5299,7 +5299,7 @@
             "HM_short": "Ac2a",
             "HM_simple": "Ac2a",
             "HM_numbered": "41: Ac2a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "42",
@@ -5338,7 +5338,7 @@
             "HM_short": "Fmm2",
             "HM_simple": "Fmm2",
             "HM_numbered": "42: Fmm2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "42:cab",
@@ -5377,7 +5377,7 @@
             "HM_short": "F2mm",
             "HM_simple": "F2mm",
             "HM_numbered": "42: F2mm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "42:bca",
@@ -5416,7 +5416,7 @@
             "HM_short": "Fm2m",
             "HM_simple": "Fm2m",
             "HM_numbered": "42: Fm2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "43",
@@ -5455,7 +5455,7 @@
             "HM_short": "Fdd2",
             "HM_simple": "Fdd2",
             "HM_numbered": "43: Fdd2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "43:cab",
@@ -5494,7 +5494,7 @@
             "HM_short": "F2dd",
             "HM_simple": "F2dd",
             "HM_numbered": "43: F2dd",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "43:bca",
@@ -5533,7 +5533,7 @@
             "HM_short": "Fd2d",
             "HM_simple": "Fd2d",
             "HM_numbered": "43: Fd2d",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "44",
@@ -5562,7 +5562,7 @@
             "HM_short": "Imm2",
             "HM_simple": "Imm2",
             "HM_numbered": "44: Imm2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "44:cab",
@@ -5591,7 +5591,7 @@
             "HM_short": "I2mm",
             "HM_simple": "I2mm",
             "HM_numbered": "44: I2mm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "44:bca",
@@ -5620,7 +5620,7 @@
             "HM_short": "Im2m",
             "HM_simple": "Im2m",
             "HM_numbered": "44: Im2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "45",
@@ -5649,7 +5649,7 @@
             "HM_short": "Iba2",
             "HM_simple": "Iba2",
             "HM_numbered": "45: Iba2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "45:cab",
@@ -5678,7 +5678,7 @@
             "HM_short": "I2cb",
             "HM_simple": "I2cb",
             "HM_numbered": "45: I2cb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "45:bca",
@@ -5707,7 +5707,7 @@
             "HM_short": "Ic2a",
             "HM_simple": "Ic2a",
             "HM_numbered": "45: Ic2a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "46",
@@ -5736,7 +5736,7 @@
             "HM_short": "Ima2",
             "HM_simple": "Ima2",
             "HM_numbered": "46: Ima2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "46:ba-c",
@@ -5765,7 +5765,7 @@
             "HM_short": "Ibm2",
             "HM_simple": "Ibm2",
             "HM_numbered": "46: Ibm2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "46:cab",
@@ -5794,7 +5794,7 @@
             "HM_short": "I2mb",
             "HM_simple": "I2mb",
             "HM_numbered": "46: I2mb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "46:-cba",
@@ -5823,7 +5823,7 @@
             "HM_short": "I2cm",
             "HM_simple": "I2cm",
             "HM_numbered": "46: I2cm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "46:bca",
@@ -5852,7 +5852,7 @@
             "HM_short": "Ic2m",
             "HM_simple": "Ic2m",
             "HM_numbered": "46: Ic2m",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "46:a-cb",
@@ -5881,7 +5881,7 @@
             "HM_short": "Im2a",
             "HM_simple": "Im2a",
             "HM_numbered": "46: Im2a",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "47",
@@ -5910,7 +5910,7 @@
             "HM_short": "Pmmm",
             "HM_simple": "Pmmm",
             "HM_numbered": "47: Pmmm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "48:1",
@@ -5939,7 +5939,7 @@
             "HM_short": "Pnnn:1",
             "HM_simple": "Pnnn",
             "HM_numbered": "48: Pnnn:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "48:2",
@@ -5968,7 +5968,7 @@
             "HM_short": "Pnnn:2",
             "HM_simple": "Pnnn",
             "HM_numbered": "48: Pnnn:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "49",
@@ -5997,7 +5997,7 @@
             "HM_short": "Pccm",
             "HM_simple": "Pccm",
             "HM_numbered": "49: Pccm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "49:cab",
@@ -6026,7 +6026,7 @@
             "HM_short": "Pmaa",
             "HM_simple": "Pmaa",
             "HM_numbered": "49: Pmaa",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "49:bca",
@@ -6055,7 +6055,7 @@
             "HM_short": "Pbmb",
             "HM_simple": "Pbmb",
             "HM_numbered": "49: Pbmb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "50:1",
@@ -6084,7 +6084,7 @@
             "HM_short": "Pban:1",
             "HM_simple": "Pban",
             "HM_numbered": "50: Pban:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "50:2",
@@ -6113,7 +6113,7 @@
             "HM_short": "Pban:2",
             "HM_simple": "Pban",
             "HM_numbered": "50: Pban:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "50:1cab",
@@ -6142,7 +6142,7 @@
             "HM_short": "Pncb:1",
             "HM_simple": "Pncb",
             "HM_numbered": "50: Pncb:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "50:2cab",
@@ -6171,7 +6171,7 @@
             "HM_short": "Pncb:2",
             "HM_simple": "Pncb",
             "HM_numbered": "50: Pncb:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "50:1bca",
@@ -6200,7 +6200,7 @@
             "HM_short": "Pcna:1",
             "HM_simple": "Pcna",
             "HM_numbered": "50: Pcna:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "50:2bca",
@@ -6229,7 +6229,7 @@
             "HM_short": "Pcna:2",
             "HM_simple": "Pcna",
             "HM_numbered": "50: Pcna:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "51",
@@ -6258,7 +6258,7 @@
             "HM_short": "Pmma",
             "HM_simple": "Pmma",
             "HM_numbered": "51: Pmma",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "51:ba-c",
@@ -6287,7 +6287,7 @@
             "HM_short": "Pmmb",
             "HM_simple": "Pmmb",
             "HM_numbered": "51: Pmmb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "51:cab",
@@ -6316,7 +6316,7 @@
             "HM_short": "Pbmm",
             "HM_simple": "Pbmm",
             "HM_numbered": "51: Pbmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "51:-cba",
@@ -6345,7 +6345,7 @@
             "HM_short": "Pcmm",
             "HM_simple": "Pcmm",
             "HM_numbered": "51: Pcmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "51:bca",
@@ -6374,7 +6374,7 @@
             "HM_short": "Pmcm",
             "HM_simple": "Pmcm",
             "HM_numbered": "51: Pmcm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "51:a-cb",
@@ -6403,7 +6403,7 @@
             "HM_short": "Pmam",
             "HM_simple": "Pmam",
             "HM_numbered": "51: Pmam",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "52",
@@ -6432,7 +6432,7 @@
             "HM_short": "Pnna",
             "HM_simple": "Pnna",
             "HM_numbered": "52: Pnna",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "52:ba-c",
@@ -6461,7 +6461,7 @@
             "HM_short": "Pnnb",
             "HM_simple": "Pnnb",
             "HM_numbered": "52: Pnnb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "52:cab",
@@ -6490,7 +6490,7 @@
             "HM_short": "Pbnn",
             "HM_simple": "Pbnn",
             "HM_numbered": "52: Pbnn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "52:-cba",
@@ -6519,7 +6519,7 @@
             "HM_short": "Pcnn",
             "HM_simple": "Pcnn",
             "HM_numbered": "52: Pcnn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "52:bca",
@@ -6548,7 +6548,7 @@
             "HM_short": "Pncn",
             "HM_simple": "Pncn",
             "HM_numbered": "52: Pncn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "52:a-cb",
@@ -6577,7 +6577,7 @@
             "HM_short": "Pnan",
             "HM_simple": "Pnan",
             "HM_numbered": "52: Pnan",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "53",
@@ -6606,7 +6606,7 @@
             "HM_short": "Pmna",
             "HM_simple": "Pmna",
             "HM_numbered": "53: Pmna",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "53:ba-c",
@@ -6635,7 +6635,7 @@
             "HM_short": "Pnmb",
             "HM_simple": "Pnmb",
             "HM_numbered": "53: Pnmb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "53:cab",
@@ -6664,7 +6664,7 @@
             "HM_short": "Pbmn",
             "HM_simple": "Pbmn",
             "HM_numbered": "53: Pbmn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "53:-cba",
@@ -6693,7 +6693,7 @@
             "HM_short": "Pcnm",
             "HM_simple": "Pcnm",
             "HM_numbered": "53: Pcnm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "53:bca",
@@ -6722,7 +6722,7 @@
             "HM_short": "Pncm",
             "HM_simple": "Pncm",
             "HM_numbered": "53: Pncm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "53:a-cb",
@@ -6751,7 +6751,7 @@
             "HM_short": "Pman",
             "HM_simple": "Pman",
             "HM_numbered": "53: Pman",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "54",
@@ -6780,7 +6780,7 @@
             "HM_short": "Pcca",
             "HM_simple": "Pcca",
             "HM_numbered": "54: Pcca",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "54:ba-c",
@@ -6809,7 +6809,7 @@
             "HM_short": "Pccb",
             "HM_simple": "Pccb",
             "HM_numbered": "54: Pccb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "54:cab",
@@ -6838,7 +6838,7 @@
             "HM_short": "Pbaa",
             "HM_simple": "Pbaa",
             "HM_numbered": "54: Pbaa",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "54:-cba",
@@ -6867,7 +6867,7 @@
             "HM_short": "Pcaa",
             "HM_simple": "Pcaa",
             "HM_numbered": "54: Pcaa",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "54:bca",
@@ -6896,7 +6896,7 @@
             "HM_short": "Pbcb",
             "HM_simple": "Pbcb",
             "HM_numbered": "54: Pbcb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "54:a-cb",
@@ -6925,7 +6925,7 @@
             "HM_short": "Pbab",
             "HM_simple": "Pbab",
             "HM_numbered": "54: Pbab",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "55",
@@ -6954,7 +6954,7 @@
             "HM_short": "Pbam",
             "HM_simple": "Pbam",
             "HM_numbered": "55: Pbam",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "55:cab",
@@ -6983,7 +6983,7 @@
             "HM_short": "Pmcb",
             "HM_simple": "Pmcb",
             "HM_numbered": "55: Pmcb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "55:bca",
@@ -7012,7 +7012,7 @@
             "HM_short": "Pcma",
             "HM_simple": "Pcma",
             "HM_numbered": "55: Pcma",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "56",
@@ -7041,7 +7041,7 @@
             "HM_short": "Pccn",
             "HM_simple": "Pccn",
             "HM_numbered": "56: Pccn",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "56:cab",
@@ -7070,7 +7070,7 @@
             "HM_short": "Pnaa",
             "HM_simple": "Pnaa",
             "HM_numbered": "56: Pnaa",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "56:bca",
@@ -7099,7 +7099,7 @@
             "HM_short": "Pbnb",
             "HM_simple": "Pbnb",
             "HM_numbered": "56: Pbnb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "57",
@@ -7128,7 +7128,7 @@
             "HM_short": "Pbcm",
             "HM_simple": "Pbcm",
             "HM_numbered": "57: Pbcm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "57:ba-c",
@@ -7157,7 +7157,7 @@
             "HM_short": "Pcam",
             "HM_simple": "Pcam",
             "HM_numbered": "57: Pcam",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "57:cab",
@@ -7186,7 +7186,7 @@
             "HM_short": "Pmca",
             "HM_simple": "Pmca",
             "HM_numbered": "57: Pmca",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "57:-cba",
@@ -7215,7 +7215,7 @@
             "HM_short": "Pmab",
             "HM_simple": "Pmab",
             "HM_numbered": "57: Pmab",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "57:bca",
@@ -7244,7 +7244,7 @@
             "HM_short": "Pbma",
             "HM_simple": "Pbma",
             "HM_numbered": "57: Pbma",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "57:a-cb",
@@ -7273,7 +7273,7 @@
             "HM_short": "Pcmb",
             "HM_simple": "Pcmb",
             "HM_numbered": "57: Pcmb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "58",
@@ -7302,7 +7302,7 @@
             "HM_short": "Pnnm",
             "HM_simple": "Pnnm",
             "HM_numbered": "58: Pnnm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "58:cab",
@@ -7331,7 +7331,7 @@
             "HM_short": "Pmnn",
             "HM_simple": "Pmnn",
             "HM_numbered": "58: Pmnn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "58:bca",
@@ -7360,7 +7360,7 @@
             "HM_short": "Pnmn",
             "HM_simple": "Pnmn",
             "HM_numbered": "58: Pnmn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "59:1",
@@ -7389,7 +7389,7 @@
             "HM_short": "Pmmn:1",
             "HM_simple": "Pmmn",
             "HM_numbered": "59: Pmmn:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "59:2",
@@ -7418,7 +7418,7 @@
             "HM_short": "Pmmn:2",
             "HM_simple": "Pmmn",
             "HM_numbered": "59: Pmmn:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "59:1cab",
@@ -7447,7 +7447,7 @@
             "HM_short": "Pnmm:1",
             "HM_simple": "Pnmm",
             "HM_numbered": "59: Pnmm:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "59:2cab",
@@ -7476,7 +7476,7 @@
             "HM_short": "Pnmm:2",
             "HM_simple": "Pnmm",
             "HM_numbered": "59: Pnmm:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "59:1bca",
@@ -7505,7 +7505,7 @@
             "HM_short": "Pmnm:1",
             "HM_simple": "Pmnm",
             "HM_numbered": "59: Pmnm:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "59:2bca",
@@ -7534,7 +7534,7 @@
             "HM_short": "Pmnm:2",
             "HM_simple": "Pmnm",
             "HM_numbered": "59: Pmnm:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "60",
@@ -7563,7 +7563,7 @@
             "HM_short": "Pbcn",
             "HM_simple": "Pbcn",
             "HM_numbered": "60: Pbcn",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "60:ba-c",
@@ -7592,7 +7592,7 @@
             "HM_short": "Pcan",
             "HM_simple": "Pcan",
             "HM_numbered": "60: Pcan",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "60:cab",
@@ -7621,7 +7621,7 @@
             "HM_short": "Pnca",
             "HM_simple": "Pnca",
             "HM_numbered": "60: Pnca",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "60:-cba",
@@ -7650,7 +7650,7 @@
             "HM_short": "Pnab",
             "HM_simple": "Pnab",
             "HM_numbered": "60: Pnab",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "60:bca",
@@ -7679,7 +7679,7 @@
             "HM_short": "Pbna",
             "HM_simple": "Pbna",
             "HM_numbered": "60: Pbna",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "60:a-cb",
@@ -7708,7 +7708,7 @@
             "HM_short": "Pcnb",
             "HM_simple": "Pcnb",
             "HM_numbered": "60: Pcnb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "61",
@@ -7737,7 +7737,7 @@
             "HM_short": "Pbca",
             "HM_simple": "Pbca",
             "HM_numbered": "61: Pbca",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "61:ba-c",
@@ -7766,7 +7766,7 @@
             "HM_short": "Pcab",
             "HM_simple": "Pcab",
             "HM_numbered": "61: Pcab",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "62",
@@ -7795,7 +7795,7 @@
             "HM_short": "Pnma",
             "HM_simple": "Pnma",
             "HM_numbered": "62: Pnma",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "62:ba-c",
@@ -7824,7 +7824,7 @@
             "HM_short": "Pmnb",
             "HM_simple": "Pmnb",
             "HM_numbered": "62: Pmnb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "62:cab",
@@ -7853,7 +7853,7 @@
             "HM_short": "Pbnm",
             "HM_simple": "Pbnm",
             "HM_numbered": "62: Pbnm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "62:-cba",
@@ -7882,7 +7882,7 @@
             "HM_short": "Pcmn",
             "HM_simple": "Pcmn",
             "HM_numbered": "62: Pcmn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "62:bca",
@@ -7911,7 +7911,7 @@
             "HM_short": "Pmcn",
             "HM_simple": "Pmcn",
             "HM_numbered": "62: Pmcn",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "62:a-cb",
@@ -7940,7 +7940,7 @@
             "HM_short": "Pnam",
             "HM_simple": "Pnam",
             "HM_numbered": "62: Pnam",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "63",
@@ -7978,7 +7978,7 @@
             "HM_short": "Cmcm",
             "HM_simple": "Cmcm",
             "HM_numbered": "63: Cmcm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "63:ba-c",
@@ -8016,7 +8016,7 @@
             "HM_short": "Ccmm",
             "HM_simple": "Ccmm",
             "HM_numbered": "63: Ccmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "63:cab",
@@ -8054,7 +8054,7 @@
             "HM_short": "Amma",
             "HM_simple": "Amma",
             "HM_numbered": "63: Amma",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "63:-cba",
@@ -8092,7 +8092,7 @@
             "HM_short": "Amam",
             "HM_simple": "Amam",
             "HM_numbered": "63: Amam",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "63:bca",
@@ -8130,7 +8130,7 @@
             "HM_short": "Bbmm",
             "HM_simple": "Bbmm",
             "HM_numbered": "63: Bbmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "63:a-cb",
@@ -8168,7 +8168,7 @@
             "HM_short": "Bmmb",
             "HM_simple": "Bmmb",
             "HM_numbered": "63: Bmmb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "64",
@@ -8206,7 +8206,7 @@
             "HM_short": "Cmce",
             "HM_simple": "Cmce",
             "HM_numbered": "64: Cmce",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "64:ba-c",
@@ -8244,7 +8244,7 @@
             "HM_short": "Ccmb",
             "HM_simple": "Ccmb",
             "HM_numbered": "64: Ccmb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "64:cab",
@@ -8282,7 +8282,7 @@
             "HM_short": "Abma",
             "HM_simple": "Abma",
             "HM_numbered": "64: Abma",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "64:-cba",
@@ -8320,7 +8320,7 @@
             "HM_short": "Acam",
             "HM_simple": "Acam",
             "HM_numbered": "64: Acam",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "64:bca",
@@ -8358,7 +8358,7 @@
             "HM_short": "Bbcm",
             "HM_simple": "Bbcm",
             "HM_numbered": "64: Bbcm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "64:a-cb",
@@ -8396,7 +8396,7 @@
             "HM_short": "Bmab",
             "HM_simple": "Bmab",
             "HM_numbered": "64: Bmab",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "65",
@@ -8434,7 +8434,7 @@
             "HM_short": "Cmmm",
             "HM_simple": "Cmmm",
             "HM_numbered": "65: Cmmm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "65:cab",
@@ -8472,7 +8472,7 @@
             "HM_short": "Ammm",
             "HM_simple": "Ammm",
             "HM_numbered": "65: Ammm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "65:bca",
@@ -8510,7 +8510,7 @@
             "HM_short": "Bmmm",
             "HM_simple": "Bmmm",
             "HM_numbered": "65: Bmmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "66",
@@ -8548,7 +8548,7 @@
             "HM_short": "Cccm",
             "HM_simple": "Cccm",
             "HM_numbered": "66: Cccm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "66:cab",
@@ -8586,7 +8586,7 @@
             "HM_short": "Amaa",
             "HM_simple": "Amaa",
             "HM_numbered": "66: Amaa",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "66:bca",
@@ -8624,7 +8624,7 @@
             "HM_short": "Bbmb",
             "HM_simple": "Bbmb",
             "HM_numbered": "66: Bbmb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "67",
@@ -8662,7 +8662,7 @@
             "HM_short": "Cmme",
             "HM_simple": "Cmme",
             "HM_numbered": "67: Cmme",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "67:ba-c",
@@ -8700,7 +8700,7 @@
             "HM_short": "Cmmb",
             "HM_simple": "Cmmb",
             "HM_numbered": "67: Cmmb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "67:cab",
@@ -8738,7 +8738,7 @@
             "HM_short": "Abmm",
             "HM_simple": "Abmm",
             "HM_numbered": "67: Abmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "67:-cba",
@@ -8776,7 +8776,7 @@
             "HM_short": "Acmm",
             "HM_simple": "Acmm",
             "HM_numbered": "67: Acmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "67:bca",
@@ -8814,7 +8814,7 @@
             "HM_short": "Bmcm",
             "HM_simple": "Bmcm",
             "HM_numbered": "67: Bmcm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "67:a-cb",
@@ -8852,7 +8852,7 @@
             "HM_short": "Bmam",
             "HM_simple": "Bmam",
             "HM_numbered": "67: Bmam",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:1",
@@ -8890,7 +8890,7 @@
             "HM_short": "Ccce:1",
             "HM_simple": "Ccce",
             "HM_numbered": "68: Ccce:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "68:2",
@@ -8928,7 +8928,7 @@
             "HM_short": "Ccce:2",
             "HM_simple": "Ccce",
             "HM_numbered": "68: Ccce:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:1ba-c",
@@ -8966,7 +8966,7 @@
             "HM_short": "Cccb:1",
             "HM_simple": "Cccb",
             "HM_numbered": "68: Cccb:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:2ba-c",
@@ -9004,7 +9004,7 @@
             "HM_short": "Cccb:2",
             "HM_simple": "Cccb",
             "HM_numbered": "68: Cccb:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:1cab",
@@ -9042,7 +9042,7 @@
             "HM_short": "Abaa:1",
             "HM_simple": "Abaa",
             "HM_numbered": "68: Abaa:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:2cab",
@@ -9080,7 +9080,7 @@
             "HM_short": "Abaa:2",
             "HM_simple": "Abaa",
             "HM_numbered": "68: Abaa:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:1-cba",
@@ -9118,7 +9118,7 @@
             "HM_short": "Acaa:1",
             "HM_simple": "Acaa",
             "HM_numbered": "68: Acaa:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:2-cba",
@@ -9156,7 +9156,7 @@
             "HM_short": "Acaa:2",
             "HM_simple": "Acaa",
             "HM_numbered": "68: Acaa:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:1bca",
@@ -9194,7 +9194,7 @@
             "HM_short": "Bbcb:1",
             "HM_simple": "Bbcb",
             "HM_numbered": "68: Bbcb:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:2bca",
@@ -9232,7 +9232,7 @@
             "HM_short": "Bbcb:2",
             "HM_simple": "Bbcb",
             "HM_numbered": "68: Bbcb:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:1a-cb",
@@ -9270,7 +9270,7 @@
             "HM_short": "Bbab:1",
             "HM_simple": "Bbab",
             "HM_numbered": "68: Bbab:1",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "68:2a-cb",
@@ -9308,7 +9308,7 @@
             "HM_short": "Bbab:2",
             "HM_simple": "Bbab",
             "HM_numbered": "68: Bbab:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "69",
@@ -9364,7 +9364,7 @@
             "HM_short": "Fmmm",
             "HM_simple": "Fmmm",
             "HM_numbered": "69: Fmmm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "70:1",
@@ -9420,7 +9420,7 @@
             "HM_short": "Fddd:1",
             "HM_simple": "Fddd",
             "HM_numbered": "70: Fddd:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "70:2",
@@ -9476,7 +9476,7 @@
             "HM_short": "Fddd:2",
             "HM_simple": "Fddd",
             "HM_numbered": "70: Fddd:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "71",
@@ -9514,7 +9514,7 @@
             "HM_short": "Immm",
             "HM_simple": "Immm",
             "HM_numbered": "71: Immm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "72",
@@ -9552,7 +9552,7 @@
             "HM_short": "Ibam",
             "HM_simple": "Ibam",
             "HM_numbered": "72: Ibam",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "72:cab",
@@ -9590,7 +9590,7 @@
             "HM_short": "Imcb",
             "HM_simple": "Imcb",
             "HM_numbered": "72: Imcb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "72:bca",
@@ -9628,7 +9628,7 @@
             "HM_short": "Icma",
             "HM_simple": "Icma",
             "HM_numbered": "72: Icma",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "73",
@@ -9666,7 +9666,7 @@
             "HM_short": "Ibca",
             "HM_simple": "Ibca",
             "HM_numbered": "73: Ibca",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "73:ba-c",
@@ -9704,7 +9704,7 @@
             "HM_short": "Icab",
             "HM_simple": "Icab",
             "HM_numbered": "73: Icab",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "74",
@@ -9742,7 +9742,7 @@
             "HM_short": "Imma",
             "HM_simple": "Imma",
             "HM_numbered": "74: Imma",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "74:ba-c",
@@ -9780,7 +9780,7 @@
             "HM_short": "Immb",
             "HM_simple": "Immb",
             "HM_numbered": "74: Immb",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "74:cab",
@@ -9818,7 +9818,7 @@
             "HM_short": "Ibmm",
             "HM_simple": "Ibmm",
             "HM_numbered": "74: Ibmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "74:-cba",
@@ -9856,7 +9856,7 @@
             "HM_short": "Icmm",
             "HM_simple": "Icmm",
             "HM_numbered": "74: Icmm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "74:bca",
@@ -9894,7 +9894,7 @@
             "HM_short": "Imcm",
             "HM_simple": "Imcm",
             "HM_numbered": "74: Imcm",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "74:a-cb",
@@ -9932,7 +9932,7 @@
             "HM_short": "Imam",
             "HM_simple": "Imam",
             "HM_numbered": "74: Imam",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "75",
@@ -9955,7 +9955,7 @@
             "HM_short": "P4",
             "HM_simple": "P4",
             "HM_numbered": "75: P4",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "76",
@@ -9978,7 +9978,7 @@
             "HM_short": "P41",
             "HM_simple": "P41",
             "HM_numbered": "76: P41",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "77",
@@ -10001,7 +10001,7 @@
             "HM_short": "P42",
             "HM_simple": "P42",
             "HM_numbered": "77: P42",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "78",
@@ -10024,7 +10024,7 @@
             "HM_short": "P43",
             "HM_simple": "P43",
             "HM_numbered": "78: P43",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "79",
@@ -10052,7 +10052,7 @@
             "HM_short": "I4",
             "HM_simple": "I4",
             "HM_numbered": "79: I4",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "80",
@@ -10080,7 +10080,7 @@
             "HM_short": "I41",
             "HM_simple": "I41",
             "HM_numbered": "80: I41",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "81",
@@ -10103,7 +10103,7 @@
             "HM_short": "P-4",
             "HM_simple": "P-4",
             "HM_numbered": "81: P-4",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "82",
@@ -10131,7 +10131,7 @@
             "HM_short": "I-4",
             "HM_simple": "I-4",
             "HM_numbered": "82: I-4",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "83",
@@ -10159,7 +10159,7 @@
             "HM_short": "P4/m",
             "HM_simple": "P4/m",
             "HM_numbered": "83: P4/m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "84",
@@ -10187,7 +10187,7 @@
             "HM_short": "P42/m",
             "HM_simple": "P42/m",
             "HM_numbered": "84: P42/m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "85:1",
@@ -10215,7 +10215,7 @@
             "HM_short": "P4/n:1",
             "HM_simple": "P4/n",
             "HM_numbered": "85: P4/n:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "85:2",
@@ -10243,7 +10243,7 @@
             "HM_short": "P4/n:2",
             "HM_simple": "P4/n",
             "HM_numbered": "85: P4/n:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "86:1",
@@ -10271,7 +10271,7 @@
             "HM_short": "P42/n:1",
             "HM_simple": "P42/n",
             "HM_numbered": "86: P42/n:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "86:2",
@@ -10299,7 +10299,7 @@
             "HM_short": "P42/n:2",
             "HM_simple": "P42/n",
             "HM_numbered": "86: P42/n:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "87",
@@ -10336,7 +10336,7 @@
             "HM_short": "I4/m",
             "HM_simple": "I4/m",
             "HM_numbered": "87: I4/m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "88:1",
@@ -10373,7 +10373,7 @@
             "HM_short": "I41/a:1",
             "HM_simple": "I41/a",
             "HM_numbered": "88: I41/a:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "88:2",
@@ -10410,7 +10410,7 @@
             "HM_short": "I41/a:2",
             "HM_simple": "I41/a",
             "HM_numbered": "88: I41/a:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "89",
@@ -10438,7 +10438,7 @@
             "HM_short": "P422",
             "HM_simple": "P422",
             "HM_numbered": "89: P422",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "90",
@@ -10466,7 +10466,7 @@
             "HM_short": "P4212",
             "HM_simple": "P4212",
             "HM_numbered": "90: P4212",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "91",
@@ -10494,7 +10494,7 @@
             "HM_short": "P4122",
             "HM_simple": "P4122",
             "HM_numbered": "91: P4122",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "92",
@@ -10522,7 +10522,7 @@
             "HM_short": "P41212",
             "HM_simple": "P41212",
             "HM_numbered": "92: P41212",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "93",
@@ -10550,7 +10550,7 @@
             "HM_short": "P4222",
             "HM_simple": "P4222",
             "HM_numbered": "93: P4222",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "94",
@@ -10578,7 +10578,7 @@
             "HM_short": "P42212",
             "HM_simple": "P42212",
             "HM_numbered": "94: P42212",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "95",
@@ -10606,7 +10606,7 @@
             "HM_short": "P4322",
             "HM_simple": "P4322",
             "HM_numbered": "95: P4322",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "96",
@@ -10634,7 +10634,7 @@
             "HM_short": "P43212",
             "HM_simple": "P43212",
             "HM_numbered": "96: P43212",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "97",
@@ -10671,7 +10671,7 @@
             "HM_short": "I422",
             "HM_simple": "I422",
             "HM_numbered": "97: I422",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "98",
@@ -10708,7 +10708,7 @@
             "HM_short": "I4122",
             "HM_simple": "I4122",
             "HM_numbered": "98: I4122",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "99",
@@ -10736,7 +10736,7 @@
             "HM_short": "P4mm",
             "HM_simple": "P4mm",
             "HM_numbered": "99: P4mm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "100",
@@ -10764,7 +10764,7 @@
             "HM_short": "P4bm",
             "HM_simple": "P4bm",
             "HM_numbered": "100: P4bm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "101",
@@ -10792,7 +10792,7 @@
             "HM_short": "P42cm",
             "HM_simple": "P42cm",
             "HM_numbered": "101: P42cm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "102",
@@ -10820,7 +10820,7 @@
             "HM_short": "P42nm",
             "HM_simple": "P42nm",
             "HM_numbered": "102: P42nm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "103",
@@ -10848,7 +10848,7 @@
             "HM_short": "P4cc",
             "HM_simple": "P4cc",
             "HM_numbered": "103: P4cc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "104",
@@ -10876,7 +10876,7 @@
             "HM_short": "P4nc",
             "HM_simple": "P4nc",
             "HM_numbered": "104: P4nc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "105",
@@ -10904,7 +10904,7 @@
             "HM_short": "P42mc",
             "HM_simple": "P42mc",
             "HM_numbered": "105: P42mc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "106",
@@ -10932,7 +10932,7 @@
             "HM_short": "P42bc",
             "HM_simple": "P42bc",
             "HM_numbered": "106: P42bc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "107",
@@ -10969,7 +10969,7 @@
             "HM_short": "I4mm",
             "HM_simple": "I4mm",
             "HM_numbered": "107: I4mm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "108",
@@ -11006,7 +11006,7 @@
             "HM_short": "I4cm",
             "HM_simple": "I4cm",
             "HM_numbered": "108: I4cm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "109",
@@ -11043,7 +11043,7 @@
             "HM_short": "I41md",
             "HM_simple": "I41md",
             "HM_numbered": "109: I41md",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "110",
@@ -11080,7 +11080,7 @@
             "HM_short": "I41cd",
             "HM_simple": "I41cd",
             "HM_numbered": "110: I41cd",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "111",
@@ -11108,7 +11108,7 @@
             "HM_short": "P-42m",
             "HM_simple": "P-42m",
             "HM_numbered": "111: P-42m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "112",
@@ -11136,7 +11136,7 @@
             "HM_short": "P-42c",
             "HM_simple": "P-42c",
             "HM_numbered": "112: P-42c",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "113",
@@ -11164,7 +11164,7 @@
             "HM_short": "P-421m",
             "HM_simple": "P-421m",
             "HM_numbered": "113: P-421m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "114",
@@ -11192,7 +11192,7 @@
             "HM_short": "P-421c",
             "HM_simple": "P-421c",
             "HM_numbered": "114: P-421c",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "115",
@@ -11220,7 +11220,7 @@
             "HM_short": "P-4m2",
             "HM_simple": "P-4m2",
             "HM_numbered": "115: P-4m2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "116",
@@ -11248,7 +11248,7 @@
             "HM_short": "P-4c2",
             "HM_simple": "P-4c2",
             "HM_numbered": "116: P-4c2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "117",
@@ -11276,7 +11276,7 @@
             "HM_short": "P-4b2",
             "HM_simple": "P-4b2",
             "HM_numbered": "117: P-4b2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "118",
@@ -11304,7 +11304,7 @@
             "HM_short": "P-4n2",
             "HM_simple": "P-4n2",
             "HM_numbered": "118: P-4n2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "119",
@@ -11341,7 +11341,7 @@
             "HM_short": "I-4m2",
             "HM_simple": "I-4m2",
             "HM_numbered": "119: I-4m2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "120",
@@ -11378,7 +11378,7 @@
             "HM_short": "I-4c2",
             "HM_simple": "I-4c2",
             "HM_numbered": "120: I-4c2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "121",
@@ -11415,7 +11415,7 @@
             "HM_short": "I-42m",
             "HM_simple": "I-42m",
             "HM_numbered": "121: I-42m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "122",
@@ -11452,7 +11452,7 @@
             "HM_short": "I-42d",
             "HM_simple": "I-42d",
             "HM_numbered": "122: I-42d",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "123",
@@ -11489,7 +11489,7 @@
             "HM_short": "P4/mmm",
             "HM_simple": "P4/mmm",
             "HM_numbered": "123: P4/mmm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "124",
@@ -11526,7 +11526,7 @@
             "HM_short": "P4/mcc",
             "HM_simple": "P4/mcc",
             "HM_numbered": "124: P4/mcc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "125:1",
@@ -11563,7 +11563,7 @@
             "HM_short": "P4/nbm:1",
             "HM_simple": "P4/nbm",
             "HM_numbered": "125: P4/nbm:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "125:2",
@@ -11600,7 +11600,7 @@
             "HM_short": "P4/nbm:2",
             "HM_simple": "P4/nbm",
             "HM_numbered": "125: P4/nbm:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "126:1",
@@ -11637,7 +11637,7 @@
             "HM_short": "P4/nnc:1",
             "HM_simple": "P4/nnc",
             "HM_numbered": "126: P4/nnc:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "126:2",
@@ -11674,7 +11674,7 @@
             "HM_short": "P4/nnc:2",
             "HM_simple": "P4/nnc",
             "HM_numbered": "126: P4/nnc:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "127",
@@ -11711,7 +11711,7 @@
             "HM_short": "P4/mbm",
             "HM_simple": "P4/mbm",
             "HM_numbered": "127: P4/mbm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "128",
@@ -11748,7 +11748,7 @@
             "HM_short": "P4/mnc",
             "HM_simple": "P4/mnc",
             "HM_numbered": "128: P4/mnc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "129:1",
@@ -11785,7 +11785,7 @@
             "HM_short": "P4/nmm:1",
             "HM_simple": "P4/nmm",
             "HM_numbered": "129: P4/nmm:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "129:2",
@@ -11822,7 +11822,7 @@
             "HM_short": "P4/nmm:2",
             "HM_simple": "P4/nmm",
             "HM_numbered": "129: P4/nmm:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "130:1",
@@ -11859,7 +11859,7 @@
             "HM_short": "P4/ncc:1",
             "HM_simple": "P4/ncc",
             "HM_numbered": "130: P4/ncc:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "130:2",
@@ -11896,7 +11896,7 @@
             "HM_short": "P4/ncc:2",
             "HM_simple": "P4/ncc",
             "HM_numbered": "130: P4/ncc:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "131",
@@ -11933,7 +11933,7 @@
             "HM_short": "P42/mmc",
             "HM_simple": "P42/mmc",
             "HM_numbered": "131: P42/mmc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "132",
@@ -11970,7 +11970,7 @@
             "HM_short": "P42/mcm",
             "HM_simple": "P42/mcm",
             "HM_numbered": "132: P42/mcm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "133:1",
@@ -12007,7 +12007,7 @@
             "HM_short": "P42/nbc:1",
             "HM_simple": "P42/nbc",
             "HM_numbered": "133: P42/nbc:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "133:2",
@@ -12044,7 +12044,7 @@
             "HM_short": "P42/nbc:2",
             "HM_simple": "P42/nbc",
             "HM_numbered": "133: P42/nbc:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "134:1",
@@ -12081,7 +12081,7 @@
             "HM_short": "P42/nnm:1",
             "HM_simple": "P42/nnm",
             "HM_numbered": "134: P42/nnm:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "134:2",
@@ -12118,7 +12118,7 @@
             "HM_short": "P42/nnm:2",
             "HM_simple": "P42/nnm",
             "HM_numbered": "134: P42/nnm:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "135",
@@ -12155,7 +12155,7 @@
             "HM_short": "P42/mbc",
             "HM_simple": "P42/mbc",
             "HM_numbered": "135: P42/mbc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "136",
@@ -12192,7 +12192,7 @@
             "HM_short": "P42/mnm",
             "HM_simple": "P42/mnm",
             "HM_numbered": "136: P42/mnm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "137:1",
@@ -12229,7 +12229,7 @@
             "HM_short": "P42/nmc:1",
             "HM_simple": "P42/nmc",
             "HM_numbered": "137: P42/nmc:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "137:2",
@@ -12266,7 +12266,7 @@
             "HM_short": "P42/nmc:2",
             "HM_simple": "P42/nmc",
             "HM_numbered": "137: P42/nmc:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "138:1",
@@ -12303,7 +12303,7 @@
             "HM_short": "P42/ncm:1",
             "HM_simple": "P42/ncm",
             "HM_numbered": "138: P42/ncm:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "138:2",
@@ -12340,7 +12340,7 @@
             "HM_short": "P42/ncm:2",
             "HM_simple": "P42/ncm",
             "HM_numbered": "138: P42/ncm:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "139",
@@ -12394,7 +12394,7 @@
             "HM_short": "I4/mmm",
             "HM_simple": "I4/mmm",
             "HM_numbered": "139: I4/mmm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "140",
@@ -12448,7 +12448,7 @@
             "HM_short": "I4/mcm",
             "HM_simple": "I4/mcm",
             "HM_numbered": "140: I4/mcm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "141:1",
@@ -12502,7 +12502,7 @@
             "HM_short": "I41/amd:1",
             "HM_simple": "I41/amd",
             "HM_numbered": "141: I41/amd:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "141:2",
@@ -12556,7 +12556,7 @@
             "HM_short": "I41/amd:2",
             "HM_simple": "I41/amd",
             "HM_numbered": "141: I41/amd:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "142:1",
@@ -12610,7 +12610,7 @@
             "HM_short": "I41/acd:1",
             "HM_simple": "I41/acd",
             "HM_numbered": "142: I41/acd:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "142:2",
@@ -12664,7 +12664,7 @@
             "HM_short": "I41/acd:2",
             "HM_simple": "I41/acd",
             "HM_numbered": "142: I41/acd:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "143",
@@ -12686,7 +12686,7 @@
             "HM_short": "P3",
             "HM_simple": "P3",
             "HM_numbered": "143: P3",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "144",
@@ -12708,7 +12708,7 @@
             "HM_short": "P31",
             "HM_simple": "P31",
             "HM_numbered": "144: P31",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "145",
@@ -12730,7 +12730,7 @@
             "HM_short": "P32",
             "HM_simple": "P32",
             "HM_numbered": "145: P32",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "146:h",
@@ -12760,7 +12760,7 @@
             "HM_short": "R3:h",
             "HM_simple": "R3",
             "HM_numbered": "146: R3:h",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "146:r",
@@ -12782,7 +12782,7 @@
             "HM_short": "R3:r",
             "HM_simple": "R3",
             "HM_numbered": "146: R3:r",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "147",
@@ -12808,7 +12808,7 @@
             "HM_short": "P-3",
             "HM_simple": "P-3",
             "HM_numbered": "147: P-3",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "148:h",
@@ -12848,7 +12848,7 @@
             "HM_short": "R-3:h",
             "HM_simple": "R-3",
             "HM_numbered": "148: R-3:h",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "148:r",
@@ -12874,7 +12874,7 @@
             "HM_short": "R-3:r",
             "HM_simple": "R-3",
             "HM_numbered": "148: R-3:r",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "149",
@@ -12900,7 +12900,7 @@
             "HM_short": "P312",
             "HM_simple": "P312",
             "HM_numbered": "149: P312",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "150",
@@ -12926,7 +12926,7 @@
             "HM_short": "P321",
             "HM_simple": "P321",
             "HM_numbered": "150: P321",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "151",
@@ -12952,7 +12952,7 @@
             "HM_short": "P3112",
             "HM_simple": "P3112",
             "HM_numbered": "151: P3112",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "152",
@@ -12978,7 +12978,7 @@
             "HM_short": "P3121",
             "HM_simple": "P3121",
             "HM_numbered": "152: P3121",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "153",
@@ -13004,7 +13004,7 @@
             "HM_short": "P3212",
             "HM_simple": "P3212",
             "HM_numbered": "153: P3212",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "154",
@@ -13030,7 +13030,7 @@
             "HM_short": "P3221",
             "HM_simple": "P3221",
             "HM_numbered": "154: P3221",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "155:h",
@@ -13070,7 +13070,7 @@
             "HM_short": "R32:h",
             "HM_simple": "R32",
             "HM_numbered": "155: R32:h",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "155:r",
@@ -13096,7 +13096,7 @@
             "HM_short": "R32:r",
             "HM_simple": "R32",
             "HM_numbered": "155: R32:r",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "156",
@@ -13122,7 +13122,7 @@
             "HM_short": "P3m1",
             "HM_simple": "P3m1",
             "HM_numbered": "156: P3m1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "157",
@@ -13148,7 +13148,7 @@
             "HM_short": "P31m",
             "HM_simple": "P31m",
             "HM_numbered": "157: P31m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "158",
@@ -13174,7 +13174,7 @@
             "HM_short": "P3c1",
             "HM_simple": "P3c1",
             "HM_numbered": "158: P3c1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "159",
@@ -13200,7 +13200,7 @@
             "HM_short": "P31c",
             "HM_simple": "P31c",
             "HM_numbered": "159: P31c",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "160:h",
@@ -13240,7 +13240,7 @@
             "HM_short": "R3m:h",
             "HM_simple": "R3m",
             "HM_numbered": "160: R3m:h",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "160:r",
@@ -13266,7 +13266,7 @@
             "HM_short": "R3m:r",
             "HM_simple": "R3m",
             "HM_numbered": "160: R3m:r",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "161:h",
@@ -13306,7 +13306,7 @@
             "HM_short": "R3c:h",
             "HM_simple": "R3c",
             "HM_numbered": "161: R3c:h",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "161:r",
@@ -13332,7 +13332,7 @@
             "HM_short": "R3c:r",
             "HM_simple": "R3c",
             "HM_numbered": "161: R3c:r",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "162",
@@ -13365,7 +13365,7 @@
             "HM_short": "P-31m",
             "HM_simple": "P-31m",
             "HM_numbered": "162: P-31m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "163",
@@ -13398,7 +13398,7 @@
             "HM_short": "P-31c",
             "HM_simple": "P-31c",
             "HM_numbered": "163: P-31c",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "164",
@@ -13431,7 +13431,7 @@
             "HM_short": "P-3m1",
             "HM_simple": "P-3m1",
             "HM_numbered": "164: P-3m1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "165",
@@ -13464,7 +13464,7 @@
             "HM_short": "P-3c1",
             "HM_simple": "P-3c1",
             "HM_numbered": "165: P-3c1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "166:h",
@@ -13523,7 +13523,7 @@
             "HM_short": "R-3m:h",
             "HM_simple": "R-3m",
             "HM_numbered": "166: R-3m:h",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "166:r",
@@ -13556,7 +13556,7 @@
             "HM_short": "R-3m:r",
             "HM_simple": "R-3m",
             "HM_numbered": "166: R-3m:r",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "167:h",
@@ -13615,7 +13615,7 @@
             "HM_short": "R-3c:h",
             "HM_simple": "R-3c",
             "HM_numbered": "167: R-3c:h",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "167:r",
@@ -13648,7 +13648,7 @@
             "HM_short": "R-3c:r",
             "HM_simple": "R-3c",
             "HM_numbered": "167: R-3c:r",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "168",
@@ -13673,7 +13673,7 @@
             "HM_short": "P6",
             "HM_simple": "P6",
             "HM_numbered": "168: P6",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "169",
@@ -13698,7 +13698,7 @@
             "HM_short": "P61",
             "HM_simple": "P61",
             "HM_numbered": "169: P61",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "170",
@@ -13723,7 +13723,7 @@
             "HM_short": "P65",
             "HM_simple": "P65",
             "HM_numbered": "170: P65",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "171",
@@ -13748,7 +13748,7 @@
             "HM_short": "P62",
             "HM_simple": "P62",
             "HM_numbered": "171: P62",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "172",
@@ -13773,7 +13773,7 @@
             "HM_short": "P64",
             "HM_simple": "P64",
             "HM_numbered": "172: P64",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "173",
@@ -13798,7 +13798,7 @@
             "HM_short": "P63",
             "HM_simple": "P63",
             "HM_numbered": "173: P63",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "174",
@@ -13823,7 +13823,7 @@
             "HM_short": "P-6",
             "HM_simple": "P-6",
             "HM_numbered": "174: P-6",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "175",
@@ -13855,7 +13855,7 @@
             "HM_short": "P6/m",
             "HM_simple": "P6/m",
             "HM_numbered": "175: P6/m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "176",
@@ -13887,7 +13887,7 @@
             "HM_short": "P63/m",
             "HM_simple": "P63/m",
             "HM_numbered": "176: P63/m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "177",
@@ -13919,7 +13919,7 @@
             "HM_short": "P622",
             "HM_simple": "P622",
             "HM_numbered": "177: P622",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "178",
@@ -13951,7 +13951,7 @@
             "HM_short": "P6122",
             "HM_simple": "P6122",
             "HM_numbered": "178: P6122",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "179",
@@ -13983,7 +13983,7 @@
             "HM_short": "P6522",
             "HM_simple": "P6522",
             "HM_numbered": "179: P6522",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "180",
@@ -14015,7 +14015,7 @@
             "HM_short": "P6222",
             "HM_simple": "P6222",
             "HM_numbered": "180: P6222",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "181",
@@ -14047,7 +14047,7 @@
             "HM_short": "P6422",
             "HM_simple": "P6422",
             "HM_numbered": "181: P6422",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "182",
@@ -14079,7 +14079,7 @@
             "HM_short": "P6322",
             "HM_simple": "P6322",
             "HM_numbered": "182: P6322",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "183",
@@ -14111,7 +14111,7 @@
             "HM_short": "P6mm",
             "HM_simple": "P6mm",
             "HM_numbered": "183: P6mm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "184",
@@ -14143,7 +14143,7 @@
             "HM_short": "P6cc",
             "HM_simple": "P6cc",
             "HM_numbered": "184: P6cc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "185",
@@ -14175,7 +14175,7 @@
             "HM_short": "P63cm",
             "HM_simple": "P63cm",
             "HM_numbered": "185: P63cm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "186",
@@ -14207,7 +14207,7 @@
             "HM_short": "P63mc",
             "HM_simple": "P63mc",
             "HM_numbered": "186: P63mc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "187",
@@ -14239,7 +14239,7 @@
             "HM_short": "P-6m2",
             "HM_simple": "P-6m2",
             "HM_numbered": "187: P-6m2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "188",
@@ -14271,7 +14271,7 @@
             "HM_short": "P-6c2",
             "HM_simple": "P-6c2",
             "HM_numbered": "188: P-6c2",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "189",
@@ -14303,7 +14303,7 @@
             "HM_short": "P-62m",
             "HM_simple": "P-62m",
             "HM_numbered": "189: P-62m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "190",
@@ -14335,7 +14335,7 @@
             "HM_short": "P-62c",
             "HM_simple": "P-62c",
             "HM_numbered": "190: P-62c",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "191",
@@ -14380,7 +14380,7 @@
             "HM_short": "P6/mmm",
             "HM_simple": "P6/mmm",
             "HM_numbered": "191: P6/mmm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "192",
@@ -14425,7 +14425,7 @@
             "HM_short": "P6/mcc",
             "HM_simple": "P6/mcc",
             "HM_numbered": "192: P6/mcc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "193",
@@ -14470,7 +14470,7 @@
             "HM_short": "P63/mcm",
             "HM_simple": "P63/mcm",
             "HM_numbered": "193: P63/mcm",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "194",
@@ -14515,7 +14515,7 @@
             "HM_short": "P63/mmc",
             "HM_simple": "P63/mmc",
             "HM_numbered": "194: P63/mmc",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "195",
@@ -14548,7 +14548,7 @@
             "HM_short": "P23",
             "HM_simple": "P23",
             "HM_numbered": "195: P23",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "196",
@@ -14620,7 +14620,7 @@
             "HM_short": "F23",
             "HM_simple": "F23",
             "HM_numbered": "196: F23",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "197",
@@ -14666,7 +14666,7 @@
             "HM_short": "I23",
             "HM_simple": "I23",
             "HM_numbered": "197: I23",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "198",
@@ -14699,7 +14699,7 @@
             "HM_short": "P213",
             "HM_simple": "P213",
             "HM_numbered": "198: P213",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "199",
@@ -14745,7 +14745,7 @@
             "HM_short": "I213",
             "HM_simple": "I213",
             "HM_numbered": "199: I213",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "200",
@@ -14791,7 +14791,7 @@
             "HM_short": "Pm-3",
             "HM_simple": "Pm-3",
             "HM_numbered": "200: Pm-3",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "201:1",
@@ -14837,7 +14837,7 @@
             "HM_short": "Pn-3:1",
             "HM_simple": "Pn-3",
             "HM_numbered": "201: Pn-3:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "201:2",
@@ -14883,7 +14883,7 @@
             "HM_short": "Pn-3:2",
             "HM_simple": "Pn-3",
             "HM_numbered": "201: Pn-3:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "202",
@@ -15004,7 +15004,7 @@
             "HM_short": "Fm-3",
             "HM_simple": "Fm-3",
             "HM_numbered": "202: Fm-3",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "203:1",
@@ -15125,7 +15125,7 @@
             "HM_short": "Fd-3:1",
             "HM_simple": "Fd-3",
             "HM_numbered": "203: Fd-3:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "203:2",
@@ -15246,7 +15246,7 @@
             "HM_short": "Fd-3:2",
             "HM_simple": "Fd-3",
             "HM_numbered": "203: Fd-3:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "204",
@@ -15317,7 +15317,7 @@
             "HM_short": "Im-3",
             "HM_simple": "Im-3",
             "HM_numbered": "204: Im-3",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "205",
@@ -15363,7 +15363,7 @@
             "HM_short": "Pa-3",
             "HM_simple": "Pa-3",
             "HM_numbered": "205: Pa-3",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "206",
@@ -15434,7 +15434,7 @@
             "HM_short": "Ia-3",
             "HM_simple": "Ia-3",
             "HM_numbered": "206: Ia-3",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "207",
@@ -15479,7 +15479,7 @@
             "HM_short": "P432",
             "HM_simple": "P432",
             "HM_numbered": "207: P432",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "208",
@@ -15524,7 +15524,7 @@
             "HM_short": "P4232",
             "HM_simple": "P4232",
             "HM_numbered": "208: P4232",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "209",
@@ -15644,7 +15644,7 @@
             "HM_short": "F432",
             "HM_simple": "F432",
             "HM_numbered": "209: F432",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "210",
@@ -15764,7 +15764,7 @@
             "HM_short": "F4132",
             "HM_simple": "F4132",
             "HM_numbered": "210: F4132",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "211",
@@ -15834,7 +15834,7 @@
             "HM_short": "I432",
             "HM_simple": "I432",
             "HM_numbered": "211: I432",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "212",
@@ -15879,7 +15879,7 @@
             "HM_short": "P4332",
             "HM_simple": "P4332",
             "HM_numbered": "212: P4332",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "213",
@@ -15924,7 +15924,7 @@
             "HM_short": "P4132",
             "HM_simple": "P4132",
             "HM_numbered": "213: P4132",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "214",
@@ -15994,7 +15994,7 @@
             "HM_short": "I4132",
             "HM_simple": "I4132",
             "HM_numbered": "214: I4132",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "215",
@@ -16039,7 +16039,7 @@
             "HM_short": "P-43m",
             "HM_simple": "P-43m",
             "HM_numbered": "215: P-43m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "216",
@@ -16159,7 +16159,7 @@
             "HM_short": "F-43m",
             "HM_simple": "F-43m",
             "HM_numbered": "216: F-43m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "217",
@@ -16229,7 +16229,7 @@
             "HM_short": "I-43m",
             "HM_simple": "I-43m",
             "HM_numbered": "217: I-43m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "218",
@@ -16274,7 +16274,7 @@
             "HM_short": "P-43n",
             "HM_simple": "P-43n",
             "HM_numbered": "218: P-43n",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "219",
@@ -16394,7 +16394,7 @@
             "HM_short": "F-43c",
             "HM_simple": "F-43c",
             "HM_numbered": "219: F-43c",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "220",
@@ -16464,7 +16464,7 @@
             "HM_short": "I-43d",
             "HM_simple": "I-43d",
             "HM_numbered": "220: I-43d",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "221",
@@ -16534,7 +16534,7 @@
             "HM_short": "Pm-3m",
             "HM_simple": "Pm-3m",
             "HM_numbered": "221: Pm-3m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "222:1",
@@ -16604,7 +16604,7 @@
             "HM_short": "Pn-3n:1",
             "HM_simple": "Pn-3n",
             "HM_numbered": "222: Pn-3n:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "222:2",
@@ -16674,7 +16674,7 @@
             "HM_short": "Pn-3n:2",
             "HM_simple": "Pn-3n",
             "HM_numbered": "222: Pn-3n:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "223",
@@ -16744,7 +16744,7 @@
             "HM_short": "Pm-3n",
             "HM_simple": "Pm-3n",
             "HM_numbered": "223: Pm-3n",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "224:1",
@@ -16814,7 +16814,7 @@
             "HM_short": "Pn-3m:1",
             "HM_simple": "Pn-3m",
             "HM_numbered": "224: Pn-3m:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "224:2",
@@ -16884,7 +16884,7 @@
             "HM_short": "Pn-3m:2",
             "HM_simple": "Pn-3m",
             "HM_numbered": "224: Pn-3m:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "225",
@@ -17101,7 +17101,7 @@
             "HM_short": "Fm-3m",
             "HM_simple": "Fm-3m",
             "HM_numbered": "225: Fm-3m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "226",
@@ -17318,7 +17318,7 @@
             "HM_short": "Fm-3c",
             "HM_simple": "Fm-3c",
             "HM_numbered": "226: Fm-3c",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "227:1",
@@ -17535,7 +17535,7 @@
             "HM_short": "Fd-3m:1",
             "HM_simple": "Fd-3m",
             "HM_numbered": "227: Fd-3m:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "227:2",
@@ -17752,7 +17752,7 @@
             "HM_short": "Fd-3m:2",
             "HM_simple": "Fd-3m",
             "HM_numbered": "227: Fd-3m:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "228:1",
@@ -17969,7 +17969,7 @@
             "HM_short": "Fd-3c:1",
             "HM_simple": "Fd-3c",
             "HM_numbered": "228: Fd-3c:1",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "228:2",
@@ -18186,7 +18186,7 @@
             "HM_short": "Fd-3c:2",
             "HM_simple": "Fd-3c",
             "HM_numbered": "228: Fd-3c:2",
-            "standard": "False"
+            "standard": false
         },
         {
             "n_c": "229",
@@ -18305,7 +18305,7 @@
             "HM_short": "Im-3m",
             "HM_simple": "Im-3m",
             "HM_numbered": "229: Im-3m",
-            "standard": "True"
+            "standard": true
         },
         {
             "n_c": "230",
@@ -18424,7 +18424,7 @@
             "HM_short": "Ia-3d",
             "HM_simple": "Ia-3d",
             "HM_numbered": "230: Ia-3d",
-            "standard": "True"
+            "standard": true
         }
     ]
 }

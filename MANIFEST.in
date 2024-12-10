@@ -1,0 +1,2 @@
+include hikari/resources/*
+recursive-include hikari/resources *
