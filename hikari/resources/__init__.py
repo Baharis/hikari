@@ -5,11 +5,6 @@ import pandas as pd
 from importlib.resources import open_text, open_binary
 
 
-def _load_bytes(resource_name: str) -> bytes:
-    with open_binary(__name__, resource_name) as f:
-        return f.read()
-
-
 def _load_indexed_csv(resource_name: str) -> pd.DataFrame:
     with open_text(__name__, resource_name, encoding='utf-8') as f:
         s = io.StringIO(f.read())
