@@ -171,14 +171,6 @@ def _resolve_construct_order(keys: list[GroupCatalogKey]) -> list[GroupCatalogKe
 # ~~~~~~~~~~~~~~~~~~~~~~~ CATALOG JSON ENCODER/DECODER ~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-def is_json_serializable(x):
-    try:
-        json.dumps(x)
-        return True
-    except TypeError:
-        return False
-
-
 class GroupCatalogJSONEncoder(json.JSONEncoder):
     """Handles serialization of `GroupCatalog` to a `.json` file"""
     def default(self, gc: 'GroupCatalog') -> dict:
