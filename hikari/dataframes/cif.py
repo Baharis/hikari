@@ -3,6 +3,7 @@ from collections import UserDict
 import pathlib
 import re
 import tempfile
+from typing import Any, Callable, Sequence, TypeVar
 
 from enum import Enum
 from functools import lru_cache
@@ -12,6 +13,9 @@ from hikari.resources import cif_core_dict
 from hikari.utility import make_abspath
 
 
+T = TypeVar('T')
+
+
 class CifBlock(UserDict):
     """
     CifBlock object handles all data inside an individual block of Cif file.
@@ -19,19 +23,15 @@ class CifBlock(UserDict):
     Individual Cif items can be accessed or assigned using a dict-like syntax.
     """
 
-    def get_as_type(self, key, typ, default=None):
+    def get_as_type(self, key: str, typ: Callable[[Any], T], default: Any = None) -> T:
         """
         Get value of `self[key]` converted to `typ`. If value is a list,
         convert its contents element-wise.
 
         :param key: key associated with accessed element
-        :type key: str
         :param typ: type/function applied to a value or its every element
-        :type typ: Callable
         :param default: if given, return it on KeyError
-        :type default: Any
-        :return: converted value of `self[key]` or `default`
-        :rtype: Union[list, str]
+        :return: value of `self[key]` or `default` converted to `typ`
         """
         value = self.get(key)
         if value is None:
@@ -51,9 +51,7 @@ class CifBlock(UserDict):
         access and store only the `block` data block in self.
 
         :param path: Absolute or relative path to the .cif file.
-        :type path: str
         :param block: Name of the cif data block to be accessed
-        :type block: str
         """
         reader = CifReader(cif_file_path=path)
         self.update(reader.read()[block])
@@ -64,7 +62,6 @@ class CifBlock(UserDict):
         by the `path` parameter, using 'hikari' as block name.
 
         :param path: Absolute or relative path to the .cif file.
-
         """
         writer = CifWriter(cif_file_path=path)
         writer.write(cif_frame=CifFrame({'hikari': self}))
@@ -109,14 +106,22 @@ class CifFrame(UserDict):
 
 class CifValidator(UserDict):
     """
-    This object reads an appropriate cif core dictionary and uses it in order to
-    format or validate all entries passing through it.
+    This object is used to validate individual cif keys when parsing cif files.
+    It knows the metadata about each key based on its entry
+    in the cif core dictionary v.2.4.5 packaged with the project.
+    Since the specification itself is written in cif format,
+    it is also read using the same `CifReader` (but without `CifValidator`).
 
-    The `CifValidator` contains all keys from core cif dictionary. In order
+    Upon initialization, `CifValidator` becomes a dictionary whose
+    keys are all valid cif keys, according to the cif specification used.
+    Individual values are themselves dictionaries that store information
+    about key's contents, `_category`, `_type`, whether they are a `_list` etc.
+
+    contains all keys from core cif dictionary. In order
     to access individual values, use `.get()` instead of bracket notation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_dic_path = str(pathlib.Path(temp_dir) / 'cif_core.dic')
@@ -125,7 +130,7 @@ class CifValidator(UserDict):
             reader = CifReader(cif_file_path=temp_dic_path, validate=False)
             self.update(reader.read())
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         try:
             _ = self.get(item)
         except KeyError:
@@ -133,7 +138,9 @@ class CifValidator(UserDict):
         else:
             return True
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: UserDict = None) -> UserDict:
+        """Get the dictionary containing information about input cif `key`."""
+        # def get(self, key: str, default: Any = str) -> UserDict: FAILED
         key, _key = (key[1:], key) if key.startswith('_') else (key, '_' + key)
         value = UserDict()
         try:
@@ -147,7 +154,8 @@ class CifValidator(UserDict):
                 value = default
         return value
 
-    def get__category(self, key, default=None):
+    def get__category(self, key: str, default: str = None) -> str:
+        """Close equivalent to `self.get(key).get('_category', default)`"""
         value = self.get(key)
         if value is not None:
             _category = value.get('_category', default)
@@ -155,7 +163,8 @@ class CifValidator(UserDict):
             _category = default
         return _category
 
-    def get__list(self, key, default=None):
+    def get__list(self, key: str, default: bool = None) -> bool:
+        """Close equivalent to `self.get(key).get('_list', default) == 'yes'`"""
         value = self.get(key)
         if value is not None:
             got = value.get('_list')
@@ -166,7 +175,14 @@ class CifValidator(UserDict):
 
 
 class CifIOBuffer(abc.ABC):
-    def __init__(self, target):
+    """
+    An abstract base class for Cif reader and writer buffers.
+    Specifies that data can be added and flushed, names and values are stored
+    in a list, output is stored in target (dict if reading, file if writing).
+    """
+
+    @abc.abstractmethod
+    def __init__(self, target: Any) -> None:
         self.names = []
         self.values = []
 
@@ -204,11 +220,11 @@ class CifIO(abc.ABC):
 class CifReaderBuffer(CifIOBuffer):
     """Buffer for reading data from cif file into `CifReader`"""
 
-    def __init__(self, target):
+    def __init__(self, target: dict) -> None:
         super().__init__(target=target)
-        self.target: UserDict = target
+        self.target: dict = target
 
-    def add(self, word):
+    def add(self, word: str) -> None:
         """Append the word to names or values based on its first char"""
         if word.startswith('_'):
             if self.values:
@@ -217,7 +233,7 @@ class CifReaderBuffer(CifIOBuffer):
         else:
             self.values.append(CifReader.revert_delimiters_and_whitespace(word))
 
-    def flush(self):
+    def flush(self) -> None:
         """Update the target dict with names and values stored hitherto"""
         d = UserDict()
         lv = len(self.values)
@@ -245,16 +261,16 @@ class CifReader(CifIO):
     """
 
     @property
-    def blocks(self):
-        """A dictionary of all blocks names and their positions in cif file."""
+    def blocks(self) -> dict[str, int]:
+        """A dict of block names:line numbers where they start in cif file."""
         return self._blocks(lines=tuple(self.file_lines))
 
     @lru_cache(maxsize=1)
-    def _blocks(self, lines):
+    def _blocks(self, lines: Sequence[str]) -> dict[str, int]:
         return {l[5:]: i for i, l in enumerate(lines) if l.startswith('data_')}
 
     class State(Enum):
-        """This class stores current cif reading state (eg. inside loop etc.)"""
+        """This class stores current cif reading state (e.g. inside loop etc.)"""
         default = 0
         loop_keys = 1
         loop_values = 2
@@ -284,17 +300,14 @@ class CifReader(CifIO):
                 new_dict[k] = v[0]
         return new_dict
 
-    def parse_lines(self, start, end):
+    def parse_lines(self, start: int, end: int) -> dict:
         """
         Read the data from :attr:`~.CifIO.lines` numbered `start` to `end`,
         interpret it, and return it as an instance of a dict.
 
         :param start: number of the first line which data should be read from
-        :type start: int
         :param end: number of the first line which should not be read anymore
-        :type end: int
         :return: ordered dictionary with name: value pairs for all parsed lines
-        :rtype: dict
         """
         parsed_data = dict()
         buffer = CifReaderBuffer(target=parsed_data)
@@ -398,14 +411,14 @@ class CifWriterBuffer(CifIOBuffer):
     MIN_STEP_LENGTH = 2
     WHITESPACE = {' ', '\t', '\n'}
 
-    def __init__(self, target):
+    def __init__(self, target: TextIO) -> None:
         super().__init__(target=target)
         self.target: TextIO = target
         self.current__category = ''
         self.current__list = False
         self.current_len = 0
 
-    def add(self, data: tuple):
+    def add(self, data: tuple) -> None:
         k_, v_ = data
         k__category = cif_core_validator.get__category(k_)
         k__list = cif_core_validator.get__list(k_) or isinstance(v_, list)
@@ -429,7 +442,7 @@ class CifWriterBuffer(CifIOBuffer):
             self.current__list = k__list
             self.current_len = v_len
 
-    def flush(self):
+    def flush(self) -> None:
         s = '\n'
         if self.current__list is True:
             s += self.format_table()
@@ -440,7 +453,7 @@ class CifWriterBuffer(CifIOBuffer):
         self.names = []
         self.values = []
 
-    def format_line(self, k, v):
+    def format_line(self, k, v) -> str:
         name_string = f'{k:<{self.MAX_NAME_LENGTH}}'
         step_string = ' ' * self.MIN_STEP_LENGTH
         value_string = self.enquote(v)
@@ -451,7 +464,7 @@ class CifWriterBuffer(CifIOBuffer):
             step_string = '\n'
         return name_string + step_string + value_string
 
-    def format_table(self):
+    def format_table(self) -> str:
         column_widths = [max(map(len, v)) for v in self.values]
         if sum(column_widths) + len(column_widths) >= self.MAX_LINE_LENGTH:
             pass  # TODO: break long loop tables rows into multiple
@@ -463,7 +476,7 @@ class CifWriterBuffer(CifIOBuffer):
             formatted_string += f' {" ".join(enquoted_value_row)}\n'
         return formatted_string
 
-    def enquote(self, text, force=False):
+    def enquote(self, text: str, force: bool = False) -> str:
         if text == '':
             quoted = "''"
         elif any(whitespace in text for whitespace in self.WHITESPACE) or force:
@@ -488,7 +501,7 @@ class CifWriter(CifIO):
     into cif files
     """
 
-    def write(self, cif_frame):
+    def write(self, cif_frame: CifFrame) -> None:
         with open(self.file_path, 'w') as cif_file:
             buffer = CifWriterBuffer(target=cif_file)
             first_block = True
