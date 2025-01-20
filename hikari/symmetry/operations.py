@@ -5,6 +5,7 @@ This file contains class and definitions of 3-dimensional symmetry operations.
 import numpy as np
 from fractions import Fraction
 from enum import Enum
+from typing import Sequence, Union
 
 
 class Operation:
@@ -271,12 +272,11 @@ class Operation:
 
     @property
     def origin(self) -> np.ndarray:
-        """
-        Selected point invariant to the symmetry operation
-        """
-        return (self.tl - self.glide) * 1 / 2
+        """Selected point that remains on the symmetry element after operation"""
+        return np.linalg.pinv(np.eye(3) - self.tf) @ self.tl
 
     # TODO Likely incorrect, see ITC 5.2.1. Transformations and example for P4/n
+    # TODO Fixed? Test rigorously.
 
     @property
     def reciprocal(self):
@@ -356,15 +356,14 @@ class Operation:
     def unbounded(self) -> 'Operation':
         return Operation(self.tf, self.tl)
 
-    def at(self, point):
+    def at(self, point: np.ndarray) -> 'Operation':
         """
         Transform operation as little as possible so that its symmetry element
         contains "point". To be used after "into" if used together.
+        Based on "ITC 5.2.1. Transformations".
 
         :param point: Target coordinates of point which should lie in element
-        :type point: np.array
         :return: New symmetry operation which contains "point" in its element
-        :rtype: Operation
         """
         shift = np.array(point) - self.origin
         for invariant in self.invariants:
@@ -443,6 +442,14 @@ class Operation:
         cond1 = np.isclose(hkl, self.reciprocal.transform(hkl)).all(axis=1)
         cond2 = ~np.isclose(np.dot(hkl, self.glide) % 1, 0)
         return cond1 & cond2
+
+    def distance_to_point(self, point: Sequence[Union[int, float]]) -> float:
+        if self.typ in {self.Type.rotation, self.Type.rototranslation, self.Type.rotoinversion}:
+            point = np.array(point) - self.origin
+            projection = np.dot(point, self.orientation) * self.orientation
+            orthogonal_vector = point - projection
+            return float(np.linalg.norm(orthogonal_vector))
+        return NotImplemented
 
 
 class BoundedOperation(Operation):
