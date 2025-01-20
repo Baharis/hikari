@@ -261,17 +261,6 @@ class Operation:
         """
         return (self.unbounded() ** 24)._tl24 / 576
 
-    # TODO There is a big issue with the interpretation of symmetry operations
-    # Originally, `glide` would return `(self ** 24)._tl24 / 576 % 1`
-    # This is because this class was designed mostly to work with periodic
-    # systems and "operations" collapsed to the unit cell.
-    # This means that glide (1/3, -1/3, 0) would collapse to (1/3, 2/3, 0),
-    # which is correct in periodic conditions, but does not describe relations
-    # between two individual molecules in the local space correctly.
-    # There needs to be a distinction between `Operation`s that should
-    # automatically collapse and the ones that do not care for equivalence
-    # but rather are designed to properly transform in non-collapsed space.
-
     @property
     def glide_fold(self) -> int:
         """
