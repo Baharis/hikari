@@ -3,7 +3,7 @@ from typing import List, Match, Union
 
 import numpy as np
 
-from hikari.symmetry.operations import SymmOp
+from hikari.symmetry.operations import BoundedOperation
 from hikari.utility import dict_union
 
 
@@ -45,20 +45,28 @@ class HallSymbol:
     DIRECTION_SYMBOLS = ("'", '"', '*')
     TRANSLATION_SYMBOLS = '12345abcnuvwd'
     LATTICE_GENERATORS = {
-        'p': (SymmOp(np.eye(3)), ),
-        'a': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2))),
-        'b': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 0, 1 / 2))),
-        'c': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))),
-        'i': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 2, 1 / 2, 1 / 2))),
-        'r': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (2 / 3, 1 / 3, 1 / 3)),
-              SymmOp(np.eye(3), (1 / 3, 2 / 3, 2 / 3))),
-        's': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 3, 1 / 3, 2 / 3)),
-              SymmOp(np.eye(3), (2 / 3, 2 / 3, 1 / 3))),
-        't': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (1 / 3, 2 / 3, 1 / 3)),
-              SymmOp(np.eye(3), (2 / 3, 1 / 3, 2 / 3))),
-        'f': (SymmOp(np.eye(3)), SymmOp(np.eye(3), (0, 1 / 2, 1 / 2)),
-              SymmOp(np.eye(3), (1 / 2, 0, 1 / 2)),
-              SymmOp(np.eye(3), (1 / 2, 1 / 2, 0))),
+        'p': (BoundedOperation(np.eye(3)),),
+        'a': (BoundedOperation(np.eye(3)),
+              BoundedOperation(np.eye(3), (0, 1 / 2, 1 / 2))),
+        'b': (BoundedOperation(np.eye(3)),
+              BoundedOperation(np.eye(3), (1 / 2, 0, 1 / 2))),
+        'c': (BoundedOperation(np.eye(3)),
+              BoundedOperation(np.eye(3), (1 / 2, 1 / 2, 0))),
+        'i': (BoundedOperation(np.eye(3)),
+              BoundedOperation(np.eye(3), (1 / 2, 1 / 2, 1 / 2))),
+        'r': (BoundedOperation(np.eye(3)),
+              BoundedOperation(np.eye(3), (2 / 3, 1 / 3, 1 / 3)),
+              BoundedOperation(np.eye(3), (1 / 3, 2 / 3, 2 / 3))),
+        's': (BoundedOperation(np.eye(3)),
+              BoundedOperation(np.eye(3), (1 / 3, 1 / 3, 2 / 3)),
+              BoundedOperation(np.eye(3), (2 / 3, 2 / 3, 1 / 3))),
+        't': (BoundedOperation(np.eye(3)),
+              BoundedOperation(np.eye(3), (1 / 3, 2 / 3, 1 / 3)),
+              BoundedOperation(np.eye(3), (2 / 3, 1 / 3, 2 / 3))),
+        'f': (BoundedOperation(np.eye(3)),
+              BoundedOperation(np.eye(3), (0, 1 / 2, 1 / 2)),
+              BoundedOperation(np.eye(3), (1 / 2, 0, 1 / 2)),
+              BoundedOperation(np.eye(3), (1 / 2, 1 / 2, 0))),
     }
     UNIVERSAL_MATRICES = {
         '1': np.eye(3),
@@ -142,13 +150,13 @@ class HallSymbol:
         self._symbol = symbol.lower().replace(' ', '_')
 
     @property
-    def generators(self) -> List[SymmOp]:
+    def generators(self) -> List[BoundedOperation]:
         elements: re.Match = self.elements
 
         # lattice / centering generators
-        generators: List[SymmOp] = list(self.LATTICE_GENERATORS[elements[2]])
+        generators: List[BoundedOperation] = list(self.LATTICE_GENERATORS[elements[2]])
         if elements[1] == '-':
-            generators.append(SymmOp(-np.eye(3)))
+            generators.append(BoundedOperation(-np.eye(3)))
 
         # generator 1
         gen1_inv, gen1_fold, gen1_dir, gen1_tl = elements.group(3, 4, 5, 6)
@@ -163,7 +171,7 @@ class HallSymbol:
         gen1_translations = dict_union(*gen1_translation_dicts)
         for tl in gen1_tl:
             tl1 += gen1_translations[tl]
-        generators.append(SymmOp(tf1, tl1))
+        generators.append(BoundedOperation(tf1, tl1))
 
         # generator 2
         gen2_inv, gen2_fold, gen2_dir, gen2_tl = elements.group(7, 8, 9, 10)
@@ -181,7 +189,7 @@ class HallSymbol:
             tl2 = np.array([0., 0., 0.])
             for tl in gen2_tl:
                 tl2 += self.STATIC_TRANSLATIONS[tl]
-            generators.append(SymmOp(tf2, tl2))
+            generators.append(BoundedOperation(tf2, tl2))
 
         # generator 3
         gen3_inv, gen3_fold, gen3_tl = elements.group(11, 12, 13)
@@ -191,7 +199,7 @@ class HallSymbol:
             tl3 = np.array([0., 0., 0.])
             for tl in gen3_tl:
                 tl3 += self.STATIC_TRANSLATIONS[tl]
-            generators.append(SymmOp(tf3, tl3))
+            generators.append(BoundedOperation(tf3, tl3))
 
         # generator 4
         gen4_fold, gen4_tl = elements.group(14, 15)
@@ -199,14 +207,14 @@ class HallSymbol:
             tl4 = np.array([0., 0., 0.])
             for tl in gen4_tl:
                 tl4 += self.STATIC_TRANSLATIONS[tl]
-            generators.append(SymmOp(-np.eye(3), tl4))
+            generators.append(BoundedOperation(-np.eye(3), tl4))
 
         if any(elements.group(16, 17, 18)):
             shift_ints = [int(i) for i in elements.group(16, 17, 18)]
             shift_vector = np.array(shift_ints, dtype=float) / 12
-            shift_op_left = SymmOp(np.eye(3), shift_vector)
-            shift_op_right = SymmOp(np.eye(3), -shift_vector)
-            generators = [SymmOp.from_matrix(shift_op_left.matrix @ g.matrix
-                          @ shift_op_right.matrix) for g in generators]
+            shift_op_left = BoundedOperation(np.eye(3), shift_vector)
+            shift_op_right = BoundedOperation(np.eye(3), -shift_vector)
+            generators = [BoundedOperation.from_matrix(shift_op_left.matrix @ g.matrix
+                                                @ shift_op_right.matrix) for g in generators]
 
         return generators

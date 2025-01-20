@@ -7,7 +7,7 @@ from fractions import Fraction
 from enum import Enum
 
 
-class SymmOp:
+class Operation:
     """
     Class storing information about symmetry operations, with clear string
     representation and intuitive syntax for combining / utilising operations:
@@ -34,20 +34,21 @@ class SymmOp:
 
     def __eq__(self, other):
         return np.array_equal(self.tf, other.tf) and \
-               np.array_equal(self.__tl24, other.__tl24)
+               np.array_equal(self._tl24, other._tl24)
 
     def __mul__(self, other):
-        assert isinstance(other, SymmOp)
-        return SymmOp(self.tf @ other.tf, self.tf @ other.tl + self.tl)
+        assert isinstance(other, Operation)
+        return self.__class__(self.tf @ other.tf, self.tf @ other.tl + self.tl)
 
     def __pow__(self, power, modulo=None):
-        return SymmOp.from_matrix(np.linalg.matrix_power(self.matrix, power))
+        return self.__class__.from_matrix(np.linalg.matrix_power(self.matrix, power))
 
-    def __mod__(self, other):
-        return SymmOp(self.tf, np.mod(self.__tl24, 24 * other) / 24)
+    # TODO removed __mod__ operator: replace all uses of % 1 with new `bounded()`
+    # def __mod__(self, other):
+    #     return self.__class__(self.tf, np.mod(self._tl24, 24 * other) / 24)
 
     def __repr__(self):
-        return f'SymmOp(np.{repr(self.tf)}, np.{repr(self.tl)})'.\
+        return f'{self.__class__.__name__}(np.{repr(self.tf)}, np.{repr(self.tl)})'.\
             replace('\n', '').replace(' ', '')
 
     def __str__(self):
@@ -67,7 +68,7 @@ class SymmOp:
         :param code: string representing new coordinates after operation
         :type code: str
         :return: Symmetry operation generated from given coordinate triplet code
-        :rtype: SymmOp
+        :rtype: Operation
         """
         coords = str(code).replace(';', ',').replace(' ', '').lower().split(',')
         tf = np.zeros((3, 3))
@@ -90,7 +91,7 @@ class SymmOp:
         :param matrix: augmented 4x4 matrix
         :type matrix: np.ndarray
         :return: Symmetry operation generated based on augmented matrix
-        :rtype: SymmOp
+        :rtype: Operation
         """
         return cls(matrix[0:3, 0:3], matrix[0:3, 3])
 
@@ -105,21 +106,18 @@ class SymmOp:
         :param vector: 3-length translation vector
         :type vector: np.ndarray
         :return: Symmetry operation generated based on matrix - vector pair
-        :rtype: SymmOp
+        :rtype: Operation
         """
         return cls(matrix, vector)
 
     @staticmethod
-    def _row_to_str(xyz, r):
+    def _row_to_str(xyz: np.ndarray[int], r: float) -> str:
         """
         Convert xyz: 3-el. list and r - number to single element of code triplet
 
-        :param xyz: 3-element list of coordinates, eg
-        :type xyz: Union[list, np.ndarray]
+        :param xyz: 3-element list of coordinates, e.g.: [1,-1,0]
         :param r: translation applied to the row
-        :type r: Union[float, Fraction]
         :return: string representing change of coordinate
-        :rtype: str
         """
         s = ''
         for var, char in zip(xyz, 'xyz'):
@@ -136,33 +134,33 @@ class SymmOp:
         return s.strip('+')
 
     @staticmethod
-    def _project(vector, onto):
+    def _project(vector: np.ndarray, onto: np.ndarray) -> np.ndarray:
         """Return projection of np.ndarray "vector" to np.ndarray "onto" """
         return (np.dot(vector, onto) / np.sqrt(sum(onto ** 2)) ** 2) * onto
 
     @property
-    def code(self):
+    def code(self) -> str:
         return ','.join([self._row_to_str(xyz, r) for xyz, r
                          in zip(self.tf, self.tl)])
 
     @property
-    def tf(self):
-        return self.__tf
+    def tf(self) -> np.ndarray:
+        return self._tf
 
     @tf.setter
-    def tf(self, value):
-        self.__tf = np.rint(value).astype(int)
+    def tf(self, value: np.ndarray) -> None:
+        self._tf = np.rint(value).astype(int)
 
     @property
-    def tl(self):
-        return self.__tl24 / 24
+    def tl(self) -> np.ndarray:
+        return self._tl24 / 24
 
     @tl.setter
-    def tl(self, value):
-        self.__tl24 = np.rint(value * 24).astype(int)
+    def tl(self, value: np.ndarray) -> None:
+        self._tl24 = np.rint(value * 24).astype(int)
 
     @property
-    def matrix(self):
+    def matrix(self) -> np.ndarray:
         """
         :return: Augmented 4 x 4 transformation matrix with float-type values
         :rtype: np.ndarray
@@ -173,7 +171,7 @@ class SymmOp:
         return matrix
 
     @property
-    def det(self):
+    def det(self) -> np.float64:
         """
         :return: determinant of 3x3 transformation part of operation's matrix
         :rtype: int
@@ -181,10 +179,9 @@ class SymmOp:
         return np.linalg.det(self.tf)
 
     @property
-    def typ(self):
+    def typ(self) -> Type:
         """
-        :return: crystallographic type of this symmetry operation
-        :rtype: SymmOp.Type
+        :return: crystallographic type of this symmetry operation (see `Type`)
         """
         _trans = self.translational
         if self.trace == 3:
@@ -199,10 +196,9 @@ class SymmOp:
             return self.Type.rototranslation if _trans else self.Type.rotation
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
-        :return: short name of symmetry operation, eg.: "m", "3" or "2_1"
-        :rtype: str
+        :return: short name of symmetry operation, e.g.: "m", "3" or "2_1"
         """
         _glide = self.glide
         _glide_dir = 'n' if np.linalg.norm(_glide) < 1e-8 else 'x'
@@ -240,7 +236,7 @@ class SymmOp:
         Number of times operation must be repeated to become identity, inversion
         or translation: n for n-fold axes, 2 for reflections, 1 for other (max 6)
         """
-        op = SymmOp(self.tf) if self.det > 0 else SymmOp(-self.tf)
+        op = BoundedOperation(self.tf if self.det > 0 else -self.tf)
         for f in (1, 2, 3, 4, 5, 6):
             if (op ** f).trace == 3:
                 return f
@@ -250,10 +246,11 @@ class SymmOp:
     def order(self) -> int:
         """
         Number of times operation has to be repeated to become
-        a translation, eg.: n for all n-fold axes, 2 for other (max 6)
+        a translation, e.g.: n for all n-fold axes, 2 for other (max 6)
         """
+        op = self.bounded()
         for f in (1, 2, 3, 4, 5, 6):
-            if pow(self, f, 1).typ is self.Type.identity:
+            if pow(op, f, 1).typ is self.Type.identity:
                 return f
         raise NotImplementedError('order is not in range 1 to 6')
 
@@ -262,15 +259,26 @@ class SymmOp:
         """
         Part of the translation vector stemming from operations' glide
         """
-        return (self ** 24).__tl24 / 576 % 1
+        return (self.unbounded() ** 24)._tl24 / 576
+
+    # TODO There is a big issue with the interpretation of symmetry operations
+    # Originally, `glide` would return `(self ** 24)._tl24 / 576 % 1`
+    # This is because this class was designed mostly to work with periodic
+    # systems and "operations" collapsed to the unit cell.
+    # This means that glide (1/3, -1/3, 0) would collapse to (1/3, 2/3, 0),
+    # which is correct in periodic conditions, but does not describe relations
+    # between two individual molecules in the local space correctly.
+    # There needs to be a distinction between `Operation`s that should
+    # automatically collapse and the ones that do not care for equivalence
+    # but rather are designed to properly transform in non-collapsed space.
 
     @property
     def glide_fold(self) -> int:
         """
         Number of types glide component of the operation must be repeated
-        in order to contain only integer values, eg.: 3 for "6_2", 4 for "d"
+        in order to contain only integer values, e.g.: 3 for "6_2", 4 for "d"
         """
-        return max([24 // t for t in [*self.__tl24, 24] if t != 0])
+        return max([24 // t for t in [*self._tl24, 24] if t != 0])
 
     @property
     def origin(self) -> np.ndarray:
@@ -279,13 +287,15 @@ class SymmOp:
         """
         return (self.tl - self.glide) * 1 / 2
 
+    # TODO Likely incorrect, see ITC 5.2.1. Transformations and example for P4/n
+
     @property
     def reciprocal(self):
         """
         :return: relevant symmetry operation in reciprocal hkl space
-        :rtype: SymmOp
+        :rtype: Operation
         """
-        return SymmOp(np.linalg.inv(self.tf).T)
+        return PointOperation(np.linalg.inv(self.tf).T)
 
     @property
     def trace(self):
@@ -319,7 +329,7 @@ class SymmOp:
         :rtype: Union[np.ndarray, None]
         """
         if self.det < 0:
-            o = SymmOp(-1 * self.tf).orientation
+            o = Operation(-1 * self.tf).orientation
         elif self.typ in {self.Type.rotation, self.Type.rototranslation}:
             m = self.tf  # method: see https://math.stackexchange.com/q/3441262
             t = m + m.T - (m.trace() - 1) * np.eye(3)
@@ -342,6 +352,21 @@ class SymmOp:
         sign = np.dot(self.orientation, np.cross(unique, rotation @ unique))
         return '' if np.isclose(sign, 0) else '+' if sign > 0 else '-'
 
+    @property
+    def is_bounded(self) -> bool:
+        """
+        True if the operation is a coset representatives i.e. if all
+        translation components lie in range -0.5 exclusive to 0.5 inclusive.
+        """
+        return all(self._tl24 > -12) and all(self._tl24 <= 12)
+
+    def bounded(self) -> 'BoundedOperation':
+        return self if isinstance(self, BoundedOperation) \
+            else BoundedOperation(self.tf, self.tl)
+
+    def unbounded(self) -> 'Operation':
+        return Operation(self.tf, self.tl)
+
     def at(self, point):
         """
         Transform operation as little as possible so that its symmetry element
@@ -350,12 +375,12 @@ class SymmOp:
         :param point: Target coordinates of point which should lie in element
         :type point: np.array
         :return: New symmetry operation which contains "point" in its element
-        :rtype: SymmOp
+        :rtype: Operation
         """
         shift = np.array(point) - self.origin
         for invariant in self.invariants:
             shift -= self._project(shift, onto=invariant)
-        return SymmOp(np.eye(3), shift) * self * SymmOp(np.eye(3), -shift)
+        return Operation(np.eye(3), shift) * self * Operation(np.eye(3), -shift)
 
     def into(self, direction, hexagonal=False):
         """
@@ -368,7 +393,7 @@ class SymmOp:
         :param hexagonal: True if operation is defined in hexagonal coordinates
         :type hexagonal: bool
         :return: New symmetry operation whose orientation is "direction"
-        :rtype: SymmOp
+        :rtype: Operation
         """
         rebase = np.array(((1, -1/2, 0), (0, np.sqrt(3)/2, 0), (0, 0, 1))) \
             if hexagonal else np.eye(3)
@@ -401,8 +426,8 @@ class SymmOp:
                 glide_els = [abs(g) for g in new_glide if not np.isclose(g, 0)]
                 new_glide = (new_glide / min(glide_els)) / self.glide_fold
 
-            return SymmOp(rot_h @ self.tf @ np.linalg.inv(rot_h),
-                          2 * self.origin + new_glide)
+            return Operation(rot_h @ self.tf @ np.linalg.inv(rot_h),
+                             2 * self.origin + new_glide)
 
     def transform(self, other):
         """
@@ -419,15 +444,49 @@ class SymmOp:
             return self.matrix @ other.T
         raise TypeError('Cannot transform "{}"'.format(other))
 
-    def extincts(self, hkl):
+    def extincts(self, hkl: np.ndarray) -> np.ndarray:
         """
         Return boolean array with truth whenever reflection should be extinct
 
         :param hkl: An array containing one hkl or multiple hkls in columns
-        :type hkl: np.ndarray
         :return: array of booleans, where extinct reflections are marked as True
-        :rtype: np.array
         """
         cond1 = np.isclose(hkl, self.reciprocal.transform(hkl)).all(axis=1)
         cond2 = ~np.isclose(np.dot(hkl, self.glide) % 1, 0)
         return cond1 & cond2
+
+
+class BoundedOperation(Operation):
+    """
+    A subclass of `Operation` where all three elements of the translation
+    vector are bounded between 0 (inclusive) and 1 (exclusive).
+    This class is suitable for handling coset representatives of space groups,
+    since upon binding operations related by unit translation become equivalent.
+    """
+
+    @property
+    def tl(self):
+        return self._tl24 / 24
+
+    @tl.setter
+    def tl(self, value):
+        """
+        This setter automatically handles binding the translation component
+        of the `Operation` into the [0; 1) range.
+        This makes the `Operation` a "bounded" "coset representative".
+        With this operation 0 casts onto 0, +/-0.5 onto 0.5, and 1 back onto 0.
+        """
+        self._tl24 = np.rint(value * 24).astype(int) % 24
+
+
+class PointOperation(BoundedOperation):
+    """A subclass of `BoundedOperation`, asserts translation vector = [0,0,0]"""
+    @property
+    def tl(self):
+        return np.array([0, 0, 0], dtype=float)
+
+    @tl.setter
+    def tl(self, value):
+        if np.any(value):
+            raise ValueError('Translation in `PointOperation` must be [0,0,0]')
+        self._tl24 = np.array([0, 0, 0], dtype=int)

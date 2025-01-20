@@ -7,8 +7,9 @@ from enum import Enum
 from typing import Union
 
 import numpy as np
+from numpy.random.mtrand import Sequence
 
-from hikari.symmetry.operations import SymmOp
+from hikari.symmetry.operations import BoundedOperation
 from hikari.symmetry.hall import HallSymbol
 from hikari.utility.list_tools import find_best
 
@@ -17,7 +18,7 @@ class Group:
     """
     Base immutable class containing information about symmetry groups.
     It stores information for point and space groups and, among others,
-    allows for iteration over its elements from `hikari.symmetry.SymmOp`.
+    allows for iteration over its `hikari.symmetry.BoundedOperation` elements.
     """
 
     class System(Enum):
@@ -31,57 +32,53 @@ class Group:
         hexagonal = 6
 
         @property
-        def directions(self):
+        def directions(self) -> list[np.ndarray]:
             _a = np.array((1, 0, 0))
             _b = np.array((0, 1, 0))
             _c = np.array((0, 0, 1))
             _ab = np.array((1 / np.sqrt(2), 1 / np.sqrt(2), 0))
             _abc = np.array((1 / np.sqrt(3), 1 / np.sqrt(3), 1 / np.sqrt(3)))
-            return [(), (_b, ), (_a, _b, _c), (_c, _a, _ab),
-                    (_c, _a, _ab), (_c, _abc, _ab), (_c, _a, _ab)][self.value]
+            return [[], [_b, ], [_a, _b, _c], [_c, _a, _ab],
+                    [_c, _a, _ab], [_c, _abc, _ab], [_c, _a, _ab]][self.value]
 
     BRAVAIS_PRIORITY_RULES = 'A+B+C=F>R>I>C>B>A>H>P'
     AXIS_PRIORITY_RULES = '6>61>62>63>64>65>-6>4>41>42>43>-4>-3>3>31>32>2>21'
     PLANE_PRIORITY_RULES = 'm>a+b=e>a+c=e>b+c=e>a>b>c>n>d'
 
-    def __init__(self, *generators):
+    def __init__(self, *generators: BoundedOperation) -> None:
         """
         :param generators: List of operations necessary to construct whole group
-        :type generators: list[SymmOp]
         """
 
         generator_list = []
         for gen in generators:
-            if gen % 1 not in generator_list:  # noqa - SymmOp supports % int
-                generator_list.append(gen % 1)  # noqa - SymmOp supports % int
+            if gen not in generator_list:
+                generator_list.append(gen)
 
-        def _find_new_product(ops):
+        def _find_new_product(ops: list[BoundedOperation]) -> list[BoundedOperation]:
             if len(ops) > 200:
                 raise ValueError('Generated group order exceeds size of 200')
-            new = list({o1 * o2 % 1 for o1, o2 in itertools_product(ops, ops)})
-            new = set(ops).union(new)
+            new = list({o1 * o2 for o1, o2 in itertools_product(ops, ops)})
+            new = list(set(ops).union(new))
             return _find_new_product(new) if len(new) > len(ops) else ops
 
-        self.__generators = tuple(generator_list)
-        self.__operations = tuple(_find_new_product(generator_list))
+        self.__generators = list(generator_list)
+        self.__operations = list(_find_new_product(generator_list))
         self.name = self.auto_generated_name
         self.number = 0
 
     @classmethod
     def from_generators_operations(
             cls,
-            generators: list[SymmOp],
-            operations: list[SymmOp],
+            generators: list[BoundedOperation],
+            operations: list[BoundedOperation],
     ) -> 'Group':
         """
         Generate group using already complete list of generators and operators.
         Does not check if `operations` are correct or complete for efficiency!
         :param generators: A complete list of group generators
-        :type generators: list[SymmOp]
         :param operations: A complete list of group operations
-        :type operations: list[SymmOp]
         :return: Symmetry group with given generators and operators.
-        :rtype: Group
         """
         new_group = cls()
         new_group.__generators = generators
@@ -89,39 +86,39 @@ class Group:
         return new_group
 
     @classmethod
-    def from_hall_symbol(cls, hall_symbol: Union[str, HallSymbol]):
+    def from_hall_symbol(cls, hall_symbol: Union[str, HallSymbol]) -> 'Group':
         if isinstance(hall_symbol, str):
             hall_symbol = HallSymbol(hall_symbol)
         return cls(*hall_symbol.generators)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Group') -> bool:
         return all([o in self.operations for o in other.operations])\
                and all([o in other.operations for o in self.operations])
 
-    def __lt__(self, other):
+    def __lt__(self, other: 'Group') -> bool:
         return len(self.operations) < len(other.operations) and \
             all([o in other.operations for o in self.operations])
 
-    def __gt__(self, other):
+    def __gt__(self, other: 'Group') -> bool:
         return other.__lt__(self)
 
-    def __le__(self, other):
+    def __le__(self, other: 'Group') -> bool:
         return self.__eq__(other) or self.__lt__(other)
 
-    def __ge__(self, other):
+    def __ge__(self, other: 'Group') -> bool:
         return self.__eq__(other) or other.__lt__(self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Group('+',\n      '.join([repr(g) for g in self.generators])+')'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name} (#{abs(self.number)}{"*" if self.number<0 else""})'
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return sum(hash(o) for o in self.operations)
 
     @property
-    def auto_generated_name(self):
+    def auto_generated_name(self) -> str:
         """Name of the group generated automatically. Use only as approx."""
         # TODO: enantiomorphs like P41 / P43 not recognised
         # TODO: 'e' found always whenever 'a' and 'b' present
@@ -138,45 +135,36 @@ class Group:
         return name.strip()
 
     @property
-    def centering_symbol(self):
+    def centering_symbol(self) -> str:
         tl = ([o.name for o in self.operations if o.typ is o.Type.translation])
         tl.append('H' if self.system is self.System.trigonal else 'P')
         return find_best(tl, self.BRAVAIS_PRIORITY_RULES)
 
     @property
-    def generators(self):
+    def generators(self) -> list[BoundedOperation]:
         return self.__generators
 
     @property
-    def operations(self):
+    def operations(self) -> list[BoundedOperation]:
         return self.__operations
 
     @property
-    def order(self):
+    def order(self) -> int:
         return len(self.__operations)
 
     @property
-    def is_centrosymmetric(self):
-        """
-        :return: True if group has centre of symmetry; False otherwise.
-        :rtype: bool
-        """
+    def is_centrosymmetric(self) -> bool:
+        """True if group has centre of symmetry; False otherwise."""
         return any(np.isclose(op.trace, -3) for op in self.operations)
 
     @property
-    def is_enantiogenic(self):
-        """
-        :return: True if determinant of all operations in group are positive.
-        :rtype: bool
-        """
+    def is_enantiogenic(self) -> bool:
+        """True if determinant of any operation in group is negative."""
         return any(op.det < 0 for op in self.operations)
 
     @property
-    def is_sohncke(self):
-        """
-        :return: True if determinant of all operations in group are positive.
-        :rtype: bool
-        """
+    def is_sohncke(self) -> bool:
+        """True if determinant of all operations in group are positive."""
         return all(op.det > 0 for op in self.operations)
 
     @property
@@ -188,14 +176,14 @@ class Group:
         return NotImplemented  # TODO and dx.doi.org/10.1524/zkri.2006.221.1.1
 
     @property
-    def is_symmorphic(self):
+    def is_symmorphic(self) -> bool:
         zero_vector = np.array([0, 0, 0])
         trans = [o for o in self.operations if o.typ is o.Type.translation]
         zero_tl = [o for o in self.operations if np.allclose(o.tl, zero_vector)]
         return self.order == len(zero_tl) * (len(trans) + 1)
 
     @property
-    def is_polar(self):
+    def is_polar(self) -> bool:
         if any(op.typ in {op.Type.rotoinversion, op.Type.inversion}
                for op in self.operations):
             return False
@@ -207,7 +195,7 @@ class Group:
         return True
 
     @property
-    def system(self):
+    def system(self) -> System:
         """
         :return: Predicted crystal system associated with this group
         :rtype: self.CrystalSystem()
@@ -233,19 +221,19 @@ class Group:
         else:
             return self.System.triclinic
 
-    def lauefy(self):
+    def lauefy(self) -> 'Group':
         """
         :return: New PointGroup with centre of symmetry added to generators.
         :rtype: Group
         """
-        inv = SymmOp.from_code('-x, -y, -z')
+        inv = BoundedOperation.from_code('-x, -y, -z')
         return Group(*self.operations, inv)
 
-    def reciprocate(self):
+    def reciprocate(self) -> 'Group':
         new_generators = [op.reciprocal for op in self.generators]
         return Group(*new_generators)
 
-    def transform(self, m):
+    def transform(self, m) -> 'Group':
         r"""
         Transform the group using 4x4 matrix. For reference, see `bilbao
         resources <https://www.cryst.ehu.es/cryst/trmatrix.html>`_ or `IUCr
@@ -265,10 +253,10 @@ class Group:
         :rtype: Group
         """
         transformed_group = Group.from_generators_operations(
-            generators=[SymmOp.from_matrix(np.linalg.inv(m) @ g.matrix @ m)
+            generators=[BoundedOperation.from_matrix(np.linalg.inv(m) @ g.matrix @ m)
                         for g in self.generators],
-            operations=[SymmOp.from_matrix(np.linalg.inv(m) @ o.matrix @ m)
-                    for o in self.operations])
+            operations=[BoundedOperation.from_matrix(np.linalg.inv(m) @ o.matrix @ m)
+                        for o in self.operations])
         transformed_group.name = self.name+' @ '+repr(m)[6:-1].replace(' ', '')
         transformed_group.number = -abs(self.number)
         return transformed_group

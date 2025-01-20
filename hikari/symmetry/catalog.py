@@ -12,7 +12,7 @@ import pandas as pd
 
 from hikari.resources import (point_groups_json, space_groups_json,
                               point_groups_dataframe, space_groups_dataframe)
-from hikari.symmetry import SymmOp
+from hikari.symmetry.operations import BoundedOperation
 from hikari.utility.typing import PathLike
 from hikari.symmetry.group import Group
 
@@ -201,8 +201,8 @@ class GroupCatalogJSONDecoder(json.JSONDecoder):
             for record in obj['table']:
                 group = record['group']
                 group = Group.from_generators_operations(
-                    generators=[SymmOp.from_code(c) for c in group['generators']],
-                    operations=[SymmOp.from_code(c) for c in group['operations']])
+                    generators=[BoundedOperation.from_code(c) for c in group['generators']],
+                    operations=[BoundedOperation.from_code(c) for c in group['operations']])
                 record.update({'group': group})
                 records.append(record)
             return GroupCatalog(table=pd.DataFrame.from_records(records))

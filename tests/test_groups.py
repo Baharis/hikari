@@ -5,7 +5,7 @@ import warnings
 
 from hikari.resources import (point_groups_dataframe, space_groups_dataframe,
                               point_groups_json, space_groups_json)
-from hikari.symmetry import Group, PG, SymmOp, SG
+from hikari.symmetry import BoundedOperation, Group, PG, SG
 from hikari.symmetry.catalog import GroupCatalog, AmbiguousGroupAccessorWarning
 
 import pandas as pd
@@ -17,7 +17,7 @@ class TestGroup(unittest.TestCase):
             'x,y,z', '-x+1/2,-y,z+1/2', '-x,y+1/2,-z+1/2', 'z,x,y',
             'y+3/4,x+1/4,-z+1/4', '-x,-y,-z', 'x+1/2,y+1/2,z+1/2'
         ]
-        sg230_generators = [SymmOp.from_code(c) for c in sg230_generator_codes]
+        sg230_generators = [BoundedOperation.from_code(c) for c in sg230_generator_codes]
         _ = Group(*sg230_generators)
 
 
