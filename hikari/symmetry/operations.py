@@ -29,45 +29,43 @@ class Operation:
         transflection = -2
         translation = -3
 
-    def __init__(self, transformation, translation=np.array([0, 0, 0])):
+    def __init__(self, transformation, translation=np.array([0, 0, 0])) -> None:
         self.tf = np.array(transformation)
         self.tl = np.array(translation)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Operation') -> bool:
         if isinstance(other, Operation):
             return (np.array_equal(self.tf, other.tf)
                     and np.array_equal(self._tl24, other._tl24))  # noqa
         return NotImplemented
 
-    def __mul__(self, other):
+    def __mul__(self, other: 'Operation') -> 'Operation':
         assert isinstance(other, Operation)
         return self.__class__(self.tf @ other.tf, self.tf @ other.tl + self.tl)
 
-    def __pow__(self, power, modulo=None):
+    def __pow__(self, power: int, modulo=None) -> 'Operation':
         return self.__class__.from_matrix(np.linalg.matrix_power(self.matrix, power))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.__class__.__name__}(np.{repr(self.tf)}, np.{repr(self.tl)})'.\
             replace('\n', '').replace(' ', '')
 
-    def __str__(self):
+    def __str__(self) -> str:
         origin = ','.join([str(Fraction(o).limit_denominator(12))
                            for o in self.origin])
         return self.name + ': ' + self.code + ' (' + origin + ')'
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(repr(self))
 
     @classmethod
-    def from_code(cls, code):
+    def from_code(cls, code: str) -> 'Operation':
         """
         Create new symmetry operation using symmetry code "x',y',z'" containing
         transformation of each individual coordinate from x,y,z to x',y',z'.
 
         :param code: string representing new coordinates after operation
-        :type code: str
         :return: Symmetry operation generated from given coordinate triplet code
-        :rtype: Operation
         """
         coords = str(code).replace(';', ',').replace(' ', '').lower().split(',')
         tf = np.zeros((3, 3))
@@ -83,19 +81,17 @@ class Operation:
         return cls(tf, tl)
 
     @classmethod
-    def from_matrix(cls, matrix):
+    def from_matrix(cls, matrix: np.ndarray) -> 'Operation':
         """
         Create new symmetry operation using augmented 4x4 transformation matrix
 
         :param matrix: augmented 4x4 matrix
-        :type matrix: np.ndarray
         :return: Symmetry operation generated based on augmented matrix
-        :rtype: Operation
         """
         return cls(matrix[0:3, 0:3], matrix[0:3, 3])
 
     @classmethod
-    def from_pair(cls, matrix, vector):
+    def from_pair(cls, matrix: np.ndarray, vector: np.ndarray) -> 'Operation':
         """
         Create new symmetry operation using point transformation 3x3 matrix
         and 3-length translation vector. Alias for standard creation method.
@@ -170,18 +166,13 @@ class Operation:
         return matrix
 
     @property
-    def det(self) -> np.float64:
-        """
-        :return: determinant of 3x3 transformation part of operation's matrix
-        :rtype: int
-        """
-        return np.linalg.det(self.tf)
+    def det(self) -> int:
+        """Determinant of 3x3 transformation part of operation's matrix"""
+        return int(np.linalg.det(self.tf))
 
     @property
     def typ(self) -> Type:
-        """
-        :return: crystallographic type of this symmetry operation (see `Type`)
-        """
+        """Crystallographic type of this symmetry operation (see `Type`)"""
         _trans = self.translational
         if self.trace == 3:
             return self.Type.translation if _trans else self.Type.identity
@@ -196,9 +187,7 @@ class Operation:
 
     @property
     def name(self) -> str:
-        """
-        :return: short name of symmetry operation, e.g.: "m", "3" or "2_1"
-        """
+        """Short name of symmetry operation, e.g.: 'm', '3' or '2_1'"""
         _glide = self.glide
         _glide_dir = 'n' if np.linalg.norm(_glide) < 1e-8 else 'x'
         d = {(1, 0, 0): 'a', (0, 1, 0): 'b', (0, 0, 1): 'c',
@@ -285,7 +274,7 @@ class Operation:
     @property
     def trace(self) -> int:
         """Trace of 3x3 transformation part of operation's matrix"""
-        return np.trace(self.tf)
+        return int(np.trace(self.tf))
 
     @property
     def translational(self) -> bool:
@@ -315,11 +304,8 @@ class Operation:
         return o / np.sqrt(sum(o*o))
 
     @property
-    def sense(self):
-        """
-        :return: "+" or "-", the "sense" of rotation, as given in ITC A, 11.1.2
-        :rtype: str
-        """
+    def sense(self) -> str:
+        """"+" or "-", the "sense" of rotation, as given in ITC A, 11.1.2"""
         unique = np.array([np.sqrt(2), np.e, np.pi])
         rotation = self.tf if self.det > 0 else -self.tf
         sign = np.dot(self.orientation, np.cross(unique, rotation @ unique))
@@ -327,11 +313,13 @@ class Operation:
 
     @property
     def bounded(self) -> 'BoundedOperation':
+        """Instance of self that always collapses down to Coset representative"""
         return self if isinstance(self, BoundedOperation) \
             else BoundedOperation(self.tf, self.tl)
 
     @property
     def unbounded(self) -> 'Operation':
+        """Instance of self that can express translations beyond the unit cube"""
         return Operation(self.tf, self.tl)
 
     @property
@@ -353,7 +341,7 @@ class Operation:
             shift -= self._project(shift, onto=invariant)
         return Operation(np.eye(3), shift) * self * Operation(np.eye(3), -shift)
 
-    def into(self, direction, hexagonal=False):
+    def into(self, direction: np.ndarray, hexagonal: bool = False) -> 'Operation':
         """
         Rotate operation so that its orientation changes to "direction", while
         preserving fractional glide. To be used before respective "at" method.
@@ -400,7 +388,7 @@ class Operation:
             return Operation(rot_h @ self.tf @ np.linalg.inv(rot_h),
                              2 * self.origin + new_glide)
 
-    def transform(self, other):
+    def transform(self, other: np.ndarray) -> np.ndarray:
         """
         Transform a column containing rows of coordinate points
 
@@ -452,11 +440,11 @@ class BoundedOperation(Operation):
     """
 
     @property
-    def tl(self):
+    def tl(self) -> np.ndarray:
         return self._tl24 / 24
 
     @tl.setter
-    def tl(self, value):
+    def tl(self, value: np.ndarray) -> None:
         """
         This setter automatically handles binding the translation component
         of the `Operation` into the [0; 1) range.
@@ -469,11 +457,11 @@ class BoundedOperation(Operation):
 class PointOperation(BoundedOperation):
     """A subclass of `BoundedOperation`, asserts translation vector = [0,0,0]"""
     @property
-    def tl(self):
+    def tl(self) -> np.ndarray:
         return np.array([0, 0, 0], dtype=float)
 
     @tl.setter
-    def tl(self, value):
+    def tl(self, value: np.ndarray) -> None:
         if np.any(value):
             raise ValueError('Translation in `PointOperation` must be [0,0,0]')
         self._tl24 = np.array([0, 0, 0], dtype=int)
