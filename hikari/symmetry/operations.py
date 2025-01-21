@@ -97,11 +97,8 @@ class Operation:
         and 3-length translation vector. Alias for standard creation method.
 
         :param matrix: 3x3 point transformation matrix
-        :type matrix: np.ndarray
         :param vector: 3-length translation vector
-        :type vector: np.ndarray
         :return: Symmetry operation generated based on matrix - vector pair
-        :rtype: Operation
         """
         return cls(matrix, vector)
 
@@ -156,10 +153,7 @@ class Operation:
 
     @property
     def matrix(self) -> np.ndarray:
-        """
-        :return: Augmented 4 x 4 transformation matrix with float-type values
-        :rtype: np.ndarray
-        """
+        """Augmented 4 x 4 transformation matrix with float-type values"""
         matrix = np.eye(4, dtype=float)
         matrix[0:3, 0:3] = self.tf
         matrix[0:3, 3] = self.tl
@@ -348,11 +342,8 @@ class Operation:
         Will most likely not work for unimplemented rhombohedral unit cells.
 
         :param direction: Target orientation for element of symmetry operation
-        :type direction: np.ndarray
         :param hexagonal: True if operation is defined in hexagonal coordinates
-        :type hexagonal: bool
         :return: New symmetry operation whose orientation is "direction"
-        :rtype: Operation
         """
         rebase = np.array(((1, -1/2, 0), (0, np.sqrt(3)/2, 0), (0, 0, 1))) \
             if hexagonal else np.eye(3)
@@ -393,9 +384,7 @@ class Operation:
         Transform a column containing rows of coordinate points
 
         :param other: A vertical numpy array of coordinate triplets kept in rows
-        :type other: np.ndarray
         :return: Same-shaped array of coordinate triplets transformed by self
-        :rtype: np.ndarray
         """
         if other.shape[1] == 3:
             return (self.tf @ other.T).T + self.tl
