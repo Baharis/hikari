@@ -34,8 +34,10 @@ class Operation:
         self.tl = np.array(translation)
 
     def __eq__(self, other):
-        return np.array_equal(self.tf, other.tf) and \
-               np.array_equal(self._tl24, other._tl24)
+        if isinstance(other, Operation):
+            return (np.array_equal(self.tf, other.tf)
+                    and np.array_equal(self._tl24, other._tl24))  # noqa
+        return NotImplemented
 
     def __mul__(self, other):
         assert isinstance(other, Operation)
@@ -43,10 +45,6 @@ class Operation:
 
     def __pow__(self, power, modulo=None):
         return self.__class__.from_matrix(np.linalg.matrix_power(self.matrix, power))
-
-    # TODO removed __mod__ operator: replace all uses of % 1 with new `bounded()`
-    # def __mod__(self, other):
-    #     return self.__class__(self.tf, np.mod(self._tl24, 24 * other) / 24)
 
     def __repr__(self):
         return f'{self.__class__.__name__}(np.{repr(self.tf)}, np.{repr(self.tl)})'.\
@@ -249,7 +247,7 @@ class Operation:
         Number of times operation has to be repeated to become
         a translation, e.g.: n for all n-fold axes, 2 for other (max 6)
         """
-        op = self.bounded()
+        op = self.bounded
         for f in (1, 2, 3, 4, 5, 6):
             if pow(op, f, 1).typ is self.Type.identity:
                 return f
@@ -257,10 +255,8 @@ class Operation:
 
     @property
     def glide(self) -> np.ndarray:
-        """
-        Part of the translation vector stemming from operations' glide
-        """
-        return (self.unbounded() ** 24)._tl24 / 576
+        """Part of the translation vector stemming from operations' glide"""
+        return (self.unbounded ** 24)._tl24 / 576
 
     @property
     def glide_fold(self) -> int:
@@ -272,51 +268,39 @@ class Operation:
 
     @property
     def origin(self) -> np.ndarray:
-        """Selected point that remains on the symmetry element after operation"""
+        """
+        Selected point that remains on the symmetry element after operation
+        Loosely based on solving https://math.stackexchange.com/q/1054481/.
+        """
         return np.linalg.pinv(np.eye(3) - self.tf) @ self.tl
 
     # TODO Likely incorrect, see ITC 5.2.1. Transformations and example for P4/n
     # TODO Fixed? Test rigorously.
 
     @property
-    def reciprocal(self):
-        """
-        :return: relevant symmetry operation in reciprocal hkl space
-        :rtype: Operation
-        """
+    def reciprocal(self) -> 'PointOperation':
+        """Relevant symmetry operation in its respective reciprocal space"""
         return PointOperation(np.linalg.inv(self.tf).T)
 
     @property
-    def trace(self):
-        """
-        :return: trace of 3x3 transformation part of operation's matrix
-        :rtype:
-        """
+    def trace(self) -> int:
+        """Trace of 3x3 transformation part of operation's matrix"""
         return np.trace(self.tf)
 
     @property
-    def translational(self):
-        """
-        :return: True if operation has any glide component, False otherwise
-        :rtype: bool
-        """
+    def translational(self) -> bool:
+        """True if operation has any glide component, False otherwise"""
         return not np.allclose(self.glide, 0)
 
     @property
-    def invariants(self):
-        """
-        :return: List of directions not affected by this symmetry operation
-        :rtype: list[np.ndarray]
-        """
+    def invariants(self) -> list[np.ndarray]:
+        """List of directions not affected by this symmetry operation"""
         eigenvalues, eigenvectors = np.linalg.eig(self.tf)
         return eigenvectors.T[np.isclose(eigenvalues.real, 1)].real
 
     @property
-    def orientation(self):
-        """
-        :return: Direction of symmetry element (if can be defined) else None
-        :rtype: Union[np.ndarray, None]
-        """
+    def orientation(self) -> Union[np.ndarray, None]:
+        """Direction of symmetry element (if it can be defined) else None"""
         if self.det < 0:
             o = Operation(-1 * self.tf).orientation
         elif self.typ in {self.Type.rotation, self.Type.rototranslation}:
@@ -342,19 +326,18 @@ class Operation:
         return '' if np.isclose(sign, 0) else '+' if sign > 0 else '-'
 
     @property
-    def is_bounded(self) -> bool:
-        """
-        True if the operation is a coset representatives i.e. if all
-        translation components lie in range -0.5 exclusive to 0.5 inclusive.
-        """
-        return all(self._tl24 > -12) and all(self._tl24 <= 12)
-
     def bounded(self) -> 'BoundedOperation':
         return self if isinstance(self, BoundedOperation) \
             else BoundedOperation(self.tf, self.tl)
 
+    @property
     def unbounded(self) -> 'Operation':
         return Operation(self.tf, self.tl)
+
+    @property
+    def is_bounded(self) -> bool:
+        """True if self is a coset representatives i.e. 0 <= tl < 1 element-wise"""
+        return all(self._tl24 >= 0) and all(self._tl24 <= 24)
 
     def at(self, point: np.ndarray) -> 'Operation':
         """
@@ -449,6 +432,14 @@ class Operation:
             projection = np.dot(point, self.orientation) * self.orientation
             orthogonal_vector = point - projection
             return float(np.linalg.norm(orthogonal_vector))
+        elif self.typ in {self.Type.reflection, self.Type.transflection}:
+            point = np.array(point) - self.origin
+            projection = np.dot(point, self.orientation) * self.orientation
+            return float(np.linalg.norm(projection))
+        elif self.typ in {self.Type.inversion}:
+            return float(np.linalg.norm(np.array(point) - self.origin))
+        elif self.typ in {self.Type.identity, self.Type.translation}:
+            return -1.0
         return NotImplemented
 
 
