@@ -1,6 +1,82 @@
 # CHANGELOG
 
 
+## v0.3.2 (2025-01-22)
+
+### :bug:
+
+- :bug: Fix heuristic `Operation.origin` code that gave wrong results in cubic system
+  ([`8ad71d1`](https://github.com/Baharis/hikari/commit/8ad71d18f12af13f25dcb80516fac85012a09961))
+
+- :bug: Fix some trigonal systems being mistaken for cubic
+  ([`51e50d1`](https://github.com/Baharis/hikari/commit/51e50d15dfb3d662e4f3ae5a8d7c96bc5e730d1d))
+
+- :bug: Fix test which wrongly assumed that diagonal 3-fold screw axes should extinct -hhh, h-hh,
+  and hh-h reflections
+  ([`38bff51`](https://github.com/Baharis/hikari/commit/38bff519171f8eb9ab76bfc4c46a8285be097893))
+
+- :bug: Fix test which wrongly assumed that diagonal 3-fold screw axes should extinct -hhh, h-hh,
+  and hh-h reflections
+  ([`6b98f10`](https://github.com/Baharis/hikari/commit/6b98f109f5bd6228158e014f851bcc836334fcfb))
+
+- :bug: Make `Group.auto_generated_code` a single word
+  ([`67c01c7`](https://github.com/Baharis/hikari/commit/67c01c75b01d49dff91e4566082db59ff19f85fe))
+
+- :bug: Properly attach `Group.name` and `.number` when reading catalog from json
+  ([`1952454`](https://github.com/Baharis/hikari/commit/1952454934b07729a89d606234444d630be6666d))
+
+- :bug: Split `SymmOp` into `Operation` and `BoundedOperation` whose translation is fixed to [0,1)
+  ([`5352e54`](https://github.com/Baharis/hikari/commit/5352e5448fea7ce420bdfd1a134130d2cbfa6b67))
+
+- :bug: The direction of screw axes should align with their glide
+  ([`ea7c587`](https://github.com/Baharis/hikari/commit/ea7c587081e05cac8c3061f2bfacdf39d069eeba))
+
+### :rewind:
+
+- :rewind: Revert ":test_tube: Add failing test for auto-generated space group names"
+  ([`0f0cb4c`](https://github.com/Baharis/hikari/commit/0f0cb4ce17d3da438980a49f639752f5fdf4c963))
+
+This reverts commit 50c96c21928f208b7834e54e25f2979885e08ad8.
+
+### Other
+
+- :bulb: Remove TODO comment associated with completed code update
+  ([`80189b8`](https://github.com/Baharis/hikari/commit/80189b80579d2a27a926df1251c1f5af3b5c6265))
+
+- :construction: Add `hikari.utility.Singleton` to be potentially used later
+  ([`a051311`](https://github.com/Baharis/hikari/commit/a051311147cd8639538a1f3e3f4fba20f163b85e))
+
+- :construction: Add rudimentary `hm_symbol` property that better aligns with crystallographic
+  tables
+  ([`8b850b0`](https://github.com/Baharis/hikari/commit/8b850b0df6eb833a312e7dcad40fb44c082c067f))
+
+- :memo: Improve documentation, type hints in `hikari.dataframes.cif`
+  ([`2018a6c`](https://github.com/Baharis/hikari/commit/2018a6c2a5d834e4432aa410cfaa34cdf8740862))
+
+- :memo: Improve documentation, type hints in `hikari.dataframes.cif`
+  ([`941c6a1`](https://github.com/Baharis/hikari/commit/941c6a1bc0439c45775e10219ac2412641b807c2))
+
+- :memo: Improve type hints for `hikari.symmetry.Operation`s
+  ([`ce974d0`](https://github.com/Baharis/hikari/commit/ce974d0aaec811de731979dfd6ea89438cf9151c))
+
+- :memo: Streamline `operations.py` type hints to rely on `typing` only
+  ([`3d003ab`](https://github.com/Baharis/hikari/commit/3d003ab8b9ed3821f1eee70690926f127fab9b43))
+
+- :test_tube: Add failing test for auto-generated space group names
+  ([`50c96c2`](https://github.com/Baharis/hikari/commit/50c96c21928f208b7834e54e25f2979885e08ad8))
+
+- :white_check_mark: Make (ub)bounded a property, add/improve all `Operation` tests
+  ([`ad33a95`](https://github.com/Baharis/hikari/commit/ad33a95a76308ebd5bea35a5f352a634d18490c7))
+
+- Merge remote-tracking branch 'origin/development' into development
+  ([`321bc56`](https://github.com/Baharis/hikari/commit/321bc56b647e7987824579a6fd79636e3080e364))
+
+- 🔀 Merge pull request #43 from Baharis/development
+  ([`c2f66e9`](https://github.com/Baharis/hikari/commit/c2f66e98e6c3bb9270d0d0f904c5cc0fdc2e9dbf))
+
+Split `SymmOp` into `Operation` and `BoundedOperation`
+
+
 ## v0.3.1 (2024-12-10)
 
 ### :bug:

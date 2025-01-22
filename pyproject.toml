@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hikari-toolkit"
-version = "0.3.1"
+version = "0.3.2"
 description = "A high-level tool for manipulating crystallographic files"
 authors = ["Daniel Tchoń <dtchon@chem.uw.edu.pl>"]
 license = "MIT"
