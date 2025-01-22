@@ -196,15 +196,12 @@ class Group:
 
     @property
     def system(self) -> System:
-        """
-        :return: Predicted crystal system associated with this group
-        :rtype: self.CrystalSystem()
-        """
+        """Predicted crystal system associated with this group"""
         folds = [op.fold for op in self.operations]
         orients = [op.orientation for op in self.operations]
 
         def _is_many(_orients):
-            return any([np.dot(_orients[0], o) < 0.99 for o in _orients[1:]])
+            return any([abs(np.dot(_orients[0], o)) < 0.99 for o in _orients[1:]])
 
         if 6 in folds:
             return self.System.hexagonal
