@@ -203,6 +203,8 @@ class GroupCatalogJSONDecoder(json.JSONDecoder):
                 group = Group.from_generators_operations(
                     generators=[BoundedOperation.from_code(c) for c in group['generators']],
                     operations=[BoundedOperation.from_code(c) for c in group['operations']])
+                group.name = record['HM']
+                group.number = record['number']
                 record.update({'group': group})
                 records.append(record)
             return GroupCatalog(table=pd.DataFrame.from_records(records))
