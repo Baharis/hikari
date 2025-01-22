@@ -294,7 +294,9 @@ class Operation:
             return None
         if o is None:
             return o
-        o = o if sum(o) > 0 else -o
+        o = o if sum(o) >= 0 else -o
+        if self.typ is self.Type.rotoinversion:  # same direction as glide
+            o = o if np.dot(o, self.glide) > 0 else -o
         return o / np.sqrt(sum(o*o))
 
     @property

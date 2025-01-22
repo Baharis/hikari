@@ -142,7 +142,7 @@ class TestOperations(TestSelectedOperations):
         self.assertEqual(self.sg40_a.sense, '')
         self.assertEqual(self.sg40_21.sense, '')
         self.assertEqual(self.sg40_n.sense, '')
-        self.assertEqual(self.sg147_m3.sense, '+')
+        self.assertEqual(self.sg147_m3.sense, '-')
 
     def test_at(self):
         self.assertEqual(self.sg40_a.at(p111).code, 'x+1/2,-y+2,z')
