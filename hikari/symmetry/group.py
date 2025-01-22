@@ -131,7 +131,7 @@ class Group:
             best_axis = find_best(ops, self.AXIS_PRIORITY_RULES)
             best_plane = find_best(ops, self.PLANE_PRIORITY_RULES)
             sep = '/' if len(best_axis) > 0 and len(best_plane) > 0 else ''
-            name += ' ' + best_axis + sep + best_plane
+            name += '_' + best_axis + sep + best_plane
         return name.strip()
 
     @property
