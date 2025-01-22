@@ -196,7 +196,7 @@ class Operation:
         elif self.typ is self.Type.reflection:
             return 'm'
         elif self.typ is self.Type.rotation:
-            return str(self.fold) + self.sense
+            return str(self.fold) + (self.sense if self.fold > 2 else '')
         elif self.typ is self.Type.inversion:
             return '-1'
         elif self.typ is self.Type.rototranslation:
@@ -306,6 +306,46 @@ class Operation:
         rotation = self.tf if self.det > 0 else -self.tf
         sign = np.dot(self.orientation, np.cross(unique, rotation @ unique))
         return '' if np.isclose(sign, 0) else '+' if sign > 0 else '-'
+
+    @property
+    def _hm_span(self):
+        span = np.array(['', '', ''], dtype='U16')
+        for inv in self.invariants:
+            coefficients = (inv / min(i for i in abs(inv) if i > 0.01)).astype(int)
+            axis = 'xyz'[(coefficients != 0).argmax(axis=0)]
+            letters = [str(s).replace('0', '').replace('1', '')
+                       + (axis if s != 0 else '') for s in coefficients]
+            span += np.array(letters)
+        for i, s in enumerate(span):
+            if s == '':
+                span[i] = Fraction(self.origin[i]).limit_denominator(12)
+        return ','.join(f'{s!s:>4s}' for s in span)
+
+    @property
+    def _hm_glide(self):
+        return ','.join([f'{Fraction(g).limit_denominator(12)!s:>4s}'
+                         for g in self.glide])
+
+    @property
+    def hm_symbol(self) -> str:
+        if self.typ is self.Type.identity:
+            return ' 1                                 '
+        elif self.typ is self.Type.inversion:
+            return f'-1                   {self._hm_span} '
+        elif self.typ is self.Type.translation:
+            return f' t  ({self._hm_glide})'
+        elif self.typ is self.Type.rotation:
+            return f' {self.name:2s}                  {self._hm_span}'
+        elif self.typ is self.Type.rototranslation:
+            return f'{self.name:3s} ({self._hm_glide}) {self._hm_span}'
+        elif self.typ is self.Type.reflection:
+            return f' m                   {self._hm_span}'
+        elif self.typ is self.Type.transflection:
+            return f'{self.name:3s} ({self._hm_glide}) {self._hm_span}'
+        elif self.typ is self.Type.rotoinversion:
+            return f'{self.name:3s} ({self._hm_glide}) {self._hm_span}'
+        else:
+            return '?'
 
     @property
     def bounded(self) -> 'BoundedOperation':
