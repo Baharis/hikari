@@ -17,3 +17,4 @@ from .os_tools import make_abspath
 from .palettes import gnuplot_map_palette, mpl_map_palette
 from .artists import artist_factory
 from .numpy_tools import str2array
+from .singleton import Singleton

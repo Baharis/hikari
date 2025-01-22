@@ -101,7 +101,7 @@ class TestHklScripts(unittest.TestCase):
     def test_completeness_statistics(self):
         kwargs = dict({'space_group': 'Fm-3m'}, **nacl_commons)
         stdout = self.get_stdout(completeness_statistics, kwargs)
-        line = '(2.373, 2.468]    287      6       6  11.039363'
+        line = '(2.373, 2.468]    293      6       6  11.057517   1.0   48.833333'
         self.assertIn(line, stdout)
         # TODO: for some reason, on ubuntu latest ONLY, one refl is not read?
         # TODO: check that out eventually - the last reflection not read
