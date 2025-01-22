@@ -87,3 +87,12 @@ class TestSpaceGroupCatalog(TestPointGroupCatalog):
     catalogue_length: int = 530
     catalogue_standards: int = 230
     catalogue_sample_HM_simple: str = 'P2/m'
+
+    def test_group_catalogs_auto_generated_names(self):
+        print(len(self.catalogue_object.standard.values()))
+        for group in self.catalogue_object.standard.values():
+            with self.subTest(group_id=group.number):
+                hardcoded_name = group.name
+                generated_name = group.auto_generated_name
+                print(f'{group.number=}, {group.name=}, {generated_name=}, {group.operations=}')
+                self.assertEqual(hardcoded_name, generated_name)
