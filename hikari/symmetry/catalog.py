@@ -394,6 +394,8 @@ def regenerate_group_catalog_jsons():
 
 PG = GroupCatalog.from_json(point_groups_json)
 r"""
+An instance of `GroupCatalog` that holds all point groups known to hikari.
+
 Since hikari's groups do not carry information about lattice translations,
 hikari does not differentiate between point groups and space groups.
 As a result, all groups are instances of the same class `Group`,
@@ -513,6 +515,8 @@ keywords. Please mind that in the raw docstring all `\` should be ignored.
 
 SG = GroupCatalog.from_json(space_groups_json)
 r"""
+An instance of `GroupCatalog` that holds all space groups known to hikari.
+
 Since hikari's groups do not carry information about lattice translations,
 hikari does not differentiate between point groups and space groups.
 As a result, all groups are instances of the same class `Group`,

@@ -29,7 +29,9 @@ class Operation:
         transflection = -2
         translation = -3
 
-    def __init__(self, transformation, translation=np.array([0, 0, 0])) -> None:
+    def __init__(self,
+                 transformation: np.ndarray,
+                 translation: np.ndarray = np.array([0, 0, 0])) -> None:
         self.tf = np.array(transformation)
         self.tl = np.array(translation)
 
@@ -132,11 +134,13 @@ class Operation:
 
     @property
     def code(self) -> str:
+        """Coordinates of the point obtained by applying `self` to (x,y,z)"""
         return ','.join([self._row_to_str(xyz, r) for xyz, r
                          in zip(self.tf, self.tl)])
 
     @property
     def tf(self) -> np.ndarray:
+        """3x3 matrix representing the linear transformation part of the operation"""
         return self._tf
 
     @tf.setter
@@ -145,6 +149,7 @@ class Operation:
 
     @property
     def tl(self) -> np.ndarray:
+        """3-length vector representing translation introduced by the operation"""
         return self._tl24 / 24
 
     @tl.setter
@@ -308,7 +313,7 @@ class Operation:
         return '' if np.isclose(sign, 0) else '+' if sign > 0 else '-'
 
     @property
-    def _hm_span(self):
+    def _hm_span(self) -> str:
         span = np.array(['', '', ''], dtype='U16')
         for inv in self.invariants:
             coefficients = (inv / min(i for i in abs(inv) if i > 0.01)).astype(int)
@@ -322,12 +327,13 @@ class Operation:
         return ','.join(f'{s!s:>4s}' for s in span)
 
     @property
-    def _hm_glide(self):
+    def _hm_glide(self) -> str:
         return ','.join([f'{Fraction(g).limit_denominator(12)!s:>4s}'
                          for g in self.glide])
 
     @property
     def hm_symbol(self) -> str:
+        """Full Hermann-Mauguin symbol of the symmetry operation"""
         if self.typ is self.Type.identity:
             return ' 1                                 '
         elif self.typ is self.Type.inversion:
@@ -472,16 +478,16 @@ class BoundedOperation(Operation):
 
     @property
     def tl(self) -> np.ndarray:
+        """
+        3-length vector representing translation introduced by the operation.
+        Automatically wraps the translation of the `Operation` into the [0; 1) range.
+        This makes the `Operation` a "bounded" "coset representative".
+        With this operation 0 casts onto 0, +/-0.5 onto 0.5, and 1 back onto 0.
+        """
         return self._tl24 / 24
 
     @tl.setter
     def tl(self, value: np.ndarray) -> None:
-        """
-        This setter automatically handles binding the translation component
-        of the `Operation` into the [0; 1) range.
-        This makes the `Operation` a "bounded" "coset representative".
-        With this operation 0 casts onto 0, +/-0.5 onto 0.5, and 1 back onto 0.
-        """
         self._tl24 = np.rint(value * 24).astype(int) % 24
 
 
@@ -489,6 +495,11 @@ class PointOperation(BoundedOperation):
     """A subclass of `BoundedOperation`, asserts translation vector = [0,0,0]"""
     @property
     def tl(self) -> np.ndarray:
+        """
+        3-length vector representing translation introduced by the operation.
+        Should only ever be all-zero; trying to set any translation vector
+        component significantly different from zero will raise an `ValueError`.
+        """
         return np.array([0, 0, 0], dtype=float)
 
     @tl.setter
